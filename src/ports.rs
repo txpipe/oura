@@ -1,12 +1,22 @@
+use merge::Merge;
 use pallas::ledger::alonzo::Value;
 
 pub type Error = Box<dyn std::error::Error>;
 
+#[derive(Debug, Clone, Merge, Default)]
+pub struct EventContext {
+    pub block_number: Option<u64>,
+    pub slot: Option<u64>,
+    pub tx_id: Option<String>,
+    pub input_idx: Option<usize>,
+    pub output_idx: Option<usize>,
+}
+
 #[derive(Debug, Clone)]
-pub enum Event {
+pub enum EventData {
     Block {
-        block_number: u64,
-        slot: u64,
+        body_size: usize,
+        issuer_vkey: String,
     },
     Transaction {
         fee: u64,
@@ -14,19 +24,25 @@ pub enum Event {
         validity_interval_start: Option<u64>,
     },
     TxInput {
-        transaction_id: String,
+        tx_id: String,
         index: u64,
     },
     TxOutput {
         address: String,
         amount: Value,
     },
+    OutputAsset {
+        coin: u64,
+        policy: String,
+        asset: String,
+        value: u64,
+    },
     Metadata {
         key: String,
     },
     Mint {
-        key1: String,
-        key2: String,
+        policy: String,
+        asset: String,
         quantity: i64,
     },
     NativeScript,
@@ -40,10 +56,7 @@ pub enum Event {
     MoveInstantaneousRewardsCert,
 }
 
-pub trait InputPort {
-    fn on_event(event: Event) -> Result<(), Error>;
-}
-
-pub trait OutputPort {
-    fn get_next() -> Result<Event, Error>;
+pub struct Event {
+    pub context: EventContext,
+    pub data: EventData,
 }

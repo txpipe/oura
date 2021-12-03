@@ -3,10 +3,8 @@ name = "oura"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-pallas = { path = "../pallas/pallas" }
+pallas = "0.1.0"
 hex = "0.4.3"
 net2 = "0.2.37"
 clap = "2.33.3"
@@ -14,3 +12,4 @@ log = "0.4.14"
 env_logger = "0.9.0"
 crossterm = "0.20"
 tui = { version = "0.16", default-features = false, features = ['crossterm'] }
+merge = "0.1.0"

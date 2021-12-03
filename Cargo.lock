@@ -32,6 +32,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "autocfg"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -196,6 +202,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
+name = "merge"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10bbef93abb1da61525bbc45eeaff6473a41907d19f8f9aa5168d214e10693e9"
+dependencies = [
+ "merge_derive",
+ "num-traits",
+]
+
+[[package]]
+name = "merge_derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "209d075476da2e63b4b29e72a2ef627b840589588e71400a25e3565c4f849d07"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "minicbor"
 version = "0.11.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -213,15 +241,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "minicbor-io"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a2059665235ed036537deee78f912c48435b61db4f0dae1fade1f7baa880511"
-dependencies = [
- "minicbor",
 ]
 
 [[package]]
@@ -267,6 +286,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-traits"
+version = "0.2.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "oura"
 version = "0.1.0"
 dependencies = [
@@ -275,6 +303,7 @@ dependencies = [
  "env_logger",
  "hex",
  "log",
+ "merge",
  "net2",
  "pallas",
  "tui",
@@ -283,6 +312,8 @@ dependencies = [
 [[package]]
 name = "pallas"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b5fa833d7f2a35beabcf765986096c3bf84b627bf252bfb09cec4aba6aa4b90"
 dependencies = [
  "pallas-alonzo",
  "pallas-blockfetch",
@@ -297,21 +328,23 @@ dependencies = [
 [[package]]
 name = "pallas-alonzo"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "234d5a9a58f31a324a9736f07637eea010fb309d42b61b6779081f8f17cd79ca"
 dependencies = [
  "hex",
  "log",
  "minicbor",
  "minicbor-derive",
- "minicbor-io",
 ]
 
 [[package]]
 name = "pallas-blockfetch"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4394fb0bd29d9918673c4bffce256394cf9e7787e2bb0e626297e3d21c1868cd"
 dependencies = [
  "log",
  "minicbor",
- "minicbor-io",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -319,11 +352,12 @@ dependencies = [
 [[package]]
 name = "pallas-chainsync"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee25d58d9a475e44bfdd7ed73df52e2b015e14c494f244a319a10d2c7b3167e6"
 dependencies = [
  "hex",
  "log",
  "minicbor",
- "minicbor-io",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -331,11 +365,12 @@ dependencies = [
 [[package]]
 name = "pallas-handshake"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ae1b2283e491a52d2eb574b71ee9c71a03c04800fac8cb6902108653bf03a34"
 dependencies = [
  "itertools",
  "log",
  "minicbor",
- "minicbor-io",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -343,11 +378,12 @@ dependencies = [
 [[package]]
 name = "pallas-localstate"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29533bc334a1482ad2abb3196bbcca3bed4e79169bfb1d3a63d2c180cf790dc3"
 dependencies = [
  "hex",
  "log",
  "minicbor",
- "minicbor-io",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -355,6 +391,8 @@ dependencies = [
 [[package]]
 name = "pallas-machines"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "207d6aeb5cbc3ffb0c3dcf8b6133b572f763d2b09e3b2ffcc225e1270cbc07b2"
 dependencies = [
  "hex",
  "log",
@@ -364,7 +402,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.1.0"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4f64de489a8832421485aa3c106d0f01325be67a7688e89079db57b37aa8962"
 dependencies = [
  "byteorder",
  "hex",
@@ -374,12 +414,13 @@ dependencies = [
 [[package]]
 name = "pallas-txsubmission"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baead05e85428bcf660ea4c0574131aaff0914d26509ee1b6c98acc58d17b5a1"
 dependencies = [
  "hex",
  "itertools",
  "log",
  "minicbor",
- "minicbor-io",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -407,6 +448,30 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "winapi",
+]
+
+[[package]]
+name = "proc-macro-error"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+dependencies = [
+ "proc-macro-error-attr",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "version_check",
+]
+
+[[package]]
+name = "proc-macro-error-attr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "version_check",
 ]
 
 [[package]]
@@ -566,6 +631,12 @@ name = "vec_map"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
+
+[[package]]
+name = "version_check"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
 name = "winapi"

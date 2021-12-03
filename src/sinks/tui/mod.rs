@@ -64,7 +64,7 @@ fn tui_loop(app: Arc<RwLock<ConsoleApp>>) -> Result<(), Error> {
                 .tx_items
                 .iter()
                 .map(|evt| {
-                    let content = Span::from(format!("{:?}", evt));
+                    let content = Span::from(format!("{:?} => {:?}", evt.context, evt.data));
                     ListItem::new(content)
                 })
                 .collect::<Vec<_>>();

@@ -1,8 +1,3 @@
-mod sources;
-mod sinks;
-mod ports;
-
-pub mod utils;
 
 use clap::{value_t, App};
 
@@ -24,9 +19,9 @@ fn main() {
 
     let (tx, rx) = std::sync::mpsc::channel();
 
-    let source = sources::chain::bootstrap(&socket, magic, tx).unwrap();
-    let sink = sinks::tui::bootstrap(rx).unwrap();
+    let source = oura::sources::chain::bootstrap(&socket, magic, tx).unwrap();
+    let sink = oura::sinks::terminal::bootstrap(rx).unwrap();
 
-    //source.join().unwrap();
     sink.join().unwrap();
+    source.join().unwrap();
 }

@@ -11,10 +11,10 @@ impl Throttle {
     }
 
     pub fn wait_turn(&mut self) {
-        let remaining = self.min_delay.as_millis() as i64 - self.last_action.elapsed().as_millis() as i64;
+        let remaining = self.min_delay.checked_sub(self.last_action.elapsed());
         
-        if remaining > 0 {
-            sleep(Duration::from_millis(remaining as u64));
+        if let Some(remaining) = remaining {
+            sleep(remaining);
         }
 
         self.last_action = Instant::now();

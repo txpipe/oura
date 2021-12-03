@@ -38,7 +38,7 @@ impl Observer<BlockBody> for ChainObserver {
                 block.write_events(&mut writer);
                 let sent = storage
                     .into_iter()
-                    .map(|(_, e)| self.0.send(e))
+                    .map(|e| self.0.send(e))
                     .collect::<Result<Vec<_>, _>>();
 
                 match sent {
