@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{collections::BTreeMap, ops::Deref};
 
 use merge::Merge;
 use pallas::ledger::alonzo::{
@@ -84,17 +84,50 @@ impl EventSource for Certificate {
     }
 }
 
-impl EventSource for Metadatum {
-    fn write_events(&self, writer: &mut EventWriter) {
-        let key = match self {
-            Metadatum::Int(x) => x.to_string(),
-            Metadatum::Bytes(x) => hex::encode::<&Vec<u8>>(x.as_ref()),
-            Metadatum::Text(x) => x.to_owned(),
-            Metadatum::Array(_) => "array".to_string(),
-            Metadatum::Map(_) => "map".to_string(),
-        };
+fn metadatum_to_string(datum: &Metadatum) -> String {
+    match datum {
+        Metadatum::Int(x) => x.to_string(),
+        Metadatum::Bytes(x) => hex::encode::<&Vec<u8>>(x.as_ref()),
+        Metadatum::Text(x) => x.to_owned(),
+        Metadatum::Array(x) => x
+            .iter()
+            .map(|i| format!("{}, ", metadatum_to_string(i)))
+            .collect(),
+        Metadatum::Map(x) => x
+            .iter()
+            .map(|(key, val)| {
+                format!(
+                    "{}: {}, ",
+                    metadatum_to_string(key),
+                    metadatum_to_string(val)
+                )
+            })
+            .collect(),
+    }
+}
 
-        writer.append(EventData::Metadata { key });
+impl EventSource for BTreeMap<Metadatum, Metadatum> {
+    fn write_events<'a>(&'a self, writer: &'a mut EventWriter) {
+        for (level1_key, level1_data) in self {
+            match level1_data {
+                Metadatum::Map(level1_map) => {
+                    for (level2_key, level2_data) in level1_map {
+                        writer.append(EventData::Metadata {
+                            key: metadatum_to_string(level1_key),
+                            subkey: Some(metadatum_to_string(level2_key)),
+                            value: Some(metadatum_to_string(level2_data)),
+                        });
+                    }
+                }
+                _ => {
+                    writer.append(EventData::Metadata {
+                        key: metadatum_to_string(level1_key),
+                        subkey: None,
+                        value: None,
+                    });
+                }
+            }
+        }
     }
 }
 
@@ -103,23 +136,21 @@ impl EventSource for AuxiliaryData {
         match self {
             AuxiliaryData::Alonzo(data) => {
                 if let Some(metadata) = &data.metadata {
-                    for (key, _) in metadata {
-                        key.write_events(writer);
-                    }
+                    metadata.write_events(writer);
                 }
 
                 for native in data.native_scripts.iter() {
-                    writer.append(EventData::NativeScript);
+                    writer.append(EventData::NewNativeScript);
                 }
 
                 for plutus in data.plutus_scripts.iter() {
-                    writer.append(EventData::PlutusScript);
+                    writer.append(EventData::NewPlutusScript {
+                        data: plutus.to_hex(),
+                    });
                 }
             }
             AuxiliaryData::Shelley(data) => {
-                for (key, _) in data.iter() {
-                    key.write_events(writer);
-                }
+                data.write_events(writer);
             }
             _ => log::warn!("ShelleyMa auxiliary data, not sure what to do"),
         }
@@ -130,18 +161,20 @@ impl EventSource for TransactionOutput {
     fn write_events<'a>(&'a self, writer: &'a mut EventWriter) {
         writer.append(EventData::TxOutput {
             address: self.address.to_hex(),
-            amount: self.amount.clone(),
+            amount: match self.amount {
+                Value::Coin(x) => x,
+                Value::Multiasset(x, _) => x,
+            },
         });
 
         match &self.amount {
-            Value::Multiasset(coin, assets) => {
+            Value::Multiasset(_, assets) => {
                 for (policy, assets) in assets.iter() {
-                    for (asset, value) in assets.iter() {
+                    for (asset, amount) in assets.iter() {
                         writer.append(EventData::OutputAsset {
                             policy: policy.to_hex(),
                             asset: asset.to_hex(),
-                            value: *value,
-                            coin: *coin,
+                            amount: *amount,
                         });
                     }
                 }
@@ -166,6 +199,7 @@ impl EventSource for Block {
 
         for (idx, tx) in self.transaction_bodies.iter().enumerate() {
             let mut writer = writer.child_writer(EventContext {
+                tx_idx: Some(idx),
                 tx_id: Some("some-hash".to_string()),
                 ..EventContext::default()
             });
@@ -197,6 +231,16 @@ impl EventSource for Block {
             if let Some(aux) = self.auxiliary_data_set.get(&(idx as u32)) {
                 aux.write_events(&mut writer);
             };
+
+            if let Some(witness) = self.transaction_witness_sets.get(idx) {
+                if let Some(scripts) = &witness.plutus_script {
+                    for script in scripts.iter() {
+                        writer.append(EventData::PlutusScriptRef {
+                            data: script.to_hex(),
+                        });
+                    }
+                }
+            }
 
             for (idx, input) in tx.inputs.iter().enumerate() {
                 let mut writer = writer.child_writer(EventContext {

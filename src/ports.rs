@@ -1,5 +1,5 @@
 use merge::Merge;
-use pallas::ledger::alonzo::Value;
+use pallas::ledger::alonzo::{Metadatum, Value};
 
 pub type Error = Box<dyn std::error::Error>;
 
@@ -7,6 +7,7 @@ pub type Error = Box<dyn std::error::Error>;
 pub struct EventContext {
     pub block_number: Option<u64>,
     pub slot: Option<u64>,
+    pub tx_idx: Option<usize>,
     pub tx_id: Option<String>,
     pub input_idx: Option<usize>,
     pub output_idx: Option<usize>,
@@ -29,24 +30,32 @@ pub enum EventData {
     },
     TxOutput {
         address: String,
-        amount: Value,
+        amount: u64,
     },
     OutputAsset {
-        coin: u64,
         policy: String,
         asset: String,
-        value: u64,
+        amount: u64,
     },
     Metadata {
         key: String,
+        subkey: Option<String>,
+        // TODO: value should be some sort of structured, JSON-like value.
+        // we could use Pallas' Metadatum struct, but it needs to be clonable
+        value: Option<String>,
     },
     Mint {
         policy: String,
         asset: String,
         quantity: i64,
     },
-    NativeScript,
-    PlutusScript,
+    NewNativeScript,
+    NewPlutusScript {
+        data: String,
+    },
+    PlutusScriptRef {
+        data: String,
+    },
     StakeRegistration,
     StakeDeregistration,
     StakeDelegation,
