@@ -25,14 +25,26 @@ The name of the tool is inspired by the `tail` command available in unix-like sy
     - [ ] chain-sync + block-fetch (node-to-node)
     - [ ] shared file system
 - Sinks
-    - [ ] kafka topic
-    - [ ] redis streams
-    - [ ] aws sqs queue
-    - [ ] gcp pubsub
+    - [ ] Kafka topic
+    - [ ] Redis streams
+    - [ ] AWS SQS queue
+    - [ ] GCP PubSub
     - [ ] webhook (http post)
-    - [ ] email (http post)
+    - [ ] email
     - [x] terminal (append-only, tail-like)
     - [ ] TUI
 - Filters
     - [ ] by event type (block, tx, mint, cert, etc)
     - [ ] by block property (size, tx count)
+    - [ ] by tx property (fee, has native script, has plutus script, etc)
+    - [ ] by utxo property (address, asset, amount range)
+- Enrichment
+    - [ ] policy info from metadata service
+    - [ ] input tx info from Blockfrost api
+    - [ ] address translation from ADAHandle
+
+## Terminal Output Demo
+
+In this terminal recording we get to see a few mins of live output from a testnet node connected to the terminal sink.
+
+[![asciicast](https://asciinema.org/a/66x3QUjQm6KtCkPYREiBycR6b.svg)](https://asciinema.org/a/66x3QUjQm6KtCkPYREiBycR6b)
