@@ -48,3 +48,9 @@ The name of the tool is inspired by the `tail` command available in unix-like sy
 In this terminal recording we get to see a few mins of live output from a testnet node connected to the terminal sink.
 
 [![asciicast](https://asciinema.org/a/66x3QUjQm6KtCkPYREiBycR6b.svg)](https://asciinema.org/a/66x3QUjQm6KtCkPYREiBycR6b)
+
+## Under the Hood
+
+All the heavy lifting required to communicate with the Cardano node is done by the [Pallas](https://github.com/txpipe/pallas) library, which provides an implementation of the Ouroboros multiplixer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).
+
+The data pipeline makes heavy use (maybe a bit too much) of multi-threading and mpsc channels provided by Rust's `std::sync` library.
