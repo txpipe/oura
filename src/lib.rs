@@ -1,5 +1,5 @@
-pub mod sources;
-pub mod sinks;
 pub mod ports;
+pub mod sinks;
+pub mod sources;
 
 pub mod utils;

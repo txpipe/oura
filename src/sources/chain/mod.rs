@@ -1,6 +1,6 @@
 mod map;
 
-use log::{error, info, debug};
+use log::{debug, error, info};
 use net2::TcpStreamExt;
 use pallas::{
     ledger::alonzo::Block,
