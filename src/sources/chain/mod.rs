@@ -1,12 +1,12 @@
 mod map;
 
-use log::{debug, error, info};
+use log::{error, info};
 use net2::TcpStreamExt;
 use pallas::{
     ledger::alonzo::Block,
     ouroboros::network::{
         chainsync::{BlockBody, ClientConsumer, Observer},
-        handshake::n2c,
+        handshake::{n2c, MAINNET_MAGIC, TESTNET_MAGIC},
         localstate::{
             queries::{QueryV10, RequestV10},
             OneShotClient,
@@ -16,7 +16,8 @@ use pallas::{
     },
 };
 use std::{
-    error::Error, net::TcpStream, os::unix::net::UnixStream, sync::mpsc::Sender, thread::JoinHandle,
+    error::Error, net::TcpStream, ops::Deref, os::unix::net::UnixStream, str::FromStr,
+    sync::mpsc::Sender, thread::JoinHandle,
 };
 
 use crate::ports::Event;
@@ -108,16 +109,87 @@ fn observe_forever(
     Ok(())
 }
 
+pub enum BearerKind {
+    Tcp,
+    Unix,
+}
+
+pub struct AddressArg(pub BearerKind, pub String);
+
+impl FromStr for BearerKind {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "unix" => Ok(BearerKind::Unix),
+            "tcp" => Ok(BearerKind::Tcp),
+            _ => return Err("can't parse bearer type value"),
+        }
+    }
+}
+
+pub struct MagicArg(u64);
+
+impl Deref for MagicArg {
+    type Target = u64;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl FromStr for MagicArg {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let m = match s {
+            "testnet" => MagicArg(TESTNET_MAGIC),
+            "mainnet" => MagicArg(MAINNET_MAGIC),
+            _ => MagicArg(u64::from_str(s).map_err(|_| "can't parse magic value")?),
+        };
+
+        Ok(m)
+    }
+}
+
+pub enum PeerMode {
+    AsNode,
+    AsClient,
+}
+
+impl FromStr for PeerMode {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_ref() {
+            "node" => Ok(PeerMode::AsNode),
+            "client" => Ok(PeerMode::AsClient),
+            _ => Err("can't parse peer mode (valid values: client|node)"),
+        }
+    }
+}
+
 pub fn bootstrap(
-    socket: &str,
-    magic: u64,
+    address: AddressArg,
+    magic: Option<MagicArg>,
+    mode: Option<PeerMode>,
     sender: Sender<Event>,
 ) -> Result<JoinHandle<()>, Box<dyn Error>> {
-    //let mut muxer = setup_unix_multiplexer(socket)?;
-    let mut muxer = setup_tcp_multiplexer(socket)?;
+    let mut muxer = match address.0 {
+        BearerKind::Tcp => setup_tcp_multiplexer(&address.1)?,
+        BearerKind::Unix => setup_unix_multiplexer(&address.1)?,
+    };
 
+    // TODO: placeholder for when we implement chainsync + blockfetch
+    let _mode = match (mode, address.0) {
+        (Some(mode), _) => mode,
+        (None, BearerKind::Tcp) => PeerMode::AsClient,
+        (None, BearerKind::Unix) => PeerMode::AsNode,
+    };
+
+    let magic = magic.unwrap_or(MagicArg(MAINNET_MAGIC));
     let hs_channel = muxer.use_channel(0);
-    do_handshake(hs_channel, magic)?;
+    do_handshake(hs_channel, *magic)?;
 
     let ls_channel = muxer.use_channel(7);
     let point = find_end_of_chain(ls_channel)?;

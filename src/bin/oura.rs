@@ -1,27 +1,71 @@
+use clap::{value_t, App, Arg, ArgMatches, SubCommand};
+use oura::sources::chain::{AddressArg, BearerKind, MagicArg, PeerMode};
 
-use clap::{value_t, App};
+type Error = Box<dyn std::error::Error>;
+
+fn run_log(args: &ArgMatches) -> Result<(), Error> {
+    let address = value_t!(args, "node", String)?;
+
+    let bearer = match args.is_present("bearer") {
+        true => value_t!(args, "bearer", BearerKind)?,
+        false => BearerKind::Unix,
+    };
+
+    let node = AddressArg(bearer, address);
+
+    let mode = match args.is_present("mode") {
+        true => Some(value_t!(args, "mode", PeerMode)?),
+        false => None,
+    };
+
+    let magic = match args.is_present("magic") {
+        true => Some(value_t!(args, "magic", MagicArg)?),
+        false => None,
+    };
+
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    let source = oura::sources::chain::bootstrap(node, magic, mode, tx).unwrap();
+    let sink = oura::sinks::terminal::bootstrap(rx).unwrap();
+
+    sink.join().map_err(|_| "error in sink thread")?;
+    source.join().map_err(|_| "error in source thread")?;
+
+    Ok(())
+}
 
 fn main() {
     //env_logger::init();
 
-    let app = App::new("app")
-        .arg_from_usage("--socket=[socket] 'path of the socket'")
-        .arg_from_usage("--magic=[magic] 'network magic'")
-        //.arg_from_usage("--slot=[slot] 'start point slot'")
-        //.arg_from_usage("--hash=[hash] 'start point hash'")
+    let args = App::new("app")
+        .name("oura")
+        .about("the tail of cardano")
+        .subcommand(
+            SubCommand::with_name("log")
+                .arg(
+                    Arg::with_name("node")
+                        .long("node")
+                        .takes_value(true)
+                        .required(true),
+                )
+                .arg(
+                    Arg::with_name("bearer")
+                        .long("bearer")
+                        .takes_value(true)
+                        .possible_values(&["tcp", "unix"]),
+                )
+                .arg(Arg::with_name("magic").long("magic").takes_value(true))
+                .arg(
+                    Arg::with_name("mode")
+                        .long("mode")
+                        .takes_value(true)
+                        .possible_values(&["node", "client"]),
+                ),
+        )
         .get_matches();
 
-    let socket = value_t!(app, "socket", String).unwrap_or_else(|e| e.exit());
-    let magic = value_t!(app, "magic", u64).unwrap_or_else(|e| e.exit());
-    //let slot = value_t!(app, "slot", u64).unwrap_or_else(|e| e.exit());
-    //let hash = value_t!(app, "hash", String).unwrap_or_else(|e| e.exit());
-    //let point = Point(slot, hex::decode(&hash).unwrap());
-
-    let (tx, rx) = std::sync::mpsc::channel();
-
-    let source = oura::sources::chain::bootstrap(&socket, magic, tx).unwrap();
-    let sink = oura::sinks::terminal::bootstrap(rx).unwrap();
-
-    sink.join().unwrap();
-    source.join().unwrap();
+    match args.subcommand() {
+        ("log", Some(args)) => run_log(args).unwrap(),
+        _ => unreachable!(),
+    }
 }
