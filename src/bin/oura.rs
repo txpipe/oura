@@ -1,17 +1,17 @@
-use clap::{value_t, App, Arg, ArgMatches, SubCommand};
+use clap::{value_t, App, AppSettings, Arg, ArgMatches, SubCommand};
 use oura::sources::chain::{AddressArg, BearerKind, MagicArg, PeerMode};
 
 type Error = Box<dyn std::error::Error>;
 
 fn run_log(args: &ArgMatches) -> Result<(), Error> {
-    let address = value_t!(args, "node", String)?;
+    let socket = value_t!(args, "socket", String)?;
 
     let bearer = match args.is_present("bearer") {
         true => value_t!(args, "bearer", BearerKind)?,
         false => BearerKind::Unix,
     };
 
-    let node = AddressArg(bearer, address);
+    let address = AddressArg(bearer, socket);
 
     let mode = match args.is_present("mode") {
         true => Some(value_t!(args, "mode", PeerMode)?),
@@ -25,7 +25,7 @@ fn run_log(args: &ArgMatches) -> Result<(), Error> {
 
     let (tx, rx) = std::sync::mpsc::channel();
 
-    let source = oura::sources::chain::bootstrap(node, magic, mode, tx).unwrap();
+    let source = oura::sources::chain::bootstrap(address, magic, mode, tx).unwrap();
     let sink = oura::sinks::terminal::bootstrap(rx).unwrap();
 
     sink.join().map_err(|_| "error in sink thread")?;
@@ -42,12 +42,7 @@ fn main() {
         .about("the tail of cardano")
         .subcommand(
             SubCommand::with_name("log")
-                .arg(
-                    Arg::with_name("node")
-                        .long("node")
-                        .takes_value(true)
-                        .required(true),
-                )
+                .arg(Arg::with_name("socket").required(true))
                 .arg(
                     Arg::with_name("bearer")
                         .long("bearer")
@@ -62,10 +57,11 @@ fn main() {
                         .possible_values(&["node", "client"]),
                 ),
         )
+        .setting(AppSettings::SubcommandRequiredElseHelp)
         .get_matches();
 
     match args.subcommand() {
         ("log", Some(args)) => run_log(args).unwrap(),
-        _ => unreachable!(),
+        _ => (),
     }
 }
