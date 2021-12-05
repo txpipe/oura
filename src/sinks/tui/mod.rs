@@ -12,7 +12,6 @@ use crate::utils::throttle::Throttle;
 pub type Error = Box<dyn std::error::Error>;
 
 use crossterm::{
-    event::EnableMouseCapture,
     execute,
     terminal::{enable_raw_mode, EnterAlternateScreen},
 };
@@ -76,9 +75,8 @@ fn tui_loop(app: Arc<RwLock<ConsoleApp>>) -> Result<(), Error> {
 
         if crossterm::event::poll(Duration::from_millis(50))? {
             if let crossterm::event::Event::Key(key) = crossterm::event::read()? {
-                match key.code {
-                    crossterm::event::KeyCode::Char('q') => return Ok(()),
-                    _ => {}
+                if let crossterm::event::KeyCode::Char('q') = key.code {
+                    return Ok(());
                 }
             }
         }
@@ -94,9 +92,9 @@ pub fn bootstrap(rx: Receiver<Event>) -> Result<JoinHandle<()>, Error> {
     }));
 
     let c1 = console.clone();
-    let handle1 = std::thread::spawn(move || reducer_loop(rx, c1).unwrap());
+    let _handle1 = std::thread::spawn(move || reducer_loop(rx, c1).unwrap());
 
-    let c2 = console.clone();
+    let c2 = console;
     let handle2 = std::thread::spawn(move || tui_loop(c2).unwrap());
 
     Ok(handle2)

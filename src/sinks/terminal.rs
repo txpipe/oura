@@ -9,40 +9,22 @@ pub type Error = Box<dyn std::error::Error>;
 
 const THROTTLE_MIN_SPAN_MILLIS: u64 = 500;
 
-use crossterm::execute;
-use crossterm::style::{
-    Attribute, Colored, Colors, Print, PrintStyledContent, SetForegroundColor, StyledContent,
-};
-use crossterm::{style, style::Color, style::Stylize, ExecutableCommand};
+use crossterm::style::{Print, SetForegroundColor};
+use crossterm::{style::Color, style::Stylize, ExecutableCommand};
 use std::io::stdout;
 
 fn type_color(data: &EventData) -> Color {
     match data {
-        EventData::Block {
-            body_size,
-            issuer_vkey,
-        } => Color::Magenta,
-        EventData::Transaction {
-            fee,
-            ttl,
-            validity_interval_start,
-        } => Color::DarkBlue,
-        EventData::TxInput { tx_id, index } => Color::Blue,
-        EventData::TxOutput { address, amount } => Color::Blue,
-        EventData::OutputAsset {
-            policy,
-            asset,
-            amount,
-        } => Color::Green,
-        EventData::Metadata { key, subkey, value } => Color::Yellow,
-        EventData::Mint {
-            policy,
-            asset,
-            quantity,
-        } => Color::DarkGreen,
+        EventData::Block { .. } => Color::Magenta,
+        EventData::Transaction { .. } => Color::DarkBlue,
+        EventData::TxInput { tx_id: _, index: _ } => Color::Blue,
+        EventData::TxOutput { .. } => Color::Blue,
+        EventData::OutputAsset { .. } => Color::Green,
+        EventData::Metadata { .. } => Color::Yellow,
+        EventData::Mint { .. } => Color::DarkGreen,
         EventData::NewNativeScript => Color::White,
-        EventData::NewPlutusScript { data } => Color::White,
-        EventData::PlutusScriptRef { data } => Color::White,
+        EventData::NewPlutusScript { .. } => Color::White,
+        EventData::PlutusScriptRef { .. } => Color::White,
         EventData::StakeRegistration => Color::Magenta,
         EventData::StakeDeregistration => Color::DarkMagenta,
         EventData::StakeDelegation => Color::Magenta,
@@ -55,38 +37,23 @@ fn type_color(data: &EventData) -> Color {
 
 fn type_prefix(data: &EventData) -> &'static str {
     match data {
-        EventData::Block {
-            body_size,
-            issuer_vkey,
-        } => &"BLOCK",
-        EventData::Transaction {
-            fee,
-            ttl,
-            validity_interval_start,
-        } => &"TX",
-        EventData::TxInput { tx_id, index } => &"STXI",
-        EventData::TxOutput { address, amount } => &"UTXO",
-        EventData::OutputAsset {
-            policy,
-            asset,
-            amount,
-        } => &"ASSET",
-        EventData::Metadata { key, subkey, value } => &"META",
-        EventData::Mint {
-            policy,
-            asset,
-            quantity,
-        } => &"MINT",
-        EventData::NewNativeScript => &"NATIVE+",
-        EventData::NewPlutusScript { data } => &"PLUTUS+",
-        EventData::PlutusScriptRef { data } => &"PLUTUS",
-        EventData::StakeRegistration => &"STAKE+",
-        EventData::StakeDeregistration => &"STAKE-",
-        EventData::StakeDelegation => &"STAKE",
-        EventData::PoolRegistration => &"POOL+",
-        EventData::PoolRetirement => &"POOL-",
-        EventData::GenesisKeyDelegation => &"GENESIS",
-        EventData::MoveInstantaneousRewardsCert => &"MOVE",
+        EventData::Block { .. } => "BLOCK",
+        EventData::Transaction { .. } => "TX",
+        EventData::TxInput { .. } => "STXI",
+        EventData::TxOutput { .. } => "UTXO",
+        EventData::OutputAsset { .. } => "ASSET",
+        EventData::Metadata { .. } => "META",
+        EventData::Mint { .. } => "MINT",
+        EventData::NewNativeScript => "NATIVE+",
+        EventData::NewPlutusScript { .. } => "PLUTUS+",
+        EventData::PlutusScriptRef { .. } => "PLUTUS",
+        EventData::StakeRegistration => "STAKE+",
+        EventData::StakeDeregistration => "STAKE-",
+        EventData::StakeDelegation => "STAKE",
+        EventData::PoolRegistration => "POOL+",
+        EventData::PoolRetirement => "POOL-",
+        EventData::GenesisKeyDelegation => "GENESIS",
+        EventData::MoveInstantaneousRewardsCert => "MOVE",
     }
 }
 
@@ -106,8 +73,8 @@ impl Display for LogLine {
             self.0
                 .context
                 .tx_idx
-                .and_then(|x| Some(format!("{:-2}", x)))
-                .unwrap_or("--".to_string()),
+                .map(|x| format!("{:-2}", x))
+                .unwrap_or_else(|| "--".to_string()),
         )
         .stylize()
         .with(Color::DarkGrey)

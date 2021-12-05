@@ -28,7 +28,7 @@ pub struct EventWriter<'a> {
 }
 
 impl<'a> EventWriter<'a> {
-    pub fn new<'b>(storage: &'b mut Storage) -> EventWriter<'b> {
+    pub fn new(storage: &mut Storage) -> EventWriter<'_> {
         EventWriter {
             context: EventContext::default(),
             storage,
@@ -44,12 +44,12 @@ impl<'a> EventWriter<'a> {
         self
     }
 
-    fn child_writer<'b>(&'b mut self, mut extra_context: EventContext) -> EventWriter<'b> {
+    fn child_writer(&mut self, mut extra_context: EventContext) -> EventWriter<'_> {
         extra_context.merge(self.context.clone());
 
         EventWriter {
             context: extra_context,
-            storage: &mut self.storage,
+            storage: self.storage,
         }
     }
 }
@@ -61,23 +61,15 @@ pub trait EventSource {
 impl EventSource for Certificate {
     fn write_events(&self, writer: &mut EventWriter) {
         let event = match self {
-            Certificate::StakeRegistration(_) => EventData::StakeRegistration,
-            Certificate::StakeDeregistration(_) => EventData::StakeDeregistration,
-            Certificate::StakeDelegation(_, _) => EventData::StakeDelegation,
-            Certificate::PoolRegistration {
-                operator,
-                vrf_keyhash,
-                pledge,
-                cost,
-                margin,
-                reward_account,
-                pool_owners,
-                relays,
-                pool_metadata,
-            } => EventData::PoolRegistration,
-            Certificate::PoolRetirement(_, _) => EventData::PoolRetirement,
-            Certificate::GenesisKeyDelegation(_, _, _) => EventData::GenesisKeyDelegation,
-            Certificate::MoveInstantaneousRewardsCert(_) => EventData::MoveInstantaneousRewardsCert,
+            Certificate::StakeRegistration(..) => EventData::StakeRegistration,
+            Certificate::StakeDeregistration(..) => EventData::StakeDeregistration,
+            Certificate::StakeDelegation(..) => EventData::StakeDelegation,
+            Certificate::PoolRegistration { .. } => EventData::PoolRegistration,
+            Certificate::PoolRetirement(..) => EventData::PoolRetirement,
+            Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation,
+            Certificate::MoveInstantaneousRewardsCert(..) => {
+                EventData::MoveInstantaneousRewardsCert
+            }
         };
 
         writer.append(event);
@@ -139,7 +131,7 @@ impl EventSource for AuxiliaryData {
                     metadata.write_events(writer);
                 }
 
-                for native in data.native_scripts.iter() {
+                for _native in data.native_scripts.iter() {
                     writer.append(EventData::NewNativeScript);
                 }
 
@@ -167,19 +159,16 @@ impl EventSource for TransactionOutput {
             },
         });
 
-        match &self.amount {
-            Value::Multiasset(_, assets) => {
-                for (policy, assets) in assets.iter() {
-                    for (asset, amount) in assets.iter() {
-                        writer.append(EventData::OutputAsset {
-                            policy: policy.to_hex(),
-                            asset: asset.to_hex(),
-                            amount: *amount,
-                        });
-                    }
+        if let Value::Multiasset(_, assets) = &self.amount {
+            for (policy, assets) in assets.iter() {
+                for (asset, amount) in assets.iter() {
+                    writer.append(EventData::OutputAsset {
+                        policy: policy.to_hex(),
+                        asset: asset.to_hex(),
+                        amount: *amount,
+                    });
                 }
             }
-            _ => (),
         }
     }
 }

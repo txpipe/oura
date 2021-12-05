@@ -1,5 +1,4 @@
 use merge::Merge;
-use pallas::ledger::alonzo::{Metadatum, Value};
 
 pub type Error = Box<dyn std::error::Error>;
 

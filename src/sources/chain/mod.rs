@@ -42,9 +42,8 @@ impl Observer<BlockBody> for ChainObserver {
                     .map(|e| self.0.send(e))
                     .collect::<Result<Vec<_>, _>>();
 
-                match sent {
-                    Err(err) => log::error!("{:?}", err),
-                    Ok(_) => (),
+                if let Err(err) = sent {
+                    log::error!("{:?}", err)
                 }
             }
             Err(err) => {
@@ -87,14 +86,16 @@ fn find_end_of_chain(channel: Channel) -> Result<Point, Box<dyn Error>> {
 
 fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, Box<dyn Error>> {
     let unix = UnixStream::connect(path)?;
-    Multiplexer::setup(unix, &vec![0, 5, 7]).into()
+
+    Multiplexer::setup(unix, &[0, 5, 7])
 }
 
 fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Box<dyn Error>> {
     let tcp = TcpStream::connect(address).unwrap();
     tcp.set_nodelay(true).unwrap();
     tcp.set_keepalive_ms(Some(30_000u32)).unwrap();
-    Multiplexer::setup(tcp, &vec![0, 5, 7]).into()
+
+    Multiplexer::setup(tcp, &[0, 5, 7])
 }
 
 fn observe_forever(
@@ -123,7 +124,7 @@ impl FromStr for BearerKind {
         match s {
             "unix" => Ok(BearerKind::Unix),
             "tcp" => Ok(BearerKind::Tcp),
-            _ => return Err("can't parse bearer type value"),
+            _ => Err("can't parse bearer type value"),
         }
     }
 }
