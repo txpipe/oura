@@ -88,7 +88,7 @@ where
         where
             E: de::Error,
         {
-            let value = FromStr::from_str(value).map_err(|e| de::Error::custom(e))?;
+            let value = FromStr::from_str(value).map_err(de::Error::custom)?;
             Ok(Some(value))
         }
 

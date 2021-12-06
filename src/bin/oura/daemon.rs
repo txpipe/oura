@@ -1,12 +1,12 @@
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Receiver, Sender};
 
-use clap::{ArgMatches, value_t};
-use config::{Config, ConfigError, File, Environment};
+use clap::{value_t, ArgMatches};
+use config::{Config, ConfigError, Environment, File};
 use log::debug;
-use oura::framework::{SourceConfig, BootstrapResult, SinkConfig};
+use oura::framework::{BootstrapResult, SinkConfig, SourceConfig};
 use oura::ports::Event;
-use oura::sources::chain::Config as NodeConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
+use oura::sources::chain::Config as NodeConfig;
 use serde_derive::Deserialize;
 
 use crate::Error;
@@ -28,7 +28,7 @@ impl SourceConfig for Source {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 enum Sink {
-    Terminal(TerminalConfig)
+    Terminal(TerminalConfig),
 }
 
 impl SinkConfig for Sink {
@@ -48,13 +48,13 @@ struct ConfigRoot {
 impl ConfigRoot {
     pub fn new(explicit_file: Option<String>) -> Result<Self, ConfigError> {
         let mut s = Config::default();
-        
+
         // our base config will always be in /etc/oura
         s.merge(File::with_name("/etc/oura/daemon.toml").required(false))?;
 
         // but we can override it by having a file in the working dir
         s.merge(File::with_name("oura.toml").required(false))?;
-        
+
         // if an explicit file was passed, then we load it as mandatory
         if let Some(explicit) = explicit_file {
             s.merge(File::with_name(&explicit).required(true))?;
@@ -67,7 +67,6 @@ impl ConfigRoot {
     }
 }
 
-
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
     let explicit_config = match args.is_present("config") {
         true => Some(value_t!(args, "config", String)?),
@@ -77,9 +76,9 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     let root = ConfigRoot::new(explicit_config)?;
 
     debug!("daemon starting with this config: {:?}", root);
-    
+
     let (tx, rx) = std::sync::mpsc::channel();
-    
+
     let source = root.source.bootstrap(tx)?;
     let sink = root.sink.bootstrap(rx)?;
 
