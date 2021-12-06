@@ -1,13 +1,11 @@
 use std::fmt::{Display, Write};
-use std::{sync::mpsc::Receiver, thread::JoinHandle, time::Duration};
+use std::{sync::mpsc::Receiver, time::Duration};
 
 use crate::ports::{Event, EventData};
 
 use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;
-
-const THROTTLE_MIN_SPAN_MILLIS: u64 = 500;
 
 use crossterm::style::{Print, SetForegroundColor};
 use crossterm::{style::Color, style::Stylize, ExecutableCommand};
@@ -102,23 +100,17 @@ impl Display for LogLine {
     }
 }
 
-fn reducer_loop(event_rx: Receiver<Event>) -> Result<(), Error> {
+pub fn reducer_loop(throttle_min_span: Duration, input: Receiver<Event>) -> Result<(), Error> {
     let mut stdout = stdout();
 
-    let mut throttle = Throttle::new(Duration::from_millis(THROTTLE_MIN_SPAN_MILLIS));
+    let mut throttle = Throttle::new(throttle_min_span);
 
     loop {
         let (width, _) = crossterm::terminal::size()?;
-        let evt = event_rx.recv()?;
+        let evt = input.recv()?;
         throttle.wait_turn();
         let line = LogLine(evt, width as usize);
         stdout.execute(SetForegroundColor(Color::White))?;
         stdout.execute(Print(line))?;
     }
-}
-
-pub fn bootstrap(rx: Receiver<Event>) -> Result<JoinHandle<()>, Error> {
-    let handle = std::thread::spawn(move || reducer_loop(rx).unwrap());
-
-    Ok(handle)
 }
