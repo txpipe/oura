@@ -1,5 +1,7 @@
 use std::{sync::mpsc::Receiver, time::Duration};
 
+use serde_derive::Deserialize;
+
 use crate::{
     framework::{BootstrapResult, SinkConfig},
     ports::Event,
@@ -9,7 +11,7 @@ use super::run::reducer_loop;
 
 const THROTTLE_MIN_SPAN_MILLIS: u64 = 500;
 
-#[derive(Default)]
+#[derive(Default, Debug, Deserialize)]
 pub struct Config {
     throttle_min_span_millis: Option<u64>,
 }

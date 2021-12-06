@@ -13,3 +13,6 @@ env_logger = "0.9.0"
 crossterm = "0.20"
 tui = { version = "0.16", default-features = false, features = ['crossterm'] }
 merge = "0.1.0"
+config = "0.11.0"
+serde = "1.0.130"
+serde_derive = "1.0.130"

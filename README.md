@@ -33,7 +33,7 @@ The data pipeline makes heavy use (maybe a bit too much) of multi-threading and 
 
 ### CLI to Watch Live Transactions
 
-You can run `oura log <socket>` to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see whats going on in the network (for example, to see airdrops as they happen or oracles posting new information).
+You can run `oura watch <socket>` to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see whats going on in the network (for example, to see airdrops as they happen or oracles posting new information).
 
 ### As a Bridge to Other Persistence Mechanisms
 

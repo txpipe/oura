@@ -1,8 +1,13 @@
 use std::{
-    net::TcpStream, ops::Deref, os::unix::net::UnixStream, str::FromStr, sync::mpsc::Sender,
+    fmt, net::TcpStream, ops::Deref, os::unix::net::UnixStream, str::FromStr, sync::mpsc::Sender,
 };
 
 use net2::TcpStreamExt;
+
+use serde::{
+    de::{self, Visitor},
+    Deserializer,
+};
 
 use log::info;
 use pallas::ouroboros::network::{
@@ -14,16 +19,19 @@ use pallas::ouroboros::network::{
     machines::{primitives::Point, run_agent},
     multiplexer::{Channel, Multiplexer},
 };
+use serde_derive::Deserialize;
 
 use crate::framework::{BootstrapResult, SourceConfig};
 
 use super::observe_forever;
 
+#[derive(Debug, Deserialize)]
 pub enum BearerKind {
     Tcp,
     Unix,
 }
 
+#[derive(Debug, Deserialize)]
 pub struct AddressArg(pub BearerKind, pub String);
 
 impl FromStr for BearerKind {
@@ -38,6 +46,7 @@ impl FromStr for BearerKind {
     }
 }
 
+#[derive(Debug, Deserialize)]
 pub struct MagicArg(u64);
 
 impl Deref for MagicArg {
@@ -62,7 +71,46 @@ impl FromStr for MagicArg {
     }
 }
 
-#[derive(Clone)]
+fn deserialize_magic_arg<'de, D>(deserializer: D) -> Result<Option<MagicArg>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct MagicArgVisitor;
+
+    impl<'de> Visitor<'de> for MagicArgVisitor {
+        type Value = Option<MagicArg>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("string or map")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Option<MagicArg>, E>
+        where
+            E: de::Error,
+        {
+            let value = FromStr::from_str(value).map_err(|e| de::Error::custom(e))?;
+            Ok(Some(value))
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<Option<MagicArg>, E>
+        where
+            E: de::Error,
+        {
+            Ok(Some(MagicArg(value)))
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
+        }
+    }
+
+    deserializer.deserialize_any(MagicArgVisitor)
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub enum PeerMode {
     AsNode,
     AsClient,
@@ -80,9 +128,13 @@ impl FromStr for PeerMode {
     }
 }
 
+#[derive(Debug, Deserialize)]
 pub struct Config {
     pub address: AddressArg,
+
+    #[serde(deserialize_with = "deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
+
     pub mode: Option<PeerMode>,
 }
 
