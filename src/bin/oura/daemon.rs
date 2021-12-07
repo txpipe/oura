@@ -5,9 +5,9 @@ use config::{Config, ConfigError, Environment, File};
 use log::debug;
 use oura::framework::{BootstrapResult, SinkConfig, SourceConfig};
 use oura::ports::Event;
+use oura::sinks::kafka::Config as KafkaConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::chain::Config as NodeConfig;
-use oura::sinks::kafka::Config as KafkaConfig;
 use serde_derive::Deserialize;
 
 use crate::Error;

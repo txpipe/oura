@@ -1,5 +1,5 @@
 use merge::Merge;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 pub type Error = Box<dyn std::error::Error>;
 

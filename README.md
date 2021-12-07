@@ -57,7 +57,7 @@ If the available out-of-the-box features don't satisfiy your particular use-case
     - [ ] chain-sync + block-fetch (node-to-node)
     - [ ] shared file system
 - Sinks
-    - [ ] Kafka topic
+    - [x] Kafka topic
     - [ ] Redis streams
     - [ ] AWS SQS queue
     - [ ] AWS Lambda call
