@@ -6,8 +6,6 @@ use clap::{App, AppSettings, Arg, SubCommand};
 type Error = Box<dyn std::error::Error>;
 
 fn main() {
-    //env_logger::init();
-
     let args = App::new("app")
         .name("oura")
         .about("the tail of cardano")

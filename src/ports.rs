@@ -1,8 +1,9 @@
 use merge::Merge;
+use serde_derive::{Serialize, Deserialize};
 
 pub type Error = Box<dyn std::error::Error>;
 
-#[derive(Debug, Clone, Merge, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, Merge, Default)]
 pub struct EventContext {
     pub block_number: Option<u64>,
     pub slot: Option<u64>,
@@ -12,7 +13,7 @@ pub struct EventContext {
     pub output_idx: Option<usize>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum EventData {
     Block {
         body_size: usize,
@@ -64,6 +65,7 @@ pub enum EventData {
     MoveInstantaneousRewardsCert,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
     pub context: EventContext,
     pub data: EventData,

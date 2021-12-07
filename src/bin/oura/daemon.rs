@@ -7,6 +7,7 @@ use oura::framework::{BootstrapResult, SinkConfig, SourceConfig};
 use oura::ports::Event;
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::chain::Config as NodeConfig;
+use oura::sinks::kafka::Config as KafkaConfig;
 use serde_derive::Deserialize;
 
 use crate::Error;
@@ -29,12 +30,14 @@ impl SourceConfig for Source {
 #[serde(tag = "type")]
 enum Sink {
     Terminal(TerminalConfig),
+    Kafka(KafkaConfig),
 }
 
 impl SinkConfig for Sink {
     fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),
+            Sink::Kafka(c) => c.bootstrap(input),
         }
     }
 }
@@ -68,6 +71,8 @@ impl ConfigRoot {
 }
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
+    env_logger::init();
+
     let explicit_config = match args.is_present("config") {
         true => Some(value_t!(args, "config", String)?),
         false => None,
