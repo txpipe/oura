@@ -54,6 +54,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     steps:
+      - name: Post Build | Prepare artifacts [Windows]
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install -y openssl
+
       - name: Setup | Checkout
         uses: actions/checkout@v2.4.0
 
