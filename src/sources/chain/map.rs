@@ -1,8 +1,8 @@
-use std::{collections::BTreeMap, ops::Deref};
+use std::{ops::Deref};
 
 use merge::Merge;
 use pallas::ledger::alonzo::{
-    AuxiliaryData, Block, Certificate, Metadatum, TransactionOutput, Value,
+    AuxiliaryData, Block, Certificate, Metadatum, TransactionOutput, Value, Metadata, crypto::hash_transaction,
 };
 
 use crate::ports::{Event, EventContext, EventData};
@@ -98,12 +98,12 @@ fn metadatum_to_string(datum: &Metadatum) -> String {
     }
 }
 
-impl EventSource for BTreeMap<Metadatum, Metadatum> {
+impl EventSource for Metadata {
     fn write_events<'a>(&'a self, writer: &'a mut EventWriter) {
-        for (level1_key, level1_data) in self {
+        for (level1_key, level1_data) in self.iter() {
             match level1_data {
                 Metadatum::Map(level1_map) => {
-                    for (level2_key, level2_data) in level1_map {
+                    for (level2_key, level2_data) in level1_map.iter() {
                         writer.append(EventData::Metadata {
                             key: metadatum_to_string(level1_key),
                             subkey: Some(metadatum_to_string(level2_key)),
@@ -187,13 +187,22 @@ impl EventSource for Block {
         });
 
         for (idx, tx) in self.transaction_bodies.iter().enumerate() {
+            let tx_hash = match hash_transaction(tx) {
+                Ok(h) => Some(hex::encode(h)),
+                Err(err) => {
+                    log::warn!("error hashing transaction: {:?}", err);
+                    None
+                }
+            };
+
             let mut writer = writer.child_writer(EventContext {
                 tx_idx: Some(idx),
-                tx_id: Some("some-hash".to_string()),
+                tx_hash: tx_hash.clone(),
                 ..EventContext::default()
             });
 
             writer.append(EventData::Transaction {
+                hash: tx_hash,
                 fee: tx.fee,
                 ttl: tx.ttl,
                 validity_interval_start: tx.validity_interval_start,

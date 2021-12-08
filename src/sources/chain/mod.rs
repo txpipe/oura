@@ -6,13 +6,14 @@ pub use setup::*;
 use log::error;
 
 use pallas::{
-    ledger::alonzo::Block,
+    ledger::alonzo::{BlockWrapper, Fragment},
     ouroboros::network::{
         chainsync::{BlockBody, ClientConsumer, Observer},
         machines::{primitives::Point, run_agent},
         multiplexer::Channel,
     },
 };
+
 use std::{error::Error, sync::mpsc::Sender};
 
 use crate::ports::Event;
@@ -25,10 +26,10 @@ pub struct ChainObserver(pub Sender<Event>);
 impl Observer<BlockBody> for ChainObserver {
     fn on_block(&self, content: &BlockBody) -> Result<(), Box<dyn std::error::Error>> {
         let BlockBody(bytes) = content;
-        let block = Block::try_from(&bytes[..]);
+        let maybe_block = BlockWrapper::decode_fragment(&bytes[..]);
 
-        match block {
-            Ok(block) => {
+        match maybe_block {
+            Ok(BlockWrapper(_, block)) => {
                 let mut storage = Vec::with_capacity(5 + (block.transaction_bodies.len() * 2));
                 let mut writer = EventWriter::new(&mut storage);
                 block.write_events(&mut writer);

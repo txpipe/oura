@@ -8,7 +8,7 @@ pub struct EventContext {
     pub block_number: Option<u64>,
     pub slot: Option<u64>,
     pub tx_idx: Option<usize>,
-    pub tx_id: Option<String>,
+    pub tx_hash: Option<String>,
     pub input_idx: Option<usize>,
     pub output_idx: Option<usize>,
 }
@@ -20,6 +20,7 @@ pub enum EventData {
         issuer_vkey: String,
     },
     Transaction {
+        hash: Option<String>,
         fee: u64,
         ttl: Option<u64>,
         validity_interval_start: Option<u64>,

@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-pallas = "0.1.0"
+pallas = "0.2.1"
+#pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"
 clap = "2.33.3"
