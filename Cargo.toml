@@ -1,7 +1,17 @@
 [package]
 name = "oura"
+description = "The tail of Cardano"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/txpipe/oura"
+homepage = "https://github.com/txpipe/oura"
+documentation = "https://docs.rs/oura/0.1.0/oura/"
+license = "Apache-2.0"
+readme = "README.md"
+authors = [
+    "Santiago Carmuega <santiago@carmuega.me>"
+]
+
 
 [dependencies]
 pallas = "0.2.1"
