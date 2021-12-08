@@ -1,11 +1,12 @@
 <div align="center">
-    <img src="assets/logo.svg" alt="Oura" width="500">  
+    <img src="assets/logo.svg" alt="Oura" width="500">
+    <hr />
+        <h2 align="center" style="border-bottom: none">The tail of Cardano</h2>
+        <img alt="GitHub" src="https://img.shields.io/github/license/txpipe/oura" />
+        <img alt="Crates.io" src="https://img.shields.io/crates/v/oura" />
+        <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/txpipe/oura/Validate" />
+    <hr/>
 </div>
-<hr />
-
-<h2 align="center">The tail of Cardano</h2>
-
-<hr/>
 
 ## Introduction
 
@@ -21,7 +22,9 @@ The name of the tool is inspired by the `tail` command available in unix-like sy
 
 In this terminal recording we get to see a few mins of live output from a testnet node connected to the terminal sink.
 
-[![asciicast](https://asciinema.org/a/66x3QUjQm6KtCkPYREiBycR6b.svg)](https://asciinema.org/a/66x3QUjQm6KtCkPYREiBycR6b)
+![Terminal Demo](assets/demo.svg)
+
+[watch full asciicast](https://asciinema.org/a/453455)
 
 ## Under the Hood
 
@@ -43,7 +46,7 @@ Given its small memory / cpu footprint, _Oura_ can be deployed side-by-side with
 
 ### As a Trigger of Custom Actions
 
-_Oura_ running in `daemon` mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;  
+_Oura_ running in `daemon` mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;
 
 ### As a Library for Custom Scenarios
 
@@ -52,26 +55,26 @@ If the available out-of-the-box features don't satisfiy your particular use-case
 ## Features
 
 - Sources
-    - [x] chain-sync full-block (node-to-client)
-    - [ ] chain-sync headers-only (node-to-node)
-    - [ ] chain-sync + block-fetch (node-to-node)
-    - [ ] shared file system
+  - [x] chain-sync full-block (node-to-client)
+  - [ ] chain-sync headers-only (node-to-node)
+  - [ ] chain-sync + block-fetch (node-to-node)
+  - [ ] shared file system
 - Sinks
-    - [x] Kafka topic
-    - [ ] Redis streams
-    - [ ] AWS SQS queue
-    - [ ] AWS Lambda call
-    - [ ] GCP PubSub
-    - [ ] webhook (http post)
-    - [ ] email
-    - [x] terminal (append-only, tail-like)
-    - [ ] TUI
+  - [x] Kafka topic
+  - [ ] Redis streams
+  - [ ] AWS SQS queue
+  - [ ] AWS Lambda call
+  - [ ] GCP PubSub
+  - [ ] webhook (http post)
+  - [ ] email
+  - [x] terminal (append-only, tail-like)
+  - [ ] TUI
 - Filters
-    - [ ] by event type (block, tx, mint, cert, etc)
-    - [ ] by block property (size, tx count)
-    - [ ] by tx property (fee, has native script, has plutus script, etc)
-    - [ ] by utxo property (address, asset, amount range)
+  - [ ] by event type (block, tx, mint, cert, etc)
+  - [ ] by block property (size, tx count)
+  - [ ] by tx property (fee, has native script, has plutus script, etc)
+  - [ ] by utxo property (address, asset, amount range)
 - Enrichment
-    - [ ] policy info from metadata service
-    - [ ] input tx info from Blockfrost api
-    - [ ] address translation from ADAHandle
+  - [ ] policy info from metadata service
+  - [ ] input tx info from Blockfrost api
+  - [ ] address translation from ADAHandle
