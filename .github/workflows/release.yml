@@ -54,10 +54,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     steps:
-      - name: Post Build | Prepare artifacts [Windows]
+      - name: Prev Build | Get Dependencies [Ubuntu]
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get install -y openssl
+          sudo apt-get install pkg-config libssl-dev
+      
+      - name: Prev Build | Get Dependencies [MacOS]
+        if: matrix.os == 'macOS-latest'
+        run: |
+          brew install openssl@1.1
 
       - name: Setup | Checkout
         uses: actions/checkout@v2.4.0
