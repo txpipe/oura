@@ -1,8 +1,9 @@
-use std::{ops::Deref};
+use std::ops::Deref;
 
 use merge::Merge;
 use pallas::ledger::alonzo::{
-    AuxiliaryData, Block, Certificate, Metadatum, TransactionOutput, Value, Metadata, crypto::hash_transaction,
+    crypto::hash_transaction, AuxiliaryData, Block, Certificate, Metadata, Metadatum,
+    TransactionOutput, Value,
 };
 
 use crate::ports::{Event, EventContext, EventData};
