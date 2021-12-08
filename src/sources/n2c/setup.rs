@@ -21,7 +21,7 @@ use pallas::ouroboros::network::{
 };
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, SourceConfig};
+use crate::framework::{BootstrapResult, Event, SourceConfig};
 
 use super::observe_forever;
 
@@ -176,7 +176,7 @@ fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, crate::framework:
 }
 
 impl SourceConfig for Config {
-    fn bootstrap(&self, output: Sender<crate::ports::Event>) -> BootstrapResult {
+    fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
         let mut muxer = match self.address.0 {
             BearerKind::Tcp => setup_tcp_multiplexer(&self.address.1)?,
             BearerKind::Unix => setup_unix_multiplexer(&self.address.1)?,

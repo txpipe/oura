@@ -3,11 +3,10 @@ use std::sync::mpsc::{Receiver, Sender};
 use clap::{value_t, ArgMatches};
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
-use oura::framework::{BootstrapResult, SinkConfig, SourceConfig};
-use oura::ports::Event;
+use oura::framework::{BootstrapResult, Event, SinkConfig, SourceConfig};
 use oura::sinks::kafka::Config as KafkaConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
-use oura::sources::chain::Config as NodeConfig;
+use oura::sources::n2c::Config as N2CConfig;
 use serde_derive::Deserialize;
 
 use crate::Error;
@@ -15,13 +14,13 @@ use crate::Error;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 enum Source {
-    Node(NodeConfig),
+    N2C(N2CConfig),
 }
 
 impl SourceConfig for Source {
     fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
         match self {
-            Source::Node(c) => c.bootstrap(output),
+            Source::N2C(c) => c.bootstrap(output),
         }
     }
 }

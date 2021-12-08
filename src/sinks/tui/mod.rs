@@ -5,9 +5,7 @@ use std::{
     time::Duration,
 };
 
-use crate::ports::Event;
-
-use crate::utils::throttle::Throttle;
+use crate::{framework::Event, utils::throttle::Throttle};
 
 pub type Error = Box<dyn std::error::Error>;
 

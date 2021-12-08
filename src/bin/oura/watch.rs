@@ -1,7 +1,7 @@
 use clap::{value_t, ArgMatches};
 use oura::{
     framework::*,
-    sources::chain::{AddressArg, BearerKind, MagicArg, PeerMode},
+    sources::n2c::{AddressArg, BearerKind, MagicArg, PeerMode},
 };
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
@@ -12,7 +12,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => BearerKind::Unix,
     };
 
-    let source_setup = oura::sources::chain::Config {
+    let source_setup = oura::sources::n2c::Config {
         address: AddressArg(bearer, socket),
         magic: match args.is_present("magic") {
             true => Some(value_t!(args, "magic", MagicArg)?),

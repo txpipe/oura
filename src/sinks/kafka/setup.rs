@@ -3,10 +3,7 @@ use std::{sync::mpsc::Receiver, time::Duration};
 use kafka::{client::RequiredAcks, producer::Producer};
 use serde_derive::Deserialize;
 
-use crate::{
-    framework::{BootstrapResult, SinkConfig},
-    ports::Event,
-};
+use crate::framework::{BootstrapResult, Event, SinkConfig};
 
 use super::run::producer_loop;
 

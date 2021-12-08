@@ -2,8 +2,9 @@ use kafka::producer::{Producer, Record};
 use log::debug;
 use std::sync::mpsc::Receiver;
 
+use crate::framework::{Error, Event};
+
 use super::PartitionStrategy;
-use crate::ports::{Error, Event};
 
 fn define_event_key(event: &Event, strategy: &PartitionStrategy) -> Option<[u8; 8]> {
     match strategy {

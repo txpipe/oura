@@ -1,4 +1,3 @@
-mod map;
 mod setup;
 
 pub use setup::*;
@@ -16,9 +15,7 @@ use pallas::{
 
 use std::{error::Error, sync::mpsc::Sender};
 
-use crate::ports::Event;
-
-use self::map::{EventSource, EventWriter};
+use crate::framework::{Event, EventSource, EventWriter};
 
 #[derive(Debug)]
 pub struct ChainObserver(pub Sender<Event>);

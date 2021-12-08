@@ -1,63 +1,9 @@
-use std::ops::Deref;
-
-use merge::Merge;
 use pallas::ledger::alonzo::{
     crypto::hash_transaction, AuxiliaryData, Block, Certificate, Metadata, Metadatum,
     TransactionOutput, Value,
 };
 
-use crate::ports::{Event, EventContext, EventData};
-
-pub type Storage = Vec<Event>;
-
-trait ToHex {
-    fn to_hex(&self) -> String;
-}
-
-impl<T> ToHex for T
-where
-    T: Deref<Target = Vec<u8>>,
-{
-    fn to_hex(&self) -> String {
-        hex::encode(self.deref())
-    }
-}
-
-pub struct EventWriter<'a> {
-    context: EventContext,
-    storage: &'a mut Storage,
-}
-
-impl<'a> EventWriter<'a> {
-    pub fn new(storage: &mut Storage) -> EventWriter<'_> {
-        EventWriter {
-            context: EventContext::default(),
-            storage,
-        }
-    }
-
-    fn append(&mut self, data: EventData) -> &mut Self {
-        self.storage.push(Event {
-            context: self.context.clone(),
-            data,
-        });
-
-        self
-    }
-
-    fn child_writer(&mut self, mut extra_context: EventContext) -> EventWriter<'_> {
-        extra_context.merge(self.context.clone());
-
-        EventWriter {
-            context: extra_context,
-            storage: self.storage,
-        }
-    }
-}
-
-pub trait EventSource {
-    fn write_events<'a>(&'a self, writer: &'a mut EventWriter);
-}
+use crate::framework::{EventContext, EventData, EventSource, EventWriter, ToHex};
 
 impl EventSource for Certificate {
     fn write_events(&self, writer: &mut EventWriter) {

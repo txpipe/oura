@@ -1,8 +1,7 @@
 use std::fmt::{Display, Write};
 use std::{sync::mpsc::Receiver, time::Duration};
 
-use crate::ports::{Event, EventData};
-
+use crate::framework::{Event, EventData};
 use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;
