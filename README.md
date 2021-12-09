@@ -38,6 +38,8 @@ The data pipeline makes heavy use (maybe a bit too much) of multi-threading and 
 
 You can run `oura watch <socket>` to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see whats going on in the network (for example, to see airdrops as they happen or oracles posting new information).
 
+Check the [CLI instructions](docs/cli.md) for details on how to install the binary release and a few examples of how to start using the tool.
+
 ### As a Bridge to Other Persistence Mechanisms
 
 Similar to the well-known db-sync tool provided by IOHK, _Oura_ can be used as a daemon to follow a node and output the data into a different data storage techonology more suited for your final use-case. The main difference with db-sync is that _Oura_ was designed for easy integration with data-streaming pipelines instead of relational databases.
@@ -57,7 +59,7 @@ If the available out-of-the-box features don't satisfiy your particular use-case
 - Sources
   - [x] chain-sync full-block (node-to-client)
   - [ ] chain-sync headers-only (node-to-node)
-  - [ ] chain-sync + block-fetch (node-to-node)
+  - [x] chain-sync + block-fetch (node-to-node)
   - [ ] shared file system
 - Sinks
   - [x] Kafka topic
@@ -66,7 +68,6 @@ If the available out-of-the-box features don't satisfiy your particular use-case
   - [ ] AWS Lambda call
   - [ ] GCP PubSub
   - [ ] webhook (http post)
-  - [ ] email
   - [x] terminal (append-only, tail-like)
   - [ ] TUI
 - Filters

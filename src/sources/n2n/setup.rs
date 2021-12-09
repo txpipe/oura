@@ -1,22 +1,24 @@
-use std::{
-    net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc::Sender,
-};
+use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc::Sender};
 
 use net2::TcpStreamExt;
 
-use log::{info, error};
+use log::{error, info};
 
 use pallas::ouroboros::network::{
+    chainsync::TipFinder,
     handshake::{n2n, MAINNET_MAGIC, TESTNET_MAGIC},
     machines::{primitives::Point, run_agent},
-    multiplexer::{Channel, Multiplexer}, chainsync::TipFinder,
+    multiplexer::{Channel, Multiplexer},
 };
 
 use serde_derive::Deserialize;
 
 use crate::{
     framework::{BootstrapResult, Error, Event, SourceConfig},
-    sources::{common::{AddressArg, BearerKind, MagicArg}, n2n::{observe_headers_forever, fetch_blocks_forever}},
+    sources::{
+        common::{AddressArg, BearerKind, MagicArg},
+        n2n::{fetch_blocks_forever, observe_headers_forever},
+    },
 };
 
 #[derive(Debug, Deserialize)]
@@ -66,7 +68,10 @@ fn get_wellknonwn_chain_point(magic: u64) -> Result<Point, Error> {
     }
 }
 
-fn find_end_of_chain(channel: &mut Channel, wellknown_point: Point) -> Result<Point, crate::framework::Error> {
+fn find_end_of_chain(
+    channel: &mut Channel,
+    wellknown_point: Point,
+) -> Result<Point, crate::framework::Error> {
     let agent = TipFinder::initial(wellknown_point);
     let agent = run_agent(agent, channel)?;
     info!("chain point query output: {:?}", agent.output);
@@ -91,20 +96,20 @@ impl SourceConfig for Config {
 
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
-        
+
         let mut cs_channel = muxer.use_channel(2);
-        
+
         let wellknown_point = get_wellknonwn_chain_point(magic)?;
         let node_tip = find_end_of_chain(&mut cs_channel, wellknown_point)?;
-        
+
         info!("node tip: {:#?}", &node_tip);
-        
+
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
-        
+
         let cs_handle = std::thread::spawn(move || {
             observe_headers_forever(cs_channel, node_tip, headers_tx).unwrap();
         });
-        
+
         let bf_channel = muxer.use_channel(3);
 
         let _bf_handle = std::thread::spawn(move || {

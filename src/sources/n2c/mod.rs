@@ -21,7 +21,11 @@ use crate::framework::{Event, EventSource, EventWriter};
 pub struct ChainObserver(pub Sender<Event>);
 
 impl Observer<BlockBody> for ChainObserver {
-    fn on_block(&self, _cursor: &Option<Point>, content: &BlockBody) -> Result<(), Box<dyn std::error::Error>> {
+    fn on_block(
+        &self,
+        _cursor: &Option<Point>,
+        content: &BlockBody,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let BlockBody(bytes) = content;
         let maybe_block = BlockWrapper::decode_fragment(&bytes[..]);
 
