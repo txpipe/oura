@@ -60,7 +60,7 @@ impl Observer<BlockBody> for ChainObserver {
     fn on_intersect_found(
         &self,
         point: &Point,
-        tip: &Tip,
+        _tip: &Tip,
     ) -> Result<(), Box<dyn std::error::Error>> {
         println!("rollback to {:#?}", point);
         Ok(())

@@ -2,7 +2,7 @@ use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc::Sen
 
 use net2::TcpStreamExt;
 
-use log::{error, info};
+use log::info;
 
 use pallas::ouroboros::network::{
     chainsync::TipFinder,

@@ -5,7 +5,7 @@ pub use setup::*;
 use log::{error, info};
 
 use pallas::{
-    ledger::alonzo::{BlockWrapper, Fragment, Header},
+    ledger::alonzo::{BlockWrapper, Fragment},
     ouroboros::network::{
         blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
         chainsync::{NodeConsumer, Observer, WrappedHeader},

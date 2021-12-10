@@ -45,7 +45,7 @@ fn relay_to_string(relay: &Relay) -> String {
 
             match port {
                 Some(port) => format!("{}:{}", ip, port),
-                None => ip.clone(),
+                None => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
@@ -96,14 +96,8 @@ impl EventSource for Certificate {
             },
             Certificate::MoveInstantaneousRewardsCert(move_) => {
                 EventData::MoveInstantaneousRewardsCert {
-                    from_reserves: match move_.source {
-                        InstantaneousRewardSource::Reserves => true,
-                        _ => false,
-                    },
-                    from_treasury: match move_.source {
-                        InstantaneousRewardSource::Treasury => true,
-                        _ => false,
-                    },
+                    from_reserves: matches!(move_.source, InstantaneousRewardSource::Reserves),
+                    from_treasury: matches!(move_.source, InstantaneousRewardSource::Treasury),
                     to_stake_credentials: match &move_.target {
                         InstantaneousRewardTarget::StakeCredentials(creds) => {
                             let x = creds.iter().map(|(k, v)| (k.into(), *v)).collect();

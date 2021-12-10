@@ -96,7 +96,7 @@ impl LogLine {
             EventData::NewNativeScript => LogLine {
                 prefix: "NATIVE+",
                 color: Color::White,
-                content: format!("{{ ... }}"),
+                content: "{{ ... }}".to_string(),
                 source,
                 max_width,
             },
@@ -168,7 +168,7 @@ impl LogLine {
             EventData::GenesisKeyDelegation => LogLine {
                 prefix: "GENESIS",
                 color: Color::Magenta,
-                content: format!("{{ ... }}"),
+                content: "{{ ... }}".to_string(),
                 source,
                 max_width,
             },
