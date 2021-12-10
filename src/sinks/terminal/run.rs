@@ -6,7 +6,7 @@ use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;
 
-use crossterm::style::{Print, SetForegroundColor, StyledContent, ContentStyle};
+use crossterm::style::{Print, SetForegroundColor};
 use crossterm::{style::Color, style::Stylize, ExecutableCommand};
 use std::io::stdout;
 
@@ -55,24 +55,41 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::OutputAsset { policy, asset, amount } => LogLine {
+            EventData::OutputAsset {
+                policy,
+                asset,
+                amount,
+            } => LogLine {
                 prefix: "ASSET",
                 color: Color::Green,
-                content: format!("{{ policy: {}, asset: {}, amount: {} }}", policy, asset, amount),
+                content: format!(
+                    "{{ policy: {}, asset: {}, amount: {} }}",
+                    policy, asset, amount
+                ),
                 source,
                 max_width,
             },
             EventData::Metadata { key, subkey, value } => LogLine {
                 prefix: "META",
                 color: Color::Yellow,
-                content: format!("{{ key: {}, sub key: {:?}, value: {:?} }}", key, subkey, value),
+                content: format!(
+                    "{{ key: {}, sub key: {:?}, value: {:?} }}",
+                    key, subkey, value
+                ),
                 source,
                 max_width,
             },
-            EventData::Mint { policy, asset, quantity } => LogLine {
+            EventData::Mint {
+                policy,
+                asset,
+                quantity,
+            } => LogLine {
                 prefix: "MINT",
                 color: Color::DarkGreen,
-                content: format!("{{ policy: {}, asset: {}, quantity: {} }}", policy, asset, quantity),
+                content: format!(
+                    "{{ policy: {}, asset: {}, quantity: {} }}",
+                    policy, asset, quantity
+                ),
                 source,
                 max_width,
             },
@@ -97,38 +114,54 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::StakeRegistration => LogLine {
+            EventData::StakeRegistration { credential } => LogLine {
                 prefix: "STAKE+",
                 color: Color::Magenta,
-                content: format!("{{ ... }}"),
+                content: format!("{{ credential: {:?} }}", credential),
                 source,
                 max_width,
             },
-            EventData::StakeDeregistration => LogLine {
+            EventData::StakeDeregistration { credential } => LogLine {
                 prefix: "STAKE-",
                 color: Color::DarkMagenta,
-                content: format!("{{ ... }}"),
+                content: format!("{{ credential: {:?} }}", credential),
                 source,
                 max_width,
             },
-            EventData::StakeDelegation => LogLine {
+            EventData::StakeDelegation {
+                credential,
+                pool_hash,
+            } => LogLine {
                 prefix: "DELE",
                 color: Color::Magenta,
-                content: format!("{{ ... }}"),
+                content: format!("{{ credential: {:?}, pool: {} }}", credential, pool_hash),
                 source,
                 max_width,
             },
-            EventData::PoolRegistration => LogLine {
+            EventData::PoolRegistration {
+                operator,
+                vrf_keyhash: _,
+                pledge,
+                cost,
+                margin,
+                reward_account: _,
+                pool_owners: _,
+                relays: _,
+                pool_metadata,
+            } => LogLine {
                 prefix: "POOL+",
                 color: Color::Magenta,
-                content: format!("{{ ... }}"),
+                content: format!(
+                    "{{ operator: {}, pledge: {}, cost: {}, margin: {}, metadata: {:?} }}",
+                    operator, pledge, cost, margin, pool_metadata
+                ),
                 source,
                 max_width,
             },
-            EventData::PoolRetirement => LogLine {
+            EventData::PoolRetirement { pool, epoch } => LogLine {
                 prefix: "POOL-",
                 color: Color::DarkMagenta,
-                content: format!("{{ ... }}"),
+                content: format!("{{ pool: {}, epoch: {} }}", pool, epoch),
                 source,
                 max_width,
             },
@@ -139,10 +172,18 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::MoveInstantaneousRewardsCert => LogLine {
+            EventData::MoveInstantaneousRewardsCert {
+                from_reserves,
+                from_treasury,
+                to_stake_credentials,
+                to_other_pot,
+            } => LogLine {
                 prefix: "MOVE",
                 color: Color::Magenta,
-                content: format!("{{ ... }}"),
+                content: format!(
+                    "{{ reserves: {}, treasury: {}, to_credentials: {:?}, to_other_pot: {:?} }}",
+                    from_reserves, from_treasury, to_stake_credentials, to_other_pot
+                ),
                 source,
                 max_width,
             },
@@ -181,16 +222,15 @@ impl Display for LogLine {
 
             match self.content.len() {
                 x if x > max_width => {
-                    let partial = &self.content[..max_width-3];
+                    let partial = &self.content[..max_width - 3];
                     partial.with(Color::White).fmt(f)?;
                     f.write_str("...")?;
                 }
-                _ => {                   
-                    let full = &self.content[..]; 
+                _ => {
+                    let full = &self.content[..];
                     full.with(Color::White).fmt(f)?;
                 }
             };
-
         }
 
         f.write_str("\n")?;

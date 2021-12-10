@@ -1,5 +1,5 @@
 use std::{
-    ops::Deref,
+    collections::BTreeMap,
     sync::mpsc::{Receiver, Sender},
     thread::JoinHandle,
 };
@@ -18,6 +18,12 @@ pub struct EventContext {
     pub tx_hash: Option<String>,
     pub input_idx: Option<usize>,
     pub output_idx: Option<usize>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum StakeCredential {
+    AddrKeyhash(String),
+    Scripthash(String),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -64,13 +70,38 @@ pub enum EventData {
     PlutusScriptRef {
         data: String,
     },
-    StakeRegistration,
-    StakeDeregistration,
-    StakeDelegation,
-    PoolRegistration,
-    PoolRetirement,
+    StakeRegistration {
+        credential: StakeCredential,
+    },
+    StakeDeregistration {
+        credential: StakeCredential,
+    },
+    StakeDelegation {
+        credential: StakeCredential,
+        pool_hash: String,
+    },
+    PoolRegistration {
+        operator: String,
+        vrf_keyhash: String,
+        pledge: u64,
+        cost: u64,
+        margin: f64,
+        reward_account: String,
+        pool_owners: Vec<String>,
+        relays: Vec<String>,
+        pool_metadata: Option<String>,
+    },
+    PoolRetirement {
+        pool: String,
+        epoch: u64,
+    },
     GenesisKeyDelegation,
-    MoveInstantaneousRewardsCert,
+    MoveInstantaneousRewardsCert {
+        from_reserves: bool,
+        from_treasury: bool,
+        to_stake_credentials: Option<BTreeMap<StakeCredential, i64>>,
+        to_other_pot: Option<u64>,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -87,19 +118,6 @@ pub trait SourceConfig {
 
 pub trait SinkConfig {
     fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult;
-}
-
-pub trait ToHex {
-    fn to_hex(&self) -> String;
-}
-
-impl<T> ToHex for T
-where
-    T: Deref<Target = Vec<u8>>,
-{
-    fn to_hex(&self) -> String {
-        hex::encode(self.deref())
-    }
 }
 
 pub type Storage = Vec<Event>;

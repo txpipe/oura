@@ -1,22 +1,125 @@
+use std::ops::Deref;
+
 use pallas::ledger::alonzo::{
-    crypto::hash_transaction, AuxiliaryData, Block, Certificate, Metadata, Metadatum,
+    self as alonzo, crypto::hash_transaction, AuxiliaryData, Block, Certificate,
+    InstantaneousRewardSource, InstantaneousRewardTarget, Metadata, Metadatum, Relay,
     TransactionOutput, Value,
 };
 
-use crate::framework::{EventContext, EventData, EventSource, EventWriter, ToHex};
+use crate::framework::{EventContext, EventData, EventSource, EventWriter, StakeCredential};
+
+pub trait ToHex {
+    fn to_hex(&self) -> String;
+}
+
+impl<T> ToHex for T
+where
+    T: Deref<Target = Vec<u8>>,
+{
+    fn to_hex(&self) -> String {
+        hex::encode(self.deref())
+    }
+}
+
+impl From<&alonzo::StakeCredential> for StakeCredential {
+    fn from(other: &alonzo::StakeCredential) -> Self {
+        match other {
+            alonzo::StakeCredential::AddrKeyhash(x) => StakeCredential::AddrKeyhash(x.to_hex()),
+            alonzo::StakeCredential::Scripthash(x) => StakeCredential::Scripthash(x.to_hex()),
+        }
+    }
+}
+
+fn ip_string_from_bytes(bytes: &[u8]) -> String {
+    format!("{}.{}.{}.{}", bytes[0], bytes[1], bytes[2], bytes[3])
+}
+
+fn relay_to_string(relay: &Relay) -> String {
+    match relay {
+        Relay::SingleHostAddr(port, ipv4, ipv6) => {
+            let ip = match (ipv6, ipv4) {
+                (None, None) => "".to_string(),
+                (_, Some(x)) => ip_string_from_bytes(x.as_ref()),
+                (Some(x), _) => ip_string_from_bytes(x.as_ref()),
+            };
+
+            match port {
+                Some(port) => format!("{}:{}", ip, port),
+                None => ip.clone(),
+            }
+        }
+        Relay::SingleHostName(port, host) => match port {
+            Some(port) => format!("{}:{}", host, port),
+            None => host.clone(),
+        },
+        Relay::MultiHostName(host) => host.clone(),
+    }
+}
 
 impl EventSource for Certificate {
     fn write_events(&self, writer: &mut EventWriter) {
         let event = match self {
-            Certificate::StakeRegistration(..) => EventData::StakeRegistration,
-            Certificate::StakeDeregistration(..) => EventData::StakeDeregistration,
-            Certificate::StakeDelegation(..) => EventData::StakeDelegation,
-            Certificate::PoolRegistration { .. } => EventData::PoolRegistration,
-            Certificate::PoolRetirement(..) => EventData::PoolRetirement,
-            Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation,
-            Certificate::MoveInstantaneousRewardsCert(..) => {
-                EventData::MoveInstantaneousRewardsCert
+            Certificate::StakeRegistration(credential) => EventData::StakeRegistration {
+                credential: credential.into(),
+            },
+            Certificate::StakeDeregistration(credential) => EventData::StakeDeregistration {
+                credential: credential.into(),
+            },
+            Certificate::StakeDelegation(credential, pool) => EventData::StakeDelegation {
+                credential: credential.into(),
+                pool_hash: pool.to_hex(),
+            },
+            Certificate::PoolRegistration {
+                operator,
+                vrf_keyhash,
+                pledge,
+                cost,
+                margin,
+                reward_account,
+                pool_owners,
+                relays,
+                pool_metadata,
+            } => EventData::PoolRegistration {
+                operator: operator.to_hex(),
+                vrf_keyhash: vrf_keyhash.to_hex(),
+                pledge: *pledge,
+                cost: *cost,
+                margin: (margin.numerator as f64 / margin.denominator as f64),
+                reward_account: reward_account.to_hex(),
+                pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
+                relays: relays.iter().map(relay_to_string).collect(),
+                pool_metadata: pool_metadata.as_ref().map(|m| m.url.clone()),
+            },
+            Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
+                pool: pool.to_hex(),
+                epoch: *epoch,
+            },
+            Certificate::MoveInstantaneousRewardsCert(move_) => {
+                EventData::MoveInstantaneousRewardsCert {
+                    from_reserves: match move_.source {
+                        InstantaneousRewardSource::Reserves => true,
+                        _ => false,
+                    },
+                    from_treasury: match move_.source {
+                        InstantaneousRewardSource::Treasury => true,
+                        _ => false,
+                    },
+                    to_stake_credentials: match &move_.target {
+                        InstantaneousRewardTarget::StakeCredentials(creds) => {
+                            let x = creds.iter().map(|(k, v)| (k.into(), *v)).collect();
+                            Some(x)
+                        }
+                        _ => None,
+                    },
+                    to_other_pot: match move_.target {
+                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x),
+                        _ => None,
+                    },
+                }
             }
+
+            // TODO: not likely, leaving for later
+            Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation,
         };
 
         writer.append(event);
