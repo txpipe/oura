@@ -6,68 +6,158 @@ use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;
 
-use crossterm::style::{Print, SetForegroundColor};
+use crossterm::style::{Print, SetForegroundColor, StyledContent, ContentStyle};
 use crossterm::{style::Color, style::Stylize, ExecutableCommand};
 use std::io::stdout;
 
-fn type_color(data: &EventData) -> Color {
-    match data {
-        EventData::Block { .. } => Color::Magenta,
-        EventData::Transaction { .. } => Color::DarkBlue,
-        EventData::TxInput { tx_id: _, index: _ } => Color::Blue,
-        EventData::TxOutput { .. } => Color::Blue,
-        EventData::OutputAsset { .. } => Color::Green,
-        EventData::Metadata { .. } => Color::Yellow,
-        EventData::Mint { .. } => Color::DarkGreen,
-        EventData::NewNativeScript => Color::White,
-        EventData::NewPlutusScript { .. } => Color::White,
-        EventData::PlutusScriptRef { .. } => Color::White,
-        EventData::StakeRegistration => Color::Magenta,
-        EventData::StakeDeregistration => Color::DarkMagenta,
-        EventData::StakeDelegation => Color::Magenta,
-        EventData::PoolRegistration => Color::Magenta,
-        EventData::PoolRetirement => Color::DarkMagenta,
-        EventData::GenesisKeyDelegation => Color::Magenta,
-        EventData::MoveInstantaneousRewardsCert => Color::Magenta,
-    }
+struct LogLine {
+    prefix: &'static str,
+    color: Color,
+    source: Event,
+    content: String,
+    max_width: usize,
 }
 
-fn type_prefix(data: &EventData) -> &'static str {
-    match data {
-        EventData::Block { .. } => "BLOCK",
-        EventData::Transaction { .. } => "TX",
-        EventData::TxInput { .. } => "STXI",
-        EventData::TxOutput { .. } => "UTXO",
-        EventData::OutputAsset { .. } => "ASSET",
-        EventData::Metadata { .. } => "META",
-        EventData::Mint { .. } => "MINT",
-        EventData::NewNativeScript => "NATIVE+",
-        EventData::NewPlutusScript { .. } => "PLUTUS+",
-        EventData::PlutusScriptRef { .. } => "PLUTUS",
-        EventData::StakeRegistration => "STAKE+",
-        EventData::StakeDeregistration => "STAKE-",
-        EventData::StakeDelegation => "STAKE",
-        EventData::PoolRegistration => "POOL+",
-        EventData::PoolRetirement => "POOL-",
-        EventData::GenesisKeyDelegation => "GENESIS",
-        EventData::MoveInstantaneousRewardsCert => "MOVE",
+impl LogLine {
+    fn from(source: Event, max_width: usize) -> LogLine {
+        match &source.data {
+            EventData::Block {
+                body_size,
+                issuer_vkey,
+            } => LogLine {
+                prefix: "BLOCK",
+                color: Color::Magenta,
+                content: format!(
+                    "{{ body size: {}, issues vkey: {} }}",
+                    body_size, issuer_vkey
+                ),
+                source,
+                max_width,
+            },
+            EventData::Transaction { fee, hash, ttl, .. } => LogLine {
+                prefix: "TX",
+                color: Color::DarkBlue,
+                content: format!("{{ fee: {}, hash: {:?}, ttl: {:?} }}", fee, hash, ttl),
+                source,
+                max_width,
+            },
+            EventData::TxInput { tx_id, index } => LogLine {
+                prefix: "STXI",
+                color: Color::Blue,
+                content: format!("{{ tx id: {}, index: {} }}", tx_id, index),
+                source,
+                max_width,
+            },
+            EventData::TxOutput { address, amount } => LogLine {
+                prefix: "UTXO",
+                color: Color::Blue,
+                content: format!("{{ address: {}, amount: {} }}", address, amount),
+                source,
+                max_width,
+            },
+            EventData::OutputAsset { policy, asset, amount } => LogLine {
+                prefix: "ASSET",
+                color: Color::Green,
+                content: format!("{{ policy: {}, asset: {}, amount: {} }}", policy, asset, amount),
+                source,
+                max_width,
+            },
+            EventData::Metadata { key, subkey, value } => LogLine {
+                prefix: "META",
+                color: Color::Yellow,
+                content: format!("{{ key: {}, sub key: {:?}, value: {:?} }}", key, subkey, value),
+                source,
+                max_width,
+            },
+            EventData::Mint { policy, asset, quantity } => LogLine {
+                prefix: "MINT",
+                color: Color::DarkGreen,
+                content: format!("{{ policy: {}, asset: {}, quantity: {} }}", policy, asset, quantity),
+                source,
+                max_width,
+            },
+            EventData::NewNativeScript => LogLine {
+                prefix: "NATIVE+",
+                color: Color::White,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::NewPlutusScript { data } => LogLine {
+                prefix: "PLUTUS+",
+                color: Color::White,
+                content: format!("{{ {} }}", data),
+                source,
+                max_width,
+            },
+            EventData::PlutusScriptRef { data } => LogLine {
+                prefix: "PLUTUS",
+                color: Color::White,
+                content: format!("{{ {} }}", data),
+                source,
+                max_width,
+            },
+            EventData::StakeRegistration => LogLine {
+                prefix: "STAKE+",
+                color: Color::Magenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::StakeDeregistration => LogLine {
+                prefix: "STAKE-",
+                color: Color::DarkMagenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::StakeDelegation => LogLine {
+                prefix: "DELE",
+                color: Color::Magenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::PoolRegistration => LogLine {
+                prefix: "POOL+",
+                color: Color::Magenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::PoolRetirement => LogLine {
+                prefix: "POOL-",
+                color: Color::DarkMagenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::GenesisKeyDelegation => LogLine {
+                prefix: "GENESIS",
+                color: Color::Magenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+            EventData::MoveInstantaneousRewardsCert => LogLine {
+                prefix: "MOVE",
+                color: Color::Magenta,
+                content: format!("{{ ... }}"),
+                source,
+                max_width,
+            },
+        }
     }
 }
-
-type MaxWidth = usize;
-
-struct LogLine(Event, MaxWidth);
 
 impl Display for LogLine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let color = type_color(&self.0.data);
-        let prefix = type_prefix(&self.0.data);
-        let flex_width = self.1 - 40;
+        let flex_width = self.max_width - 40;
 
         format!(
-            "BLOCK:{}>TX:{:-2}",
-            self.0.context.block_number.unwrap_or_default(),
-            self.0
+            "BLOCK:{} █ TX:{:-2}",
+            self.source.context.block_number.unwrap_or_default(),
+            self.source
                 .context
                 .tx_idx
                 .map(|x| format!("{:-2}", x))
@@ -79,19 +169,28 @@ impl Display for LogLine {
 
         f.write_char(' ')?;
 
-        format!("█ {:6}", prefix).stylize().with(color).fmt(f)?;
+        format!("█ {:6}", self.prefix)
+            .stylize()
+            .with(self.color)
+            .fmt(f)?;
+
         f.write_char(' ')?;
 
         {
-            let mut debug = format!("{:?}", &self.0.data);
-            let max_width = std::cmp::min(debug.len(), flex_width);
+            let max_width = std::cmp::min(self.content.len(), flex_width);
 
-            if debug.len() > max_width {
-                debug.truncate(max_width - 3);
-                debug = format!("{}...", debug);
-            }
+            match self.content.len() {
+                x if x > max_width => {
+                    let partial = &self.content[..max_width-3];
+                    partial.with(Color::White).fmt(f)?;
+                    f.write_str("...")?;
+                }
+                _ => {                   
+                    let full = &self.content[..]; 
+                    full.with(Color::White).fmt(f)?;
+                }
+            };
 
-            debug.stylize().with(Color::White).fmt(f)?;
         }
 
         f.write_str("\n")?;
@@ -108,7 +207,7 @@ pub fn reducer_loop(throttle_min_span: Duration, input: Receiver<Event>) -> Resu
         let (width, _) = crossterm::terminal::size()?;
         let evt = input.recv()?;
         throttle.wait_turn();
-        let line = LogLine(evt, width as usize);
+        let line = LogLine::from(evt, width as usize);
         stdout.execute(SetForegroundColor(Color::White))?;
         stdout.execute(Print(line))?;
     }
