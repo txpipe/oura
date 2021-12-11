@@ -6,7 +6,7 @@ use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;
 
-use crossterm::style::{Print, SetForegroundColor};
+use crossterm::style::{Attribute, Print, SetForegroundColor};
 use crossterm::{style::Color, style::Stylize, ExecutableCommand};
 use std::io::stdout;
 
@@ -187,6 +187,16 @@ impl LogLine {
                 source,
                 max_width,
             },
+            EventData::RollBack {
+                block_slot,
+                block_hash,
+            } => LogLine {
+                prefix: "RLLBCK",
+                color: Color::Red,
+                content: format!("{{ slot: {}, hash: {} }}", block_slot, block_hash),
+                source,
+                max_width,
+            },
         }
     }
 }
@@ -196,16 +206,21 @@ impl Display for LogLine {
         let flex_width = self.max_width - 40;
 
         format!(
-            "BLOCK:{} █ TX:{:-2}",
-            self.source.context.block_number.unwrap_or_default(),
+            "BLOCK:{:0>7} █ TX:{:0>2}",
+            self.source
+                .context
+                .block_number
+                .map(|x| x.to_string())
+                .unwrap_or_else(|| "-------".to_string()),
             self.source
                 .context
                 .tx_idx
-                .map(|x| format!("{:-2}", x))
+                .map(|x| x.to_string())
                 .unwrap_or_else(|| "--".to_string()),
         )
         .stylize()
         .with(Color::DarkGrey)
+        .attribute(Attribute::Dim)
         .fmt(f)?;
 
         f.write_char(' ')?;
@@ -223,12 +238,12 @@ impl Display for LogLine {
             match self.content.len() {
                 x if x > max_width => {
                     let partial = &self.content[..max_width - 3];
-                    partial.with(Color::White).fmt(f)?;
+                    partial.with(Color::Grey).fmt(f)?;
                     f.write_str("...")?;
                 }
                 _ => {
                     let full = &self.content[..];
-                    full.with(Color::White).fmt(f)?;
+                    full.with(Color::Grey).fmt(f)?;
                 }
             };
         }

@@ -106,8 +106,9 @@ impl SourceConfig for Config {
 
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
 
+        let cs_events = output.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, node_tip, headers_tx).unwrap();
+            observe_headers_forever(cs_channel, node_tip, cs_events, headers_tx).unwrap();
         });
 
         let bf_channel = muxer.use_channel(3);

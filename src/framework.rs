@@ -102,6 +102,10 @@ pub enum EventData {
         to_stake_credentials: Option<BTreeMap<StakeCredential, i64>>,
         to_other_pot: Option<u64>,
     },
+    RollBack {
+        block_slot: u64,
+        block_hash: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -120,40 +124,41 @@ pub trait SinkConfig {
     fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult;
 }
 
-pub type Storage = Vec<Event>;
-
-pub struct EventWriter<'a> {
+#[derive(Debug)]
+pub struct EventWriter {
     context: EventContext,
-    storage: &'a mut Storage,
+    output: Sender<Event>,
 }
 
-impl<'a> EventWriter<'a> {
-    pub fn new(storage: &mut Storage) -> EventWriter<'_> {
+impl EventWriter {
+    pub fn new(output: Sender<Event>) -> Self {
         EventWriter {
             context: EventContext::default(),
-            storage,
+            output,
         }
     }
 
-    pub fn append(&mut self, data: EventData) -> &mut Self {
-        self.storage.push(Event {
+    pub fn append(&self, data: EventData) -> Result<(), Error> {
+        let evt = Event {
             context: self.context.clone(),
             data,
-        });
+        };
 
-        self
+        self.output.send(evt)?;
+
+        Ok(())
     }
 
-    pub fn child_writer(&mut self, mut extra_context: EventContext) -> EventWriter<'_> {
+    pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
         extra_context.merge(self.context.clone());
 
         EventWriter {
             context: extra_context,
-            storage: self.storage,
+            output: self.output.clone(),
         }
     }
 }
 
 pub trait EventSource {
-    fn write_events<'a>(&'a self, writer: &'a mut EventWriter);
+    fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
 }

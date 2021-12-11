@@ -13,12 +13,15 @@ use pallas::{
     },
 };
 
-use std::{error::Error, sync::mpsc::Sender};
+use std::sync::mpsc::Sender;
 
-use crate::framework::{Event, EventSource, EventWriter};
+use crate::{
+    framework::{Error, Event, EventData, EventSource, EventWriter},
+    mapping::ToHex,
+};
 
 #[derive(Debug)]
-pub struct ChainObserver(pub Sender<Event>);
+pub struct ChainObserver(EventWriter);
 
 impl Observer<BlockBody> for ChainObserver {
     fn on_block(
@@ -31,17 +34,7 @@ impl Observer<BlockBody> for ChainObserver {
 
         match maybe_block {
             Ok(BlockWrapper(_, block)) => {
-                let mut storage = Vec::with_capacity(5 + (block.transaction_bodies.len() * 2));
-                let mut writer = EventWriter::new(&mut storage);
-                block.write_events(&mut writer);
-                let sent = storage
-                    .into_iter()
-                    .map(|e| self.0.send(e))
-                    .collect::<Result<Vec<_>, _>>();
-
-                if let Err(err) = sent {
-                    log::error!("{:?}", err)
-                }
+                block.write_events(&self.0)?;
             }
             Err(err) => {
                 log::error!("{:?}", err);
@@ -52,32 +45,27 @@ impl Observer<BlockBody> for ChainObserver {
         Ok(())
     }
 
-    fn on_rollback(&self, point: &Point) -> Result<(), Box<dyn std::error::Error>> {
-        println!("rollback to {:#?}", point);
+    fn on_rollback(&self, point: &Point) -> Result<(), Error> {
+        self.0.append(EventData::RollBack {
+            block_slot: point.0,
+            block_hash: point.1.to_hex(),
+        })
+    }
+
+    fn on_intersect_found(&self, point: &Point, _tip: &Tip) -> Result<(), Error> {
+        println!("intersect found {:#?}", point);
         Ok(())
     }
 
-    fn on_intersect_found(
-        &self,
-        point: &Point,
-        _tip: &Tip,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        println!("rollback to {:#?}", point);
-        Ok(())
-    }
-
-    fn on_tip_reached(&self) -> Result<(), Box<dyn std::error::Error>> {
+    fn on_tip_reached(&self) -> Result<(), Error> {
         println!("tip reached");
         Ok(())
     }
 }
 
-fn observe_forever(
-    mut channel: Channel,
-    from: Point,
-    output: Sender<Event>,
-) -> Result<(), Box<dyn Error>> {
-    let observer = ChainObserver(output);
+fn observe_forever(mut channel: Channel, from: Point, output: Sender<Event>) -> Result<(), Error> {
+    let writer = EventWriter::new(output);
+    let observer = ChainObserver(writer);
     let agent = ClientConsumer::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     error!("chainsync agent final state: {:?}", agent.state);
