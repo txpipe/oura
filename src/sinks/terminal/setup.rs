@@ -20,7 +20,9 @@ impl SinkConfig for Config {
                 .unwrap_or(THROTTLE_MIN_SPAN_MILLIS),
         );
 
-        let handle = std::thread::spawn(move || reducer_loop(throttle_min_span, input).unwrap());
+        let handle = std::thread::spawn(move || {
+            reducer_loop(throttle_min_span, input).expect("terminal sink loop failed");
+        });
 
         Ok(handle)
     }

@@ -38,7 +38,7 @@ impl SinkConfig for Config {
             .clone()
             .unwrap_or(PartitionStrategy::Random);
         let handle = std::thread::spawn(move || {
-            producer_loop(input, producer, topic, partitioning).unwrap()
+            producer_loop(input, producer, topic, partitioning).expect("producer loop failed")
         });
 
         Ok(handle)

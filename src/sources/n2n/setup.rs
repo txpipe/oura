@@ -47,9 +47,9 @@ fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, crate::framework::E
 }
 
 fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, crate::framework::Error> {
-    let tcp = TcpStream::connect(address).unwrap();
-    tcp.set_nodelay(true).unwrap();
-    tcp.set_keepalive_ms(Some(30_000u32)).unwrap();
+    let tcp = TcpStream::connect(address)?;
+    tcp.set_nodelay(true)?;
+    tcp.set_keepalive_ms(Some(30_000u32))?;
 
     Multiplexer::setup(tcp, &[0, 2, 3])
 }
@@ -108,13 +108,13 @@ impl SourceConfig for Config {
 
         let cs_events = output.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, node_tip, cs_events, headers_tx).unwrap();
+            observe_headers_forever(cs_channel, node_tip, cs_events, headers_tx).expect("chainsync loop failed");
         });
 
         let bf_channel = muxer.use_channel(3);
 
         let _bf_handle = std::thread::spawn(move || {
-            fetch_blocks_forever(bf_channel, headers_rx, output).unwrap();
+            fetch_blocks_forever(bf_channel, headers_rx, output).expect("blockfetch loop failed");
         });
 
         Ok(cs_handle)

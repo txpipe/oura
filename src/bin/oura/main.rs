@@ -1,9 +1,11 @@
 mod daemon;
 mod watch;
 
+use std::process;
+
 use clap::{App, AppSettings, Arg, SubCommand};
 
-type Error = Box<dyn std::error::Error>;
+type Error = oura::framework::Error;
 
 fn main() {
     let args = App::new("app")
@@ -37,9 +39,16 @@ fn main() {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .get_matches();
 
-    match args.subcommand() {
-        ("watch", Some(args)) => watch::run(args).unwrap(),
-        ("daemon", Some(args)) => daemon::run(args).unwrap(),
-        _ => (),
+    let result = match args.subcommand() {
+        ("watch", Some(args)) => watch::run(args),
+        ("daemon", Some(args)) => daemon::run(args),
+        _ => Err("nothing to do".into()),
+    };
+
+    if let Err(err) = &result {
+        eprintln!("ERROR: {:#?}", err);
+        process::exit(1);
     }
+
+    process::exit(0);
 }

@@ -35,7 +35,7 @@ fn reducer_loop(event_rx: Receiver<Event>, app: Arc<RwLock<ConsoleApp>>) -> Resu
         let evt = event_rx.recv()?;
         throttle.wait_turn();
         //println!("{:?}", evt);
-        let mut app = app.write().unwrap();
+        let mut app = app.write().expect("failed to acquire TUI app lock");
         app.tx_count += 1;
         app.tx_items.push_back(evt);
         if app.tx_items.len() > 10 {
@@ -54,7 +54,7 @@ fn tui_loop(app: Arc<RwLock<ConsoleApp>>) -> Result<(), Error> {
 
     loop {
         terminal.draw(|f| {
-            let app = app.read().unwrap();
+            let app = app.read().expect("failed to acquire TUI app lock");
             let size = f.size();
 
             let list_items = app
@@ -90,10 +90,10 @@ pub fn bootstrap(rx: Receiver<Event>) -> Result<JoinHandle<()>, Error> {
     }));
 
     let c1 = console.clone();
-    let _handle1 = std::thread::spawn(move || reducer_loop(rx, c1).unwrap());
+    let _handle1 = std::thread::spawn(move || reducer_loop(rx, c1).expect("TUI reducer loop failed"));
 
     let c2 = console;
-    let handle2 = std::thread::spawn(move || tui_loop(c2).unwrap());
+    let handle2 = std::thread::spawn(move || tui_loop(c2).expect("TUI drawing loop failed"));
 
     Ok(handle2)
 }

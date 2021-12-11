@@ -38,7 +38,7 @@ fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), crate::framewor
 
     match agent.output {
         n2c::Output::Accepted(_, _) => Ok(()),
-        _ => Err("couldn't agree on handshake version".into()),
+        _ => Err("couldn't agree on handshake version for client connection".into()),
     }
 }
 
@@ -61,9 +61,9 @@ fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, crate::framework::E
 }
 
 fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, crate::framework::Error> {
-    let tcp = TcpStream::connect(address).unwrap();
-    tcp.set_nodelay(true).unwrap();
-    tcp.set_keepalive_ms(Some(30_000u32)).unwrap();
+    let tcp = TcpStream::connect(address)?;
+    tcp.set_nodelay(true)?;
+    tcp.set_keepalive_ms(Some(30_000u32))?;
 
     Multiplexer::setup(tcp, &[0, 5, 7])
 }
@@ -88,7 +88,7 @@ impl SourceConfig for Config {
 
         let cs_channel = muxer.use_channel(5);
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, point, output).unwrap();
+            observe_forever(cs_channel, point, output).expect("chainsync loop failed");
         });
 
         Ok(handle)
