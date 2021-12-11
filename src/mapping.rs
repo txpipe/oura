@@ -36,7 +36,7 @@ pub trait ToBech32 {
 impl ToBech32 for Vec<u8> {
     fn try_to_bech32(&self, hrp: &str) -> Result<String, Error> {
         let enc = bech32::encode(hrp, self.to_base32(), bech32::Variant::Bech32)?;
-        Ok(enc.to_string())
+        Ok(enc)
     }
 }
 

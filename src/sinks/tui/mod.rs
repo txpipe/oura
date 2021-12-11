@@ -90,7 +90,8 @@ pub fn bootstrap(rx: Receiver<Event>) -> Result<JoinHandle<()>, Error> {
     }));
 
     let c1 = console.clone();
-    let _handle1 = std::thread::spawn(move || reducer_loop(rx, c1).expect("TUI reducer loop failed"));
+    let _handle1 =
+        std::thread::spawn(move || reducer_loop(rx, c1).expect("TUI reducer loop failed"));
 
     let c2 = console;
     let handle2 = std::thread::spawn(move || tui_loop(c2).expect("TUI drawing loop failed"));
