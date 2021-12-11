@@ -4,6 +4,8 @@ use pallas::ledger::alonzo::{
     TransactionOutput, Value,
 };
 
+use bech32::{self, ToBase32};
+
 use crate::framework::{EventContext, EventData, EventSource, EventWriter, StakeCredential};
 
 use crate::framework::Error;
@@ -24,6 +26,17 @@ impl From<&alonzo::StakeCredential> for StakeCredential {
             alonzo::StakeCredential::AddrKeyhash(x) => StakeCredential::AddrKeyhash(x.to_hex()),
             alonzo::StakeCredential::Scripthash(x) => StakeCredential::Scripthash(x.to_hex()),
         }
+    }
+}
+
+pub trait ToBech32 {
+    fn try_to_bech32(&self, hrp: &str) -> Result<String, Error>;
+}
+
+impl ToBech32 for Vec<u8> {
+    fn try_to_bech32(&self, hrp: &str) -> Result<String, Error> {
+        let enc = bech32::encode(hrp, self.to_base32(), bech32::Variant::Bech32)?;
+        Ok(enc.to_string())
     }
 }
 
@@ -199,7 +212,7 @@ impl EventSource for AuxiliaryData {
 impl EventSource for TransactionOutput {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
         writer.append(EventData::TxOutput {
-            address: self.address.to_hex(),
+            address: self.address.try_to_bech32("addr")?,
             amount: match self.amount {
                 Value::Coin(x) => x,
                 Value::Multiasset(x, _) => x,
@@ -312,5 +325,18 @@ impl EventSource for Block {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ToBech32;
+
+    #[test]
+    fn beach32_encodes_ok() {
+        let bytes = hex::decode("01ec6ad5daee9febbe300c6160a36d4daf0c5266ae2fe8245cbb581390629814d8165fd547b6f3f6f55842a5f042bcb113e8e86627bc071f37").unwrap();
+        let bech32 = bytes.try_to_bech32("addr").unwrap();
+
+        assert_eq!(bech32, "addr1q8kx44w6a607h03sp3skpgmdfkhsc5nx4ch7sfzuhdvp8yrznq2ds9jl64rmdulk74vy9f0sg27tzylgapnz00q8rumsuhj834");
     }
 }

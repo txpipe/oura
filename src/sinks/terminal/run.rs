@@ -44,14 +44,14 @@ impl LogLine {
             EventData::TxInput { tx_id, index } => LogLine {
                 prefix: "STXI",
                 color: Color::Blue,
-                content: format!("{{ tx id: {}, index: {} }}", tx_id, index),
+                content: format!("{{ tx_id: {}, index: {} }}", tx_id, index),
                 source,
                 max_width,
             },
             EventData::TxOutput { address, amount } => LogLine {
                 prefix: "UTXO",
                 color: Color::Blue,
-                content: format!("{{ address: {}, amount: {} }}", address, amount),
+                content: format!("{{ to: {}, amount: {} }}", address, amount),
                 source,
                 max_width,
             },
