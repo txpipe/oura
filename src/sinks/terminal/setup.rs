@@ -6,7 +6,7 @@ use crate::framework::{BootstrapResult, Event, SinkConfig};
 
 use super::run::reducer_loop;
 
-const THROTTLE_MIN_SPAN_MILLIS: u64 = 500;
+const THROTTLE_MIN_SPAN_MILLIS: u64 = 300;
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
