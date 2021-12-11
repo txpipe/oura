@@ -12,7 +12,7 @@ curl -L -o oura.tar.gz https://github.com/txpipe/oura/releases/latest/download/o
 
 ### Ubuntu
 
-To install Oura binary in a Mac, use the following shell command:
+To install Oura binary in a Ubuntu running machine, use the following shell command:
 
 ```sh
 curl -L -o oura.tar.gz https://github.com/txpipe/oura/releases/latest/download/oura-x86_64-unknown-linux-gnu.tar.gz && tar xvzf oura.tar.gz && mv oura /usr/local/bin
