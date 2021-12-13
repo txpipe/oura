@@ -28,10 +28,13 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::Transaction { fee, hash, ttl, .. } => LogLine {
+            EventData::Transaction { fee, ttl, .. } => LogLine {
                 prefix: "TX",
                 color: Color::DarkBlue,
-                content: format!("{{ fee: {}, hash: {:?}, ttl: {:?} }}", fee, hash, ttl),
+                content: format!(
+                    "{{ fee: {}, hash: {:?}, ttl: {:?} }}",
+                    fee, &source.context.tx_hash, ttl
+                ),
                 source,
                 max_width,
             },
@@ -188,6 +191,13 @@ impl LogLine {
                 prefix: "RLLBCK",
                 color: Color::Red,
                 content: format!("{{ slot: {}, hash: {} }}", block_slot, block_hash),
+                source,
+                max_width,
+            },
+            EventData::Collateral { tx_id, index } => LogLine {
+                prefix: "COLLAT",
+                color: Color::Blue,
+                content: format!("{{ tx_id: {}, index: {} }}", tx_id, index),
                 source,
                 max_width,
             },

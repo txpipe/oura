@@ -7,6 +7,7 @@ use oura::framework::{BootstrapResult, Event, SinkConfig, SourceConfig};
 use oura::sinks::kafka::Config as KafkaConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
+use oura::sources::n2n::Config as N2NConfig;
 use serde_derive::Deserialize;
 
 use crate::Error;
@@ -15,12 +16,14 @@ use crate::Error;
 #[serde(tag = "type")]
 enum Source {
     N2C(N2CConfig),
+    N2N(N2NConfig),
 }
 
 impl SourceConfig for Source {
     fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
         match self {
             Source::N2C(c) => c.bootstrap(output),
+            Source::N2N(c) => c.bootstrap(output),
         }
     }
 }

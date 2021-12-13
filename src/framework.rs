@@ -33,10 +33,10 @@ pub enum EventData {
         issuer_vkey: String,
     },
     Transaction {
-        hash: Option<String>,
         fee: u64,
         ttl: Option<u64>,
         validity_interval_start: Option<u64>,
+        network_id: Option<u32>,
     },
     TxInput {
         tx_id: String,
@@ -62,6 +62,10 @@ pub enum EventData {
         policy: String,
         asset: String,
         quantity: i64,
+    },
+    Collateral {
+        tx_id: String,
+        index: u64,
     },
     NewNativeScript,
     NewPlutusScript {

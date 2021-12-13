@@ -3,6 +3,7 @@ use pallas::ledger::alonzo::{
     InstantaneousRewardSource, InstantaneousRewardTarget, Metadata, Metadatum, Relay,
     TransactionOutput, Value,
 };
+use pallas::ledger::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
 
 use bech32::{self, ToBase32};
 
@@ -235,6 +236,107 @@ impl EventSource for TransactionOutput {
     }
 }
 
+impl EventSource for TransactionBodyComponent {
+    fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
+        match self {
+            TransactionBodyComponent::Inputs(inputs) => {
+                for (idx, input) in inputs.iter().enumerate() {
+                    let writer = writer.child_writer(EventContext {
+                        input_idx: Some(idx),
+                        ..EventContext::default()
+                    });
+
+                    writer.append(EventData::TxInput {
+                        tx_id: input.transaction_id.to_hex(),
+                        index: input.index,
+                    })?;
+                }
+            }
+            TransactionBodyComponent::Outputs(outputs) => {
+                for (idx, output) in outputs.iter().enumerate() {
+                    let writer = writer.child_writer(EventContext {
+                        input_idx: Some(idx),
+                        ..EventContext::default()
+                    });
+
+                    output.write_events(&writer)?;
+                }
+            }
+            TransactionBodyComponent::Certificates(certs) => {
+                for cert in certs.iter() {
+                    cert.write_events(&writer)?;
+                }
+            }
+            TransactionBodyComponent::Mint(mint) => {
+                for (policy, value) in mint.iter() {
+                    for (asset, quantity) in value.iter() {
+                        writer.append(EventData::Mint {
+                            policy: policy.to_hex(),
+                            asset: asset.to_hex(),
+                            quantity: *quantity,
+                        })?;
+                    }
+                }
+            }
+            TransactionBodyComponent::Collateral(collaterals) => {
+                for collateral in collaterals.iter() {
+                    writer.append(EventData::Collateral {
+                        tx_id: collateral.transaction_id.to_hex(),
+                        index: collateral.index,
+                    })?;
+                }
+            }
+            _ => (),
+        };
+
+        Ok(())
+    }
+}
+
+impl EventSource for TransactionBody {
+    fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
+        let mut fee = 0;
+        let mut ttl = None;
+        let mut validity_interval_start = None;
+        let mut network_id = None;
+
+        for component in self.iter() {
+            match component {
+                TransactionBodyComponent::Fee(x) => {
+                    fee = *x;
+                }
+                TransactionBodyComponent::Ttl(x) => {
+                    ttl = Some(*x);
+                }
+                TransactionBodyComponent::ValidityIntervalStart(x) => {
+                    validity_interval_start = Some(*x);
+                }
+                TransactionBodyComponent::NetworkId(NetworkId::One) => network_id = Some(1),
+                TransactionBodyComponent::NetworkId(NetworkId::Two) => network_id = Some(2),
+                // TODO
+                // TransactionBodyComponent::ScriptDataHash(_) => todo!(),
+                // TransactionBodyComponent::RequiredSigners(_) => todo!(),
+                // TransactionBodyComponent::AuxiliaryDataHash(_) => todo!(),
+                _ => (),
+            };
+        }
+
+        writer.append(EventData::Transaction {
+            fee,
+            ttl,
+            validity_interval_start,
+            network_id,
+        })?;
+
+        // write sub-events
+        for component in self.iter() {
+            component.write_events(&writer)?;
+        }
+
+        Ok(())
+    }
+}
+
 impl EventSource for Block {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
         let writer = writer.child_writer(EventContext {
@@ -263,32 +365,13 @@ impl EventSource for Block {
                 ..EventContext::default()
             });
 
-            writer.append(EventData::Transaction {
-                hash: tx_hash,
-                fee: tx.fee,
-                ttl: tx.ttl,
-                validity_interval_start: tx.validity_interval_start,
-            })?;
+            tx.write_events(&writer)?;
 
-            if let Some(mint) = &tx.mint {
-                for (policy, value) in mint.iter() {
-                    for (asset, quantity) in value.iter() {
-                        writer.append(EventData::Mint {
-                            policy: policy.to_hex(),
-                            asset: asset.to_hex(),
-                            quantity: *quantity,
-                        })?;
-                    }
-                }
-            }
-
-            if let Some(certs) = &tx.certificates {
-                for cert in certs.iter() {
-                    cert.write_events(&writer)?;
-                }
-            }
-
-            if let Some(aux) = self.auxiliary_data_set.get(&(idx as u32)) {
+            if let Some((_, aux)) = self
+                .auxiliary_data_set
+                .iter()
+                .find(|(k, _)| *k == (idx as u32))
+            {
                 aux.write_events(&writer)?;
             };
 
@@ -300,27 +383,6 @@ impl EventSource for Block {
                         })?;
                     }
                 }
-            }
-
-            for (idx, input) in tx.inputs.iter().enumerate() {
-                let writer = writer.child_writer(EventContext {
-                    input_idx: Some(idx),
-                    ..EventContext::default()
-                });
-
-                writer.append(EventData::TxInput {
-                    tx_id: input.transaction_id.to_hex(),
-                    index: input.index,
-                })?;
-            }
-
-            for (idx, output) in tx.outputs.iter().enumerate() {
-                let writer = writer.child_writer(EventContext {
-                    input_idx: Some(idx),
-                    ..EventContext::default()
-                });
-
-                output.write_events(&writer)?;
             }
         }
 

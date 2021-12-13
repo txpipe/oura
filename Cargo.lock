@@ -632,9 +632,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-alonzo"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eff5aec5631740d273d805e9a9d0cf9572b7b5a90c9bd4604404e50f84811a73"
+checksum = "34659c5e27d2f811304655becb5208527c76b07c0a2703b9bf1829105f5aeca8"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -708,9 +708,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92ca21af0bd2beeb4c727023582b6c04ed2a345c80985116df1a833cd29d87b3"
+checksum = "bb535eba0034c3ecd97d5400a36d24aaf0c8ba2ff576ee5fe4b866c35ce7024b"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
