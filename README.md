@@ -46,6 +46,8 @@ Similar to the well-known db-sync tool provided by IOHK, _Oura_ can be used as a
 
 Given its small memory / cpu footprint, _Oura_ can be deployed side-by-side with your Cardano node even in resource-constrained environments, such as Raspberry PIs.
 
+For an example of how to use _Oura_ as a bridge, check the [Cardano => Kafka](docs/kafka.md) setup instructions.
+
 ### As a Trigger of Custom Actions
 
 _Oura_ running in `daemon` mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;
