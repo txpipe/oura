@@ -6,19 +6,17 @@ use log::info;
 
 use pallas::ouroboros::network::{
     handshake::{n2c, MAINNET_MAGIC},
-    localstate::{
-        queries::{QueryV10, RequestV10},
-        OneShotClient,
-    },
-    machines::{primitives::Point, run_agent},
+    machines::run_agent,
     multiplexer::{Channel, Multiplexer},
 };
 
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{BootstrapResult, Event, SourceConfig},
-    sources::common::{AddressArg, BearerKind, MagicArg},
+    framework::{BootstrapResult, Error, Event, SourceConfig},
+    sources::common::{
+        find_end_of_chain, get_wellknonwn_chain_point, AddressArg, BearerKind, MagicArg,
+    },
 };
 
 use super::observe_forever;
@@ -31,8 +29,8 @@ pub struct Config {
     pub magic: Option<MagicArg>,
 }
 
-fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), crate::framework::Error> {
-    let versions = n2c::VersionTable::only_v10(magic);
+fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
+    let versions = n2c::VersionTable::v1_and_above(magic);
     let agent = run_agent(n2c::Client::initial(versions), channel)?;
     info!("handshake output: {:?}", agent.output);
 
@@ -42,30 +40,18 @@ fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), crate::framewor
     }
 }
 
-fn find_end_of_chain(channel: &mut Channel) -> Result<Point, crate::framework::Error> {
-    let agent = OneShotClient::<QueryV10>::initial(None, RequestV10::GetChainPoint);
-    let agent = run_agent(agent, channel)?;
-    info!("chain point query output: {:?}", agent.output);
-
-    match agent.output {
-        Some(Ok(data)) => Ok(data.try_into()?),
-        Some(Err(_)) => Err("failure acquiring end of chain".into()),
-        None => todo!(),
-    }
-}
-
-fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, crate::framework::Error> {
+fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, Error> {
     let unix = UnixStream::connect(path)?;
 
     Multiplexer::setup(unix, &[0, 5, 7])
 }
 
-fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, crate::framework::Error> {
+fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
     let tcp = TcpStream::connect(address)?;
     tcp.set_nodelay(true)?;
     tcp.set_keepalive_ms(Some(30_000u32))?;
 
-    Multiplexer::setup(tcp, &[0, 5, 7])
+    Multiplexer::setup(tcp, &[0, 5])
 }
 
 impl SourceConfig for Config {
@@ -83,12 +69,15 @@ impl SourceConfig for Config {
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
 
-        let mut ls_channel = muxer.use_channel(7);
-        let point = find_end_of_chain(&mut ls_channel)?;
+        let mut cs_channel = muxer.use_channel(5);
 
-        let cs_channel = muxer.use_channel(5);
+        let wellknown_point = get_wellknonwn_chain_point(magic)?;
+        let node_tip = find_end_of_chain(&mut cs_channel, wellknown_point)?;
+
+        info!("node tip: {:?}", &node_tip);
+
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, point, output).expect("chainsync loop failed");
+            observe_forever(cs_channel, node_tip, output).expect("chainsync loop failed");
         });
 
         Ok(handle)

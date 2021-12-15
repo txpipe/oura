@@ -5,9 +5,8 @@ use net2::TcpStreamExt;
 use log::info;
 
 use pallas::ouroboros::network::{
-    chainsync::TipFinder,
-    handshake::{n2n, MAINNET_MAGIC, TESTNET_MAGIC},
-    machines::{primitives::Point, run_agent},
+    handshake::{n2n, MAINNET_MAGIC},
+    machines::run_agent,
     multiplexer::{Channel, Multiplexer},
 };
 
@@ -16,7 +15,7 @@ use serde_derive::Deserialize;
 use crate::{
     framework::{BootstrapResult, Error, Event, SourceConfig},
     sources::{
-        common::{AddressArg, BearerKind, MagicArg},
+        common::{find_end_of_chain, get_wellknonwn_chain_point, AddressArg, BearerKind, MagicArg},
         n2n::{fetch_blocks_forever, observe_headers_forever},
     },
 };
@@ -29,7 +28,7 @@ pub struct Config {
     pub magic: Option<MagicArg>,
 }
 
-fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), crate::framework::Error> {
+fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
     let versions = n2n::VersionTable::v6_and_above(magic);
     let agent = run_agent(n2n::Client::initial(versions), channel)?;
     info!("handshake output: {:?}", agent.output);
@@ -40,46 +39,18 @@ fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), crate::framewor
     }
 }
 
-fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, crate::framework::Error> {
+fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, Error> {
     let unix = UnixStream::connect(path)?;
 
     Multiplexer::setup(unix, &[0, 2, 3])
 }
 
-fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, crate::framework::Error> {
+fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
     let tcp = TcpStream::connect(address)?;
     tcp.set_nodelay(true)?;
     tcp.set_keepalive_ms(Some(30_000u32))?;
 
     Multiplexer::setup(tcp, &[0, 2, 3])
-}
-
-fn get_wellknonwn_chain_point(magic: u64) -> Result<Point, Error> {
-    match magic {
-        MAINNET_MAGIC => Ok(Point(
-            4492799,
-            hex::decode("f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457")?,
-        )),
-        TESTNET_MAGIC => Ok(Point(
-            1598399,
-            hex::decode("7e16781b40ebf8b6da18f7b5e8ade855d6738095ef2f1c58c77e88b6e45997a4")?,
-        )),
-        _ => Err("don't have a well-known chain point for the requested magic".into()),
-    }
-}
-
-fn find_end_of_chain(
-    channel: &mut Channel,
-    wellknown_point: Point,
-) -> Result<Point, crate::framework::Error> {
-    let agent = TipFinder::initial(wellknown_point);
-    let agent = run_agent(agent, channel)?;
-    info!("chain point query output: {:?}", agent.output);
-
-    match agent.output {
-        Some(tip) => Ok(tip.0),
-        None => Err("failure acquiring end of chain".into()),
-    }
 }
 
 impl SourceConfig for Config {
@@ -102,7 +73,7 @@ impl SourceConfig for Config {
         let wellknown_point = get_wellknonwn_chain_point(magic)?;
         let node_tip = find_end_of_chain(&mut cs_channel, wellknown_point)?;
 
-        info!("node tip: {:#?}", &node_tip);
+        info!("node tip: {:?}", &node_tip);
 
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
 
