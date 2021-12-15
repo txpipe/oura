@@ -1,15 +1,19 @@
 mod setup;
 
+use minicbor::data::Tag;
 pub use setup::*;
 
 use log::{info, warn};
 
 use pallas::{
-    ledger::alonzo::{BlockWrapper, Fragment},
+    ledger::alonzo::{self, crypto, Fragment, Header},
     ouroboros::network::{
         blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
-        chainsync::{NodeConsumer, Observer, WrappedHeader},
-        machines::{primitives::Point, run_agent},
+        chainsync::{BlockLike, Consumer, Observer},
+        machines::{
+            primitives::Point, run_agent, DecodePayload, EncodePayload, PayloadDecoder,
+            PayloadEncoder,
+        },
         multiplexer::Channel,
     },
 };
@@ -22,14 +26,46 @@ use crate::{
 };
 
 #[derive(Debug)]
+pub struct Content(u32, Header);
+
+impl EncodePayload for Content {
+    fn encode_payload(&self, e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
+        e.array(2)?;
+        e.u32(self.0)?;
+        e.tag(Tag::Cbor)?;
+        e.bytes(&self.1.encode_fragment()?)?;
+
+        Ok(())
+    }
+}
+
+impl DecodePayload for Content {
+    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Box<dyn std::error::Error>> {
+        d.array()?;
+        let unknown = d.u32()?; // WTF is this value?
+        d.tag()?;
+        let bytes = d.bytes()?;
+        let header = Header::decode_fragment(bytes)?;
+        Ok(Content(unknown, header))
+    }
+}
+
+impl BlockLike for Content {
+    fn block_point(&self) -> Result<Point, Box<dyn std::error::Error>> {
+        let hash = crypto::hash_block_header(&self.1)?;
+        Ok(Point(self.1.header_body.slot, Vec::from(hash)))
+    }
+}
+
+#[derive(Debug)]
 pub struct Block2EventMapper(EventWriter);
 
 impl BlockObserver for Block2EventMapper {
     fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
-        let maybe_block = BlockWrapper::decode_fragment(&body[..]);
+        let maybe_block = alonzo::BlockWrapper::decode_fragment(&body[..]);
 
         match maybe_block {
-            Ok(BlockWrapper(_, block)) => {
+            Ok(alonzo::BlockWrapper(_, block)) => {
                 block.write_events(&self.0)?;
             }
             Err(err) => {
@@ -48,8 +84,8 @@ pub struct ChainObserver {
     event_writer: EventWriter,
 }
 
-impl Observer<WrappedHeader> for ChainObserver {
-    fn on_block(&self, cursor: &Option<Point>, _content: &WrappedHeader) -> Result<(), Error> {
+impl Observer<Content> for ChainObserver {
+    fn on_block(&self, cursor: &Option<Point>, content: &Content) -> Result<(), Error> {
         info!("requesting block fetch for point {:?}", cursor);
 
         if let Some(cursor) = cursor {
@@ -94,7 +130,7 @@ fn observe_headers_forever(
         event_writer,
         block_requests,
     };
-    let agent = NodeConsumer::initial(vec![from], observer);
+    let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);
 

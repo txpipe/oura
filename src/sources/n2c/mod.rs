@@ -2,13 +2,16 @@ mod setup;
 
 pub use setup::*;
 
-use log::error;
+use log::{error, info};
 
 use pallas::{
-    ledger::alonzo::{BlockWrapper, Fragment},
+    ledger::alonzo::{crypto, Block, BlockWrapper, Fragment},
     ouroboros::network::{
-        chainsync::{BlockBody, ClientConsumer, Observer, Tip},
-        machines::{primitives::Point, run_agent},
+        chainsync::{BlockLike, Consumer, Observer, Tip},
+        machines::{
+            primitives::Point, run_agent, DecodePayload, EncodePayload, PayloadDecoder,
+            PayloadEncoder,
+        },
         multiplexer::Channel,
     },
 };
@@ -21,26 +24,41 @@ use crate::{
 };
 
 #[derive(Debug)]
+pub struct Content(Block);
+
+impl EncodePayload for Content {
+    fn encode_payload(&self, _e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
+    }
+}
+
+impl DecodePayload for Content {
+    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Box<dyn std::error::Error>> {
+        d.tag()?;
+        let bytes = d.bytes()?;
+        let BlockWrapper(_, block) = BlockWrapper::decode_fragment(bytes)?;
+        Ok(Content(block))
+    }
+}
+
+impl BlockLike for Content {
+    fn block_point(&self) -> Result<Point, Box<dyn std::error::Error>> {
+        let hash = crypto::hash_block_header(&self.0.header)?;
+        Ok(Point(self.0.header.header_body.slot, Vec::from(hash)))
+    }
+}
+
+#[derive(Debug)]
 pub struct ChainObserver(EventWriter);
 
-impl Observer<BlockBody> for ChainObserver {
+impl Observer<Content> for ChainObserver {
     fn on_block(
         &self,
         _cursor: &Option<Point>,
-        content: &BlockBody,
+        content: &Content,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let BlockBody(bytes) = content;
-        let maybe_block = BlockWrapper::decode_fragment(&bytes[..]);
-
-        match maybe_block {
-            Ok(BlockWrapper(_, block)) => {
-                block.write_events(&self.0)?;
-            }
-            Err(err) => {
-                log::error!("{:?}", err);
-                log::info!("{}", hex::encode(bytes));
-            }
-        };
+        let Content(block) = content;
+        block.write_events(&self.0)?;
 
         Ok(())
     }
@@ -53,12 +71,12 @@ impl Observer<BlockBody> for ChainObserver {
     }
 
     fn on_intersect_found(&self, point: &Point, _tip: &Tip) -> Result<(), Error> {
-        println!("intersect found {:#?}", point);
+        info!("intersect found {:?}", point);
         Ok(())
     }
 
     fn on_tip_reached(&self) -> Result<(), Error> {
-        println!("tip reached");
+        info!("tip reached");
         Ok(())
     }
 }
@@ -66,7 +84,7 @@ impl Observer<BlockBody> for ChainObserver {
 fn observe_forever(mut channel: Channel, from: Point, output: Sender<Event>) -> Result<(), Error> {
     let writer = EventWriter::new(output);
     let observer = ChainObserver(writer);
-    let agent = ClientConsumer::initial(vec![from], observer);
+    let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     error!("chainsync agent final state: {:?}", agent.state);
 

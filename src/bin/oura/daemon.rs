@@ -4,11 +4,13 @@ use clap::{value_t, ArgMatches};
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
 use oura::framework::{BootstrapResult, Event, SinkConfig, SourceConfig};
-use oura::sinks::kafka::Config as KafkaConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 use serde_derive::Deserialize;
+
+#[cfg(kafkasink)]
+use oura::sinks::kafka::Config as KafkaConfig;
 
 use crate::Error;
 
@@ -32,6 +34,8 @@ impl SourceConfig for Source {
 #[serde(tag = "type")]
 enum Sink {
     Terminal(TerminalConfig),
+
+    #[cfg(kafkasink)]
     Kafka(KafkaConfig),
 }
 
@@ -39,6 +43,8 @@ impl SinkConfig for Sink {
     fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),
+
+            #[cfg(kafkasink)]
             Sink::Kafka(c) => c.bootstrap(input),
         }
     }

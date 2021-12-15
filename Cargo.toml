@@ -14,22 +14,32 @@ authors = [
 
 
 [dependencies]
-pallas = "0.3.1"
+pallas = "0.3.3"
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"
+bech32 = "0.8.1"
 clap = "2.33.3"
 log = "0.4.14"
 env_logger = "0.9.0"
 crossterm = "0.20"
-tui = { version = "0.16", default-features = false, features = ['crossterm'] }
 merge = "0.1.0"
 config = "0.11.0"
 serde = "1.0.130"
-serde_derive = "1.0.130"
-kafka = "0.8.0"
 serde_json = "1.0.72"
-bech32 = "0.8.1"
+serde_derive = "1.0.130"
+
+# feature: tuisink
+tui = { version = "0.16", optional = true, default-features = false, features = ['crossterm'] }
+
+# feature: kafkasink
+kafka = { version = "0.8.0", optional = true }
 
 # required for CI to complete successfully
-openssl = { version = "0.10", features = ["vendored"] }
+openssl = { version = "0.10", optional = true, features = ["vendored"] }
+minicbor = "0.12.0"
+
+[features]
+default = []
+kafkasink = ["kafka", "openssl"]
+tuisink = ["tui"]
