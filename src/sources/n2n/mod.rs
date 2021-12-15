@@ -85,7 +85,7 @@ pub struct ChainObserver {
 }
 
 impl Observer<Content> for ChainObserver {
-    fn on_block(&self, cursor: &Option<Point>, content: &Content) -> Result<(), Error> {
+    fn on_block(&self, cursor: &Option<Point>, _content: &Content) -> Result<(), Error> {
         info!("requesting block fetch for point {:?}", cursor);
 
         if let Some(cursor) = cursor {
