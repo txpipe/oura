@@ -14,6 +14,8 @@ We have tools to "explore" the Cardano blockchain, which are useful when you kno
 
 _Oura_ is a rust-native implementation of a pipeline that connects to the tip of a Cardano node through a combination of _Ouroboros_ mini-protocol (using either a unix socket or tcp bearer), filters the events that match a particular pattern and then submits a succint, self-contained payload to pluggable observers called "sinks".
 
+Check our [documentation](https://txpipe.github.io/oura) for detailed information on how to start working with _Oura_.
+
 ## Etymology
 
 The name of the tool is inspired by the `tail` command available in unix-like systems which is used to display the tail end of a text file or piped data. Cardano's consensus procotol name, _Ouroboros_, is a reference to the ancient symbol depicting a serpent or dragon eating its own tail, which means "tail eating". "Oura" is the ancient greek word for "tail".
@@ -38,15 +40,11 @@ The data pipeline makes heavy use (maybe a bit too much) of multi-threading and 
 
 You can run `oura watch <socket>` to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see whats going on in the network (for example, to see airdrops as they happen or oracles posting new information).
 
-Check the [CLI instructions](docs/cli.md) for details on how to install the binary release and a few examples of how to start using the tool.
-
 ### As a Bridge to Other Persistence Mechanisms
 
 Similar to the well-known db-sync tool provided by IOHK, _Oura_ can be used as a daemon to follow a node and output the data into a different data storage techonology more suited for your final use-case. The main difference with db-sync is that _Oura_ was designed for easy integration with data-streaming pipelines instead of relational databases.
 
 Given its small memory / cpu footprint, _Oura_ can be deployed side-by-side with your Cardano node even in resource-constrained environments, such as Raspberry PIs.
-
-For an example of how to use _Oura_ as a bridge, check the [Cardano => Kafka](docs/kafka.md) setup instructions.
 
 ### As a Trigger of Custom Actions
 
