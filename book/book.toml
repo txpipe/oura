@@ -1,0 +1,6 @@
+[book]
+authors = ["Santiago Carmuega"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Oura"
