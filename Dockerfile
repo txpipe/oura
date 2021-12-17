@@ -28,4 +28,4 @@ FROM debian:buster-slim
 
 COPY --from=builder /usr/local/cargo/bin/oura /usr/local/bin/oura
 
-CMD ["oura"]
+ENTRYPOINT [ "oura" ]
