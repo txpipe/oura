@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation/binary_release.html"><strong aria-hidden="true">2.1.</strong> Binary Release</a></li><li class="chapter-item expanded "><a href="installation/from_source.html"><strong aria-hidden="true">2.2.</strong> From Source</a></li><li class="chapter-item expanded "><a href="installation/docker.html"><strong aria-hidden="true">2.3.</strong> Docker</a></li><li class="chapter-item expanded "><a href="installation/kubernetes.html"><strong aria-hidden="true">2.4.</strong> Kubernetes</a></li></ol></li><li class="chapter-item expanded "><a href="usage/index.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="usage/watch.html"><strong aria-hidden="true">3.1.</strong> Watch Mode</a></li><li class="chapter-item expanded "><a href="usage/daemon.html"><strong aria-hidden="true">3.2.</strong> Daemon Mode</a></li><li class="chapter-item expanded "><a href="usage/library.html"><strong aria-hidden="true">3.3.</strong> Library</a></li></ol></li><li class="chapter-item expanded "><a href="sources/index.html"><strong aria-hidden="true">4.</strong> Sources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sources/n2n.html"><strong aria-hidden="true">4.1.</strong> Node-to-Node</a></li><li class="chapter-item expanded "><a href="sources/n2c.html"><strong aria-hidden="true">4.2.</strong> Node-to-Client</a></li></ol></li><li class="chapter-item expanded "><a href="sinks/index.html"><strong aria-hidden="true">5.</strong> Sinks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sinks/terminal.html"><strong aria-hidden="true">5.1.</strong> Terminal</a></li><li class="chapter-item expanded "><a href="sinks/kafka.html"><strong aria-hidden="true">5.2.</strong> Kafka</a></li></ol></li><li class="chapter-item expanded "><a href="reference/index.html"><strong aria-hidden="true">6.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="data_dictionary.html"><strong aria-hidden="true">6.1.</strong> Data Dictionary</a></li></ol></li><li class="chapter-item expanded "><a href="guides/index.html"><strong aria-hidden="true">7.</strong> Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guides/cardano_2_kafka.html"><strong aria-hidden="true">7.1.</strong> Cardano =&gt; Kafka</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation/binary_release.html"><strong aria-hidden="true">2.1.</strong> Binary Release</a></li><li class="chapter-item expanded "><a href="installation/from_source.html"><strong aria-hidden="true">2.2.</strong> From Source</a></li><li class="chapter-item expanded "><a href="installation/docker.html"><strong aria-hidden="true">2.3.</strong> Docker</a></li><li class="chapter-item expanded "><a href="installation/kubernetes.html"><strong aria-hidden="true">2.4.</strong> Kubernetes</a></li></ol></li><li class="chapter-item expanded "><a href="usage/index.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="usage/watch.html"><strong aria-hidden="true">3.1.</strong> Watch Mode</a></li><li class="chapter-item expanded "><a href="usage/daemon.html"><strong aria-hidden="true">3.2.</strong> Daemon Mode</a></li><li class="chapter-item expanded "><a href="usage/library.html"><strong aria-hidden="true">3.3.</strong> Library</a></li></ol></li><li class="chapter-item expanded "><a href="sources/index.html"><strong aria-hidden="true">4.</strong> Sources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sources/n2n.html"><strong aria-hidden="true">4.1.</strong> Node-to-Node</a></li><li class="chapter-item expanded "><a href="sources/n2c.html"><strong aria-hidden="true">4.2.</strong> Node-to-Client</a></li></ol></li><li class="chapter-item expanded "><a href="sinks/index.html"><strong aria-hidden="true">5.</strong> Sinks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sinks/terminal.html"><strong aria-hidden="true">5.1.</strong> Terminal</a></li><li class="chapter-item expanded "><a href="sinks/kafka.html"><strong aria-hidden="true">5.2.</strong> Kafka</a></li></ol></li><li class="chapter-item expanded "><a href="reference/index.html"><strong aria-hidden="true">6.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="reference/data_dictionary.html"><strong aria-hidden="true">6.1.</strong> Data Dictionary</a></li></ol></li><li class="chapter-item expanded "><a href="guides/index.html"><strong aria-hidden="true">7.</strong> Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guides/cardano_2_kafka.html"><strong aria-hidden="true">7.1.</strong> Cardano =&gt; Kafka</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -147,11 +147,9 @@
 <h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
 <h3 id="cli-to-watch-live-transactions"><a class="header" href="#cli-to-watch-live-transactions">CLI to Watch Live Transactions</a></h3>
 <p>You can run <code>oura watch &lt;socket&gt;</code> to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see whats going on in the network (for example, to see airdrops as they happen or oracles posting new information).</p>
-<p>Check the <a href="docs/cli.html">CLI instructions</a> for details on how to install the binary release and a few examples of how to start using the tool.</p>
 <h3 id="as-a-bridge-to-other-persistence-mechanisms"><a class="header" href="#as-a-bridge-to-other-persistence-mechanisms">As a Bridge to Other Persistence Mechanisms</a></h3>
 <p>Similar to the well-known db-sync tool provided by IOHK, <em>Oura</em> can be used as a daemon to follow a node and output the data into a different data storage techonology more suited for your final use-case. The main difference with db-sync is that <em>Oura</em> was designed for easy integration with data-streaming pipelines instead of relational databases.</p>
 <p>Given its small memory / cpu footprint, <em>Oura</em> can be deployed side-by-side with your Cardano node even in resource-constrained environments, such as Raspberry PIs.</p>
-<p>For an example of how to use <em>Oura</em> as a bridge, check the <a href="docs/kafka.html">Cardano =&gt; Kafka</a> setup instructions.</p>
 <h3 id="as-a-trigger-of-custom-actions"><a class="header" href="#as-a-trigger-of-custom-actions">As a Trigger of Custom Actions</a></h3>
 <p><em>Oura</em> running in <code>daemon</code> mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;</p>
 <h3 id="as-a-library-for-custom-scenarios"><a class="header" href="#as-a-library-for-custom-scenarios">As a Library for Custom Scenarios</a></h3>
@@ -167,19 +165,29 @@
 <div style="break-before: page; page-break-before: always;"></div><h1 id="binary-releases"><a class="header" href="#binary-releases">Binary Releases</a></h1>
 <p>Oura can be ran as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.</p>
 <h2 id="macos"><a class="header" href="#macos">MacOS</a></h2>
-<p>To install Oura binary in a Mac, use the following shell command:</p>
+<p>Use the following command to download and install <em>Oura's</em> binary release for MacOS:</p>
 <pre><code class="language-sh">curl -L -o oura.tar.gz https://git.io/JD2iH &amp;&amp; \
     tar xvzf oura.tar.gz &amp;&amp; \
     mv oura /usr/local/bin
 </code></pre>
-<h2 id="ubuntu"><a class="header" href="#ubuntu">Ubuntu</a></h2>
-<p>To install Oura binary in a Ubuntu running machine, use the following shell command:</p>
+<h2 id="gnulinux"><a class="header" href="#gnulinux">GNU/Linux</a></h2>
+<p>Use the following command to download and install <em>Oura's</em> binary release for GNU/Linux:</p>
 <pre><code class="language-sh">curl -L -o oura.tar.gz https://git.io/JD2ix &amp;&amp; \
     tar xvzf oura.tar.gz &amp;&amp; \
     mv oura /usr/local/bin
 </code></pre>
 <p>Check the <a href="https://github.com/txpipe/oura/releases/latest">latest release</a> for more binary download options.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="from-source"><a class="header" href="#from-source">From Source</a></h1>
+<p>The following instructions show how to build and install <em>Oura</em> from source code.</p>
+<h2 id="pre-requisites"><a class="header" href="#pre-requisites">Pre-requisites</a></h2>
+<ul>
+<li>Rust toolchain</li>
+</ul>
+<h2 id="procedure"><a class="header" href="#procedure">Procedure</a></h2>
+<pre><code>git clone git@github.com:txpipe/oura.git
+cd oura
+cargo install --path .
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="docker"><a class="header" href="#docker">Docker</a></h1>
 <p><em>Oura</em> can be executed as a Docker container:</p>
 <pre><code class="language-sh">docker run ghcr.io/txpipe/oura:latest
@@ -374,6 +382,102 @@ topic = &quot;cardano-events&quot;
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="data-dictionary"><a class="header" href="#data-dictionary">Data Dictionary</a></h1>
+<p><em>Oura</em> follows a Cardano chain and outputs events. Each event contains data about itself and about the <em>context</em> in which it occured.</p>
+<p>A consumer aggregating a sequence of multiple events will notices redundant / duplicated data. For example, the &quot;block number&quot; value will appeare repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor &quot;consumption ergonomics&quot; over &quot;data normalization&quot;.</p>
+<h2 id="available-events"><a class="header" href="#available-events">Available Events</a></h2>
+<p>The following list represent the already implemented events. These data structures are represented as an <code>enum</code> at the code level.</p>
+<h3 id="rollback-event"><a class="header" href="#rollback-event"><code>RollBack</code> Event</a></h3>
+<ul>
+<li>block_slot: u64,</li>
+<li>block_hash: String,</li>
+</ul>
+<h3 id="block-event"><a class="header" href="#block-event"><code>Block</code> Event</a></h3>
+<ul>
+<li>body_size: usize,</li>
+<li>issuer_vkey: String,</li>
+</ul>
+<h3 id="transaction-event"><a class="header" href="#transaction-event"><code>Transaction</code> Event</a></h3>
+<ul>
+<li>fee: u64,</li>
+<li>ttl: Option<u64>,</li>
+<li>validity_interval_start: Option<u64>,</li>
+<li>network_id: Option<u32>,</li>
+</ul>
+<h3 id="txinput-event"><a class="header" href="#txinput-event"><code>TxInput</code> Event</a></h3>
+<ul>
+<li>tx_id: String,</li>
+<li>index: u64,</li>
+</ul>
+<h3 id="txoutput-event"><a class="header" href="#txoutput-event"><code>TxOutput</code> Event</a></h3>
+<ul>
+<li>address: String,</li>
+<li>amount: u64,</li>
+</ul>
+<h3 id="outputasset-event"><a class="header" href="#outputasset-event"><code>OutputAsset</code> Event</a></h3>
+<ul>
+<li>policy: String,</li>
+<li>asset: String,</li>
+<li>amount: u64,</li>
+</ul>
+<h3 id="metadata-event"><a class="header" href="#metadata-event"><code>Metadata</code> Event</a></h3>
+<ul>
+<li>key: String,</li>
+<li>subkey: Option<String>,</li>
+<li>value: Option<String>,</li>
+</ul>
+<h3 id="mint-event"><a class="header" href="#mint-event"><code>Mint</code> Event</a></h3>
+<ul>
+<li>policy: String,</li>
+<li>asset: String,</li>
+<li>quantity: i64,</li>
+</ul>
+<h3 id="collateral-event"><a class="header" href="#collateral-event"><code>Collateral</code> Event</a></h3>
+<ul>
+<li>tx_id: String,</li>
+<li>index: u64,</li>
+</ul>
+<h3 id="plutusscriptref-event"><a class="header" href="#plutusscriptref-event"><code>PlutusScriptRef</code> Event</a></h3>
+<ul>
+<li>data: String</li>
+</ul>
+<h3 id="stakeregistration-event"><a class="header" href="#stakeregistration-event"><code>StakeRegistration</code> Event</a></h3>
+<ul>
+<li>credential: StakeCredential</li>
+</ul>
+<h3 id="stakederegistration-event"><a class="header" href="#stakederegistration-event"><code>StakeDeregistration</code> Event</a></h3>
+<ul>
+<li>credential: StakeCredential</li>
+</ul>
+<h3 id="stakedelegation-event"><a class="header" href="#stakedelegation-event"><code>StakeDelegation</code> Event</a></h3>
+<ul>
+<li>credential: StakeCredential,</li>
+<li>pool_hash: String,</li>
+</ul>
+<h3 id="poolregistration-event"><a class="header" href="#poolregistration-event"><code>PoolRegistration</code> Event</a></h3>
+<ul>
+<li>operator: String,</li>
+<li>vrf_keyhash: String,</li>
+<li>pledge: u64,</li>
+<li>cost: u64,</li>
+<li>margin: f64,</li>
+<li>reward_account: String,</li>
+<li>pool_owners: Vec<String>,</li>
+<li>relays: Vec<String>,</li>
+<li>pool_metadata: Option<String>,</li>
+</ul>
+<h3 id="poolretirement-event"><a class="header" href="#poolretirement-event"><code>PoolRetirement</code> Event</a></h3>
+<ul>
+<li>pool: String,</li>
+<li>epoch: u64,</li>
+</ul>
+<h3 id="genesiskeydelegation-event"><a class="header" href="#genesiskeydelegation-event"><code>GenesisKeyDelegation</code> Event</a></h3>
+<h3 id="moveinstantaneousrewardscert-event"><a class="header" href="#moveinstantaneousrewardscert-event"><code>MoveInstantaneousRewardsCert</code> Event</a></h3>
+<ul>
+<li>from_reserves: bool,</li>
+<li>from_treasury: bool,</li>
+<li>to_stake_credentials: Option&lt;BTreeMap&lt;StakeCredential, i64&gt;&gt;,</li>
+<li>to_other_pot: Option<u64>,</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="guides"><a class="header" href="#guides">Guides</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cardano--kafka"><a class="header" href="#cardano--kafka">Cardano =&gt; Kafka</a></h1>
 <p>This guide shows how to leverage <em>Oura</em> to stream data from a Cardano node into a <em>Kafka</em> topic.</p>
