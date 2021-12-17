@@ -17,6 +17,9 @@ The following list represent the already implemented events. These data structur
 
 - body_size: usize,
 - issuer_vkey: String,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
 
 ### `Transaction` Event
 
@@ -24,57 +27,114 @@ The following list represent the already implemented events. These data structur
 - ttl: Option<u64>,
 - validity_interval_start: Option<u64>,
 - network_id: Option<u32>,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `TxInput` Event
 
 - tx_id: String,
 - index: u64,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
+    - input_idx: Option<usize>,
 
 ### `TxOutput` Event
 
 - address: String,
 - amount: u64,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
+    - output_idx: Option<usize>,
 
 ### `OutputAsset` Event
 
 - policy: String,
 - asset: String,
 - amount: u64,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
+    - output_idx: Option<usize>,
 
 ### `Metadata` Event
 
 - key: String,
 - subkey: Option<String>,
 - value: Option<String>,
-
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `Mint` Event
 
 - policy: String,
 - asset: String,
 - quantity: i64,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `Collateral` Event
 
 - tx_id: String,
 - index: u64,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `PlutusScriptRef` Event
 
 - data: String
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `StakeRegistration` Event
 
 - credential: StakeCredential
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `StakeDeregistration` Event
 
 - credential: StakeCredential
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `StakeDelegation` Event
 
 - credential: StakeCredential,
 - pool_hash: String,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `PoolRegistration` Event
 
@@ -87,13 +147,28 @@ The following list represent the already implemented events. These data structur
 - pool_owners: Vec<String>,
 - relays: Vec<String>,
 - pool_metadata: Option<String>,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `PoolRetirement` Event
 
 - pool: String,
 - epoch: u64,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `GenesisKeyDelegation` Event
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
 
 ### `MoveInstantaneousRewardsCert` Event
 
@@ -101,3 +176,8 @@ The following list represent the already implemented events. These data structur
 - from_treasury: bool,
 - to_stake_credentials: Option<BTreeMap<StakeCredential, i64>>,
 - to_other_pot: Option<u64>,
+- context:
+    - block_number: Option<u64>,
+    - slot: Option<u64>,
+    - tx_idx: Option<usize>,
+    - tx_hash: Option<String>,
