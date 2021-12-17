@@ -395,6 +395,12 @@ topic = &quot;cardano-events&quot;
 <ul>
 <li>body_size: usize,</li>
 <li>issuer_vkey: String,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="transaction-event"><a class="header" href="#transaction-event"><code>Transaction</code> Event</a></h3>
 <ul>
@@ -402,56 +408,147 @@ topic = &quot;cardano-events&quot;
 <li>ttl: Option<u64>,</li>
 <li>validity_interval_start: Option<u64>,</li>
 <li>network_id: Option<u32>,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="txinput-event"><a class="header" href="#txinput-event"><code>TxInput</code> Event</a></h3>
 <ul>
 <li>tx_id: String,</li>
 <li>index: u64,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+<li>input_idx: Option<usize>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="txoutput-event"><a class="header" href="#txoutput-event"><code>TxOutput</code> Event</a></h3>
 <ul>
 <li>address: String,</li>
 <li>amount: u64,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+<li>output_idx: Option<usize>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="outputasset-event"><a class="header" href="#outputasset-event"><code>OutputAsset</code> Event</a></h3>
 <ul>
 <li>policy: String,</li>
 <li>asset: String,</li>
 <li>amount: u64,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+<li>output_idx: Option<usize>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="metadata-event"><a class="header" href="#metadata-event"><code>Metadata</code> Event</a></h3>
 <ul>
 <li>key: String,</li>
 <li>subkey: Option<String>,</li>
 <li>value: Option<String>,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="mint-event"><a class="header" href="#mint-event"><code>Mint</code> Event</a></h3>
 <ul>
 <li>policy: String,</li>
 <li>asset: String,</li>
 <li>quantity: i64,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="collateral-event"><a class="header" href="#collateral-event"><code>Collateral</code> Event</a></h3>
 <ul>
 <li>tx_id: String,</li>
 <li>index: u64,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="plutusscriptref-event"><a class="header" href="#plutusscriptref-event"><code>PlutusScriptRef</code> Event</a></h3>
 <ul>
 <li>data: String</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="stakeregistration-event"><a class="header" href="#stakeregistration-event"><code>StakeRegistration</code> Event</a></h3>
 <ul>
 <li>credential: StakeCredential</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="stakederegistration-event"><a class="header" href="#stakederegistration-event"><code>StakeDeregistration</code> Event</a></h3>
 <ul>
 <li>credential: StakeCredential</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="stakedelegation-event"><a class="header" href="#stakedelegation-event"><code>StakeDelegation</code> Event</a></h3>
 <ul>
 <li>credential: StakeCredential,</li>
 <li>pool_hash: String,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="poolregistration-event"><a class="header" href="#poolregistration-event"><code>PoolRegistration</code> Event</a></h3>
 <ul>
@@ -464,19 +561,53 @@ topic = &quot;cardano-events&quot;
 <li>pool_owners: Vec<String>,</li>
 <li>relays: Vec<String>,</li>
 <li>pool_metadata: Option<String>,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="poolretirement-event"><a class="header" href="#poolretirement-event"><code>PoolRetirement</code> Event</a></h3>
 <ul>
 <li>pool: String,</li>
 <li>epoch: u64,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <h3 id="genesiskeydelegation-event"><a class="header" href="#genesiskeydelegation-event"><code>GenesisKeyDelegation</code> Event</a></h3>
+<ul>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
+</ul>
 <h3 id="moveinstantaneousrewardscert-event"><a class="header" href="#moveinstantaneousrewardscert-event"><code>MoveInstantaneousRewardsCert</code> Event</a></h3>
 <ul>
 <li>from_reserves: bool,</li>
 <li>from_treasury: bool,</li>
 <li>to_stake_credentials: Option&lt;BTreeMap&lt;StakeCredential, i64&gt;&gt;,</li>
 <li>to_other_pot: Option<u64>,</li>
+<li>context:
+<ul>
+<li>block_number: Option<u64>,</li>
+<li>slot: Option<u64>,</li>
+<li>tx_idx: Option<usize>,</li>
+<li>tx_hash: Option<String>,</li>
+</ul>
+</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="guides"><a class="header" href="#guides">Guides</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cardano--kafka"><a class="header" href="#cardano--kafka">Cardano =&gt; Kafka</a></h1>
