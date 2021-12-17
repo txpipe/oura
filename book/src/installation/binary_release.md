@@ -4,7 +4,7 @@ Oura can be ran as a standalone executable. Follow the instructions for your par
 
 ## MacOS
 
-To install Oura binary in a Mac, use the following shell command:
+Use the following command to download and install _Oura's_ binary release for MacOS:
 
 ```sh
 curl -L -o oura.tar.gz https://git.io/JD2iH && \
@@ -12,9 +12,9 @@ curl -L -o oura.tar.gz https://git.io/JD2iH && \
     mv oura /usr/local/bin
 ```
 
-## Ubuntu
+## GNU/Linux
 
-To install Oura binary in a Ubuntu running machine, use the following shell command:
+Use the following command to download and install _Oura's_ binary release for GNU/Linux:
 
 ```sh
 curl -L -o oura.tar.gz https://git.io/JD2ix && \

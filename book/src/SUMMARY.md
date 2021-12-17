@@ -17,6 +17,6 @@
     - [Terminal](./sinks/terminal.md)
     - [Kafka](./sinks/kafka.md)
 - [Reference](reference/README.md)
-    - [Data Dictionary](./data_dictionary.md)
+    - [Data Dictionary](./reference/data_dictionary.md)
 - [Guides](./guides/README.md)
     - [Cardano => Kafka](./guides/cardano_2_kafka.md)
