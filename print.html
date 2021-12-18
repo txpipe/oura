@@ -166,15 +166,11 @@
 <p>Oura can be ran as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.</p>
 <h2 id="macos"><a class="header" href="#macos">MacOS</a></h2>
 <p>Use the following command to download and install <em>Oura's</em> binary release for MacOS:</p>
-<pre><code class="language-sh">curl -L -o oura.tar.gz https://git.io/JD2iH &amp;&amp; \
-    tar xvzf oura.tar.gz &amp;&amp; \
-    mv oura /usr/local/bin
+<pre><code class="language-sh">curl --silent --location https://git.io/JD2iH | tar xz -C /tmp &amp;&amp; mv /tmp/oura /usr/local/bin
 </code></pre>
 <h2 id="gnulinux"><a class="header" href="#gnulinux">GNU/Linux</a></h2>
 <p>Use the following command to download and install <em>Oura's</em> binary release for GNU/Linux:</p>
-<pre><code class="language-sh">curl -L -o oura.tar.gz https://git.io/JD2ix &amp;&amp; \
-    tar xvzf oura.tar.gz &amp;&amp; \
-    mv oura /usr/local/bin
+<pre><code class="language-sh">curl --silent --location https://git.io/JD2ix | tar xz -C /tmp &amp;&amp; mv /tmp/oura /usr/local/bin
 </code></pre>
 <p>Check the <a href="https://github.com/txpipe/oura/releases/latest">latest release</a> for more binary download options.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="from-source"><a class="header" href="#from-source">From Source</a></h1>
@@ -616,7 +612,7 @@ topic = &quot;cardano-events&quot;
 <blockquote>
 <p>Apache Kafka is a framework implementation of a software bus using stream-processing. It is an open-source software platform developed by the Apache Software Foundation written in Scala and Java. </p>
 </blockquote>
-<p>Find <a href="https://en.wikipedia.org/wiki/Apache_Kafka">more info</a> about <em>Kafka</em> in wikipedia.</p>
+<p>Find <a href="https://en.wikipedia.org/wiki/Apache_Kafka">more info</a> about <em>Kafka</em> in wikipedia or visit <em>Kafka's</em> official <a href="https://kafka.apache.org/">website</a></p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>This examples assumes the following prerequisites:</p>
 <ul>

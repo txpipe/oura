@@ -138,15 +138,11 @@
 <p>Oura can be ran as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.</p>
 <h2 id="macos"><a class="header" href="#macos">MacOS</a></h2>
 <p>Use the following command to download and install <em>Oura's</em> binary release for MacOS:</p>
-<pre><code class="language-sh">curl -L -o oura.tar.gz https://git.io/JD2iH &amp;&amp; \
-    tar xvzf oura.tar.gz &amp;&amp; \
-    mv oura /usr/local/bin
+<pre><code class="language-sh">curl --silent --location https://git.io/JD2iH | tar xz -C /tmp &amp;&amp; mv /tmp/oura /usr/local/bin
 </code></pre>
 <h2 id="gnulinux"><a class="header" href="#gnulinux">GNU/Linux</a></h2>
 <p>Use the following command to download and install <em>Oura's</em> binary release for GNU/Linux:</p>
-<pre><code class="language-sh">curl -L -o oura.tar.gz https://git.io/JD2ix &amp;&amp; \
-    tar xvzf oura.tar.gz &amp;&amp; \
-    mv oura /usr/local/bin
+<pre><code class="language-sh">curl --silent --location https://git.io/JD2ix | tar xz -C /tmp &amp;&amp; mv /tmp/oura /usr/local/bin
 </code></pre>
 <p>Check the <a href="https://github.com/txpipe/oura/releases/latest">latest release</a> for more binary download options.</p>
 
