@@ -30,10 +30,14 @@ serde_json = "1.0.72"
 serde_derive = "1.0.130"
 
 # feature: tuisink
-tui = { version = "0.16", optional = true, default-features = false, features = ['crossterm'] }
+tui = { version = "0.16", optional = true, default-features = false, features = ["crossterm"] }
 
 # feature: kafkasink
 kafka = { version = "0.8.0", optional = true }
+
+# feature: elasticsink
+elasticsearch = { version = "7.14.0-alpha.1", optional = true }
+tokio = { version = "1.15.0", optional = true, features = ["rt"] }
 
 # required for CI to complete successfully
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
@@ -42,4 +46,5 @@ minicbor = "0.12.0"
 [features]
 default = []
 kafkasink = ["kafka", "openssl"]
+elasticsink = ["elasticsearch", "tokio"]
 tuisink = ["tui"]
