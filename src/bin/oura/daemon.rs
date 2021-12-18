@@ -9,7 +9,7 @@ use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 use serde_derive::Deserialize;
 
-#[cfg(kafkasink)]
+#[cfg(feature = "kafkasink")]
 use oura::sinks::kafka::Config as KafkaConfig;
 
 use crate::Error;
@@ -35,7 +35,7 @@ impl SourceConfig for Source {
 enum Sink {
     Terminal(TerminalConfig),
 
-    #[cfg(kafkasink)]
+    #[cfg(feature = "kafkasink")]
     Kafka(KafkaConfig),
 }
 
@@ -44,7 +44,7 @@ impl SinkConfig for Sink {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),
 
-            #[cfg(kafkasink)]
+            #[cfg(feature = "kafkasink")]
             Sink::Kafka(c) => c.bootstrap(input),
         }
     }
