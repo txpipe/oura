@@ -1,7 +1,7 @@
 pub mod terminal;
 
-#[cfg(tuisink)]
+#[cfg(feature = "tuisink")]
 pub mod tui;
 
-#[cfg(kafkasink)]
+#[cfg(feature = "kafkasink")]
 pub mod kafka;
