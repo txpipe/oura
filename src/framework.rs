@@ -27,6 +27,7 @@ pub enum StakeCredential {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "type")]
 pub enum EventData {
     Block {
         body_size: usize,
