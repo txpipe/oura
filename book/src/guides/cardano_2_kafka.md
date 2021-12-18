@@ -6,7 +6,8 @@ This guide shows how to leverage _Oura_ to stream data from a Cardano node into 
 
 > Apache Kafka is a framework implementation of a software bus using stream-processing. It is an open-source software platform developed by the Apache Software Foundation written in Scala and Java. 
 
-Find [more info](https://en.wikipedia.org/wiki/Apache_Kafka) about _Kafka_ in wikipedia.
+Find [more info](https://en.wikipedia.org/wiki/Apache_Kafka) about _Kafka_ in wikipedia or visit _Kafka's_ official [website](https://kafka.apache.org/)
+
 
 ## Prerequisites
 
