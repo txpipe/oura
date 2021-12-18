@@ -12,6 +12,9 @@ use serde_derive::Deserialize;
 #[cfg(feature = "kafkasink")]
 use oura::sinks::kafka::Config as KafkaConfig;
 
+#[cfg(feature = "elasticsink")]
+use oura::sinks::elastic::Config as ElasticConfig;
+
 use crate::Error;
 
 #[derive(Debug, Deserialize)]
@@ -37,6 +40,9 @@ enum Sink {
 
     #[cfg(feature = "kafkasink")]
     Kafka(KafkaConfig),
+    
+    #[cfg(feature = "elasticsink")]
+    Elastic(ElasticConfig),
 }
 
 impl SinkConfig for Sink {
@@ -46,6 +52,9 @@ impl SinkConfig for Sink {
 
             #[cfg(feature = "kafkasink")]
             Sink::Kafka(c) => c.bootstrap(input),
+            
+            #[cfg(feature = "elasticsink")]
+            Sink::Elastic(c) => c.bootstrap(input),
         }
     }
 }
