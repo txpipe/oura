@@ -7,9 +7,7 @@ Oura can be ran as a standalone executable. Follow the instructions for your par
 Use the following command to download and install _Oura's_ binary release for MacOS:
 
 ```sh
-curl -L -o oura.tar.gz https://git.io/JD2iH && \
-    tar xvzf oura.tar.gz && \
-    mv oura /usr/local/bin
+curl --silent --location https://git.io/JD2iH | tar xz -C /tmp && mv /tmp/oura /usr/local/bin
 ```
 
 ## GNU/Linux
@@ -17,9 +15,7 @@ curl -L -o oura.tar.gz https://git.io/JD2iH && \
 Use the following command to download and install _Oura's_ binary release for GNU/Linux:
 
 ```sh
-curl -L -o oura.tar.gz https://git.io/JD2ix && \
-    tar xvzf oura.tar.gz && \
-    mv oura /usr/local/bin
+curl --silent --location https://git.io/JD2ix | tar xz -C /tmp && mv /tmp/oura /usr/local/bin
 ```
 
 Check the [latest release](https://github.com/txpipe/oura/releases/latest) for more binary download options.
