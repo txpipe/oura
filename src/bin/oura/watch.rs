@@ -66,10 +66,12 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         PeerMode::AsNode => WatchSource::N2N(N2NConfig {
             address: AddressArg(bearer, socket),
             magic,
+            well_known: None,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
             magic,
+            well_known: None,
         }),
     };
 

@@ -21,7 +21,7 @@ use pallas::{
 use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
-    framework::{Error, Event, EventData, EventSource, EventWriter},
+    framework::{ChainWellKnownInfo, Error, Event, EventData, EventSource, EventWriter},
     mapping::ToHex,
 };
 
@@ -107,10 +107,11 @@ impl Observer<Content> for ChainObserver {
 
 fn fetch_blocks_forever(
     mut channel: Channel,
+    chain_info: ChainWellKnownInfo,
     input: Receiver<Point>,
     output: Sender<Event>,
 ) -> Result<(), Error> {
-    let writer = EventWriter::new(output);
+    let writer = EventWriter::new(output, Some(chain_info));
     let observer = Block2EventMapper(writer);
     let agent = BlockClient::initial(input, observer);
     let agent = run_agent(agent, &mut channel)?;
@@ -121,11 +122,12 @@ fn fetch_blocks_forever(
 
 fn observe_headers_forever(
     mut channel: Channel,
+    chain_info: ChainWellKnownInfo,
     from: Point,
     event_output: Sender<Event>,
     block_requests: Sender<Point>,
 ) -> Result<(), Error> {
-    let event_writer = EventWriter::new(event_output);
+    let event_writer = EventWriter::new(event_output, Some(chain_info));
     let observer = ChainObserver {
         event_writer,
         block_requests,

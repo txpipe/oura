@@ -13,10 +13,8 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{BootstrapResult, Error, Event, SourceConfig},
-    sources::common::{
-        find_end_of_chain, get_wellknonwn_chain_point, AddressArg, BearerKind, MagicArg,
-    },
+    framework::{BootstrapResult, ChainWellKnownInfo, Error, Event, SourceConfig},
+    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg},
 };
 
 use super::observe_forever;
@@ -27,6 +25,8 @@ pub struct Config {
 
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
+
+    pub well_known: Option<ChainWellKnownInfo>,
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
@@ -66,18 +66,22 @@ impl SourceConfig for Config {
             None => MAINNET_MAGIC,
         };
 
+        let well_known = match &self.well_known {
+            Some(info) => info.clone(),
+            None => ChainWellKnownInfo::try_from_magic(magic)?,
+        };
+
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
 
         let mut cs_channel = muxer.use_channel(5);
 
-        let wellknown_point = get_wellknonwn_chain_point(magic)?;
-        let node_tip = find_end_of_chain(&mut cs_channel, wellknown_point)?;
+        let node_tip = find_end_of_chain(&mut cs_channel, &well_known)?;
 
         info!("node tip: {:?}", &node_tip);
 
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, node_tip, output).expect("chainsync loop failed");
+            observe_forever(cs_channel, well_known, node_tip, output).expect("chainsync loop failed");
         });
 
         Ok(handle)
