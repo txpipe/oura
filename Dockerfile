@@ -20,7 +20,7 @@ WORKDIR /code
 
 COPY . .
 
-RUN cargo install --path . --offline
+RUN cargo install --path . --offline --all-features
 
 FROM debian:buster-slim
 
