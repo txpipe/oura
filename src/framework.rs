@@ -31,7 +31,7 @@ impl ChainWellKnownInfo {
                 shelley_known_slot: 1598399,
                 shelley_known_hash:
                     "7e16781b40ebf8b6da18f7b5e8ade855d6738095ef2f1c58c77e88b6e45997a4".to_string(),
-                shelley_known_time: 1506203091,
+                shelley_known_time: 1595967596,
             }),
             _ => Err("can't infer well-known chain infro from specified magic".into()),
         }
