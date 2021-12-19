@@ -342,6 +342,7 @@ impl EventSource for Block {
         let writer = writer.child_writer(EventContext {
             block_number: Some(self.header.header_body.block_number),
             slot: Some(self.header.header_body.slot),
+            timestamp: writer.compute_timestamp(self.header.header_body.slot),
             ..EventContext::default()
         });
 

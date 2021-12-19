@@ -22,8 +22,10 @@ impl LogLine {
                 prefix: "BLOCK",
                 color: Color::Magenta,
                 content: format!(
-                    "{{ body size: {}, issues vkey: {} }}",
-                    body_size, issuer_vkey
+                    "{{ body size: {}, issues vkey: {}, timestamp: {} }}",
+                    body_size,
+                    issuer_vkey,
+                    source.context.timestamp.unwrap_or_default(),
                 ),
                 source,
                 max_width,

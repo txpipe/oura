@@ -13,9 +13,9 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{BootstrapResult, Error, Event, SourceConfig},
+    framework::{BootstrapResult, ChainWellKnownInfo, Error, Event, SourceConfig},
     sources::{
-        common::{find_end_of_chain, get_wellknonwn_chain_point, AddressArg, BearerKind, MagicArg},
+        common::{find_end_of_chain, AddressArg, BearerKind, MagicArg},
         n2n::{fetch_blocks_forever, observe_headers_forever},
     },
 };
@@ -26,6 +26,8 @@ pub struct Config {
 
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
+
+    pub well_known: Option<ChainWellKnownInfo>,
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
@@ -65,28 +67,34 @@ impl SourceConfig for Config {
             None => MAINNET_MAGIC,
         };
 
+        let well_known = match &self.well_known {
+            Some(info) => info.clone(),
+            None => ChainWellKnownInfo::try_from_magic(magic)?,
+        };
+
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
 
         let mut cs_channel = muxer.use_channel(2);
 
-        let wellknown_point = get_wellknonwn_chain_point(magic)?;
-        let node_tip = find_end_of_chain(&mut cs_channel, wellknown_point)?;
+        let node_tip = find_end_of_chain(&mut cs_channel, &well_known)?;
 
         info!("node tip: {:?}", &node_tip);
 
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
 
         let cs_events = output.clone();
+        let cs_chain_info = well_known.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, node_tip, cs_events, headers_tx)
+            observe_headers_forever(cs_channel, cs_chain_info, node_tip, cs_events, headers_tx)
                 .expect("chainsync loop failed");
         });
 
         let bf_channel = muxer.use_channel(3);
-
+        let bf_chain_info = well_known.clone();
         let _bf_handle = std::thread::spawn(move || {
-            fetch_blocks_forever(bf_channel, headers_rx, output).expect("blockfetch loop failed");
+            fetch_blocks_forever(bf_channel, bf_chain_info, headers_rx, output)
+                .expect("blockfetch loop failed");
         });
 
         Ok(cs_handle)

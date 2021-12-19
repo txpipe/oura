@@ -40,7 +40,7 @@ enum Sink {
 
     #[cfg(feature = "kafkasink")]
     Kafka(KafkaConfig),
-    
+
     #[cfg(feature = "elasticsink")]
     Elastic(ElasticConfig),
 }
@@ -52,7 +52,7 @@ impl SinkConfig for Sink {
 
             #[cfg(feature = "kafkasink")]
             Sink::Kafka(c) => c.bootstrap(input),
-            
+
             #[cfg(feature = "elasticsink")]
             Sink::Elastic(c) => c.bootstrap(input),
         }

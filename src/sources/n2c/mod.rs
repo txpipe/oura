@@ -19,7 +19,7 @@ use pallas::{
 use std::sync::mpsc::Sender;
 
 use crate::{
-    framework::{Error, Event, EventData, EventSource, EventWriter},
+    framework::{ChainWellKnownInfo, Error, Event, EventData, EventSource, EventWriter},
     mapping::ToHex,
 };
 
@@ -81,8 +81,13 @@ impl Observer<Content> for ChainObserver {
     }
 }
 
-fn observe_forever(mut channel: Channel, from: Point, output: Sender<Event>) -> Result<(), Error> {
-    let writer = EventWriter::new(output);
+fn observe_forever(
+    mut channel: Channel,
+    chain_info: ChainWellKnownInfo,
+    from: Point,
+    output: Sender<Event>,
+) -> Result<(), Error> {
+    let writer = EventWriter::new(output, Some(chain_info));
     let observer = ChainObserver(writer);
     let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;

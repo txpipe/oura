@@ -11,7 +11,7 @@ use pallas::ouroboros::network::{
 use serde::{de::Visitor, Deserializer};
 use serde_derive::Deserialize;
 
-use crate::framework::Error;
+use crate::framework::ChainWellKnownInfo;
 
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {
@@ -98,25 +98,15 @@ where
     deserializer.deserialize_any(MagicArgVisitor)
 }
 
-pub fn get_wellknonwn_chain_point(magic: u64) -> Result<Point, Error> {
-    match magic {
-        MAINNET_MAGIC => Ok(Point(
-            4492799,
-            hex::decode("f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457")?,
-        )),
-        TESTNET_MAGIC => Ok(Point(
-            1598399,
-            hex::decode("7e16781b40ebf8b6da18f7b5e8ade855d6738095ef2f1c58c77e88b6e45997a4")?,
-        )),
-        _ => Err("don't have a well-known chain point for the requested magic".into()),
-    }
-}
-
 pub fn find_end_of_chain(
     channel: &mut Channel,
-    wellknown_point: Point,
+    well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::framework::Error> {
-    let agent = TipFinder::initial(wellknown_point);
+    let point = Point(
+        well_known.shelley_known_slot,
+        hex::decode(&well_known.shelley_known_hash)?,
+    );
+    let agent = TipFinder::initial(point);
     let agent = run_agent(agent, channel)?;
     info!("chain point query output: {:?}", agent.output);
 
