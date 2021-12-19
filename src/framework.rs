@@ -196,10 +196,9 @@ impl EventWriter {
     }
 
     pub fn compute_timestamp(&self, slot: u64) -> Option<u64> {
-        match &self.chain_info {
-            None => None,
-            Some(info) => Some(info.shelley_known_time + (slot - info.shelley_known_slot)),
-        }
+        self.chain_info
+            .as_ref()
+            .map(|info| info.shelley_known_time + (slot - info.shelley_known_slot))
     }
 }
 

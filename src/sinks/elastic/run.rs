@@ -16,7 +16,10 @@ async fn index_event(client: Arc<Elasticsearch>, index: &str, evt: Event) -> Res
     if response.status_code().is_success() {
         debug!("pushed event to elastic");
     } else {
-        error!("error pushing event to elastic: {:?}", response.text().await);
+        error!(
+            "error pushing event to elastic: {:?}",
+            response.text().await
+        );
     }
 
     Ok(())

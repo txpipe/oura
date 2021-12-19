@@ -102,7 +102,10 @@ pub fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::framework::Error> {
-    let point = Point(well_known.shelley_known_slot, hex::decode(&well_known.shelley_known_hash)?);
+    let point = Point(
+        well_known.shelley_known_slot,
+        hex::decode(&well_known.shelley_known_hash)?,
+    );
     let agent = TipFinder::initial(point);
     let agent = run_agent(agent, channel)?;
     info!("chain point query output: {:?}", agent.output);

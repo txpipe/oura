@@ -81,7 +81,8 @@ impl SourceConfig for Config {
         info!("node tip: {:?}", &node_tip);
 
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, well_known, node_tip, output).expect("chainsync loop failed");
+            observe_forever(cs_channel, well_known, node_tip, output)
+                .expect("chainsync loop failed");
         });
 
         Ok(handle)
