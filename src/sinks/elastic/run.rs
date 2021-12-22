@@ -1,11 +1,21 @@
 use elasticsearch::{Elasticsearch, IndexParts};
-use log::{debug, error, info};
+use log::{debug, error};
+use serde_json::{json, Value};
 use std::sync::{mpsc::Receiver, Arc};
 
 use crate::framework::{Error, Event};
 
+fn render_es_json(event: Event) -> Value {
+    json!({
+        "context": event.context,
+        "data": event.data,
+        // we need this field so that our data plays nicely with Elasticsearch "data streams".
+        "@timestamp": event.context.timestamp,
+    })
+}
+
 async fn index_event(client: Arc<Elasticsearch>, index: &str, evt: Event) -> Result<(), Error> {
-    let json = serde_json::to_value(evt)?;
+    let json = render_es_json(evt);
 
     let response = client
         .index(IndexParts::Index(&index))
