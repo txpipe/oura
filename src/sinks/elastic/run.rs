@@ -10,7 +10,7 @@ fn render_es_json(event: Event) -> Value {
         "context": event.context,
         "data": event.data,
         // we need this field so that our data plays nicely with Elasticsearch "data streams".
-        "@timestamp": event.context.timestamp,
+        "@timestamp": event.context.timestamp.map(|x| x * 1000),
     })
 }
 
