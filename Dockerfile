@@ -1,31 +1,39 @@
-# fetch the vendor with the builder platform to avoid qemu issues
-FROM --platform=$BUILDPLATFORM rust:1 AS vendors
+FROM --platform=linux/amd64 rust:1 as builder-arm64
 
-WORKDIR /code
+RUN apt update && apt upgrade -y
+RUN apt install -y g++-arm-linux-gnueabihf libc6-dev-armhf-cross
 
-RUN cargo init
+ENV RUST_TARGET=armv7-unknown-linux-gnueabihf
 
-COPY Cargo.toml Cargo.toml
-COPY Cargo.lock Cargo.lock
+RUN rustup target add armv7-unknown-linux-gnueabihf
+RUN rustup toolchain install stable-armv7-unknown-linux-gnueabihf
 
-RUN mkdir -p ./.cargo \
-  && cargo vendor > ./.cargo/config
+ENV CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc \
+    CC_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-gcc \
+    CXX_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-g++
 
-FROM rust:1 as builder
 
-COPY --from=vendors /code/.cargo /code/.cargo
-COPY --from=vendors /code/vendor /code/vendor
+
+FROM --platform=linux/amd64 rust:1 as builder-amd64
+
+ENV RUST_TARGET=x86_64-unknown-linux-gnu
+
+
+
+FROM --platform=linux/amd64 builder-${TARGETARCH} as builder
 
 WORKDIR /code
 
 COPY . .
 
-RUN cargo install --path . --offline --all-features
+RUN cargo build --release --target ${RUST_TARGET} --all-features
+
+RUN cp /code/target/${RUST_TARGET}/release/oura /oura
 
 FROM debian:buster-slim
 
 #RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/cargo/bin/oura /usr/local/bin/oura
+COPY --from=builder /oura /usr/local/bin/oura
 
 ENTRYPOINT [ "oura" ]
