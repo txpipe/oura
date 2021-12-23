@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation/binary_release.html"><strong aria-hidden="true">2.1.</strong> Binary Release</a></li><li class="chapter-item expanded "><a href="installation/from_source.html"><strong aria-hidden="true">2.2.</strong> From Source</a></li><li class="chapter-item expanded "><a href="installation/docker.html"><strong aria-hidden="true">2.3.</strong> Docker</a></li><li class="chapter-item expanded "><a href="installation/kubernetes.html"><strong aria-hidden="true">2.4.</strong> Kubernetes</a></li></ol></li><li class="chapter-item expanded "><a href="usage/index.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="usage/watch.html"><strong aria-hidden="true">3.1.</strong> Watch Mode</a></li><li class="chapter-item expanded "><a href="usage/daemon.html"><strong aria-hidden="true">3.2.</strong> Daemon Mode</a></li><li class="chapter-item expanded "><a href="usage/library.html"><strong aria-hidden="true">3.3.</strong> Library</a></li></ol></li><li class="chapter-item expanded "><a href="sources/index.html"><strong aria-hidden="true">4.</strong> Sources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sources/n2n.html"><strong aria-hidden="true">4.1.</strong> Node-to-Node</a></li><li class="chapter-item expanded "><a href="sources/n2c.html"><strong aria-hidden="true">4.2.</strong> Node-to-Client</a></li></ol></li><li class="chapter-item expanded "><a href="sinks/index.html"><strong aria-hidden="true">5.</strong> Sinks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sinks/terminal.html"><strong aria-hidden="true">5.1.</strong> Terminal</a></li><li class="chapter-item expanded "><a href="sinks/kafka.html"><strong aria-hidden="true">5.2.</strong> Kafka</a></li></ol></li><li class="chapter-item expanded "><a href="reference/index.html"><strong aria-hidden="true">6.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="reference/data_dictionary.html"><strong aria-hidden="true">6.1.</strong> Data Dictionary</a></li></ol></li><li class="chapter-item expanded "><a href="guides/index.html"><strong aria-hidden="true">7.</strong> Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guides/cardano_2_kafka.html"><strong aria-hidden="true">7.1.</strong> Cardano =&gt; Kafka</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation/binary_release.html"><strong aria-hidden="true">2.1.</strong> Binary Release</a></li><li class="chapter-item expanded "><a href="installation/from_source.html"><strong aria-hidden="true">2.2.</strong> From Source</a></li><li class="chapter-item expanded "><a href="installation/docker.html"><strong aria-hidden="true">2.3.</strong> Docker</a></li><li class="chapter-item expanded "><a href="installation/kubernetes.html"><strong aria-hidden="true">2.4.</strong> Kubernetes</a></li></ol></li><li class="chapter-item expanded "><a href="usage/index.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="usage/watch.html"><strong aria-hidden="true">3.1.</strong> Watch Mode</a></li><li class="chapter-item expanded "><a href="usage/daemon.html"><strong aria-hidden="true">3.2.</strong> Daemon Mode</a></li><li class="chapter-item expanded "><a href="usage/library.html"><strong aria-hidden="true">3.3.</strong> Library</a></li></ol></li><li class="chapter-item expanded "><a href="sources/index.html"><strong aria-hidden="true">4.</strong> Sources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sources/n2n.html"><strong aria-hidden="true">4.1.</strong> Node-to-Node</a></li><li class="chapter-item expanded "><a href="sources/n2c.html"><strong aria-hidden="true">4.2.</strong> Node-to-Client</a></li></ol></li><li class="chapter-item expanded "><a href="sinks/index.html"><strong aria-hidden="true">5.</strong> Sinks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="sinks/terminal.html"><strong aria-hidden="true">5.1.</strong> Terminal</a></li><li class="chapter-item expanded "><a href="sinks/kafka.html"><strong aria-hidden="true">5.2.</strong> Kafka</a></li><li class="chapter-item expanded "><a href="sinks/elastic.html"><strong aria-hidden="true">5.3.</strong> Elasticsearch</a></li></ol></li><li class="chapter-item expanded "><a href="reference/index.html"><strong aria-hidden="true">6.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="reference/data_dictionary.html"><strong aria-hidden="true">6.1.</strong> Data Dictionary</a></li></ol></li><li class="chapter-item expanded "><a href="guides/index.html"><strong aria-hidden="true">7.</strong> Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guides/cardano_2_kafka.html"><strong aria-hidden="true">7.1.</strong> Cardano =&gt; Kafka</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -350,6 +350,7 @@ magic = &quot;mainnet&quot;
 <ul>
 <li><a href="sinks/terminal.html">Terminal</a>: a sink that outputs events into stdout with fancy coloring</li>
 <li><a href="sinks/kafka.html">Kakfa</a>: a sink that sends each event into a Kafka topic</li>
+<li><a href="sinks/elastic.html">Elasticsearch</a>: a sink that writes events into an Elasticsearch index or data stream.</li>
 </ul>
 <p>New sinks are being developed, information will be added in this documentation to reflect the updated list. Contributions and feature request are welcome in our <a href="https://github.com/txpipe/oura">Github Repo</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="terminal"><a class="header" href="#terminal">Terminal</a></h1>
@@ -375,6 +376,33 @@ topic = &quot;cardano-events&quot;
 <li><code>type</code>: the literal value <code>Kafka</code>.</li>
 <li><code>brokers</code>: indicates the location of the <em>Kafka</em> brokers within the network. Several hostname:port pairs can be added to the array for a &quot;cluster&quot; scenario.</li>
 <li><code>topic</code> this field indicates which <em>Kafka</em> topic to use to send the outbound messages.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="elasticsearch"><a class="header" href="#elasticsearch">Elasticsearch</a></h1>
+<p>A sink that outputs events into an Elasticsearch server. Each event is json-encoded and sent as a message to an index or data stream.</p>
+<h2 id="configuration-5"><a class="header" href="#configuration-5">Configuration</a></h2>
+<pre><code class="language-toml">[sink]
+type = &quot;Elastic&quot;
+url = &quot;https://localhost:9200&quot;
+index = &quot;oura.sink.v0.mainnet&quot;
+
+[sink.credentials]
+type = &quot;Basic&quot;
+username = &quot;oura123&quot;
+password = &quot;my very secret stuff&quot;
+</code></pre>
+<h3 id="section-sink"><a class="header" href="#section-sink">Section: <code>sink</code></a></h3>
+<ul>
+<li><code>type</code>: the literal value <code>Elastic</code>.</li>
+<li><code>url</code>: the location of the Elasticsearch's API</li>
+<li><code>index</code>: the name of the index (or data stream) to store the event documents</li>
+</ul>
+<h3 id="section-sinkcredentials"><a class="header" href="#section-sinkcredentials">Section: <code>sink.credentials</code></a></h3>
+<p>This section configures the auth mechanism against Elasticsearch. You can remove the whole section from the configuration if you want to skip authentication altogether (maybe private cluster without auth?).</p>
+<p>We currently only implement <em>basic</em> auth, other mechanisms will be implemented at some point.</p>
+<ul>
+<li><code>type</code>: the mechanism to use for authentication, only <code>Basic</code> is currenty implemented</li>
+<li><code>username</code>: username of the user with access to Elasticsearch </li>
+<li><code>password</code>: password of the user with access to Elasticsearch </li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="data-dictionary"><a class="header" href="#data-dictionary">Data Dictionary</a></h1>
