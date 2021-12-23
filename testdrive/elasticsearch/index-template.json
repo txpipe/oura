@@ -1,0 +1,185 @@
+{
+    "template": {
+        "mappings": {
+            "properties": {
+                "@timestamp": {
+                    "type": "date"
+                },
+                "block": {
+                    "properties": {
+                        "body_size": {
+                            "type": "long"
+                        },
+                        "issuer_vkey": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "collateral": {
+                    "properties": {
+                        "index": {
+                            "type": "long"
+                        },
+                        "tx_id": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "context": {
+                    "properties": {
+                        "block_number": {
+                            "type": "long"
+                        },
+                        "input_idx": {
+                            "type": "long"
+                        },
+                        "slot": {
+                            "type": "long"
+                        },
+                        "timestamp": {
+                            "type": "long"
+                        },
+                        "tx_hash": {
+                            "type": "keyword"
+                        },
+                        "tx_idx": {
+                            "type": "long"
+                        }
+                    }
+                },
+                "metadata": {
+                    "properties": {
+                        "key": {
+                            "type": "keyword"
+                        },
+                        "subkey": {
+                            "type": "keyword"
+                        },
+                        "value": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "mint": {
+                    "properties": {
+                        "asset": {
+                            "type": "keyword"
+                        },
+                        "policy": {
+                            "type": "keyword"
+                        },
+                        "quantity": {
+                            "type": "long"
+                        }
+                    }
+                },
+                "output_asset": {
+                    "properties": {
+                        "amount": {
+                            "type": "long"
+                        },
+                        "asset": {
+                            "type": "keyword"
+                        },
+                        "policy": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "plutus_script_ref": {
+                    "properties": {
+                        "data": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "roll_back": {
+                    "properties": {
+                        "block_hash": {
+                            "type": "keyword"
+                        },
+                        "block_slot": {
+                            "type": "long"
+                        }
+                    }
+                },
+                "stake_delegation": {
+                    "properties": {
+                        "credential": {
+                            "properties": {
+                                "AddrKeyhash": {
+                                    "type": "keyword"
+                                }
+                            }
+                        },
+                        "pool_hash": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "stake_deregistration": {
+                    "properties": {
+                        "credential": {
+                            "properties": {
+                                "AddrKeyhash": {
+                                    "type": "keyword"
+                                }
+                            }
+                        }
+                    }
+                },
+                "stake_registration": {
+                    "properties": {
+                        "credential": {
+                            "properties": {
+                                "AddrKeyhash": {
+                                    "type": "keyword"
+                                }
+                            }
+                        }
+                    }
+                },
+                "transaction": {
+                    "properties": {
+                        "fee": {
+                            "type": "long"
+                        },
+                        "ttl": {
+                            "type": "long"
+                        },
+                        "validity_interval_start": {
+                            "type": "long"
+                        }
+                    }
+                },
+                "tx_input": {
+                    "properties": {
+                        "index": {
+                            "type": "long"
+                        },
+                        "tx_id": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "tx_output": {
+                    "properties": {
+                        "address": {
+                            "type": "keyword"
+                        },
+                        "amount": {
+                            "type": "long"
+                        }
+                    }
+                },
+                "variant": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                }
+            }
+        }
+    },
+    "index_patterns": [
+        "oura.sink.v0.*"
+    ]
+}

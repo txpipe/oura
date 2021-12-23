@@ -1,0 +1,14 @@
+[source]
+type = "N2N"
+address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
+magic = "mainnet"
+
+[sink]
+type = "Elastic"
+url = "https://localhost:9200"
+index = "oura.sink.v0.mainnet"
+
+[sink.credentials]
+type = "Basic"
+username = "elastic"
+password = "your secret password"
