@@ -264,7 +264,7 @@ impl EventSource for TransactionBodyComponent {
             }
             TransactionBodyComponent::Certificates(certs) => {
                 for cert in certs.iter() {
-                    cert.write_events(&writer)?;
+                    cert.write_events(writer)?;
                 }
             }
             TransactionBodyComponent::Mint(mint) => {
@@ -330,7 +330,7 @@ impl EventSource for TransactionBody {
 
         // write sub-events
         for component in self.iter() {
-            component.write_events(&writer)?;
+            component.write_events(writer)?;
         }
 
         Ok(())

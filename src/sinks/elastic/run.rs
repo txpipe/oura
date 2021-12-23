@@ -1,10 +1,10 @@
 use elasticsearch::{Elasticsearch, IndexParts};
 use log::{debug, error};
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::sync::{mpsc::Receiver, Arc};
 
-use crate::framework::{Error, Event, EventData};
+use crate::framework::{Error, Event};
 
 #[derive(Serialize)]
 struct ESRecord {
@@ -23,7 +23,11 @@ impl From<Event> for ESRecord {
         let timestamp = event.context.timestamp.map(|x| x * 1000).clone();
         let variant = event.data.to_string();
 
-        ESRecord { event, timestamp, variant }
+        ESRecord {
+            event,
+            timestamp,
+            variant,
+        }
     }
 }
 
