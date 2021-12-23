@@ -81,7 +81,7 @@ impl ConfigRoot {
         }
 
         // finally, we use env vars to make some last-step overrides
-        s.merge(Environment::with_prefix("OURA"))?;
+        s.merge(Environment::with_prefix("OURA").separator("_"))?;
 
         s.try_into()
     }
