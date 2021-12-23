@@ -1,15 +1,38 @@
 use elasticsearch::{Elasticsearch, IndexParts};
-use log::{debug, error, info};
+use log::{debug, error};
+use serde::Serialize;
+use serde_json::{json, Value};
 use std::sync::{mpsc::Receiver, Arc};
 
-use crate::framework::{Error, Event};
+use crate::framework::{Error, Event, EventData};
+
+#[derive(Serialize)]
+struct ESRecord {
+    #[serde(flatten)]
+    event: Event,
+
+    variant: String,
+
+    // we need this field so that our data plays nicely with Elasticsearch "data streams".
+    #[serde(rename = "@timestamp")]
+    timestamp: Option<u64>,
+}
+
+impl From<Event> for ESRecord {
+    fn from(event: Event) -> Self {
+        let timestamp = event.context.timestamp.map(|x| x * 1000).clone();
+        let variant = event.data.to_string();
+
+        ESRecord { event, timestamp, variant }
+    }
+}
 
 async fn index_event(client: Arc<Elasticsearch>, index: &str, evt: Event) -> Result<(), Error> {
-    let json = serde_json::to_value(evt)?;
+    let record = ESRecord::from(evt);
 
     let response = client
         .index(IndexParts::Index(&index))
-        .body(json)
+        .body(json!(record))
         .send()
         .await?;
 

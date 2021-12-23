@@ -1,0 +1,1 @@
+RUST_LOG=info cargo run --features elasticsink --bin oura -- daemon --config ./daemon.toml

@@ -16,6 +16,7 @@
 - [Sinks](./sinks/README.md)
     - [Terminal](./sinks/terminal.md)
     - [Kafka](./sinks/kafka.md)
+    - [Elasticsearch](./sinks/elastic.md)
 - [Reference](reference/README.md)
     - [Data Dictionary](./reference/data_dictionary.md)
 - [Guides](./guides/README.md)

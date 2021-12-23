@@ -8,6 +8,7 @@ use merge::Merge;
 
 use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
+use strum_macros::Display;
 
 pub type Error = Box<dyn std::error::Error>;
 
@@ -55,8 +56,8 @@ pub enum StakeCredential {
     Scripthash(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "type")]
+#[derive(Serialize, Deserialize, Display, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
 pub enum EventData {
     Block {
         body_size: usize,
@@ -145,6 +146,8 @@ pub enum EventData {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
     pub context: EventContext,
+
+    #[serde(flatten)]
     pub data: EventData,
 }
 
