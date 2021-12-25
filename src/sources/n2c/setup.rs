@@ -6,7 +6,7 @@ use log::info;
 
 use pallas::ouroboros::network::{
     handshake::{n2c, MAINNET_MAGIC},
-    machines::run_agent,
+    machines::{primitives::Point, run_agent},
     multiplexer::{Channel, Multiplexer},
 };
 
@@ -14,7 +14,7 @@ use serde_derive::Deserialize;
 
 use crate::{
     framework::{BootstrapResult, ChainWellKnownInfo, Error, Event, SourceConfig},
-    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg},
+    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
 };
 
 use super::observe_forever;
@@ -25,6 +25,8 @@ pub struct Config {
 
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
+
+    pub since: Option<PointArg>,
 
     pub well_known: Option<ChainWellKnownInfo>,
 }
@@ -76,12 +78,15 @@ impl SourceConfig for Config {
 
         let mut cs_channel = muxer.use_channel(5);
 
-        let node_tip = find_end_of_chain(&mut cs_channel, &well_known)?;
+        let since: Point = match &self.since {
+            Some(arg) => arg.try_into()?,
+            None => find_end_of_chain(&mut cs_channel, &well_known)?,
+        };
 
-        info!("node tip: {:?}", &node_tip);
+        info!("starting from chain point: {:?}", &since);
 
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, well_known, node_tip, output)
+            observe_forever(cs_channel, well_known, since, output)
                 .expect("chainsync loop failed");
         });
 

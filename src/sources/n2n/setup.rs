@@ -6,7 +6,7 @@ use log::info;
 
 use pallas::ouroboros::network::{
     handshake::{n2n, MAINNET_MAGIC},
-    machines::run_agent,
+    machines::{primitives::Point, run_agent},
     multiplexer::{Channel, Multiplexer},
 };
 
@@ -15,7 +15,7 @@ use serde_derive::Deserialize;
 use crate::{
     framework::{BootstrapResult, ChainWellKnownInfo, Error, Event, SourceConfig},
     sources::{
-        common::{find_end_of_chain, AddressArg, BearerKind, MagicArg},
+        common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
         n2n::{fetch_blocks_forever, observe_headers_forever},
     },
 };
@@ -26,6 +26,8 @@ pub struct Config {
 
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
+
+    pub since: Option<PointArg>,
 
     pub well_known: Option<ChainWellKnownInfo>,
 }
@@ -77,17 +79,26 @@ impl SourceConfig for Config {
 
         let mut cs_channel = muxer.use_channel(2);
 
-        let node_tip = find_end_of_chain(&mut cs_channel, &well_known)?;
+        let since: Point = match &self.since {
+            Some(arg) => arg.try_into()?,
+            None => find_end_of_chain(&mut cs_channel, &well_known)?,
+        };
 
-        info!("node tip: {:?}", &node_tip);
+        info!("starting from chain point: {:?}", &since);
 
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
 
         let cs_events = output.clone();
         let cs_chain_info = well_known.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, cs_chain_info, node_tip, cs_events, headers_tx)
-                .expect("chainsync loop failed");
+            observe_headers_forever(
+                cs_channel,
+                cs_chain_info,
+                since,
+                cs_events,
+                headers_tx,
+            )
+            .expect("chainsync loop failed");
         });
 
         let bf_channel = muxer.use_channel(3);
