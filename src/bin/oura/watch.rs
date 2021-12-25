@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::mpsc::Sender};
 use clap::{value_t, ArgMatches};
 use oura::{
     framework::*,
-    sources::common::{AddressArg, BearerKind, MagicArg},
+    sources::common::{AddressArg, BearerKind, MagicArg, PointArg},
 };
 
 use serde_derive::Deserialize;
@@ -56,6 +56,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => None,
     };
 
+    let since = match args.is_present("since") {
+        true => Some(value_t!(args, "since", PointArg)?),
+        false => None,
+    };
+
     let mode = match (args.is_present("mode"), &bearer) {
         (true, _) => value_t!(args, "mode", PeerMode).expect("invalid value for 'mode' arg"),
         (false, BearerKind::Tcp) => PeerMode::AsNode,
@@ -67,11 +72,13 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
+            since,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
+            since,
         }),
     };
 

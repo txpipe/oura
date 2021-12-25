@@ -9,9 +9,9 @@ use pallas::ouroboros::network::{
     multiplexer::Channel,
 };
 use serde::{de::Visitor, Deserializer};
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 
-use crate::framework::ChainWellKnownInfo;
+use crate::framework::{ChainWellKnownInfo, Error};
 
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {
@@ -30,6 +30,40 @@ impl FromStr for BearerKind {
             "unix" => Ok(BearerKind::Unix),
             "tcp" => Ok(BearerKind::Tcp),
             _ => Err("can't parse bearer type value"),
+        }
+    }
+}
+
+/// A serialization-friendly chain Point struct using a hex-encoded hash
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PointArg(u64, String);
+
+impl TryInto<Point> for &PointArg {
+    type Error = Error;
+
+    fn try_into(self) -> Result<Point, Self::Error> {
+        let hash = hex::decode(&self.1)?;
+        Ok(Point(self.0, hash))
+    }
+}
+
+impl From<&Point> for PointArg {
+    fn from(other: &Point) -> Self {
+        PointArg(other.0, hex::encode(&other.1))
+    }
+}
+
+impl FromStr for PointArg {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.contains(",") {
+            let mut parts: Vec<_> = s.split(",").collect();
+            let slot = parts.remove(0).parse()?;
+            let hash = parts.remove(0).to_owned();
+            Ok(PointArg(slot, hash))
+        } else {
+            Err("Can't parse chain point value, expecting `slot,hex-hash` format".into())
         }
     }
 }
