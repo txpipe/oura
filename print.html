@@ -185,15 +185,26 @@ cd oura
 cargo install --path .
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="docker"><a class="header" href="#docker">Docker</a></h1>
-<p><em>Oura</em> can be executed as a Docker container:</p>
+<p><em>Oura</em> provides already built public Docker images through Github Packages. To execute <em>Oura</em> via Docker, use the following command:</p>
 <pre><code class="language-sh">docker run ghcr.io/txpipe/oura:latest
 </code></pre>
+<p>The result of the above command should show <em>Oura's</em> command-line help message.</p>
+<h2 id="entry-point"><a class="header" href="#entry-point">Entry Point</a></h2>
 <p>The entry-point of the image points to <em>Oura</em> executable. You can pass the same command-line arguments that you would pass to the binary release running bare-metal. For example:</p>
-<pre><code>docker run ghcr.io/txpipe/oura:latest \
+<pre><code>docker run -it ghcr.io/txpipe/oura:latest \
     watch relays-new.cardano-mainnet.iohk.io:3001 \
     --bearer tcp
 </code></pre>
 <p>For more information on available command-line arguments, check the <a href="installation/../usage/index.html">usage</a> section.</p>
+<h2 id="using-a-configuration-file"><a class="header" href="#using-a-configuration-file">Using a Configuration File</a></h2>
+<p>The default daemon configuration file for <em>Oura</em> is located in <code>/etc/oura/daemon.toml</code>. To run <em>Oura</em> in daemon mode with a custom configuration file, you need to mount it in the correct location. The following example runs a docker container in background using a configuration file named <code>daemon.toml</code> located in the current folder:</p>
+<pre><code>docker run -d -v $(pwd)/daemon.toml:/etc/oura/daemon.toml ghcr.io/txpipe/oura:latest daemon
+</code></pre>
+<h2 id="versioned-images"><a class="header" href="#versioned-images">Versioned Images</a></h2>
+<p>Images are also tagged with the corresponding version number. It is highly recommended to use a fixed image version in production environments to avoid the effects of new features being included in each release (please remember Oura hasn't reached v1 stability guarantees).</p>
+<p>To use a versioned image, replace the <code>latest</code> tag by the desired version with the <code>v</code> prefix. For example, to use version <code>0.3.7</code>, use the following image:</p>
+<pre><code>ghcr.io/txpipe/oura:v0.3.7
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="kubernetes"><a class="header" href="#kubernetes">Kubernetes</a></h1>
 <p><em>Oura</em> running in <code>daemon</code> mode can be installed can be deployed in Kuberentes cluster, Depending on your needs, we recommend any of the following approaches.</p>
 <h2 id="approach-1-sidecar-container"><a class="header" href="#approach-1-sidecar-container">Approach #1: Sidecar Container</a></h2>
