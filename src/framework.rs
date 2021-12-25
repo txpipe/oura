@@ -41,6 +41,7 @@ impl ChainWellKnownInfo {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Merge, Default)]
 pub struct EventContext {
+    pub block_hash: Option<String>,
     pub block_number: Option<u64>,
     pub slot: Option<u64>,
     pub timestamp: Option<u64>,

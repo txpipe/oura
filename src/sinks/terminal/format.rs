@@ -22,7 +22,8 @@ impl LogLine {
                 prefix: "BLOCK",
                 color: Color::Magenta,
                 content: format!(
-                    "{{ body size: {}, issues vkey: {}, timestamp: {} }}",
+                    "{{ hash: {}, body size: {}, issues vkey: {}, timestamp: {} }}",
+                    &source.context.block_hash.as_ref().unwrap_or(&"".to_string()),
                     body_size,
                     issuer_vkey,
                     source.context.timestamp.unwrap_or_default(),
