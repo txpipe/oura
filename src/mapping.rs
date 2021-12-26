@@ -172,7 +172,7 @@ impl EventSource for Metadata {
                     writer.append(EventData::Metadata {
                         key: metadatum_to_string(level1_key),
                         subkey: None,
-                        value: None,
+                        value: Some(metadatum_to_string(level1_data)),
                     })?;
                 }
             }
