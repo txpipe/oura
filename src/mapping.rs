@@ -326,8 +326,8 @@ impl EventSource for TransactionBody {
                     total_output = outputs
                         .iter()
                         .map(|o| get_tx_output_coin_value(&o.amount))
-                        .fold(0u64, |prev, x| prev + x);
-                },
+                        .sum();
+                }
                 TransactionBodyComponent::Inputs(inputs) => {
                     input_count = inputs.len();
                 }

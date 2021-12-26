@@ -57,8 +57,8 @@ impl FromStr for PointArg {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.contains(",") {
-            let mut parts: Vec<_> = s.split(",").collect();
+        if s.contains(',') {
+            let mut parts: Vec<_> = s.split(',').collect();
             let slot = parts.remove(0).parse()?;
             let hash = parts.remove(0).to_owned();
             Ok(PointArg(slot, hash))
