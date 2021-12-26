@@ -91,14 +91,8 @@ impl SourceConfig for Config {
         let cs_events = output.clone();
         let cs_chain_info = well_known.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(
-                cs_channel,
-                cs_chain_info,
-                since,
-                cs_events,
-                headers_tx,
-            )
-            .expect("chainsync loop failed");
+            observe_headers_forever(cs_channel, cs_chain_info, since, cs_events, headers_tx)
+                .expect("chainsync loop failed");
         });
 
         let bf_channel = muxer.use_channel(3);

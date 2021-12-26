@@ -21,7 +21,9 @@ use pallas::{
 use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
-    framework::{ChainWellKnownInfo, Error, Event, EventData, EventSource, EventWriter, EventContext},
+    framework::{
+        ChainWellKnownInfo, Error, Event, EventContext, EventData, EventSource, EventWriter,
+    },
     mapping::ToHex,
 };
 
@@ -68,7 +70,7 @@ impl BlockObserver for Block2EventMapper {
             Ok(alonzo::BlockWrapper(_, block)) => {
                 // inject the block hash into the context for nested events
                 let hash = crypto::hash_block_header(&block.header)?;
-                
+
                 let writer = self.0.child_writer(EventContext {
                     block_hash: Some(hex::encode(hash)),
                     ..EventContext::default()

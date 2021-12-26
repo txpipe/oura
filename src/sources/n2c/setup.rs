@@ -86,8 +86,7 @@ impl SourceConfig for Config {
         info!("starting from chain point: {:?}", &since);
 
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, well_known, since, output)
-                .expect("chainsync loop failed");
+            observe_forever(cs_channel, well_known, since, output).expect("chainsync loop failed");
         });
 
         Ok(handle)
