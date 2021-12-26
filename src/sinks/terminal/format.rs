@@ -18,25 +18,35 @@ impl LogLine {
             EventData::Block {
                 body_size,
                 issuer_vkey,
-            } => LogLine {
-                prefix: "BLOCK",
-                color: Color::Magenta,
-                content: format!(
-                    "{{ hash: {}, body size: {}, issues vkey: {}, timestamp: {} }}",
+                tx_count,
+                ..
+            } => {
+                LogLine {
+                    prefix: "BLOCK",
+                    color: Color::Magenta,
+                    content: format!(
+                    "{{ hash: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
                     &source.context.block_hash.as_ref().unwrap_or(&"".to_string()),
                     body_size,
+                    tx_count,
                     issuer_vkey,
                     source.context.timestamp.unwrap_or_default(),
                 ),
-                source,
-                max_width,
-            },
-            EventData::Transaction { fee, ttl, .. } => LogLine {
+                    source,
+                    max_width,
+                }
+            }
+            EventData::Transaction {
+                total_output,
+                fee,
+                ttl,
+                ..
+            } => LogLine {
                 prefix: "TX",
                 color: Color::DarkBlue,
                 content: format!(
-                    "{{ fee: {}, hash: {:?}, ttl: {:?} }}",
-                    fee, &source.context.tx_hash, ttl
+                    "{{ total_output: {}, fee: {}, hash: {:?}, ttl: {:?} }}",
+                    total_output, fee, &source.context.tx_hash, ttl
                 ),
                 source,
                 max_width,

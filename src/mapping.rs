@@ -210,14 +210,18 @@ impl EventSource for AuxiliaryData {
     }
 }
 
+fn get_tx_output_coin_value(amount: &Value) -> u64 {
+    match amount {
+        Value::Coin(x) => *x,
+        Value::Multiasset(x, _) => *x,
+    }
+}
+
 impl EventSource for TransactionOutput {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
         writer.append(EventData::TxOutput {
             address: self.address.try_to_bech32("addr")?,
-            amount: match self.amount {
-                Value::Coin(x) => x,
-                Value::Multiasset(x, _) => x,
-            },
+            amount: get_tx_output_coin_value(&self.amount),
         })?;
 
         if let Value::Multiasset(_, assets) = &self.amount {
@@ -299,6 +303,9 @@ impl EventSource for TransactionBody {
         let mut ttl = None;
         let mut validity_interval_start = None;
         let mut network_id = None;
+        let mut total_output = 0;
+        let mut output_count = 0;
+        let mut input_count = 0;
 
         for component in self.iter() {
             match component {
@@ -313,6 +320,17 @@ impl EventSource for TransactionBody {
                 }
                 TransactionBodyComponent::NetworkId(NetworkId::One) => network_id = Some(1),
                 TransactionBodyComponent::NetworkId(NetworkId::Two) => network_id = Some(2),
+                TransactionBodyComponent::Outputs(outputs) => {
+                    output_count = outputs.len();
+
+                    total_output = outputs
+                        .iter()
+                        .map(|o| get_tx_output_coin_value(&o.amount))
+                        .fold(0u64, |prev, x| prev + x);
+                },
+                TransactionBodyComponent::Inputs(inputs) => {
+                    input_count = inputs.len();
+                }
                 // TODO
                 // TransactionBodyComponent::ScriptDataHash(_) => todo!(),
                 // TransactionBodyComponent::RequiredSigners(_) => todo!(),
@@ -326,6 +344,9 @@ impl EventSource for TransactionBody {
             ttl,
             validity_interval_start,
             network_id,
+            total_output,
+            output_count,
+            input_count,
         })?;
 
         // write sub-events
@@ -349,6 +370,7 @@ impl EventSource for Block {
         writer.append(EventData::Block {
             body_size: self.header.header_body.block_body_size as usize,
             issuer_vkey: self.header.header_body.issuer_vkey.to_hex(),
+            tx_count: self.transaction_bodies.len(),
         })?;
 
         for (idx, tx) in self.transaction_bodies.iter().enumerate() {

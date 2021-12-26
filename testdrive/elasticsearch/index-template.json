@@ -7,6 +7,9 @@
                 },
                 "block": {
                     "properties": {
+                        "tx_count": {
+                            "type": "long"
+                        },
                         "body_size": {
                             "type": "long"
                         },
@@ -29,6 +32,9 @@
                     "properties": {
                         "block_number": {
                             "type": "long"
+                        },
+                        "block_hash": {
+                            "type": "keyword"
                         },
                         "input_idx": {
                             "type": "long"
@@ -148,6 +154,15 @@
                             "type": "long"
                         },
                         "validity_interval_start": {
+                            "type": "long"
+                        },
+                        "input_count": {
+                            "type": "long"
+                        },
+                        "output_count": {
+                            "type": "long"
+                        },
+                        "total_output": {
                             "type": "long"
                         }
                     }
