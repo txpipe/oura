@@ -63,12 +63,16 @@ pub enum EventData {
     Block {
         body_size: usize,
         issuer_vkey: String,
+        tx_count: usize,
     },
     Transaction {
         fee: u64,
         ttl: Option<u64>,
         validity_interval_start: Option<u64>,
         network_id: Option<u32>,
+        input_count: usize,
+        output_count: usize,
+        total_output: u64,
     },
     TxInput {
         tx_id: String,
