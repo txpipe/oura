@@ -156,10 +156,16 @@ pub struct Event {
     pub data: EventData,
 }
 
+pub type PartialBootstrapResult = Result<(JoinHandle<()>, Receiver<Event>), Error>;
+
 pub type BootstrapResult = Result<JoinHandle<()>, Error>;
 
 pub trait SourceConfig {
-    fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult;
+    fn bootstrap(&self) -> PartialBootstrapResult;
+}
+
+pub trait FilterConfig {
+    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult;
 }
 
 pub trait SinkConfig {

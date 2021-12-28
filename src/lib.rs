@@ -1,3 +1,4 @@
+pub mod filters;
 pub mod framework;
 pub mod mapping;
 pub mod sinks;
