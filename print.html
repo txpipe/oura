@@ -264,11 +264,35 @@ spec:
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usage"><a class="header" href="#usage">Usage</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="watch-mode"><a class="header" href="#watch-mode">Watch Mode</a></h1>
-<h2 id="watch-live-data-from-remote-relay-node"><a class="header" href="#watch-live-data-from-remote-relay-node">Watch Live Data from Remote Relay Node</a></h2>
+<p>The <code>watch</code> mode provides a quick way to tail the latest events from the blockchain. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is sent into the terminal in a human-readable fashion.</p>
+<h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
+<p>To start <em>Oura</em> in watch mode, use the following command from your terminal:</p>
+<pre><code>oura watch [OPTIONS] &lt;socket&gt;
+</code></pre>
+<ul>
+<li><code>&lt;socket&gt;</code>: this a required argument thats specifies how to connect to the cardano node. It can either be a tcp address (<code>&lt;host&gt;:&lt;port&gt;</code> syntax) or a file path pointing to the location of the unix socket.</li>
+</ul>
+<h3 id="options"><a class="header" href="#options">Options</a></h3>
+<ul>
+<li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If ommited, the value <code>unix</code> is used as default.</li>
+<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If ommited, the value <code>mainnet</code> is used as default.</li>
+<li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If ommited, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
+<li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If ommited, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
+</ul>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h3 id="watch-live-data-from-a-remote-relay-node"><a class="header" href="#watch-live-data-from-a-remote-relay-node">Watch Live Data From A Remote Relay Node</a></h3>
 <pre><code class="language-sh">oura watch relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp
 </code></pre>
-<h2 id="watch-live-data-from-a-local-node-via-unix-socket"><a class="header" href="#watch-live-data-from-a-local-node-via-unix-socket">Watch Live Data from a Local Node via Unix Socket</a></h2>
+<h3 id="watch-live-data-from-a-local-node-via-unix-socket"><a class="header" href="#watch-live-data-from-a-local-node-via-unix-socket">Watch Live Data From A Local Node Via Unix Socket</a></h3>
 <pre><code class="language-sh">oura watch /opt/cardano/cnode/sockets/node0.socket --bearer unix
+</code></pre>
+<h3 id="watch-live-data-from-the-tip-of-a-local-testnet-node"><a class="header" href="#watch-live-data-from-the-tip-of-a-local-testnet-node">Watch Live Data From The Tip Of A Local Testnet Node</a></h3>
+<pre><code class="language-sh">oura watch /opt/cardano/cnode/sockets/node0.socket --bearer unix --magic testnet
+</code></pre>
+<h3 id="watch-data-starting-at-a-particular-block"><a class="header" href="#watch-data-starting-at-a-particular-block">Watch Data Starting At A Particular Block</a></h3>
+<pre><code class="language-sh">oura watch relays-new.cardano-mainnet.iohk.io:3001 \
+    --bearer tcp \
+    --since 49159253,d034a2d0e4c3076f57368ed59319010c265718f0923057f8ff914a3b6bfd1314
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="daemon-mode"><a class="header" href="#daemon-mode">Daemon Mode</a></h1>
 <p><em>Oura's</em> <code>daemon</code> mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuosuly bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.</p>
