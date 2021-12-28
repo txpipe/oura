@@ -1,4 +1,4 @@
-use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc::Sender};
+use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc};
 
 use net2::TcpStreamExt;
 
@@ -13,7 +13,7 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{BootstrapResult, ChainWellKnownInfo, Error, Event, SourceConfig},
+    framework::{ChainWellKnownInfo, Error, PartialBootstrapResult, SourceConfig},
     sources::{
         common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
         n2n::{fetch_blocks_forever, observe_headers_forever},
@@ -58,7 +58,9 @@ fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
 }
 
 impl SourceConfig for Config {
-    fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
+    fn bootstrap(&self) -> PartialBootstrapResult {
+        let (output_tx, output_rx) = mpsc::channel();
+
         let mut muxer = match self.address.0 {
             BearerKind::Tcp => setup_tcp_multiplexer(&self.address.1)?,
             BearerKind::Unix => setup_unix_multiplexer(&self.address.1)?,
@@ -88,7 +90,7 @@ impl SourceConfig for Config {
 
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
 
-        let cs_events = output.clone();
+        let cs_events = output_tx.clone();
         let cs_chain_info = well_known.clone();
         let cs_handle = std::thread::spawn(move || {
             observe_headers_forever(cs_channel, cs_chain_info, since, cs_events, headers_tx)
@@ -98,10 +100,10 @@ impl SourceConfig for Config {
         let bf_channel = muxer.use_channel(3);
         let bf_chain_info = well_known.clone();
         let _bf_handle = std::thread::spawn(move || {
-            fetch_blocks_forever(bf_channel, bf_chain_info, headers_rx, output)
+            fetch_blocks_forever(bf_channel, bf_chain_info, headers_rx, output_tx)
                 .expect("blockfetch loop failed");
         });
 
-        Ok(cs_handle)
+        Ok((cs_handle, output_rx))
     }
 }

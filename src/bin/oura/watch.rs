@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::mpsc::Sender};
+use std::str::FromStr;
 
 use clap::{value_t, ArgMatches};
 use oura::{
@@ -35,10 +35,10 @@ enum WatchSource {
 }
 
 impl SourceConfig for WatchSource {
-    fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
+    fn bootstrap(&self) -> PartialBootstrapResult {
         match self {
-            WatchSource::N2C(c) => c.bootstrap(output),
-            WatchSource::N2N(c) => c.bootstrap(output),
+            WatchSource::N2C(c) => c.bootstrap(),
+            WatchSource::N2N(c) => c.bootstrap(),
         }
     }
 }
@@ -84,13 +84,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let sink_setup = oura::sinks::terminal::Config::default();
 
-    let (tx, rx) = std::sync::mpsc::channel();
+    let (source_handle, source_output) = source_setup.bootstrap()?;
+    let sink_handle = sink_setup.bootstrap(source_output)?;
 
-    let source = source_setup.bootstrap(tx)?;
-    let sink = sink_setup.bootstrap(rx)?;
-
-    sink.join().map_err(|_| "error in sink thread")?;
-    source.join().map_err(|_| "error in source thread")?;
+    sink_handle.join().map_err(|_| "error in sink thread")?;
+    source_handle.join().map_err(|_| "error in source thread")?;
 
     Ok(())
 }

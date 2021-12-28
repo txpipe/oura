@@ -1,4 +1,4 @@
-use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc::Sender};
+use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc};
 
 use net2::TcpStreamExt;
 
@@ -13,7 +13,7 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{BootstrapResult, ChainWellKnownInfo, Error, Event, SourceConfig},
+    framework::{ChainWellKnownInfo, Error, PartialBootstrapResult, SourceConfig},
     sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
 };
 
@@ -57,7 +57,9 @@ fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
 }
 
 impl SourceConfig for Config {
-    fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
+    fn bootstrap(&self) -> PartialBootstrapResult {
+        let (output_tx, output_rx) = mpsc::channel();
+
         let mut muxer = match self.address.0 {
             BearerKind::Tcp => setup_tcp_multiplexer(&self.address.1)?,
             BearerKind::Unix => setup_unix_multiplexer(&self.address.1)?,
@@ -86,9 +88,10 @@ impl SourceConfig for Config {
         info!("starting from chain point: {:?}", &since);
 
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, well_known, since, output).expect("chainsync loop failed");
+            observe_forever(cs_channel, well_known, since, output_tx)
+                .expect("chainsync loop failed");
         });
 
-        Ok(handle)
+        Ok((handle, output_rx))
     }
 }
