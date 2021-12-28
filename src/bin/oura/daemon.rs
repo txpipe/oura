@@ -1,9 +1,12 @@
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::Receiver;
+use std::thread::JoinHandle;
 
 use clap::{value_t, ArgMatches};
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
-use oura::framework::{BootstrapResult, Event, SinkConfig, SourceConfig};
+use oura::framework::{
+    BootstrapResult, Event, FilterConfig, PartialBootstrapResult, SinkConfig, SourceConfig,
+};
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
@@ -15,6 +18,8 @@ use oura::sinks::kafka::Config as KafkaConfig;
 #[cfg(feature = "elasticsink")]
 use oura::sinks::elastic::Config as ElasticConfig;
 
+use oura::filters::noop::Config as NoopFilterConfig;
+
 use crate::Error;
 
 #[derive(Debug, Deserialize)]
@@ -25,10 +30,24 @@ enum Source {
 }
 
 impl SourceConfig for Source {
-    fn bootstrap(&self, output: Sender<Event>) -> BootstrapResult {
+    fn bootstrap(&self) -> PartialBootstrapResult {
         match self {
-            Source::N2C(c) => c.bootstrap(output),
-            Source::N2N(c) => c.bootstrap(output),
+            Source::N2C(c) => c.bootstrap(),
+            Source::N2N(c) => c.bootstrap(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
+enum Filter {
+    Noop(NoopFilterConfig),
+}
+
+impl FilterConfig for Filter {
+    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
+        match self {
+            Filter::Noop(c) => c.bootstrap(input),
         }
     }
 }
@@ -62,6 +81,10 @@ impl SinkConfig for Sink {
 #[derive(Debug, Deserialize)]
 struct ConfigRoot {
     source: Source,
+
+    #[serde(default)]
+    filters: Vec<Filter>,
+    
     sink: Sink,
 }
 
@@ -87,6 +110,27 @@ impl ConfigRoot {
     }
 }
 
+/// Sets up the whole pipeline from configuration
+fn bootstrap(config: &ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
+    let mut threads = Vec::with_capacity(10);
+
+    let (source_handle, source_rx) = config.source.bootstrap()?;
+    threads.push(source_handle);
+
+    let mut last_rx = source_rx;
+
+    for filter in config.filters.iter() {
+        let (filter_handle, filter_rx) = filter.bootstrap(last_rx)?;
+        threads.push(filter_handle);
+        last_rx = filter_rx;
+    }
+
+    let sink_handle = config.sink.bootstrap(last_rx)?;
+    threads.push(sink_handle);
+
+    Ok(threads)
+}
+
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
     env_logger::init();
 
@@ -99,14 +143,12 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     debug!("daemon starting with this config: {:?}", root);
 
-    let (tx, rx) = std::sync::mpsc::channel();
-
-    let source = root.source.bootstrap(tx)?;
-    let sink = root.sink.bootstrap(rx)?;
+    let threads = bootstrap(&root)?;
 
     // TODO: refactor into new loop that monitors thread health
-    sink.join().map_err(|_| "error in sink thread")?;
-    source.join().map_err(|_| "error in source thread")?;
+    for handle in threads {
+        handle.join().expect("error in pipeline thread");
+    }
 
     Ok(())
 }
