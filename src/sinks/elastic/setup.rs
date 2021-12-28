@@ -22,9 +22,9 @@ pub enum CredentialsConfig {
     Basic { username: String, password: String },
 }
 
-impl Into<ESCredentials> for &CredentialsConfig {
-    fn into(self) -> ESCredentials {
-        match self {
+impl From<&CredentialsConfig> for ESCredentials {
+    fn from(other: &CredentialsConfig) -> Self {
+        match other {
             CredentialsConfig::Basic { username, password } => {
                 ESCredentials::Basic(username.clone(), password.clone())
             }
