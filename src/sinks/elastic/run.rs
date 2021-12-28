@@ -20,7 +20,7 @@ struct ESRecord {
 
 impl From<Event> for ESRecord {
     fn from(event: Event) -> Self {
-        let timestamp = event.context.timestamp.map(|x| x * 1000).clone();
+        let timestamp = event.context.timestamp.map(|x| x * 1000);
         let variant = event.data.to_string();
 
         ESRecord {
@@ -35,7 +35,7 @@ async fn index_event(client: Arc<Elasticsearch>, index: &str, evt: Event) -> Res
     let record = ESRecord::from(evt);
 
     let response = client
-        .index(IndexParts::Index(&index))
+        .index(IndexParts::Index(index))
         .body(json!(record))
         .send()
         .await?;

@@ -84,7 +84,7 @@ struct ConfigRoot {
 
     #[serde(default)]
     filters: Vec<Filter>,
-    
+
     sink: Sink,
 }
 

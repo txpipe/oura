@@ -13,11 +13,9 @@ impl FilterConfig for Config {
     fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
         let (output_tx, output_rx) = std::sync::mpsc::channel();
 
-        let handle = thread::spawn(move || {
-            loop {
-                let msg = input.recv().expect("error receiving message");
-                output_tx.send(msg).expect("error sending filter message");
-            }
+        let handle = thread::spawn(move || loop {
+            let msg = input.recv().expect("error receiving message");
+            output_tx.send(msg).expect("error sending filter message");
         });
 
         Ok((handle, output_rx))
