@@ -1,5 +1,5 @@
 use elasticsearch::{Elasticsearch, IndexParts};
-use log::{debug, error};
+use log::{debug, error, warn};
 use serde::Serialize;
 use serde_json::json;
 use std::sync::{mpsc::Receiver, Arc};
@@ -31,31 +31,61 @@ impl From<Event> for ESRecord {
     }
 }
 
-async fn index_event(client: Arc<Elasticsearch>, index: &str, evt: Event) -> Result<(), Error> {
-    let record = ESRecord::from(evt);
+#[inline]
+async fn index_event<'b>(
+    client: Arc<Elasticsearch>,
+    parts: IndexParts<'b>,
+    event: Event,
+) -> Result<(), Error> {
+    let req_body = json!(ESRecord::from(event));
 
-    let response = client
-        .index(IndexParts::Index(index))
-        .body(json!(record))
-        .send()
-        .await?;
+    let response = client.index(parts).body(req_body).send().await?;
 
     if response.status_code().is_success() {
         debug!("pushed event to elastic");
+        Ok(())
     } else {
-        error!(
+        let msg = format!(
             "error pushing event to elastic: {:?}",
             response.text().await
         );
-    }
 
-    Ok(())
+        Err(msg.into())
+    }
+}
+
+async fn index_event_with_id<'b>(
+    client: Arc<Elasticsearch>,
+    index: &'b str,
+    event: Event,
+) -> Result<(), Error> {
+    let fingerprint = event.fingerprint.clone();
+
+    let parts = match &fingerprint {
+        Some(id) => IndexParts::IndexId(index, id),
+        _ => {
+            warn!("trying to index with idempotency but no event fingerprint available");
+            IndexParts::Index(index)
+        }
+    };
+
+    index_event(client, parts, event).await
+}
+
+async fn index_event_without_id<'b>(
+    client: Arc<Elasticsearch>,
+    index: &'b str,
+    event: Event,
+) -> Result<(), Error> {
+    let parts = IndexParts::Index(index);
+    index_event(client, parts, event).await
 }
 
 pub fn writer_loop(
     input: Receiver<Event>,
     client: Elasticsearch,
     index: String,
+    idempotency: bool,
 ) -> Result<(), Error> {
     let client = Arc::new(client);
 
@@ -66,10 +96,17 @@ pub fn writer_loop(
 
     loop {
         let index = index.to_owned();
-        let evt = input.recv().unwrap();
+        let event = input.recv().unwrap();
         let client = client.clone();
         rt.block_on(async move {
-            index_event(client, &index, evt).await.unwrap();
+            let result = match idempotency {
+                true => index_event_with_id(client, &index, event).await,
+                false => index_event_without_id(client, &index, event).await,
+            };
+
+            if let Err(err) = result {
+                warn!("error indexing record in Elasticsearch: {}", err);
+            }
         });
     }
 }
