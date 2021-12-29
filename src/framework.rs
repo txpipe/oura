@@ -49,6 +49,7 @@ pub struct EventContext {
     pub tx_hash: Option<String>,
     pub input_idx: Option<usize>,
     pub output_idx: Option<usize>,
+    pub certificate_idx: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -103,11 +104,8 @@ pub enum EventData {
         tx_id: String,
         index: u64,
     },
-    NewNativeScript,
-    NewPlutusScript {
-        data: String,
-    },
-    PlutusScriptRef {
+    NativeScript,
+    PlutusScript {
         data: String,
     },
     StakeRegistration {
@@ -154,6 +152,8 @@ pub struct Event {
 
     #[serde(flatten)]
     pub data: EventData,
+
+    pub fingerprint: Option<String>,
 }
 
 pub type PartialBootstrapResult = Result<(JoinHandle<()>, Receiver<Event>), Error>;
@@ -192,6 +192,7 @@ impl EventWriter {
         let evt = Event {
             context: self.context.clone(),
             data,
+            fingerprint: None,
         };
 
         self.output.send(evt)?;

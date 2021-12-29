@@ -20,6 +20,9 @@ use oura::sinks::elastic::Config as ElasticConfig;
 
 use oura::filters::noop::Config as NoopFilterConfig;
 
+#[cfg(feature = "fingerprint")]
+use oura::filters::fingerpint::Config as FingerprintConfig;
+
 use crate::Error;
 
 #[derive(Debug, Deserialize)]
@@ -42,12 +45,18 @@ impl SourceConfig for Source {
 #[serde(tag = "type")]
 enum Filter {
     Noop(NoopFilterConfig),
+
+    #[cfg(feature = "fingerprint")]
+    Fingerprint(FingerprintConfig),
 }
 
 impl FilterConfig for Filter {
     fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
         match self {
             Filter::Noop(c) => c.bootstrap(input),
+
+            #[cfg(feature = "fingerprint")]
+            Filter::Fingerprint(c) => c.bootstrap(input),
         }
     }
 }
