@@ -1,4 +1,4 @@
-use elasticsearch::{Elasticsearch, IndexParts};
+use elasticsearch::{params::OpType, Elasticsearch, IndexParts};
 use log::{debug, error, warn};
 use serde::Serialize;
 use serde_json::json;
@@ -39,7 +39,12 @@ async fn index_event<'b>(
 ) -> Result<(), Error> {
     let req_body = json!(ESRecord::from(event));
 
-    let response = client.index(parts).body(req_body).send().await?;
+    let response = client
+        .index(parts)
+        .body(req_body)
+        .op_type(OpType::Create)
+        .send()
+        .await?;
 
     if response.status_code().is_success() {
         debug!("pushed event to elastic");
