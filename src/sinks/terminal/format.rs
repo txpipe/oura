@@ -103,21 +103,14 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::NewNativeScript => LogLine {
-                prefix: "NATIVE+",
+            EventData::NativeScript => LogLine {
+                prefix: "NATIVE",
                 color: Color::White,
                 content: "{{ ... }}".to_string(),
                 source,
                 max_width,
             },
-            EventData::NewPlutusScript { data } => LogLine {
-                prefix: "PLUTUS+",
-                color: Color::White,
-                content: format!("{{ {} }}", data),
-                source,
-                max_width,
-            },
-            EventData::PlutusScriptRef { data } => LogLine {
+            EventData::PlutusScript { data } => LogLine {
                 prefix: "PLUTUS",
                 color: Color::White,
                 content: format!("{{ {} }}", data),
