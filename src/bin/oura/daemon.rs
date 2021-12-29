@@ -19,6 +19,7 @@ use oura::sinks::kafka::Config as KafkaConfig;
 use oura::sinks::elastic::Config as ElasticConfig;
 
 use oura::filters::noop::Config as NoopFilterConfig;
+use oura::filters::selection::Config as SelectionConfig;
 
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerpint::Config as FingerprintConfig;
@@ -45,6 +46,7 @@ impl SourceConfig for Source {
 #[serde(tag = "type")]
 enum Filter {
     Noop(NoopFilterConfig),
+    Selection(SelectionConfig),
 
     #[cfg(feature = "fingerprint")]
     Fingerprint(FingerprintConfig),
@@ -54,6 +56,7 @@ impl FilterConfig for Filter {
     fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
         match self {
             Filter::Noop(c) => c.bootstrap(input),
+            Filter::Selection(c) => c.bootstrap(input),
 
             #[cfg(feature = "fingerprint")]
             Filter::Fingerprint(c) => c.bootstrap(input),
