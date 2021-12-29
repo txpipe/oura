@@ -191,11 +191,11 @@ impl EventSource for AuxiliaryData {
                 }
 
                 for _native in data.native_scripts.iter() {
-                    writer.append(EventData::NewNativeScript)?;
+                    writer.append(EventData::NativeScript)?;
                 }
 
                 for plutus in data.plutus_scripts.iter() {
-                    writer.append(EventData::NewPlutusScript {
+                    writer.append(EventData::PlutusScript {
                         data: plutus.to_hex(),
                     })?;
                 }
@@ -259,7 +259,7 @@ impl EventSource for TransactionBodyComponent {
             TransactionBodyComponent::Outputs(outputs) => {
                 for (idx, output) in outputs.iter().enumerate() {
                     let writer = writer.child_writer(EventContext {
-                        input_idx: Some(idx),
+                        output_idx: Some(idx),
                         ..EventContext::default()
                     });
 
@@ -267,8 +267,13 @@ impl EventSource for TransactionBodyComponent {
                 }
             }
             TransactionBodyComponent::Certificates(certs) => {
-                for cert in certs.iter() {
-                    cert.write_events(writer)?;
+                for (idx, cert) in certs.iter().enumerate() {
+                    let writer = writer.child_writer(EventContext {
+                        certificate_idx: Some(idx),
+                        ..EventContext::default()
+                    });
+
+                    cert.write_events(&writer)?;
                 }
             }
             TransactionBodyComponent::Mint(mint) => {
@@ -339,6 +344,26 @@ impl EventSource for TransactionBody {
             };
         }
 
+        // TODO: add witness set data to transaction
+        /*
+        if let Some(witness) = self.transaction_witness_sets.get(idx) {
+            let plutus_count = match &witness.plutus_script {
+                Some(scripts) => scripts.len(),
+                None => 0,
+            };
+            
+            let native_count = match &witness.native_script {
+                Some(scripts) => scripts.len(),
+                None => 0,
+            };
+
+            let redeemer_count = match &witness.redeemer {
+                Some(redeemer) => redeemer.len(),
+                None => 0,
+            };
+        }
+        */
+
         writer.append(EventData::Transaction {
             fee,
             ttl,
@@ -397,16 +422,6 @@ impl EventSource for Block {
             {
                 aux.write_events(&writer)?;
             };
-
-            if let Some(witness) = self.transaction_witness_sets.get(idx) {
-                if let Some(scripts) = &witness.plutus_script {
-                    for script in scripts.iter() {
-                        writer.append(EventData::PlutusScriptRef {
-                            data: script.to_hex(),
-                        })?;
-                    }
-                }
-            }
         }
 
         Ok(())

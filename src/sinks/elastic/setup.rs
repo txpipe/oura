@@ -37,6 +37,9 @@ pub struct Config {
     url: String,
     index: String,
     credentials: Option<CredentialsConfig>,
+
+    #[serde(default)]
+    idempotency: bool,
 }
 
 impl SinkConfig for Config {
@@ -49,11 +52,13 @@ impl SinkConfig for Config {
             transport = transport.auth(creds.into());
         };
 
+        
         let client = Elasticsearch::new(transport.build()?);
-
+        
         let index = self.index.clone();
+        let idempotency = self.idempotency;
         let handle = std::thread::spawn(move || {
-            writer_loop(input, client, index).expect("writer loop failed")
+            writer_loop(input, client, index, idempotency).expect("writer loop failed")
         });
 
         Ok(handle)
