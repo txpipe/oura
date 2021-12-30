@@ -3,6 +3,7 @@ use std::str::FromStr;
 use clap::{value_t, ArgMatches};
 use oura::{
     framework::*,
+    mapping::MapperConfig,
     sources::common::{AddressArg, BearerKind, MagicArg, PointArg},
 };
 
@@ -72,12 +73,14 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
+            mapper: MapperConfig::default(),
             since,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
+            mapper: MapperConfig::default(),
             since,
         }),
     };

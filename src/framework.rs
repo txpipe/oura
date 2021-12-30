@@ -10,6 +10,8 @@ use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
+use crate::mapping::MapperConfig;
+
 pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -65,8 +67,6 @@ pub struct OutputAssetRecord {
 pub struct TxOutputRecord {
     pub address: String,
     pub amount: u64,
-    
-    // beefy
     pub assets: Option<Vec<OutputAssetRecord>>,
 }
 
@@ -201,19 +201,25 @@ pub trait SinkConfig {
     fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult;
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct EventWriter {
     context: EventContext,
     output: Sender<Event>,
     chain_info: Option<ChainWellKnownInfo>,
+    pub mapping_config: MapperConfig,
 }
 
 impl EventWriter {
-    pub fn new(output: Sender<Event>, chain_info: Option<ChainWellKnownInfo>) -> Self {
+    pub fn new(
+        output: Sender<Event>,
+        chain_info: Option<ChainWellKnownInfo>,
+        mapping_config: MapperConfig,
+    ) -> Self {
         EventWriter {
             context: EventContext::default(),
             output,
             chain_info,
+            mapping_config,
         }
     }
 
@@ -236,6 +242,7 @@ impl EventWriter {
             context: extra_context,
             output: self.output.clone(),
             chain_info: self.chain_info.clone(),
+            mapping_config: self.mapping_config.clone(),
         }
     }
 

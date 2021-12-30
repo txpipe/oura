@@ -92,11 +92,9 @@ impl Observer<Content> for ChainObserver {
 
 fn observe_forever(
     mut channel: Channel,
-    chain_info: ChainWellKnownInfo,
+    writer: EventWriter,
     from: Point,
-    output: Sender<Event>,
 ) -> Result<(), Error> {
-    let writer = EventWriter::new(output, Some(chain_info));
     let observer = ChainObserver(writer);
     let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;

@@ -8,6 +8,7 @@ use pallas::ledger::alonzo::{
 };
 
 use bech32::{self, ToBase32};
+use serde_derive::Deserialize;
 
 use crate::framework::{
     EventContext, EventData, EventSource, EventWriter, MetadataRecord, MintRecord,
@@ -15,6 +16,12 @@ use crate::framework::{
 };
 
 use crate::framework::Error;
+
+#[derive(Deserialize, Clone, Debug, Default)]
+pub struct MapperConfig {
+    #[serde(default)]
+    pub include_transaction_details: bool,
+}
 
 pub trait ToHex {
     fn to_hex(&self) -> String;
@@ -445,22 +452,25 @@ impl EventSource for (&TransactionBody, Option<&AuxiliaryData>) {
                     record.output_count = sub_records.len();
                     record.total_output = sub_records.iter().map(|o| o.amount).sum();
 
-                    // beefy
-                    record.outputs = sub_records.into();
+                    if writer.mapping_config.include_transaction_details {
+                        record.outputs = sub_records.into();
+                    }
                 }
                 TransactionBodyComponent::Inputs(x) => {
                     let sub_records = x.as_slice().collect_inputs()?;
                     record.input_count = sub_records.len();
 
-                    // beefy
-                    record.inputs = sub_records.into();
+                    if writer.mapping_config.include_transaction_details {
+                        record.inputs = sub_records.into();
+                    }
                 }
                 TransactionBodyComponent::Mint(x) => {
                     let sub_records = x.collect_mint()?;
                     record.mint_count = sub_records.len();
 
-                    // beefy
-                    record.mint = sub_records.into();
+                    if writer.mapping_config.include_transaction_details {
+                        record.mint = sub_records.into();
+                    }
                 }
                 // TODO
                 // TransactionBodyComponent::ScriptDataHash(_) => todo!(),
@@ -490,8 +500,9 @@ impl EventSource for (&TransactionBody, Option<&AuxiliaryData>) {
         }
         */
 
-        // beefy
-        record.metadata = aux_data.map(|source| source.get_metadata());
+        if writer.mapping_config.include_transaction_details {
+            record.metadata = aux_data.map(|source| source.get_metadata());
+        }
 
         writer.append(EventData::Transaction(record))?;
 
