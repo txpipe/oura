@@ -2,7 +2,10 @@ use std::fmt::{Display, Write};
 
 use crossterm::style::{Attribute, Color, Stylize};
 
-use crate::framework::{Event, EventData};
+use crate::framework::{
+    Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord, TransactionRecord,
+    TxInputRecord, TxOutputRecord,
+};
 
 pub struct LogLine {
     prefix: &'static str,
@@ -36,12 +39,12 @@ impl LogLine {
                     max_width,
                 }
             }
-            EventData::Transaction {
+            EventData::Transaction(TransactionRecord {
                 total_output,
                 fee,
                 ttl,
                 ..
-            } => LogLine {
+            }) => LogLine {
                 prefix: "TX",
                 color: Color::DarkBlue,
                 content: format!(
@@ -51,25 +54,28 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::TxInput { tx_id, index } => LogLine {
+            EventData::TxInput(TxInputRecord { tx_id, index }) => LogLine {
                 prefix: "STXI",
                 color: Color::Blue,
                 content: format!("{{ tx_id: {}, index: {} }}", tx_id, index),
                 source,
                 max_width,
             },
-            EventData::TxOutput { address, amount } => LogLine {
+            EventData::TxOutput(TxOutputRecord {
+                address, amount, ..
+            }) => LogLine {
                 prefix: "UTXO",
                 color: Color::Blue,
                 content: format!("{{ to: {}, amount: {} }}", address, amount),
                 source,
                 max_width,
             },
-            EventData::OutputAsset {
+            EventData::OutputAsset(OutputAssetRecord {
                 policy,
                 asset,
                 amount,
-            } => LogLine {
+                ..
+            }) => LogLine {
                 prefix: "ASSET",
                 color: Color::Green,
                 content: format!(
@@ -79,7 +85,7 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::Metadata { key, subkey, value } => LogLine {
+            EventData::Metadata(MetadataRecord { key, subkey, value }) => LogLine {
                 prefix: "META",
                 color: Color::Yellow,
                 content: format!(
@@ -89,11 +95,11 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::Mint {
+            EventData::Mint(MintRecord {
                 policy,
                 asset,
                 quantity,
-            } => LogLine {
+            }) => LogLine {
                 prefix: "MINT",
                 color: Color::DarkGreen,
                 content: format!(

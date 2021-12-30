@@ -4,7 +4,10 @@ use std::{sync::mpsc::Receiver, thread};
 
 use serde_derive::Deserialize;
 
-use crate::framework::{Event, EventData, FilterConfig, PartialBootstrapResult};
+use crate::framework::{
+    Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
+    PartialBootstrapResult,
+};
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(tag = "predicate", content = "argument", rename_all = "snake_case")]
@@ -35,8 +38,10 @@ fn variant_in_matches(event: &Event, variants: &Vec<String>) -> bool {
 #[inline]
 fn policy_matches(event: &Event, policy: &str) -> bool {
     match &event.data {
-        EventData::OutputAsset { policy: x, .. } => relaxed_str_matches(x, &policy),
-        EventData::Mint { policy: x, .. } => relaxed_str_matches(x, &policy),
+        EventData::OutputAsset(OutputAssetRecord { policy: x, .. }) => {
+            relaxed_str_matches(x, &policy)
+        }
+        EventData::Mint(MintRecord { policy: x, .. }) => relaxed_str_matches(x, &policy),
         _ => false,
     }
 }
@@ -44,8 +49,10 @@ fn policy_matches(event: &Event, policy: &str) -> bool {
 #[inline]
 fn asset_matches(event: &Event, asset: &str) -> bool {
     match &event.data {
-        EventData::OutputAsset { asset: x, .. } => relaxed_str_matches(x, &asset),
-        EventData::Mint { asset: x, .. } => relaxed_str_matches(x, &asset),
+        EventData::OutputAsset(OutputAssetRecord { asset: x, .. }) => {
+            relaxed_str_matches(x, &asset)
+        }
+        EventData::Mint(MintRecord { asset: x, .. }) => relaxed_str_matches(x, &asset),
         _ => false,
     }
 }
@@ -53,7 +60,7 @@ fn asset_matches(event: &Event, asset: &str) -> bool {
 #[inline]
 fn metadata_key_matches(event: &Event, key: &str) -> bool {
     match &event.data {
-        EventData::Metadata { key: x, .. } => relaxed_str_matches(x, &key),
+        EventData::Metadata(MetadataRecord { key: x, .. }) => relaxed_str_matches(x, &key),
         _ => false,
     }
 }
@@ -61,7 +68,9 @@ fn metadata_key_matches(event: &Event, key: &str) -> bool {
 #[inline]
 fn metadata_subkey_matches(event: &Event, subkey: &str) -> bool {
     match &event.data {
-        EventData::Metadata { subkey: Some(x), .. } => relaxed_str_matches(x, &subkey),
+        EventData::Metadata(MetadataRecord {
+            subkey: Some(x), ..
+        }) => relaxed_str_matches(x, &subkey),
         _ => false,
     }
 }

@@ -117,12 +117,10 @@ impl Observer<Content> for ChainObserver {
 
 fn fetch_blocks_forever(
     mut channel: Channel,
-    chain_info: ChainWellKnownInfo,
+    event_writer: EventWriter,
     input: Receiver<Point>,
-    output: Sender<Event>,
 ) -> Result<(), Error> {
-    let writer = EventWriter::new(output, Some(chain_info));
-    let observer = Block2EventMapper(writer);
+    let observer = Block2EventMapper(event_writer);
     let agent = BlockClient::initial(input, observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);
@@ -132,16 +130,15 @@ fn fetch_blocks_forever(
 
 fn observe_headers_forever(
     mut channel: Channel,
-    chain_info: ChainWellKnownInfo,
+    event_writer: EventWriter,
     from: Point,
-    event_output: Sender<Event>,
     block_requests: Sender<Point>,
 ) -> Result<(), Error> {
-    let event_writer = EventWriter::new(event_output, Some(chain_info));
     let observer = ChainObserver {
         event_writer,
         block_requests,
     };
+
     let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);

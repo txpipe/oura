@@ -13,7 +13,8 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{ChainWellKnownInfo, Error, PartialBootstrapResult, SourceConfig},
+    framework::{ChainWellKnownInfo, Error, EventWriter, PartialBootstrapResult, SourceConfig},
+    mapping::MapperConfig,
     sources::{
         common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
         n2n::{fetch_blocks_forever, observe_headers_forever},
@@ -30,6 +31,9 @@ pub struct Config {
     pub since: Option<PointArg>,
 
     pub well_known: Option<ChainWellKnownInfo>,
+
+    #[serde(default)]
+    pub mapper: MapperConfig,
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
@@ -76,6 +80,8 @@ impl SourceConfig for Config {
             None => ChainWellKnownInfo::try_from_magic(magic)?,
         };
 
+        let writer = EventWriter::new(output_tx, well_known.clone().into(), self.mapper.clone());
+
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
 
@@ -90,17 +96,16 @@ impl SourceConfig for Config {
 
         let (headers_tx, headers_rx) = std::sync::mpsc::channel();
 
-        let cs_events = output_tx.clone();
-        let cs_chain_info = well_known.clone();
+        let cs_writer = writer.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, cs_chain_info, since, cs_events, headers_tx)
+            observe_headers_forever(cs_channel, cs_writer, since, headers_tx)
                 .expect("chainsync loop failed");
         });
 
         let bf_channel = muxer.use_channel(3);
-        let bf_chain_info = well_known.clone();
+        let bf_writer = writer.clone();
         let _bf_handle = std::thread::spawn(move || {
-            fetch_blocks_forever(bf_channel, bf_chain_info, headers_rx, output_tx)
+            fetch_blocks_forever(bf_channel, bf_writer, headers_rx)
                 .expect("blockfetch loop failed");
         });
 
