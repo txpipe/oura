@@ -1005,9 +1005,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0e814958621bcac7f35b31f38eec497e329c916d7d2cd02e4d344e54e0144ab"
+checksum = "e406ffe40173e60c95a40987605e98980d7f26e50cf6a2b4942ea903d5391f4e"
 dependencies = [
  "pallas-alonzo",
  "pallas-blockfetch",
@@ -1021,9 +1021,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-alonzo"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d928b73b6cd378bf0065d0ede1f8f331871aafcfc769321c5e38291f46bcf0f"
+checksum = "6ef171f020fa0ecb6f8751fcc4388623939415a080208fb48550b1720422bd71"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1034,9 +1034,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-blockfetch"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8637dcb9fec4793c357b72ea49b5473a496bfd9da545f6ae7cb5026a016cdbea"
+checksum = "4130ea7c71df6e494e48f64e1f69adb84d2f7fd4503e4ea839129b07e0af5b65"
 dependencies = [
  "log 0.4.14",
  "minicbor",
@@ -1046,9 +1046,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-chainsync"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27f51d93363c2856fbcbb3db3e9cc5b0bb0535e7db5fec8c526b115cb9fb0a65"
+checksum = "87a960817d5f8ce8cd3afa631a85b3e1dd191971d3a3ad3322ec3c2435654445"
 dependencies = [
  "hex",
  "log 0.4.14",
@@ -1059,9 +1059,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-handshake"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "210a118d66757a1b532819058fe8695c0029e992548b2701518f352d482bcd15"
+checksum = "1939a6f766078d1b264187e3d95464890ec205a3fb241a85579fb4ad780f83a5"
 dependencies = [
  "itertools",
  "log 0.4.14",
@@ -1072,9 +1072,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-localstate"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abb5f2f8c46cd14d94bef80d291da1e0d398a7a5b546cb752dc1fe0bf8b92581"
+checksum = "dc6aac9d81f2ca924d336e3230b29d60acc5a4dd0eea45065b4e19b0168ba4d6"
 dependencies = [
  "hex",
  "log 0.4.14",
@@ -1085,9 +1085,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-machines"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c3547ea64e031b21ac861e45fadf92ff1c1ce748ebe077821fe864bd7bb78a6"
+checksum = "6a0af027f42db82525800af804273118ce5c82ee87eaf6923cdcc5ea65de5ec8"
 dependencies = [
  "hex",
  "log 0.4.14",
@@ -1097,9 +1097,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3afaf0b8602fea704da3ecee7a9a8d9e506acf0c7d1d259b8b568306b8ff02d5"
+checksum = "1822709724406e676da96f79a45416e82d4411950a4e0722f5000c078c1305e6"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1108,9 +1108,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-txsubmission"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "305de7233fd3b2e5fa055538b96de407237bf408b68a55d092bdad922ae2c82c"
+checksum = "97d52eacaebc51cee212a633832ecb81d4de56ceed2e040d5b7be52e3388ada5"
 dependencies = [
  "hex",
  "itertools",
@@ -1761,7 +1761,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand",
  "static_assertions",
 ]
