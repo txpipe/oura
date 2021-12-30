@@ -1,13 +1,18 @@
 use pallas::ledger::alonzo::{
     self as alonzo, crypto::hash_transaction, AuxiliaryData, Block, Certificate,
     InstantaneousRewardSource, InstantaneousRewardTarget, Metadata, Metadatum, Relay,
-    TransactionOutput, Value,
+    TransactionInput, TransactionOutput, Value,
 };
-use pallas::ledger::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
+use pallas::ledger::alonzo::{
+    AlonzoAuxiliaryData, Mint, NetworkId, TransactionBody, TransactionBodyComponent,
+};
 
 use bech32::{self, ToBase32};
 
-use crate::framework::{EventContext, EventData, EventSource, EventWriter, StakeCredential};
+use crate::framework::{
+    EventContext, EventData, EventSource, EventWriter, MetadataRecord, MintRecord,
+    OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+};
 
 use crate::framework::Error;
 
@@ -155,27 +160,43 @@ fn metadatum_to_string(datum: &Metadatum) -> String {
     }
 }
 
-impl EventSource for Metadata {
-    fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
+trait MetadataProvider {
+    fn get_metadata(&self) -> Vec<MetadataRecord>;
+}
+
+impl MetadataProvider for &Metadata {
+    fn get_metadata(&self) -> Vec<MetadataRecord> {
+        let mut out = Vec::with_capacity(self.len());
+
         for (level1_key, level1_data) in self.iter() {
             match level1_data {
                 Metadatum::Map(level1_map) => {
                     for (level2_key, level2_data) in level1_map.iter() {
-                        writer.append(EventData::Metadata {
+                        out.push(MetadataRecord {
                             key: metadatum_to_string(level1_key),
                             subkey: Some(metadatum_to_string(level2_key)),
                             value: Some(metadatum_to_string(level2_data)),
-                        })?;
+                        });
                     }
                 }
                 _ => {
-                    writer.append(EventData::Metadata {
+                    out.push(MetadataRecord {
                         key: metadatum_to_string(level1_key),
                         subkey: None,
                         value: Some(metadatum_to_string(level1_data)),
-                    })?;
+                    });
                 }
             }
+        }
+
+        out
+    }
+}
+
+impl EventSource for Metadata {
+    fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
+        for record in self.get_metadata() {
+            writer.append(EventData::Metadata(record))?;
         }
 
         Ok(())
@@ -203,10 +224,34 @@ impl EventSource for AuxiliaryData {
             AuxiliaryData::Shelley(data) => {
                 data.write_events(writer)?;
             }
-            _ => log::warn!("ShelleyMa auxiliary data, not sure what to do"),
+            AuxiliaryData::ShelleyMa {
+                transaction_metadata,
+                ..
+            } => {
+                transaction_metadata.write_events(writer)?;
+
+                // TODO: process auxiliary scripts
+            }
         }
 
         Ok(())
+    }
+}
+
+impl MetadataProvider for AuxiliaryData {
+    fn get_metadata(&self) -> Vec<MetadataRecord> {
+        match self {
+            AuxiliaryData::Alonzo(AlonzoAuxiliaryData {
+                metadata: Some(metadata),
+                ..
+            }) => metadata.get_metadata(),
+            AuxiliaryData::Shelley(metadata) => metadata.get_metadata(),
+            AuxiliaryData::ShelleyMa {
+                transaction_metadata,
+                ..
+            } => transaction_metadata.get_metadata(),
+            _ => vec![],
+        }
     }
 }
 
@@ -217,53 +262,127 @@ fn get_tx_output_coin_value(amount: &Value) -> u64 {
     }
 }
 
-impl EventSource for TransactionOutput {
-    fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
-        writer.append(EventData::TxOutput {
-            address: self.address.try_to_bech32("addr")?,
-            amount: get_tx_output_coin_value(&self.amount),
-        })?;
+trait AssetProvider {
+    fn get_assets(&self) -> Vec<OutputAssetRecord>;
+}
 
-        if let Value::Multiasset(_, assets) = &self.amount {
-            for (policy, assets) in assets.iter() {
-                for (asset, amount) in assets.iter() {
-                    writer.append(EventData::OutputAsset {
-                        policy: policy.to_hex(),
-                        asset: asset.to_hex(),
-                        amount: *amount,
-                    })?;
+impl AssetProvider for TransactionOutput {
+    fn get_assets(&self) -> Vec<OutputAssetRecord> {
+        match &self.amount {
+            Value::Multiasset(_, assets) => {
+                let mut out = Vec::with_capacity(assets.len());
+
+                for (policy, assets) in assets.iter() {
+                    for (asset, amount) in assets.iter() {
+                        out.push(OutputAssetRecord {
+                            policy: policy.to_hex(),
+                            asset: asset.to_hex(),
+                            amount: *amount,
+                        });
+                    }
                 }
-            }
-        }
 
-        Ok(())
+                out
+            }
+            _ => vec![],
+        }
+    }
+}
+
+trait TxOutputProvider {
+    fn collect_outputs(&self) -> Result<Vec<TxOutputRecord>, Error>;
+}
+
+impl TxOutputProvider for [TransactionOutput] {
+    fn collect_outputs(&self) -> Result<Vec<TxOutputRecord>, Error> {
+        self.iter()
+            .map(|o| {
+                Ok(TxOutputRecord {
+                    address: o.address.try_to_bech32("addr")?,
+                    amount: get_tx_output_coin_value(&o.amount),
+                    assets: o.get_assets().into(),
+                })
+            })
+            .collect()
+    }
+}
+
+trait TxInputProvider {
+    fn collect_inputs(&self) -> Result<Vec<TxInputRecord>, Error>;
+}
+
+impl TxInputProvider for [TransactionInput] {
+    fn collect_inputs(&self) -> Result<Vec<TxInputRecord>, Error> {
+        self.iter()
+            .map(|i| {
+                Ok(TxInputRecord {
+                    tx_id: i.transaction_id.to_hex(),
+                    index: i.index,
+                })
+            })
+            .collect()
+    }
+}
+
+trait MintProvider {
+    fn collect_mint(&self) -> Result<Vec<MintRecord>, Error>;
+}
+
+impl MintProvider for Mint {
+    fn collect_mint(&self) -> Result<Vec<MintRecord>, Error> {
+        let out: Vec<_> = self
+            .iter()
+            .flat_map(|(policy, value)| {
+                value.iter().map(|(asset, quantity)| MintRecord {
+                    policy: policy.to_hex(),
+                    asset: asset.to_hex(),
+                    quantity: *quantity,
+                })
+            })
+            .collect();
+
+        Ok(out)
     }
 }
 
 impl EventSource for TransactionBodyComponent {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
         match self {
-            TransactionBodyComponent::Inputs(inputs) => {
-                for (idx, input) in inputs.iter().enumerate() {
+            TransactionBodyComponent::Inputs(x) => {
+                let inputs = x.as_slice().collect_inputs()?;
+
+                for (idx, input) in inputs.into_iter().enumerate() {
                     let writer = writer.child_writer(EventContext {
                         input_idx: Some(idx),
                         ..EventContext::default()
                     });
 
-                    writer.append(EventData::TxInput {
-                        tx_id: input.transaction_id.to_hex(),
-                        index: input.index,
-                    })?;
+                    writer.append(EventData::TxInput(input))?;
                 }
             }
             TransactionBodyComponent::Outputs(outputs) => {
-                for (idx, output) in outputs.iter().enumerate() {
+                let outputs = outputs.as_slice().collect_outputs()?;
+
+                for (idx, output) in outputs.into_iter().enumerate() {
                     let writer = writer.child_writer(EventContext {
                         output_idx: Some(idx),
                         ..EventContext::default()
                     });
 
-                    output.write_events(&writer)?;
+                    writer.append(EventData::TxOutput(output.clone()))?;
+
+                    if let Some(assets) = output.assets {
+                        if !assets.is_empty() {
+                            let writer = &writer.child_writer(EventContext {
+                                output_address: output.address.clone().into(),
+                                ..EventContext::default()
+                            });
+
+                            for asset in assets {
+                                writer.append(EventData::OutputAsset(asset))?;
+                            }
+                        }
+                    }
                 }
             }
             TransactionBodyComponent::Certificates(certs) => {
@@ -277,14 +396,10 @@ impl EventSource for TransactionBodyComponent {
                 }
             }
             TransactionBodyComponent::Mint(mint) => {
-                for (policy, value) in mint.iter() {
-                    for (asset, quantity) in value.iter() {
-                        writer.append(EventData::Mint {
-                            policy: policy.to_hex(),
-                            asset: asset.to_hex(),
-                            quantity: *quantity,
-                        })?;
-                    }
+                let records = mint.collect_mint()?;
+
+                for record in records {
+                    writer.append(EventData::Mint(record))?;
                 }
             }
             TransactionBodyComponent::Collateral(collaterals) => {
@@ -302,39 +417,50 @@ impl EventSource for TransactionBodyComponent {
     }
 }
 
-impl EventSource for TransactionBody {
+impl EventSource for (&TransactionBody, Option<&AuxiliaryData>) {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
-        let mut fee = 0;
-        let mut ttl = None;
-        let mut validity_interval_start = None;
-        let mut network_id = None;
-        let mut total_output = 0;
-        let mut output_count = 0;
-        let mut input_count = 0;
+        let (body, aux_data) = self;
 
-        for component in self.iter() {
+        let mut record = TransactionRecord::default();
+
+        for component in body.iter() {
             match component {
                 TransactionBodyComponent::Fee(x) => {
-                    fee = *x;
+                    record.fee = *x;
                 }
                 TransactionBodyComponent::Ttl(x) => {
-                    ttl = Some(*x);
+                    record.ttl = Some(*x);
                 }
                 TransactionBodyComponent::ValidityIntervalStart(x) => {
-                    validity_interval_start = Some(*x);
+                    record.validity_interval_start = Some(*x);
                 }
-                TransactionBodyComponent::NetworkId(NetworkId::One) => network_id = Some(1),
-                TransactionBodyComponent::NetworkId(NetworkId::Two) => network_id = Some(2),
-                TransactionBodyComponent::Outputs(outputs) => {
-                    output_count = outputs.len();
+                TransactionBodyComponent::NetworkId(x) => {
+                    record.network_id = match x {
+                        NetworkId::One => Some(1),
+                        NetworkId::Two => Some(2),
+                    };
+                }
+                TransactionBodyComponent::Outputs(x) => {
+                    let sub_records = x.as_slice().collect_outputs()?;
+                    record.output_count = sub_records.len();
+                    record.total_output = sub_records.iter().map(|o| o.amount).sum();
 
-                    total_output = outputs
-                        .iter()
-                        .map(|o| get_tx_output_coin_value(&o.amount))
-                        .sum();
+                    // beefy
+                    record.outputs = sub_records.into();
                 }
-                TransactionBodyComponent::Inputs(inputs) => {
-                    input_count = inputs.len();
+                TransactionBodyComponent::Inputs(x) => {
+                    let sub_records = x.as_slice().collect_inputs()?;
+                    record.input_count = sub_records.len();
+
+                    // beefy
+                    record.inputs = sub_records.into();
+                }
+                TransactionBodyComponent::Mint(x) => {
+                    let sub_records = x.collect_mint()?;
+                    record.mint_count = sub_records.len();
+
+                    // beefy
+                    record.mint = sub_records.into();
                 }
                 // TODO
                 // TransactionBodyComponent::ScriptDataHash(_) => todo!(),
@@ -351,7 +477,7 @@ impl EventSource for TransactionBody {
                 Some(scripts) => scripts.len(),
                 None => 0,
             };
-            
+
             let native_count = match &witness.native_script {
                 Some(scripts) => scripts.len(),
                 None => 0,
@@ -364,18 +490,18 @@ impl EventSource for TransactionBody {
         }
         */
 
-        writer.append(EventData::Transaction {
-            fee,
-            ttl,
-            validity_interval_start,
-            network_id,
-            total_output,
-            output_count,
-            input_count,
-        })?;
+        // beefy
+        record.metadata = aux_data.map(|source| source.get_metadata());
 
-        // write sub-events
-        for component in self.iter() {
+        writer.append(EventData::Transaction(record))?;
+
+        // write aux data custom events
+        if let Some(aux_data) = aux_data {
+            aux_data.write_events(&writer)?;
+        }
+
+        // write body components sub-events
+        for component in body.iter() {
             component.write_events(writer)?;
         }
 
@@ -413,15 +539,13 @@ impl EventSource for Block {
                 ..EventContext::default()
             });
 
-            tx.write_events(&writer)?;
-
-            if let Some((_, aux)) = self
+            let aux_data = self
                 .auxiliary_data_set
                 .iter()
                 .find(|(k, _)| *k == (idx as u32))
-            {
-                aux.write_events(&writer)?;
-            };
+                .map(|(_, v)| v);
+
+            (tx, aux_data).write_events(&writer)?;
         }
 
         Ok(())
