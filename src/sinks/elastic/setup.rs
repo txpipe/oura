@@ -52,7 +52,6 @@ impl SinkConfig for Config {
             transport = transport.auth(creds.into());
         };
 
-        
         let client = Elasticsearch::new(transport.build()?);
         
         let index = self.index.clone();
