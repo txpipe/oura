@@ -10,6 +10,8 @@ use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
+use crate::mapping::MapperConfig;
+
 pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,6 +41,60 @@ impl ChainWellKnownInfo {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MetadataRecord {
+    pub key: String,
+    pub subkey: Option<String>,
+    // TODO: value should be some sort of structured, JSON-like value.
+    // we could use Pallas' Metadatum struct, but it needs to be clonable
+    pub value: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TxInputRecord {
+    pub tx_id: String,
+    pub index: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct OutputAssetRecord {
+    pub policy: String,
+    pub asset: String,
+    pub amount: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TxOutputRecord {
+    pub address: String,
+    pub amount: u64,
+    pub assets: Option<Vec<OutputAssetRecord>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MintRecord {
+    pub policy: String,
+    pub asset: String,
+    pub quantity: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct TransactionRecord {
+    pub fee: u64,
+    pub ttl: Option<u64>,
+    pub validity_interval_start: Option<u64>,
+    pub network_id: Option<u32>,
+    pub input_count: usize,
+    pub output_count: usize,
+    pub mint_count: usize,
+    pub total_output: u64,
+
+    // include_details
+    pub metadata: Option<Vec<MetadataRecord>>,
+    pub inputs: Option<Vec<TxInputRecord>>,
+    pub outputs: Option<Vec<TxOutputRecord>>,
+    pub mint: Option<Vec<MintRecord>>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Merge, Default)]
 pub struct EventContext {
     pub block_hash: Option<String>,
@@ -49,6 +105,7 @@ pub struct EventContext {
     pub tx_hash: Option<String>,
     pub input_idx: Option<usize>,
     pub output_idx: Option<usize>,
+    pub output_address: Option<String>,
     pub certificate_idx: Option<usize>,
 }
 
@@ -66,40 +123,12 @@ pub enum EventData {
         issuer_vkey: String,
         tx_count: usize,
     },
-    Transaction {
-        fee: u64,
-        ttl: Option<u64>,
-        validity_interval_start: Option<u64>,
-        network_id: Option<u32>,
-        input_count: usize,
-        output_count: usize,
-        total_output: u64,
-    },
-    TxInput {
-        tx_id: String,
-        index: u64,
-    },
-    TxOutput {
-        address: String,
-        amount: u64,
-    },
-    OutputAsset {
-        policy: String,
-        asset: String,
-        amount: u64,
-    },
-    Metadata {
-        key: String,
-        subkey: Option<String>,
-        // TODO: value should be some sort of structured, JSON-like value.
-        // we could use Pallas' Metadatum struct, but it needs to be clonable
-        value: Option<String>,
-    },
-    Mint {
-        policy: String,
-        asset: String,
-        quantity: i64,
-    },
+    Transaction(TransactionRecord),
+    TxInput(TxInputRecord),
+    TxOutput(TxOutputRecord),
+    OutputAsset(OutputAssetRecord),
+    Metadata(MetadataRecord),
+    Mint(MintRecord),
     Collateral {
         tx_id: String,
         index: u64,
@@ -172,19 +201,25 @@ pub trait SinkConfig {
     fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult;
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct EventWriter {
     context: EventContext,
     output: Sender<Event>,
     chain_info: Option<ChainWellKnownInfo>,
+    pub mapping_config: MapperConfig,
 }
 
 impl EventWriter {
-    pub fn new(output: Sender<Event>, chain_info: Option<ChainWellKnownInfo>) -> Self {
+    pub fn new(
+        output: Sender<Event>,
+        chain_info: Option<ChainWellKnownInfo>,
+        mapping_config: MapperConfig,
+    ) -> Self {
         EventWriter {
             context: EventContext::default(),
             output,
             chain_info,
+            mapping_config,
         }
     }
 
@@ -207,6 +242,7 @@ impl EventWriter {
             context: extra_context,
             output: self.output.clone(),
             chain_info: self.chain_info.clone(),
+            mapping_config: self.mapping_config.clone(),
         }
     }
 

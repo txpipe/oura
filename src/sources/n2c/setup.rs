@@ -13,7 +13,8 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{ChainWellKnownInfo, Error, PartialBootstrapResult, SourceConfig},
+    framework::{ChainWellKnownInfo, Error, EventWriter, PartialBootstrapResult, SourceConfig},
+    mapping::MapperConfig,
     sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
 };
 
@@ -29,6 +30,9 @@ pub struct Config {
     pub since: Option<PointArg>,
 
     pub well_known: Option<ChainWellKnownInfo>,
+
+    #[serde(default)]
+    pub mapper: MapperConfig,
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
@@ -75,6 +79,8 @@ impl SourceConfig for Config {
             None => ChainWellKnownInfo::try_from_magic(magic)?,
         };
 
+        let writer = EventWriter::new(output_tx, well_known.clone().into(), self.mapper.clone());
+
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
 
@@ -88,8 +94,7 @@ impl SourceConfig for Config {
         info!("starting from chain point: {:?}", &since);
 
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, well_known, since, output_tx)
-                .expect("chainsync loop failed");
+            observe_forever(cs_channel, writer, since).expect("chainsync loop failed");
         });
 
         Ok((handle, output_rx))

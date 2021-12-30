@@ -9,7 +9,10 @@ use std::{
 use log::{debug, warn};
 use serde_derive::Deserialize;
 
-use crate::framework::{Error, Event, EventData, FilterConfig, PartialBootstrapResult};
+use crate::framework::{
+    Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
+    PartialBootstrapResult,
+};
 
 struct FingerprintBuilder {
     seed: u32,
@@ -107,20 +110,20 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_prefix("utxo")
             .append_optional(&event.context.tx_hash)?
             .append_optional_to_string(&event.context.output_idx)?,
-        EventData::OutputAsset { policy, asset, .. } => b
+        EventData::OutputAsset(OutputAssetRecord { policy, asset, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("asst")
             .append_optional(&event.context.tx_hash)?
             .append_optional_to_string(&event.context.output_idx)?
             .append_slice(policy)?
             .append_slice(asset)?,
-        EventData::Metadata { key, subkey, .. } => b
+        EventData::Metadata(MetadataRecord { key, subkey, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("meta")
             .append_optional(&event.context.tx_hash)?
             .append_slice(key)?
             .append_slice(subkey.as_deref().unwrap_or_default())?,
-        EventData::Mint { policy, asset, .. } => b
+        EventData::Mint(MintRecord { policy, asset, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("mint")
             .append_optional(&event.context.tx_hash)?
