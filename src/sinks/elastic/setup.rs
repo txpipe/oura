@@ -53,7 +53,7 @@ impl SinkConfig for Config {
         };
 
         let client = Elasticsearch::new(transport.build()?);
-        
+
         let index = self.index.clone();
         let idempotency = self.idempotency;
         let handle = std::thread::spawn(move || {

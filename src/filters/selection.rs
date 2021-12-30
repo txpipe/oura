@@ -29,7 +29,7 @@ fn relaxed_str_matches(a: &str, b: &str) -> bool {
 }
 
 #[inline]
-fn variant_in_matches(event: &Event, variants: &Vec<String>) -> bool {
+fn variant_in_matches(event: &Event, variants: &[String]) -> bool {
     variants
         .iter()
         .any(|v| relaxed_str_matches(&event.data.to_string(), v))
@@ -39,9 +39,9 @@ fn variant_in_matches(event: &Event, variants: &Vec<String>) -> bool {
 fn policy_matches(event: &Event, policy: &str) -> bool {
     match &event.data {
         EventData::OutputAsset(OutputAssetRecord { policy: x, .. }) => {
-            relaxed_str_matches(x, &policy)
+            relaxed_str_matches(x, policy)
         }
-        EventData::Mint(MintRecord { policy: x, .. }) => relaxed_str_matches(x, &policy),
+        EventData::Mint(MintRecord { policy: x, .. }) => relaxed_str_matches(x, policy),
         _ => false,
     }
 }
@@ -49,10 +49,8 @@ fn policy_matches(event: &Event, policy: &str) -> bool {
 #[inline]
 fn asset_matches(event: &Event, asset: &str) -> bool {
     match &event.data {
-        EventData::OutputAsset(OutputAssetRecord { asset: x, .. }) => {
-            relaxed_str_matches(x, &asset)
-        }
-        EventData::Mint(MintRecord { asset: x, .. }) => relaxed_str_matches(x, &asset),
+        EventData::OutputAsset(OutputAssetRecord { asset: x, .. }) => relaxed_str_matches(x, asset),
+        EventData::Mint(MintRecord { asset: x, .. }) => relaxed_str_matches(x, asset),
         _ => false,
     }
 }
@@ -60,7 +58,7 @@ fn asset_matches(event: &Event, asset: &str) -> bool {
 #[inline]
 fn metadata_key_matches(event: &Event, key: &str) -> bool {
     match &event.data {
-        EventData::Metadata(MetadataRecord { key: x, .. }) => relaxed_str_matches(x, &key),
+        EventData::Metadata(MetadataRecord { key: x, .. }) => relaxed_str_matches(x, key),
         _ => false,
     }
 }
@@ -70,7 +68,7 @@ fn metadata_subkey_matches(event: &Event, subkey: &str) -> bool {
     match &event.data {
         EventData::Metadata(MetadataRecord {
             subkey: Some(x), ..
-        }) => relaxed_str_matches(x, &subkey),
+        }) => relaxed_str_matches(x, subkey),
         _ => false,
     }
 }

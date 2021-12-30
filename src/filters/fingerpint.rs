@@ -32,7 +32,7 @@ impl FingerprintBuilder {
     }
 
     fn with_slot(mut self, slot: &Option<u64>) -> Self {
-        self.slot = slot.clone();
+        self.slot = *slot;
         self
     }
 
@@ -45,7 +45,7 @@ impl FingerprintBuilder {
     where
         T: AsRef<[u8]>,
     {
-        self.hasheable.write(value.as_ref())?;
+        self.hasheable.write_all(value.as_ref())?;
         Ok(self)
     }
 
@@ -57,7 +57,7 @@ impl FingerprintBuilder {
             None => Err("fingerprint component not available".into()),
             Some(x) => {
                 let slice = x.as_ref();
-                self.hasheable.write(slice)?;
+                self.hasheable.write_all(slice)?;
                 Ok(self)
             }
         }
