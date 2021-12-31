@@ -1,5 +1,5 @@
 use elasticsearch::{params::OpType, Elasticsearch, IndexParts};
-use log::{debug, error, warn};
+use log::{debug, warn};
 use serde::Serialize;
 use serde_json::json;
 use std::sync::{mpsc::Receiver, Arc};
@@ -34,7 +34,7 @@ impl From<Event> for ESRecord {
 #[inline]
 async fn index_event<'b>(
     client: Arc<Elasticsearch>,
-    parts: IndexParts<'b>,
+    parts: IndexParts<'_>,
     event: Event,
 ) -> Result<(), Error> {
     let req_body = json!(ESRecord::from(event));
@@ -61,7 +61,7 @@ async fn index_event<'b>(
 
 async fn index_event_with_id<'b>(
     client: Arc<Elasticsearch>,
-    index: &'b str,
+    index: &'_ str,
     event: Event,
 ) -> Result<(), Error> {
     let fingerprint = event.fingerprint.clone();
@@ -79,7 +79,7 @@ async fn index_event_with_id<'b>(
 
 async fn index_event_without_id<'b>(
     client: Arc<Elasticsearch>,
-    index: &'b str,
+    index: &'_ str,
     event: Event,
 ) -> Result<(), Error> {
     let parts = IndexParts::Index(index);

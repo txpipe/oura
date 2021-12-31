@@ -63,6 +63,7 @@ If the available out-of-the-box features don't satisfiy your particular use-case
   - [ ] shared file system
 - Sinks
   - [x] Kafka topic
+  - [x] Elasticsearch index / data stream
   - [ ] Redis streams
   - [ ] AWS SQS queue
   - [ ] AWS Lambda call
@@ -71,7 +72,9 @@ If the available out-of-the-box features don't satisfiy your particular use-case
   - [x] terminal (append-only, tail-like)
   - [ ] TUI
 - Filters
-  - [ ] by event type (block, tx, mint, cert, etc)
+  - [x] by event type (block, tx, mint, cert, etc)
+  - [x] by asset subject (policy, name, etc)
+  - [x] by metadata keys
   - [ ] by block property (size, tx count)
   - [ ] by tx property (fee, has native script, has plutus script, etc)
   - [ ] by utxo property (address, asset, amount range)

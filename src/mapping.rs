@@ -508,7 +508,7 @@ impl EventSource for (&TransactionBody, Option<&AuxiliaryData>) {
 
         // write aux data custom events
         if let Some(aux_data) = aux_data {
-            aux_data.write_events(&writer)?;
+            aux_data.write_events(writer)?;
         }
 
         // write body components sub-events

@@ -21,9 +21,7 @@ use pallas::{
 use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
-    framework::{
-        ChainWellKnownInfo, Error, Event, EventContext, EventData, EventSource, EventWriter,
-    },
+    framework::{Error, EventContext, EventData, EventSource, EventWriter},
     mapping::ToHex,
 };
 

@@ -103,7 +103,7 @@ impl SourceConfig for Config {
         });
 
         let bf_channel = muxer.use_channel(3);
-        let bf_writer = writer.clone();
+        let bf_writer = writer;
         let _bf_handle = std::thread::spawn(move || {
             fetch_blocks_forever(bf_channel, bf_writer, headers_rx)
                 .expect("blockfetch loop failed");

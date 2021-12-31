@@ -20,20 +20,26 @@ oura daemon --config my_config.toml
 
 ## Configuration
 
-The configuration file needs to specify the source and the sink to use in a particular pipeline. The following toml represent the typical skeleton of an _Oura_ config file:
+The configuration file needs to specify the source, filters and sink to use in a particular pipeline. The following toml represent the typical skeleton of an _Oura_ config file:
 
 ```toml
 [source]
-# the type of source to use
-type = "X" 
+type = "X" # the type of source to use
 
 # custom config fields for this source type
 foo = "abc"
 bar = "xyz"
 
+[[filters]]
+type = "Y" # the type of filter to use
+
+# custom config fields for this filter type
+foo = "123"
+bar = "789"
+
 [sink]
 # the type of sink to use
-type = "Y"
+type = "Z"
 
 # custom config fields for this sink type
 foo = "123"
@@ -43,6 +49,10 @@ bar = "789"
 ### The `source` section
 
 This section specifies the origin of the data. The special `type` field must always be present and containing a value matching any of the available built-in sources. The rest of the fields in the section will depend on the selected `type`. See the [sources](../sources/index.md) section for a list of available options and their corresponding config values.
+
+### The `filters` section
+
+This section specifies a collection of filters that are applied in sequence to each event. The sepcial `type` field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the [filters](../filters/index.md) section for a list of available options and their corresponding config values.
 
 ### The `sink` section
 
@@ -57,6 +67,14 @@ Here's an example configuration file that uses a Node-to-Node source and output 
 type = "N2N"
 address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
 magic = "mainnet"
+
+[[filters]]
+type = "Fingerprint"
+
+[[filters]]
+type = "Selection"
+predicate = "variant_in"
+argument = ["Block", "Transaction"]
 
 [sink]
 type = "Kafka"

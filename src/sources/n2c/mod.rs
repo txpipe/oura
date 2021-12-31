@@ -16,12 +16,8 @@ use pallas::{
     },
 };
 
-use std::sync::mpsc::Sender;
-
 use crate::{
-    framework::{
-        ChainWellKnownInfo, Error, Event, EventContext, EventData, EventSource, EventWriter,
-    },
+    framework::{Error, EventContext, EventData, EventSource, EventWriter},
     mapping::ToHex,
 };
 
@@ -61,7 +57,8 @@ impl Observer<Content> for ChainObserver {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let Content(block) = content;
 
-        // inject the block hash we already have as part of the context for nested events
+        // inject the block hash we already have as part of the context for nested
+        // events
         let writer = self.0.child_writer(EventContext {
             block_hash: cursor.as_ref().map(|p| p.1.to_hex()),
             ..EventContext::default()
@@ -90,11 +87,7 @@ impl Observer<Content> for ChainObserver {
     }
 }
 
-fn observe_forever(
-    mut channel: Channel,
-    writer: EventWriter,
-    from: Point,
-) -> Result<(), Error> {
+fn observe_forever(mut channel: Channel, writer: EventWriter, from: Point) -> Result<(), Error> {
     let observer = ChainObserver(writer);
     let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
