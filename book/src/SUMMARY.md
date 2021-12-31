@@ -11,7 +11,7 @@
     - [Daemon Mode](./usage/daemon.md)
     - [Library](./usage/library.md)
 - [Filters](./filters/README.md)
-    - [Fingerprint](./sources/fingerprint.md)
+    - [Fingerprint](./filters/fingerprint.md)
     - [Selection](./filters/selection.md)
 - [Sources](./sources/README.md)
     - [Node-to-Node](./sources/n2n.md)

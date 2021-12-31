@@ -27,7 +27,8 @@ For more information on available command-line arguments, check the [usage](../u
 The default daemon configuration file for _Oura_ is located in `/etc/oura/daemon.toml`. To run _Oura_ in daemon mode with a custom configuration file, you need to mount it in the correct location. The following example runs a docker container in background using a configuration file named `daemon.toml` located in the current folder:
 
 ```
-docker run -d -v $(pwd)/daemon.toml:/etc/oura/daemon.toml ghcr.io/txpipe/oura:latest daemon
+docker run -d -v $(pwd)/daemon.toml:/etc/oura/daemon.toml \
+    ghcr.io/txpipe/oura:latest daemon
 ```
 
 ## Versioned Images

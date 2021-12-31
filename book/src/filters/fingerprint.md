@@ -13,7 +13,7 @@ When enabled, this filter will set the `fingerprint` property of the `Event` dat
 Adding the following section to the daemon config file will enable the filter as part of the pipeline:
 
 ```toml
-[filter]
+[[filters]]
 type = "Fingerprint"
 ```
 

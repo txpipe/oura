@@ -6,6 +6,28 @@ Not every use-case requires each and every event to be processed. For example, a
 
 The filter works by evaluating a predicate against each event. If the predicate returns `true`, then the event will continue down the pipeline. If the predicate evalutes to `false`, the event will be dopped. We currently provide some common built-in predicate to facilitate common use-cases (eg: matching event type, matching policy id, matching a metadata key, etc). We also include some 'connecting' predicates (and / or / not) which can be used to create complex conditions by composing other predicates.
 
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "<predicate kind>"
+argument = <predicate argument>
+```
+
+### Section: `filters`
+
+- `type`: the literal value `Selection`.
+
+### Section `filters.check`
+
+- `predicate`: the key of the predicate to use for the evaluation. See the list of available predicates for possible values.
+- `argument`: a polimorphic argument that specializes the behavior of the predicate in some way.
+
 ## Available Predicates
 
 - `variant_in (string[])`: This predicate will yield true when the variant of the event matches any of the items in the argument array.
@@ -17,29 +39,6 @@ The filter works by evaluating a predicate against each event. If the predicate 
 - `not (predicate)`: This predicate will yield true when the predicate in the arguments yields false.
 - `any_of (predicate[])`: This predicate will yield true when _any_ of the predicates in the argument yields true.
 - `all_of (predicate[])`: This predicate will yield true when _all_ of the predicates in the argument yields true.
-
-## Configuration
-
-Adding the following section to the daemon config file will enable the filter as part of the pipeline:
-
-```toml
-[[filters]]
-type = "Selection"
-
-[filters.check]
-predicate = "<predicate kind>"
-argument = "<predicate argument>"
-```
-
-### Section: `filters`
-
-- `type`: the literal value `Selection`.
-
-### Section `filters.check`
-
-- `predicate`: the key of the predicate to use for the evaluation. See #predicate_types for more available options.
-- `argument`: the
-
 
 ## Examples
 
