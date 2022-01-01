@@ -153,6 +153,8 @@
 <p><em>Oura</em> running in <code>daemon</code> mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;</p>
 <h3 id="as-a-library-for-custom-scenarios"><a class="header" href="#as-a-library-for-custom-scenarios">As a Library for Custom Scenarios</a></h3>
 <p>If the available out-of-the-box features don't satisfiy your particular use-case, <em>Oura</em> can be used a library in your Rust project to setup tailor-made pipelines. Each component (sources, filters, sinks, etc) in <em>Oura</em> aims at being self-contained and reusable. For example, custom filters and sinks can be built while reusing the existing sources.</p>
+<h2 id="experimental-windows-support"><a class="header" href="#experimental-windows-support">(Experimental) Windows Support</a></h2>
+<p><em>Oura</em> Windows support is currently <strong>experimental</strong>, Windows build supports only <a href="./sources/n2n.html">Node-to-Node</a> source with tcp socket bearer.</p>
 
                     </main>
 
