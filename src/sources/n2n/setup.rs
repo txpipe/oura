@@ -1,6 +1,6 @@
-use std::{net::TcpStream, ops::Deref, sync::mpsc};
 #[cfg(target_family = "unix")]
 use std::os::unix::net::UnixStream;
+use std::{net::TcpStream, ops::Deref, sync::mpsc};
 
 use net2::TcpStreamExt;
 
