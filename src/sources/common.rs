@@ -16,6 +16,7 @@ use crate::framework::{ChainWellKnownInfo, Error};
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {
     Tcp,
+    #[cfg(target_family = "unix")]
     Unix,
 }
 
@@ -27,8 +28,9 @@ impl FromStr for BearerKind {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "unix" => Ok(BearerKind::Unix),
             "tcp" => Ok(BearerKind::Tcp),
+            #[cfg(target_family = "unix")]
+            "unix" => Ok(BearerKind::Unix),
             _ => Err("can't parse bearer type value"),
         }
     }
