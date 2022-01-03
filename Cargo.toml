@@ -25,7 +25,7 @@ env_logger = "0.9.0"
 crossterm = "0.22"
 merge = "0.1.0"
 config = { version = "0.11.0", default-features = false, features = ["toml"] }
-serde = "1.0.132"
+serde = "1.0.133"
 serde_json = "1.0.73"
 serde_derive = "1.0.130"
 strum = "0.23"
