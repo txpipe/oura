@@ -46,7 +46,7 @@ murmur3 = { version = "0.5.1", optional = true }
 
 # required for CI to complete successfully
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
-minicbor = "0.12.0"
+minicbor = "0.12.1"
 
 [features]
 default = []
