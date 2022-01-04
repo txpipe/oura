@@ -49,7 +49,10 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let bearer = match args.is_present("bearer") {
         true => value_t!(args, "bearer", BearerKind)?,
+        #[cfg(target_family = "unix")]
         false => BearerKind::Unix,
+        #[cfg(target_family = "windows")]
+        false => BearerKind::Tcp,
     };
 
     let magic = match args.is_present("magic") {
@@ -65,6 +68,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     let mode = match (args.is_present("mode"), &bearer) {
         (true, _) => value_t!(args, "mode", PeerMode).expect("invalid value for 'mode' arg"),
         (false, BearerKind::Tcp) => PeerMode::AsNode,
+        #[cfg(target_family = "unix")]
         (false, BearerKind::Unix) => PeerMode::AsClient,
     };
 

@@ -1,4 +1,6 @@
-use std::{net::TcpStream, ops::Deref, os::unix::net::UnixStream, sync::mpsc};
+#[cfg(target_family = "unix")]
+use std::os::unix::net::UnixStream;
+use std::{net::TcpStream, ops::Deref, sync::mpsc};
 
 use net2::TcpStreamExt;
 
@@ -47,6 +49,7 @@ fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
     }
 }
 
+#[cfg(target_family = "unix")]
 fn setup_unix_multiplexer(path: &str) -> Result<Multiplexer, Error> {
     let unix = UnixStream::connect(path)?;
 
@@ -67,6 +70,7 @@ impl SourceConfig for Config {
 
         let mut muxer = match self.address.0 {
             BearerKind::Tcp => setup_tcp_multiplexer(&self.address.1)?,
+            #[cfg(target_family = "unix")]
             BearerKind::Unix => setup_unix_multiplexer(&self.address.1)?,
         };
 
