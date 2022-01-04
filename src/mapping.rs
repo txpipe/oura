@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use pallas::ledger::alonzo::{
     self as alonzo, crypto::hash_transaction, AuxiliaryData, Block, Certificate,
     InstantaneousRewardSource, InstantaneousRewardTarget, Metadata, Metadatum, Relay,
@@ -9,6 +11,8 @@ use pallas::ledger::alonzo::{
 
 use bech32::{self, ToBase32};
 use serde_derive::Deserialize;
+
+use serde_json::{Value as JsonValue, json};
 
 use crate::framework::{
     EventContext, EventData, EventSource, EventWriter, MetadataRecord, MintRecord,
@@ -145,64 +149,72 @@ impl EventSource for Certificate {
     }
 }
 
-fn metadatum_to_string(datum: &Metadatum) -> String {
+fn metadatum_to_string_key(datum: &Metadatum) -> Result<String, Error> {
     match datum {
-        Metadatum::Int(x) => x.to_string(),
-        Metadatum::Bytes(x) => hex::encode::<&Vec<u8>>(x.as_ref()),
-        Metadatum::Text(x) => x.to_owned(),
-        Metadatum::Array(x) => x
-            .iter()
-            .map(|i| format!("{}, ", metadatum_to_string(i)))
-            .collect(),
-        Metadatum::Map(x) => x
-            .iter()
-            .map(|(key, val)| {
-                format!(
-                    "{}: {}, ",
-                    metadatum_to_string(key),
-                    metadatum_to_string(val)
-                )
-            })
-            .collect(),
+        Metadatum::Int(x) => Ok(x.to_string()),
+        Metadatum::Bytes(x) => Ok(hex::encode(x.as_slice())),
+        Metadatum::Text(x) => Ok(x.to_owned()),
+        _ => Err("can't turn complex metadatums into string keys".into()),
+    }
+}
+
+fn metadatum_map_entry_to_json_map_entry(
+    pair: (&Metadatum, &Metadatum),
+) -> Result<(String, JsonValue), Error> {
+    let key = metadatum_to_string_key(pair.0)?;
+    let value = metadatum_to_json(pair.1)?;
+    Ok((key, value))
+}
+
+fn metadatum_to_json(source: &Metadatum) -> Result<JsonValue, Error> {
+    match source {
+        Metadatum::Int(x) => Ok(json!(x)),
+        Metadatum::Bytes(x) => Ok(json!(hex::encode(x.as_slice()))),
+        Metadatum::Text(x) => Ok(json!(x)),
+        Metadatum::Array(x) => {
+            let items: Result<Vec<_>, _> = x.iter().map(|i| metadatum_to_json(i)).collect();
+
+            Ok(json!(items?))
+        }
+        Metadatum::Map(x) => {
+            let map: Result<HashMap<_, _>, _> = x
+                .iter()
+                .map(|(key, value)| metadatum_map_entry_to_json_map_entry((key, value)))
+                .collect();
+
+            Ok(json!(map?))
+        }
     }
 }
 
 trait MetadataProvider {
-    fn get_metadata(&self) -> Vec<MetadataRecord>;
+    fn try_get_metadata(&self) -> Result<Vec<MetadataRecord>, Error>;
+}
+
+impl TryFrom<(&Metadatum, &Metadatum)> for MetadataRecord {
+    type Error = Error;
+
+    fn try_from(value: (&Metadatum, &Metadatum)) -> Result<Self, Self::Error> {
+        Ok(MetadataRecord {
+            label: metadatum_to_string_key(value.0)?,
+            content: metadatum_to_json(value.1)?,
+        })
+    }
 }
 
 impl MetadataProvider for &Metadata {
-    fn get_metadata(&self) -> Vec<MetadataRecord> {
-        let mut out = Vec::with_capacity(self.len());
+    fn try_get_metadata(&self) -> Result<Vec<MetadataRecord>, Error> {
+        let out: Result<Vec<_>, Error> = self.iter()
+            .map(|(key, value)| MetadataRecord::try_from((key, value)))
+            .collect();
 
-        for (level1_key, level1_data) in self.iter() {
-            match level1_data {
-                Metadatum::Map(level1_map) => {
-                    for (level2_key, level2_data) in level1_map.iter() {
-                        out.push(MetadataRecord {
-                            key: metadatum_to_string(level1_key),
-                            subkey: Some(metadatum_to_string(level2_key)),
-                            value: Some(metadatum_to_string(level2_data)),
-                        });
-                    }
-                }
-                _ => {
-                    out.push(MetadataRecord {
-                        key: metadatum_to_string(level1_key),
-                        subkey: None,
-                        value: Some(metadatum_to_string(level1_data)),
-                    });
-                }
-            }
-        }
-
-        out
+        Ok(out?)
     }
 }
 
 impl EventSource for Metadata {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
-        for record in self.get_metadata() {
+        for record in self.try_get_metadata()? {
             writer.append(EventData::Metadata(record))?;
         }
 
@@ -246,18 +258,18 @@ impl EventSource for AuxiliaryData {
 }
 
 impl MetadataProvider for AuxiliaryData {
-    fn get_metadata(&self) -> Vec<MetadataRecord> {
+    fn try_get_metadata(&self) -> Result<Vec<MetadataRecord>, Error> {
         match self {
             AuxiliaryData::Alonzo(AlonzoAuxiliaryData {
                 metadata: Some(metadata),
                 ..
-            }) => metadata.get_metadata(),
-            AuxiliaryData::Shelley(metadata) => metadata.get_metadata(),
+            }) => metadata.try_get_metadata(),
+            AuxiliaryData::Shelley(metadata) => metadata.try_get_metadata(),
             AuxiliaryData::ShelleyMa {
                 transaction_metadata,
                 ..
-            } => transaction_metadata.get_metadata(),
-            _ => vec![],
+            } => transaction_metadata.try_get_metadata(),
+            _ => Ok(vec![]),
         }
     }
 }
@@ -501,7 +513,10 @@ impl EventSource for (&TransactionBody, Option<&AuxiliaryData>) {
         */
 
         if writer.mapping_config.include_transaction_details {
-            record.metadata = aux_data.map(|source| source.get_metadata());
+            record.metadata = match aux_data {
+                Some(aux_data) => Some(aux_data.try_get_metadata()?),
+                None => None,
+            };
         }
 
         writer.append(EventData::Transaction(record))?;

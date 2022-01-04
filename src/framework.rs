@@ -10,6 +10,8 @@ use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
+use serde_json::Value as JsonValue;
+
 use crate::mapping::MapperConfig;
 
 pub type Error = Box<dyn std::error::Error>;
@@ -43,11 +45,8 @@ impl ChainWellKnownInfo {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MetadataRecord {
-    pub key: String,
-    pub subkey: Option<String>,
-    // TODO: value should be some sort of structured, JSON-like value.
-    // we could use Pallas' Metadatum struct, but it needs to be clonable
-    pub value: Option<String>,
+    pub label: String,
+    pub content: JsonValue,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

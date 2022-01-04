@@ -39,6 +39,12 @@
                         "input_idx": {
                             "type": "long"
                         },
+                        "output_idx": {
+                            "type": "long"
+                        },
+                        "certificate_idx": {
+                            "type": "long"
+                        },
                         "slot": {
                             "type": "long"
                         },
@@ -55,14 +61,11 @@
                 },
                 "metadata": {
                     "properties": {
-                        "key": {
+                        "label": {
                             "type": "keyword"
                         },
-                        "subkey": {
-                            "type": "keyword"
-                        },
-                        "value": {
-                            "type": "keyword"
+                        "content": {
+                            "enabled": false
                         }
                     }
                 },
@@ -88,13 +91,6 @@
                             "type": "keyword"
                         },
                         "policy": {
-                            "type": "keyword"
-                        }
-                    }
-                },
-                "plutus_script_ref": {
-                    "properties": {
-                        "data": {
                             "type": "keyword"
                         }
                     }
@@ -187,6 +183,10 @@
                         }
                     }
                 },
+                "fingerprint": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                },
                 "variant": {
                     "type": "keyword",
                     "ignore_above": 256
@@ -194,6 +194,7 @@
             }
         }
     },
+    "data_stream": {},
     "index_patterns": [
         "oura.sink.v0.*"
     ]
