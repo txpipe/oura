@@ -12,11 +12,12 @@ use pallas::ledger::alonzo::{
 use bech32::{self, ToBase32};
 use serde_derive::Deserialize;
 
-use serde_json::{Value as JsonValue, json};
+use serde_json::{json, Value as JsonValue};
 
 use crate::framework::{
-    EventContext, EventData, EventSource, EventWriter, MetadataRecord, MintRecord,
-    OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+    EventContext, EventData, EventSource, EventWriter, MetadataRecord, MetadatumRendition,
+    MintRecord, OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord,
+    TxOutputRecord,
 };
 
 use crate::framework::Error;
@@ -191,20 +192,39 @@ trait MetadataProvider {
     fn try_get_metadata(&self) -> Result<Vec<MetadataRecord>, Error>;
 }
 
+impl TryFrom<&Metadatum> for MetadatumRendition {
+    type Error = Error;
+
+    fn try_from(value: &Metadatum) -> Result<Self, Self::Error> {
+        let rendition = match value {
+            Metadatum::Int(x) => MetadatumRendition::IntScalar(*x),
+            Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
+            Metadatum::Text(x) => MetadatumRendition::TextScalar(x.clone()),
+            Metadatum::Array(_) => MetadatumRendition::ArrayJson(metadatum_to_json(value)?),
+            Metadatum::Map(_) => MetadatumRendition::MapJson(metadatum_to_json(value)?),
+        };
+
+        Ok(rendition)
+    }
+}
+
 impl TryFrom<(&Metadatum, &Metadatum)> for MetadataRecord {
     type Error = Error;
 
     fn try_from(value: (&Metadatum, &Metadatum)) -> Result<Self, Self::Error> {
-        Ok(MetadataRecord {
+        let record = MetadataRecord {
             label: metadatum_to_string_key(value.0)?,
-            content: metadatum_to_json(value.1)?,
-        })
+            content: value.1.try_into()?,
+        };
+
+        Ok(record)
     }
 }
 
 impl MetadataProvider for &Metadata {
     fn try_get_metadata(&self) -> Result<Vec<MetadataRecord>, Error> {
-        let out: Result<Vec<_>, Error> = self.iter()
+        let out: Result<Vec<_>, Error> = self
+            .iter()
             .map(|(key, value)| MetadataRecord::try_from((key, value)))
             .collect();
 

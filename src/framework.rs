@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     sync::mpsc::{Receiver, Sender},
-    thread::JoinHandle,
+    thread::JoinHandle, fmt::{Display, Pointer},
 };
 
 use merge::Merge;
@@ -44,9 +44,33 @@ impl ChainWellKnownInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum MetadatumRendition {
+    MapJson(JsonValue),
+    ArrayJson(JsonValue),
+    IntScalar(i64),
+    TextScalar(String),
+    BytesHex(String),
+}
+
+impl Display for MetadatumRendition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MetadatumRendition::MapJson(x) => x.fmt(f),
+            MetadatumRendition::ArrayJson(x) => x.fmt(f),
+            MetadatumRendition::IntScalar(x) => x.fmt(f),
+            MetadatumRendition::TextScalar(x) => x.fmt(f),
+            MetadatumRendition::BytesHex(x) => x.fmt(f),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MetadataRecord {
     pub label: String,
-    pub content: JsonValue,
+
+    #[serde(flatten)]
+    pub content: MetadatumRendition,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

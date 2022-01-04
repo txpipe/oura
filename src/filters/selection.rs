@@ -3,10 +3,11 @@
 use std::{sync::mpsc::Receiver, thread};
 
 use serde_derive::Deserialize;
+use serde_json::Value as JsonValue;
 
 use crate::framework::{
     Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
-    PartialBootstrapResult,
+    PartialBootstrapResult, MetadatumRendition,
 };
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -21,7 +22,7 @@ pub enum Predicate {
     Not(Box<Predicate>),
     AnyOf(Vec<Predicate>),
     AllOf(Vec<Predicate>),
-    
+
     #[deprecated(note = "renamed to MetadataLabelEquals")]
     MetadataKeyEquals(String),
 
@@ -73,7 +74,9 @@ fn metadata_label_matches(event: &Event, label: &str) -> bool {
 fn metadata_any_sub_label_matches(event: &Event, sub_label: &str) -> bool {
     match &event.data {
         EventData::Metadata(record) => match &record.content {
-            serde_json::Value::Object(obj) => obj.keys().any(|x| relaxed_str_matches(x, sub_label)),
+            MetadatumRendition::MapJson(JsonValue::Object(obj)) => {
+                obj.keys().any(|x| relaxed_str_matches(x, sub_label))
+            }
             _ => false,
         },
         _ => false,
