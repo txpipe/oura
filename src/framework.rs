@@ -1,7 +1,8 @@
 use std::{
     collections::BTreeMap,
+    fmt::Display,
     sync::mpsc::{Receiver, Sender},
-    thread::JoinHandle, fmt::{Display, Pointer},
+    thread::JoinHandle,
 };
 
 use merge::Merge;

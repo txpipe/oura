@@ -223,12 +223,10 @@ impl TryFrom<(&Metadatum, &Metadatum)> for MetadataRecord {
 
 impl MetadataProvider for &Metadata {
     fn try_get_metadata(&self) -> Result<Vec<MetadataRecord>, Error> {
-        let out: Result<Vec<_>, Error> = self
+        self
             .iter()
             .map(|(key, value)| MetadataRecord::try_from((key, value)))
-            .collect();
-
-        Ok(out?)
+            .collect()
     }
 }
 
