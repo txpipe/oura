@@ -22,10 +22,7 @@ fn main() {
                 )
                 .arg(Arg::new("magic").long("magic").takes_value(true))
                 .arg(
-                    Arg::new("since")
-                        .long("since")
-                        .takes_value(true)
-                        .help(
+                    Arg::new("since").long("since").takes_value(true).help(
                         "point in the chain to start reading from, expects format `slot,hex-hash`",
                     ),
                 )
