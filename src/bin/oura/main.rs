@@ -48,8 +48,8 @@ fn main() {
         .get_matches();
 
     let result = match args.subcommand() {
-        Some(("watch",args)) => watch::run(args),
-        Some(("daemon",args)) => daemon::run(args),
+        Some(("watch", args)) => watch::run(args),
+        Some(("daemon", args)) => daemon::run(args),
         _ => Err("nothing to do".into()),
     };
 
