@@ -6,8 +6,8 @@ use serde_derive::Deserialize;
 use serde_json::Value as JsonValue;
 
 use crate::framework::{
-    Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
-    PartialBootstrapResult, MetadatumRendition,
+    Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition, MintRecord,
+    OutputAssetRecord, PartialBootstrapResult,
 };
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -22,12 +22,6 @@ pub enum Predicate {
     Not(Box<Predicate>),
     AnyOf(Vec<Predicate>),
     AllOf(Vec<Predicate>),
-
-    #[deprecated(note = "renamed to MetadataLabelEquals")]
-    MetadataKeyEquals(String),
-
-    #[deprecated(note = "renamed to MetadataAnySubLabelEquals")]
-    MetadataSubkeyEquals(String),
 }
 
 #[inline]
@@ -96,10 +90,6 @@ impl Predicate {
             Predicate::Not(x) => !x.event_matches(event),
             Predicate::AnyOf(x) => x.iter().any(|c| c.event_matches(event)),
             Predicate::AllOf(x) => x.iter().all(|c| c.event_matches(event)),
-
-            // DEPRECATED / RENAMED
-            Predicate::MetadataKeyEquals(x) => metadata_label_matches(event, x),
-            Predicate::MetadataSubkeyEquals(x) => metadata_any_sub_label_matches(event, x),
         }
     }
 }
