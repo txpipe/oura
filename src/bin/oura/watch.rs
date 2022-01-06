@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
-use clap::{value_t, ArgMatches};
+use clap::ArgMatches;
 use oura::{
     framework::*,
     mapping::MapperConfig,
-    sources::common::{AddressArg, BearerKind, MagicArg, PointArg},
+    sources::common::{AddressArg, BearerKind},
 };
 
 use serde_derive::Deserialize;
@@ -45,10 +45,10 @@ impl SourceConfig for WatchSource {
 }
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
-    let socket = value_t!(args, "socket", String)?;
+    let socket = args.value_of_t("socket")?;
 
     let bearer = match args.is_present("bearer") {
-        true => value_t!(args, "bearer", BearerKind)?,
+        true => args.value_of_t("socket")?,
         #[cfg(target_family = "unix")]
         false => BearerKind::Unix,
         #[cfg(target_family = "windows")]
@@ -56,17 +56,19 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let magic = match args.is_present("magic") {
-        true => Some(value_t!(args, "magic", MagicArg)?),
+        true => Some(args.value_of_t("magic")?),
         false => None,
     };
 
     let since = match args.is_present("since") {
-        true => Some(value_t!(args, "since", PointArg)?),
+        true => Some(args.value_of_t("since")?),
         false => None,
     };
 
     let mode = match (args.is_present("mode"), &bearer) {
-        (true, _) => value_t!(args, "mode", PeerMode).expect("invalid value for 'mode' arg"),
+        (true, _) => args
+            .value_of_t("mode")
+            .expect("invalid value for 'mode' arg"),
         (false, BearerKind::Tcp) => PeerMode::AsNode,
         #[cfg(target_family = "unix")]
         (false, BearerKind::Unix) => PeerMode::AsClient,
