@@ -3,7 +3,7 @@ mod watch;
 
 use std::process;
 
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{App, AppSettings, Arg};
 
 type Error = oura::framework::Error;
 
@@ -12,33 +12,28 @@ fn main() {
         .name("oura")
         .about("the tail of cardano")
         .subcommand(
-            SubCommand::with_name("watch")
-                .arg(Arg::with_name("socket").required(true))
+            App::new("watch")
+                .arg(Arg::new("socket").required(true))
                 .arg(
-                    Arg::with_name("bearer")
+                    Arg::new("bearer")
                         .long("bearer")
                         .takes_value(true)
                         .possible_values(&["tcp", "unix"]),
                 )
-                .arg(Arg::with_name("magic").long("magic").takes_value(true))
+                .arg(Arg::new("magic").long("magic").takes_value(true))
+                .arg(Arg::new("since").long("since").takes_value(true).help(
+                    "point in the chain to start reading from, expects format `slot,hex-hash`",
+                ))
                 .arg(
-                    Arg::with_name("since")
-                        .long("since")
-                        .takes_value(true)
-                        .help(
-                        "point in the chain to start reading from, expects format `slot,hex-hash`",
-                    ),
-                )
-                .arg(
-                    Arg::with_name("mode")
+                    Arg::new("mode")
                         .long("mode")
                         .takes_value(true)
                         .possible_values(&["node", "client"]),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("daemon").arg(
-                Arg::with_name("config")
+            App::new("daemon").arg(
+                Arg::new("config")
                     .long("config")
                     .takes_value(true)
                     .help("config file to load by the daemon"),
@@ -48,8 +43,8 @@ fn main() {
         .get_matches();
 
     let result = match args.subcommand() {
-        ("watch", Some(args)) => watch::run(args),
-        ("daemon", Some(args)) => daemon::run(args),
+        Some(("watch", args)) => watch::run(args),
+        Some(("daemon", args)) => daemon::run(args),
         _ => Err("nothing to do".into()),
     };
 

@@ -1,7 +1,7 @@
 use std::sync::mpsc::Receiver;
 use std::thread::JoinHandle;
 
-use clap::{value_t, ArgMatches};
+use clap::ArgMatches;
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
 use oura::framework::{
@@ -147,7 +147,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     env_logger::init();
 
     let explicit_config = match args.is_present("config") {
-        true => Some(value_t!(args, "config", String)?),
+        true => Some(args.value_of_t("config")?),
         false => None,
     };
 
