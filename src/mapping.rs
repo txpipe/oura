@@ -173,7 +173,7 @@ fn metadatum_to_json(source: &Metadatum) -> Result<JsonValue, Error> {
         Metadatum::Bytes(x) => Ok(json!(hex::encode(x.as_slice()))),
         Metadatum::Text(x) => Ok(json!(x)),
         Metadatum::Array(x) => {
-            let items: Result<Vec<_>, _> = x.iter().map(|i| metadatum_to_json(i)).collect();
+            let items: Result<Vec<_>, _> = x.iter().map(metadatum_to_json).collect();
 
             Ok(json!(items?))
         }
