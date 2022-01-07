@@ -2,7 +2,6 @@
 
 use std::{
     io::{Cursor, Write},
-    sync::mpsc::Receiver,
     thread,
 };
 
@@ -10,8 +9,8 @@ use log::{debug, warn};
 use serde_derive::Deserialize;
 
 use crate::framework::{
-    Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
-    PartialBootstrapResult,
+    new_inter_stage_channel, Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord,
+    OutputAssetRecord, PartialBootstrapResult, StageReceiver,
 };
 
 struct FingerprintBuilder {
@@ -117,12 +116,11 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .append_optional_to_string(&event.context.output_idx)?
             .append_slice(policy)?
             .append_slice(asset)?,
-        EventData::Metadata(MetadataRecord { key, subkey, .. }) => b
+        EventData::Metadata(MetadataRecord { label, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("meta")
             .append_optional(&event.context.tx_hash)?
-            .append_slice(key)?
-            .append_slice(subkey.as_deref().unwrap_or_default())?,
+            .append_slice(label)?,
         EventData::Mint(MintRecord { policy, asset, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("mint")
@@ -195,8 +193,8 @@ pub struct Config {
 }
 
 impl FilterConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
-        let (output_tx, output_rx) = std::sync::mpsc::channel();
+    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
+        let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let seed = self.seed.unwrap_or(0);
 

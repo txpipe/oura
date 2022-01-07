@@ -18,7 +18,7 @@ use pallas::{
     },
 };
 
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, SyncSender};
 
 use crate::{
     framework::{Error, EventContext, EventData, EventSource, EventWriter},
@@ -88,7 +88,7 @@ impl BlockObserver for Block2EventMapper {
 
 #[derive(Debug)]
 pub struct ChainObserver {
-    block_requests: Sender<Point>,
+    block_requests: SyncSender<Point>,
     event_writer: EventWriter,
 }
 
@@ -130,7 +130,7 @@ fn observe_headers_forever(
     mut channel: Channel,
     event_writer: EventWriter,
     from: Point,
-    block_requests: Sender<Point>,
+    block_requests: SyncSender<Point>,
 ) -> Result<(), Error> {
     let observer = ChainObserver {
         event_writer,

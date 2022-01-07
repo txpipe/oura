@@ -1,8 +1,8 @@
-use std::{sync::mpsc::Receiver, time::Duration};
+use std::time::Duration;
 
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, Event, SinkConfig};
+use crate::framework::{BootstrapResult, SinkConfig, StageReceiver};
 
 use super::run::reducer_loop;
 
@@ -14,7 +14,7 @@ pub struct Config {
 }
 
 impl SinkConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult {
+    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let throttle_min_span = Duration::from_millis(
             self.throttle_min_span_millis
                 .unwrap_or(THROTTLE_MIN_SPAN_MILLIS),

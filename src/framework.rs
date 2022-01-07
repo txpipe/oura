@@ -1,14 +1,12 @@
-use std::{
-    collections::BTreeMap,
-    sync::mpsc::{Receiver, Sender},
-    thread::JoinHandle,
-};
+use std::{collections::BTreeMap, fmt::Display, thread::JoinHandle};
 
 use merge::Merge;
 
 use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
+
+use serde_json::Value as JsonValue;
 
 use crate::mapping::MapperConfig;
 
@@ -42,12 +40,33 @@ impl ChainWellKnownInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum MetadatumRendition {
+    MapJson(JsonValue),
+    ArrayJson(JsonValue),
+    IntScalar(i64),
+    TextScalar(String),
+    BytesHex(String),
+}
+
+impl Display for MetadatumRendition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MetadatumRendition::MapJson(x) => x.fmt(f),
+            MetadatumRendition::ArrayJson(x) => x.fmt(f),
+            MetadatumRendition::IntScalar(x) => x.fmt(f),
+            MetadatumRendition::TextScalar(x) => x.fmt(f),
+            MetadatumRendition::BytesHex(x) => x.fmt(f),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MetadataRecord {
-    pub key: String,
-    pub subkey: Option<String>,
-    // TODO: value should be some sort of structured, JSON-like value.
-    // we could use Pallas' Metadatum struct, but it needs to be clonable
-    pub value: Option<String>,
+    pub label: String,
+
+    #[serde(flatten)]
+    pub content: MetadatumRendition,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -185,7 +204,7 @@ pub struct Event {
     pub fingerprint: Option<String>,
 }
 
-pub type PartialBootstrapResult = Result<(JoinHandle<()>, Receiver<Event>), Error>;
+pub type PartialBootstrapResult = Result<(JoinHandle<()>, StageReceiver), Error>;
 
 pub type BootstrapResult = Result<JoinHandle<()>, Error>;
 
@@ -194,24 +213,24 @@ pub trait SourceConfig {
 }
 
 pub trait FilterConfig {
-    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult;
+    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult;
 }
 
 pub trait SinkConfig {
-    fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult;
+    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult;
 }
 
 #[derive(Clone, Debug)]
 pub struct EventWriter {
     context: EventContext,
-    output: Sender<Event>,
+    output: StageSender,
     chain_info: Option<ChainWellKnownInfo>,
     pub mapping_config: MapperConfig,
 }
 
 impl EventWriter {
     pub fn new(
-        output: Sender<Event>,
+        output: StageSender,
         chain_info: Option<ChainWellKnownInfo>,
         mapping_config: MapperConfig,
     ) -> Self {
@@ -255,4 +274,40 @@ impl EventWriter {
 
 pub trait EventSource {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
+}
+
+pub type StageReceiver = std::sync::mpsc::Receiver<Event>;
+
+pub type StageSender = std::sync::mpsc::SyncSender<Event>;
+
+/// The amount of events an inter-stage channel can buffer before blocking
+///
+/// If a filter or sink has a consumption rate lower than the rate of event
+/// generations from a source, the pending events will buffer in a queue
+/// provided by the corresponding mpsc channel implementation. This constant
+/// defines the max amount of events that the buffer queue can hold. Once
+/// reached, the previous stages in the pipeline will start blockin on 'send'.
+///
+/// This value has a direct effect on the amount of memory consumed by the
+/// process. The higher the buffer, the higher potential memory consumption.
+///
+/// This value has a direct effect on performance. To allow _pipelining_
+/// benefits, stages should be allowed certain degree of flexibility to deal
+/// with resource constrains (such as network or cpu). The lower the buffer, the
+/// lower degree of flexibility.
+const DEFAULT_INTER_STAGE_BUFFER_SIZE: usize = 1000;
+
+pub type StageChannel = (StageSender, StageReceiver);
+
+/// Centralizes the implementation details of inter-stage channel creation
+///
+/// Concrete channel implementation is subject to change. We're still exploring
+/// sync vs unbounded and threaded vs event-loop. Until we have a long-term
+/// strategy, it makes sense to have a single place in the codebase that can be
+/// used to change from one implementation to the other without incurring on
+/// heavy refactoring throughout several files.
+///
+/// Sometimes centralization is not such a bad thing :)
+pub fn new_inter_stage_channel(buffer_size: Option<usize>) -> StageChannel {
+    std::sync::mpsc::sync_channel(buffer_size.unwrap_or(DEFAULT_INTER_STAGE_BUFFER_SIZE))
 }

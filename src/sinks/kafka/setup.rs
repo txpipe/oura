@@ -1,9 +1,9 @@
-use std::{sync::mpsc::Receiver, time::Duration};
+use std::time::Duration;
 
 use kafka::{client::RequiredAcks, producer::Producer};
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, Event, SinkConfig};
+use crate::framework::{BootstrapResult, SinkConfig, StageReceiver};
 
 use super::run::producer_loop;
 
@@ -22,7 +22,7 @@ pub struct Config {
 }
 
 impl SinkConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult {
+    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let mut builder = Producer::from_hosts(self.brokers.clone());
 
         if let Some(timeout) = &self.ack_timeout_secs {
