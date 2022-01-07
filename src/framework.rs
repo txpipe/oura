@@ -1,5 +1,6 @@
 use std::{
     collections::BTreeMap,
+    fmt::Display,
     sync::mpsc::{Receiver, Sender},
     thread::JoinHandle,
 };
@@ -9,6 +10,8 @@ use merge::Merge;
 use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
+
+use serde_json::Value as JsonValue;
 
 use crate::mapping::MapperConfig;
 
@@ -42,12 +45,33 @@ impl ChainWellKnownInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum MetadatumRendition {
+    MapJson(JsonValue),
+    ArrayJson(JsonValue),
+    IntScalar(i64),
+    TextScalar(String),
+    BytesHex(String),
+}
+
+impl Display for MetadatumRendition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MetadatumRendition::MapJson(x) => x.fmt(f),
+            MetadatumRendition::ArrayJson(x) => x.fmt(f),
+            MetadatumRendition::IntScalar(x) => x.fmt(f),
+            MetadatumRendition::TextScalar(x) => x.fmt(f),
+            MetadatumRendition::BytesHex(x) => x.fmt(f),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MetadataRecord {
-    pub key: String,
-    pub subkey: Option<String>,
-    // TODO: value should be some sort of structured, JSON-like value.
-    // we could use Pallas' Metadatum struct, but it needs to be clonable
-    pub value: Option<String>,
+    pub label: String,
+
+    #[serde(flatten)]
+    pub content: MetadatumRendition,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -3,10 +3,11 @@
 use std::{sync::mpsc::Receiver, thread};
 
 use serde_derive::Deserialize;
+use serde_json::Value as JsonValue;
 
 use crate::framework::{
-    Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
-    PartialBootstrapResult,
+    Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition, MintRecord,
+    OutputAssetRecord, PartialBootstrapResult,
 };
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -16,8 +17,8 @@ pub enum Predicate {
     VariantNotIn(Vec<String>),
     PolicyEquals(String),
     AssetEquals(String),
-    MetadataKeyEquals(String),
-    MetadataSubkeyEquals(String),
+    MetadataLabelEquals(String),
+    MetadataAnySubLabelEquals(String),
     Not(Box<Predicate>),
     AnyOf(Vec<Predicate>),
     AllOf(Vec<Predicate>),
@@ -56,32 +57,36 @@ fn asset_matches(event: &Event, asset: &str) -> bool {
 }
 
 #[inline]
-fn metadata_key_matches(event: &Event, key: &str) -> bool {
+fn metadata_label_matches(event: &Event, label: &str) -> bool {
     match &event.data {
-        EventData::Metadata(MetadataRecord { key: x, .. }) => relaxed_str_matches(x, key),
+        EventData::Metadata(MetadataRecord { label: x, .. }) => relaxed_str_matches(x, label),
         _ => false,
     }
 }
 
 #[inline]
-fn metadata_subkey_matches(event: &Event, subkey: &str) -> bool {
+fn metadata_any_sub_label_matches(event: &Event, sub_label: &str) -> bool {
     match &event.data {
-        EventData::Metadata(MetadataRecord {
-            subkey: Some(x), ..
-        }) => relaxed_str_matches(x, subkey),
+        EventData::Metadata(record) => match &record.content {
+            MetadatumRendition::MapJson(JsonValue::Object(obj)) => {
+                obj.keys().any(|x| relaxed_str_matches(x, sub_label))
+            }
+            _ => false,
+        },
         _ => false,
     }
 }
 
 impl Predicate {
+    #![allow(deprecated)]
     fn event_matches(&self, event: &Event) -> bool {
         match self {
             Predicate::VariantIn(x) => variant_in_matches(event, x),
             Predicate::VariantNotIn(x) => !variant_in_matches(event, x),
             Predicate::PolicyEquals(x) => policy_matches(event, x),
             Predicate::AssetEquals(x) => asset_matches(event, x),
-            Predicate::MetadataKeyEquals(x) => metadata_key_matches(event, x),
-            Predicate::MetadataSubkeyEquals(x) => metadata_subkey_matches(event, x),
+            Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
+            Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
             Predicate::Not(x) => !x.event_matches(event),
             Predicate::AnyOf(x) => x.iter().any(|c| c.event_matches(event)),
             Predicate::AllOf(x) => x.iter().all(|c| c.event_matches(event)),

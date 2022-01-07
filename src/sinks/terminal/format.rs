@@ -85,13 +85,10 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::Metadata(MetadataRecord { key, subkey, value }) => LogLine {
+            EventData::Metadata(MetadataRecord { label, content }) => LogLine {
                 prefix: "META",
                 color: Color::Yellow,
-                content: format!(
-                    "{{ key: {}, sub key: {:?}, value: {:?} }}",
-                    key, subkey, value
-                ),
+                content: format!("{{ label: {}, content: {} }}", label, content),
                 source,
                 max_width,
             },
