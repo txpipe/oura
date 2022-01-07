@@ -10,7 +10,7 @@ use elasticsearch::{
 
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, Event, SinkConfig, StageReceiver};
+use crate::framework::{BootstrapResult, SinkConfig, StageReceiver};
 
 use super::run::writer_loop;
 

@@ -4,7 +4,9 @@ use std::thread;
 
 use serde_derive::Deserialize;
 
-use crate::framework::{new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver};
+use crate::framework::{
+    new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {}
