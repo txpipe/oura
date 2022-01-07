@@ -988,7 +988,7 @@ dependencies = [
 
 [[package]]
 name = "oura"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "bech32",
  "clap",
