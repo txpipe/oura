@@ -7,7 +7,7 @@ use serde_json::Value as JsonValue;
 
 use crate::framework::{
     Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition, MintRecord,
-    OutputAssetRecord, PartialBootstrapResult,
+    OutputAssetRecord, PartialBootstrapResult, new_inter_stage_channel,
 };
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -101,7 +101,7 @@ pub struct Config {
 
 impl FilterConfig for Config {
     fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
-        let (output_tx, output_rx) = std::sync::mpsc::channel();
+        let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let check = self.check.clone();
 

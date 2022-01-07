@@ -11,7 +11,7 @@ use serde_derive::Deserialize;
 
 use crate::framework::{
     Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
-    PartialBootstrapResult,
+    PartialBootstrapResult, new_inter_stage_channel,
 };
 
 struct FingerprintBuilder {
@@ -195,7 +195,7 @@ pub struct Config {
 
 impl FilterConfig for Config {
     fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
-        let (output_tx, output_rx) = std::sync::mpsc::channel();
+        let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let seed = self.seed.unwrap_or(0);
 

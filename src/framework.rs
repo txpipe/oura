@@ -280,3 +280,18 @@ impl EventWriter {
 pub trait EventSource {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
 }
+
+pub type StageChannel = (Sender<Event>, Receiver<Event>);
+
+/// Centralizes the implementation details of inter-stage channel creation
+///
+/// Concrete channel implementation is subject to change. We're still exploring
+/// sync vs unbounded and threaded vs event-loop. Until we have a long-term
+/// strategy, it makes sense to have a single place in the codebase that can be
+/// used to change from one implementation to the other without incurring on
+/// heavy refactoring throughout several files.
+///
+/// Sometimes centralization is not such a bad thing :)
+pub fn new_inter_stage_channel(_buffer_size: Option<usize>) -> StageChannel {
+    std::sync::mpsc::channel()
+}

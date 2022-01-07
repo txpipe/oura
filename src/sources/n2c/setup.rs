@@ -1,6 +1,6 @@
 #[cfg(target_family = "unix")]
 use std::os::unix::net::UnixStream;
-use std::{net::TcpStream, ops::Deref, sync::mpsc};
+use std::{net::TcpStream, ops::Deref};
 
 use net2::TcpStreamExt;
 
@@ -15,7 +15,7 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{ChainWellKnownInfo, Error, EventWriter, PartialBootstrapResult, SourceConfig},
+    framework::{ChainWellKnownInfo, Error, EventWriter, PartialBootstrapResult, SourceConfig, new_inter_stage_channel},
     mapping::MapperConfig,
     sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
 };
@@ -65,7 +65,7 @@ fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
 
 impl SourceConfig for Config {
     fn bootstrap(&self) -> PartialBootstrapResult {
-        let (output_tx, output_rx) = mpsc::channel();
+        let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let mut muxer = match self.address.0 {
             BearerKind::Tcp => setup_tcp_multiplexer(&self.address.1)?,
