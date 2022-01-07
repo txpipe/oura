@@ -1,6 +1,6 @@
-use std::{sync::mpsc::Receiver, time::Duration};
+use std::time::Duration;
 
-use crate::framework::Event;
+use crate::framework::{Event, StageReceiver};
 use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;
@@ -11,7 +11,7 @@ use std::io::stdout;
 
 use super::format::*;
 
-pub fn reducer_loop(throttle_min_span: Duration, input: Receiver<Event>) -> Result<(), Error> {
+pub fn reducer_loop(throttle_min_span: Duration, input: StageReceiver) -> Result<(), Error> {
     let mut stdout = stdout();
 
     let mut throttle = Throttle::new(throttle_min_span);

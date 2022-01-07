@@ -48,7 +48,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     let socket = args.value_of_t("socket")?;
 
     let bearer = match args.is_present("bearer") {
-        true => args.value_of_t("socket")?,
+        true => args.value_of_t("bearer")?,
         #[cfg(target_family = "unix")]
         false => BearerKind::Unix,
         #[cfg(target_family = "windows")]

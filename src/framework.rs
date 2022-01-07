@@ -1,7 +1,6 @@
 use std::{
     collections::BTreeMap,
     fmt::Display,
-    sync::mpsc::{Receiver, Sender},
     thread::JoinHandle,
 };
 
@@ -209,7 +208,7 @@ pub struct Event {
     pub fingerprint: Option<String>,
 }
 
-pub type PartialBootstrapResult = Result<(JoinHandle<()>, Receiver<Event>), Error>;
+pub type PartialBootstrapResult = Result<(JoinHandle<()>, StageReceiver), Error>;
 
 pub type BootstrapResult = Result<JoinHandle<()>, Error>;
 
@@ -218,24 +217,24 @@ pub trait SourceConfig {
 }
 
 pub trait FilterConfig {
-    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult;
+    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult;
 }
 
 pub trait SinkConfig {
-    fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult;
+    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult;
 }
 
 #[derive(Clone, Debug)]
 pub struct EventWriter {
     context: EventContext,
-    output: Sender<Event>,
+    output: StageSender,
     chain_info: Option<ChainWellKnownInfo>,
     pub mapping_config: MapperConfig,
 }
 
 impl EventWriter {
     pub fn new(
-        output: Sender<Event>,
+        output: StageSender,
         chain_info: Option<ChainWellKnownInfo>,
         mapping_config: MapperConfig,
     ) -> Self {
@@ -281,7 +280,11 @@ pub trait EventSource {
     fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
 }
 
-pub type StageChannel = (Sender<Event>, Receiver<Event>);
+pub type StageReceiver = std::sync::mpsc::Receiver<Event>;
+
+pub type StageSender = std::sync::mpsc::Sender<Event>;
+
+pub type StageChannel = (StageSender, StageReceiver);
 
 /// Centralizes the implementation details of inter-stage channel creation
 ///

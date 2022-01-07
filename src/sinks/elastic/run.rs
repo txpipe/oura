@@ -2,9 +2,9 @@ use elasticsearch::{params::OpType, Elasticsearch, IndexParts};
 use log::{debug, warn};
 use serde::Serialize;
 use serde_json::json;
-use std::sync::{mpsc::Receiver, Arc};
+use std::sync::Arc;
 
-use crate::framework::{Error, Event};
+use crate::framework::{Error, Event, StageReceiver};
 
 #[derive(Serialize)]
 struct ESRecord {
@@ -87,7 +87,7 @@ async fn index_event_without_id<'b>(
 }
 
 pub fn writer_loop(
-    input: Receiver<Event>,
+    input: StageReceiver,
     client: Elasticsearch,
     index: String,
     idempotency: bool,

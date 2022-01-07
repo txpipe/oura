@@ -1,16 +1,16 @@
 //! A noop filter used as example and placeholder for other filters
 
-use std::{sync::mpsc::Receiver, thread};
+use std::thread;
 
 use serde_derive::Deserialize;
 
-use crate::framework::{Event, FilterConfig, PartialBootstrapResult, new_inter_stage_channel};
+use crate::framework::{new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {}
 
 impl FilterConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
+    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let handle = thread::spawn(move || loop {

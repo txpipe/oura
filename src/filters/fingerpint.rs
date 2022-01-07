@@ -2,7 +2,6 @@
 
 use std::{
     io::{Cursor, Write},
-    sync::mpsc::Receiver,
     thread,
 };
 
@@ -10,8 +9,8 @@ use log::{debug, warn};
 use serde_derive::Deserialize;
 
 use crate::framework::{
-    Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord, OutputAssetRecord,
-    PartialBootstrapResult, new_inter_stage_channel,
+    new_inter_stage_channel, Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord,
+    OutputAssetRecord, PartialBootstrapResult, StageReceiver,
 };
 
 struct FingerprintBuilder {
@@ -194,7 +193,7 @@ pub struct Config {
 }
 
 impl FilterConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
+    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let seed = self.seed.unwrap_or(0);

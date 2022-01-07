@@ -1,5 +1,3 @@
-use std::sync::mpsc::Receiver;
-
 use elasticsearch::{
     auth::Credentials as ESCredentials,
     cert::CertificateValidation,
@@ -12,7 +10,7 @@ use elasticsearch::{
 
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, Event, SinkConfig};
+use crate::framework::{BootstrapResult, Event, SinkConfig, StageReceiver};
 
 use super::run::writer_loop;
 
@@ -43,7 +41,7 @@ pub struct Config {
 }
 
 impl SinkConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> BootstrapResult {
+    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let pool = SingleNodeConnectionPool::new(Url::parse(&self.url)?);
         let mut transport =
             TransportBuilder::new(pool).cert_validation(CertificateValidation::None);
