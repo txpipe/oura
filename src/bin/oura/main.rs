@@ -11,6 +11,7 @@ fn main() {
     let args = App::new("app")
         .name("oura")
         .about("the tail of cardano")
+        .version("v0.3.8")
         .subcommand(
             App::new("watch")
                 .arg(Arg::new("socket").required(true))
