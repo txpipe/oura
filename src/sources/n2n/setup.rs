@@ -98,7 +98,7 @@ impl SourceConfig for Config {
 
         info!("starting from chain point: {:?}", &since);
 
-        let (headers_tx, headers_rx) = std::sync::mpsc::channel();
+        let (headers_tx, headers_rx) = std::sync::mpsc::sync_channel(100);
 
         let cs_writer = writer.clone();
         let cs_handle = std::thread::spawn(move || {
