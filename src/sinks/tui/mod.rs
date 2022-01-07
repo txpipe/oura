@@ -1,11 +1,14 @@
 use std::{
     collections::VecDeque,
-    sync::{mpsc::Receiver, Arc, RwLock},
+    sync::{Arc, RwLock},
     thread::JoinHandle,
     time::Duration,
 };
 
-use crate::{framework::Event, utils::throttle::Throttle};
+use crate::{
+    framework::{Event, StageReceiver},
+    utils::throttle::Throttle,
+};
 
 pub type Error = Box<dyn std::error::Error>;
 
@@ -28,7 +31,7 @@ struct ConsoleApp {
     tx_items: VecDeque<Event>,
 }
 
-fn reducer_loop(event_rx: Receiver<Event>, app: Arc<RwLock<ConsoleApp>>) -> Result<(), Error> {
+fn reducer_loop(event_rx: StageReceiver, app: Arc<RwLock<ConsoleApp>>) -> Result<(), Error> {
     let mut throttle = Throttle::new(Duration::from_millis(THROTTLE_MIN_SPAN_MILLIS));
 
     loop {
@@ -83,7 +86,7 @@ fn tui_loop(app: Arc<RwLock<ConsoleApp>>) -> Result<(), Error> {
     }
 }
 
-pub fn bootstrap(rx: Receiver<Event>) -> Result<JoinHandle<()>, Error> {
+pub fn bootstrap(rx: StageReceiver) -> Result<JoinHandle<()>, Error> {
     let console = Arc::new(RwLock::new(ConsoleApp {
         tx_count: 0,
         tx_items: VecDeque::new(),

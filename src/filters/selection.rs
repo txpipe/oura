@@ -1,13 +1,13 @@
 //! A filter that can select which events to block and which to let pass
 
-use std::{sync::mpsc::Receiver, thread};
+use std::thread;
 
 use serde_derive::Deserialize;
 use serde_json::Value as JsonValue;
 
 use crate::framework::{
-    Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition, MintRecord,
-    OutputAssetRecord, PartialBootstrapResult,
+    new_inter_stage_channel, Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition,
+    MintRecord, OutputAssetRecord, PartialBootstrapResult, StageReceiver,
 };
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -100,8 +100,8 @@ pub struct Config {
 }
 
 impl FilterConfig for Config {
-    fn bootstrap(&self, input: Receiver<Event>) -> PartialBootstrapResult {
-        let (output_tx, output_rx) = std::sync::mpsc::channel();
+    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
+        let (output_tx, output_rx) = new_inter_stage_channel(None);
 
         let check = self.check.clone();
 

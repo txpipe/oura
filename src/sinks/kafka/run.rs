@@ -1,8 +1,7 @@
 use kafka::producer::{Producer, Record};
 use log::debug;
-use std::sync::mpsc::Receiver;
 
-use crate::framework::{Error, Event};
+use crate::framework::{Error, Event, StageReceiver};
 
 use super::PartitionStrategy;
 
@@ -14,7 +13,7 @@ fn define_event_key(event: &Event, strategy: &PartitionStrategy) -> Option<[u8; 
 }
 
 pub fn producer_loop(
-    input: Receiver<Event>,
+    input: StageReceiver,
     mut producer: Producer,
     topic: String,
     partitioning: PartitionStrategy,
