@@ -251,10 +251,12 @@ impl EventSource for AuxiliaryData {
                     writer.append(EventData::NativeScript)?;
                 }
 
-                for plutus in data.plutus_scripts.iter() {
-                    writer.append(EventData::PlutusScript {
-                        data: plutus.to_hex(),
-                    })?;
+                if let Some(plutus) = &data.plutus_scripts {
+                    for script in plutus.iter() {
+                        writer.append(EventData::PlutusScript {
+                            data: script.to_hex(),
+                        })?;
+                    }
                 }
             }
             AuxiliaryData::Shelley(data) => {
