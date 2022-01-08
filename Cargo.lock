@@ -1016,9 +1016,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c8d26dbf83efc61c259d962891145997b14a49288186fd11129d84c1cd33b66"
+checksum = "6148545f6a5f649c4a6e038e6074a1ea4296a81aa26ea9859872058792b976d9"
 dependencies = [
  "pallas-alonzo",
  "pallas-blockfetch",
@@ -1032,9 +1032,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-alonzo"
-version = "0.3.7"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7395e2eadab98828eaa149acb846ad4aac69e5fa56f88c0b9bd89f776480ef"
+checksum = "1f0d8540719ede22353eb52022d298234c6473240b5caaae4fcb0ef685be1d49"
 dependencies = [
  "cryptoxide",
  "hex",
