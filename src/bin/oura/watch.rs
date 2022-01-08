@@ -45,7 +45,9 @@ impl SourceConfig for WatchSource {
 }
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
-    env_logger::builder().filter_level(log::LevelFilter::Error).init();
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Error)
+        .init();
 
     let socket = args.value_of_t("socket")?;
 
