@@ -16,14 +16,13 @@ use serde_derive::Deserialize;
 
 use crate::{
     framework::{
-        new_inter_stage_channel, ChainWellKnownInfo, Error, EventWriter, PartialBootstrapResult,
+        new_inter_stage_channel, ChainWellKnownInfo, Error, PartialBootstrapResult,
         SourceConfig,
     },
-    mapping::MapperConfig,
     sources::{
         common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
         n2n::{fetch_blocks_forever, observe_headers_forever},
-    },
+    }, mappers::framework::{MapperConfig, EventWriter},
 };
 
 #[derive(Debug, Deserialize)]

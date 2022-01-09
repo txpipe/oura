@@ -8,8 +8,6 @@ use strum_macros::Display;
 
 use serde_json::Value as JsonValue;
 
-use crate::mapping::MapperConfig;
-
 pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -218,62 +216,6 @@ pub trait FilterConfig {
 
 pub trait SinkConfig {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult;
-}
-
-#[derive(Clone, Debug)]
-pub struct EventWriter {
-    context: EventContext,
-    output: StageSender,
-    chain_info: Option<ChainWellKnownInfo>,
-    pub mapping_config: MapperConfig,
-}
-
-impl EventWriter {
-    pub fn new(
-        output: StageSender,
-        chain_info: Option<ChainWellKnownInfo>,
-        mapping_config: MapperConfig,
-    ) -> Self {
-        EventWriter {
-            context: EventContext::default(),
-            output,
-            chain_info,
-            mapping_config,
-        }
-    }
-
-    pub fn append(&self, data: EventData) -> Result<(), Error> {
-        let evt = Event {
-            context: self.context.clone(),
-            data,
-            fingerprint: None,
-        };
-
-        self.output.send(evt)?;
-
-        Ok(())
-    }
-
-    pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
-        extra_context.merge(self.context.clone());
-
-        EventWriter {
-            context: extra_context,
-            output: self.output.clone(),
-            chain_info: self.chain_info.clone(),
-            mapping_config: self.mapping_config.clone(),
-        }
-    }
-
-    pub fn compute_timestamp(&self, slot: u64) -> Option<u64> {
-        self.chain_info
-            .as_ref()
-            .map(|info| info.shelley_known_time + (slot - info.shelley_known_slot))
-    }
-}
-
-pub trait EventSource {
-    fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
 }
 
 pub type StageReceiver = std::sync::mpsc::Receiver<Event>;

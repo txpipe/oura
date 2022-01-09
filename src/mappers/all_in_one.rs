@@ -6,7 +6,7 @@ use pallas::ledger::alonzo::{
     TransactionInput, TransactionOutput, Value,
 };
 use pallas::ledger::alonzo::{
-    AlonzoAuxiliaryData, Mint, NetworkId, TransactionBody, TransactionBodyComponent,
+    crypto, AlonzoAuxiliaryData, Mint, NetworkId, TransactionBody, TransactionBodyComponent,
 };
 
 use bech32::{self, ToBase32};
@@ -15,18 +15,13 @@ use serde_derive::Deserialize;
 use serde_json::{json, Value as JsonValue};
 
 use crate::framework::{
-    EventContext, EventData, EventSource, EventWriter, MetadataRecord, MetadatumRendition,
-    MintRecord, OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord,
-    TxOutputRecord,
+    EventContext, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+    StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 use crate::framework::Error;
 
-#[derive(Deserialize, Clone, Debug, Default)]
-pub struct MapperConfig {
-    #[serde(default)]
-    pub include_transaction_details: bool,
-}
+use super::framework::{EventMapper, EventWriter};
 
 pub trait ToHex {
     fn to_hex(&self) -> String;
@@ -554,22 +549,33 @@ impl EventSource for (&TransactionBody, Option<&AuxiliaryData>) {
     }
 }
 
-impl EventSource for Block {
-    fn write_events(&self, writer: &EventWriter) -> Result<(), Error> {
+#[deprecated]
+pub trait EventSource {
+    fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
+}
+
+#[derive(Debug)]
+pub struct RootMapper;
+
+impl EventMapper<Block> for RootMapper {
+    fn map_events(&self, source: &Block, writer: &EventWriter) -> Result<(), Error> {
+        let hash = crypto::hash_block_header(&source.header)?;
+
         let writer = writer.child_writer(EventContext {
-            block_number: Some(self.header.header_body.block_number),
-            slot: Some(self.header.header_body.slot),
-            timestamp: writer.compute_timestamp(self.header.header_body.slot),
+            block_hash: Some(hex::encode(hash)),
+            block_number: Some(source.header.header_body.block_number),
+            slot: Some(source.header.header_body.slot),
+            timestamp: writer.compute_timestamp(source.header.header_body.slot),
             ..EventContext::default()
         });
 
         writer.append(EventData::Block {
-            body_size: self.header.header_body.block_body_size as usize,
-            issuer_vkey: self.header.header_body.issuer_vkey.to_hex(),
-            tx_count: self.transaction_bodies.len(),
+            body_size: source.header.header_body.block_body_size as usize,
+            issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
+            tx_count: source.transaction_bodies.len(),
         })?;
 
-        for (idx, tx) in self.transaction_bodies.iter().enumerate() {
+        for (idx, tx) in source.transaction_bodies.iter().enumerate() {
             let tx_hash = match hash_transaction(tx) {
                 Ok(h) => Some(hex::encode(h)),
                 Err(err) => {
@@ -584,7 +590,7 @@ impl EventSource for Block {
                 ..EventContext::default()
             });
 
-            let aux_data = self
+            let aux_data = source
                 .auxiliary_data_set
                 .iter()
                 .find(|(k, _)| *k == (idx as u32))
