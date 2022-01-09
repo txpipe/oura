@@ -1016,9 +1016,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6148545f6a5f649c4a6e038e6074a1ea4296a81aa26ea9859872058792b976d9"
+checksum = "d7c9f129db2cb6c66ccade83981dc8379c6fe74fef8b89a32ad2a4fb09d0479c"
 dependencies = [
  "pallas-alonzo",
  "pallas-blockfetch",
@@ -1739,7 +1739,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand",
  "static_assertions",
 ]
