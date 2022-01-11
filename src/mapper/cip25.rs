@@ -1,3 +1,5 @@
+use serde_json::Value as JsonValue;
+
 use pallas::ledger::alonzo::Metadatum;
 
 use crate::framework::{CIP25AssetRecord, Error};
@@ -25,6 +27,13 @@ fn is_asset_key(key: &Metadatum) -> Option<String> {
     }
 }
 
+fn extract_json_property(json: &JsonValue, key: &str) -> Option<String> {
+    json.as_object()
+        .and_then(|obj| obj.get(key))
+        .and_then(|v| v.as_str())
+        .map(|x| x.to_string())
+}
+
 impl EventWriter {
     fn search_cip25_version(&self, content_721: &Metadatum) -> Option<String> {
         match content_721 {
@@ -41,12 +50,23 @@ impl EventWriter {
 
     fn to_cip25_asset_record(
         &self,
-        _version: &str,
-        _policy: &str,
-        _asset: &str,
-        _content: &Metadatum,
+        version: &str,
+        policy: &str,
+        asset: &str,
+        content: &Metadatum,
     ) -> Result<CIP25AssetRecord, Error> {
-        todo!()
+        let raw_json = self.to_metadatum_json(content)?;
+
+        Ok(CIP25AssetRecord {
+            policy: policy.to_string(),
+            asset: asset.to_string(),
+            version: version.to_string(),
+            name: extract_json_property(&raw_json, "name"),
+            media_type: extract_json_property(&raw_json, "mediaType"),
+            image: extract_json_property(&raw_json, "image"),
+            description: extract_json_property(&raw_json, "description"),
+            raw_json,
+        })
     }
 
     fn crawl_721_policy(
@@ -62,7 +82,8 @@ impl EventWriter {
 
         for (key, sub_content) in entries.iter() {
             if let Some(asset) = is_asset_key(key) {
-                self.to_cip25_asset_record(version, policy, &asset, sub_content)?;
+                let record = self.to_cip25_asset_record(version, policy, &asset, sub_content)?;
+                self.append_from(record)?;
             }
         }
 

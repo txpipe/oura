@@ -75,14 +75,14 @@ impl From<MetadataRecord> for EventData {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CIP25AssetRecord {
+    pub version: String,
     pub policy: String,
-    pub id: String,
-    pub name: String,
-    pub version: Option<String>,
-    pub image: JsonValue,
+    pub asset: String,
+    pub name: Option<String>,
+    pub image: Option<String>,
     pub media_type: Option<String>,
-    pub description: Option<JsonValue>,
-    pub raw_json: Option<JsonValue>,
+    pub description: Option<String>,
+    pub raw_json: JsonValue,
 }
 
 impl From<CIP25AssetRecord> for EventData {

@@ -182,12 +182,12 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&Some(*block_slot))
             .with_prefix("back")
             .append_slice(block_hash)?,
-        EventData::CIP25Asset(CIP25AssetRecord { id, policy, .. }) => b
+        EventData::CIP25Asset(CIP25AssetRecord { policy, asset, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("cip25")
             .append_optional(&event.context.tx_hash)?
-            .append_slice(id)?
-            .append_slice(policy)?,
+            .append_slice(policy)?
+            .append_slice(asset)?,
     };
 
     b.build()

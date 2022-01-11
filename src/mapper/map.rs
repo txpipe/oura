@@ -85,35 +85,6 @@ fn metadatum_to_string_key(datum: &Metadatum) -> Result<String, Error> {
     }
 }
 
-fn metadatum_map_entry_to_json_map_entry(
-    pair: (&Metadatum, &Metadatum),
-) -> Result<(String, JsonValue), Error> {
-    let key = metadatum_to_string_key(pair.0)?;
-    let value = metadatum_to_json(pair.1)?;
-    Ok((key, value))
-}
-
-fn metadatum_to_json(source: &Metadatum) -> Result<JsonValue, Error> {
-    match source {
-        Metadatum::Int(x) => Ok(json!(x)),
-        Metadatum::Bytes(x) => Ok(json!(hex::encode(x.as_slice()))),
-        Metadatum::Text(x) => Ok(json!(x)),
-        Metadatum::Array(x) => {
-            let items: Result<Vec<_>, _> = x.iter().map(metadatum_to_json).collect();
-
-            Ok(json!(items?))
-        }
-        Metadatum::Map(x) => {
-            let map: Result<HashMap<_, _>, _> = x
-                .iter()
-                .map(|(key, value)| metadatum_map_entry_to_json_map_entry((key, value)))
-                .collect();
-
-            Ok(json!(map?))
-        }
-    }
-}
-
 fn get_tx_output_coin_value(amount: &Value) -> u64 {
     match amount {
         Value::Coin(x) => *x,
@@ -122,6 +93,37 @@ fn get_tx_output_coin_value(amount: &Value) -> u64 {
 }
 
 impl EventWriter {
+    pub fn to_metadatum_json_map_entry(
+        &self,
+        pair: (&Metadatum, &Metadatum),
+    ) -> Result<(String, JsonValue), Error> {
+        let key = metadatum_to_string_key(pair.0)?;
+        let value = self.to_metadatum_json(pair.1)?;
+        Ok((key, value))
+    }
+
+    pub fn to_metadatum_json(&self, source: &Metadatum) -> Result<JsonValue, Error> {
+        match source {
+            Metadatum::Int(x) => Ok(json!(x)),
+            Metadatum::Bytes(x) => Ok(json!(hex::encode(x.as_slice()))),
+            Metadatum::Text(x) => Ok(json!(x)),
+            Metadatum::Array(x) => {
+                let items: Result<Vec<_>, _> =
+                    x.iter().map(|x| self.to_metadatum_json(x)).collect();
+
+                Ok(json!(items?))
+            }
+            Metadatum::Map(x) => {
+                let map: Result<HashMap<_, _>, _> = x
+                    .iter()
+                    .map(|(key, value)| self.to_metadatum_json_map_entry((key, value)))
+                    .collect();
+
+                Ok(json!(map?))
+            }
+        }
+    }
+
     pub fn to_metadata_record(
         &self,
         label: &Metadatum,
@@ -133,8 +135,10 @@ impl EventWriter {
                 Metadatum::Int(x) => MetadatumRendition::IntScalar(*x),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
                 Metadatum::Text(x) => MetadatumRendition::TextScalar(x.clone()),
-                Metadatum::Array(_) => MetadatumRendition::ArrayJson(metadatum_to_json(value)?),
-                Metadatum::Map(_) => MetadatumRendition::MapJson(metadatum_to_json(value)?),
+                Metadatum::Array(_) => {
+                    MetadatumRendition::ArrayJson(self.to_metadatum_json(value)?)
+                }
+                Metadatum::Map(_) => MetadatumRendition::MapJson(self.to_metadatum_json(value)?),
             },
         };
 

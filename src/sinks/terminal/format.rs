@@ -211,8 +211,8 @@ impl LogLine {
                 max_width,
             },
             EventData::CIP25Asset(CIP25AssetRecord {
-                id,
                 policy,
+                asset,
                 name,
                 image,
                 ..
@@ -220,8 +220,11 @@ impl LogLine {
                 prefix: "CIP25",
                 color: Color::DarkYellow,
                 content: format!(
-                    "{{ id: {}, policy: {}, name: {}, image: {} }}",
-                    id, policy, name, image
+                    "{{ policy: {}, asset: {}, name: {}, image: {} }}",
+                    policy,
+                    asset,
+                    name.as_deref().unwrap_or("?"),
+                    image.as_deref().unwrap_or("?")
                 ),
                 source,
                 max_width,
