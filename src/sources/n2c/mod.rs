@@ -17,8 +17,8 @@ use pallas::{
 };
 
 use crate::{
-    framework::{Error, EventContext, EventData, EventSource, EventWriter},
-    mapping::ToHex,
+    framework::{Error, EventData},
+    mapper::EventWriter,
 };
 
 #[derive(Debug)]
@@ -49,22 +49,22 @@ impl BlockLike for Content {
 #[derive(Debug)]
 pub struct ChainObserver(EventWriter);
 
+impl ChainObserver {
+    fn new(writer: EventWriter) -> Self {
+        Self(writer)
+    }
+}
+
 impl Observer<Content> for ChainObserver {
     fn on_block(
         &self,
-        cursor: &Option<Point>,
+        _cursor: &Option<Point>,
         content: &Content,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        let Self(writer) = self;
         let Content(block) = content;
 
-        // inject the block hash we already have as part of the context for nested
-        // events
-        let writer = self.0.child_writer(EventContext {
-            block_hash: cursor.as_ref().map(|p| p.1.to_hex()),
-            ..EventContext::default()
-        });
-
-        block.write_events(&writer)?;
+        writer.crawl(block)?;
 
         Ok(())
     }
@@ -72,7 +72,7 @@ impl Observer<Content> for ChainObserver {
     fn on_rollback(&self, point: &Point) -> Result<(), Error> {
         self.0.append(EventData::RollBack {
             block_slot: point.0,
-            block_hash: point.1.to_hex(),
+            block_hash: hex::encode(&point.1),
         })
     }
 
@@ -88,7 +88,7 @@ impl Observer<Content> for ChainObserver {
 }
 
 fn observe_forever(mut channel: Channel, writer: EventWriter, from: Point) -> Result<(), Error> {
-    let observer = ChainObserver(writer);
+    let observer = ChainObserver::new(writer);
     let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     error!("chainsync agent final state: {:?}", agent.state);
