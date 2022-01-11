@@ -199,7 +199,10 @@ pub enum EventData {
     TxOutput(TxOutputRecord),
     OutputAsset(OutputAssetRecord),
     Metadata(MetadataRecord),
+
+    #[serde(rename ="cip25_asset")]
     CIP25Asset(CIP25AssetRecord),
+    
     Mint(MintRecord),
     Collateral {
         tx_id: String,
