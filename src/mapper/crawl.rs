@@ -16,7 +16,7 @@ impl EventWriter {
             match label {
                 Metadatum::Int(721) => self.crawl_metadata_label_721(content)?,
                 Metadatum::Text(x) if x == "721" => self.crawl_metadata_label_721(content)?,
-                _ => log::warn!("found label {:?}", label),
+                _ => (),
             };
         }
 
