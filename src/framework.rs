@@ -8,8 +8,6 @@ use strum_macros::Display;
 
 use serde_json::Value as JsonValue;
 
-use crate::mapping::MapperConfig;
-
 pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -69,10 +67,22 @@ pub struct MetadataRecord {
     pub content: MetadatumRendition,
 }
 
+impl From<MetadataRecord> for EventData {
+    fn from(x: MetadataRecord) -> Self {
+        EventData::Metadata(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TxInputRecord {
     pub tx_id: String,
     pub index: u64,
+}
+
+impl From<TxInputRecord> for EventData {
+    fn from(x: TxInputRecord) -> Self {
+        EventData::TxInput(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -82,6 +92,12 @@ pub struct OutputAssetRecord {
     pub amount: u64,
 }
 
+impl From<OutputAssetRecord> for EventData {
+    fn from(x: OutputAssetRecord) -> Self {
+        EventData::OutputAsset(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TxOutputRecord {
     pub address: String,
@@ -89,11 +105,23 @@ pub struct TxOutputRecord {
     pub assets: Option<Vec<OutputAssetRecord>>,
 }
 
+impl From<TxOutputRecord> for EventData {
+    fn from(x: TxOutputRecord) -> Self {
+        EventData::TxOutput(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MintRecord {
     pub policy: String,
     pub asset: String,
     pub quantity: i64,
+}
+
+impl From<MintRecord> for EventData {
+    fn from(x: MintRecord) -> Self {
+        EventData::Mint(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -112,6 +140,12 @@ pub struct TransactionRecord {
     pub inputs: Option<Vec<TxInputRecord>>,
     pub outputs: Option<Vec<TxOutputRecord>>,
     pub mint: Option<Vec<MintRecord>>,
+}
+
+impl From<TransactionRecord> for EventData {
+    fn from(x: TransactionRecord) -> Self {
+        EventData::Transaction(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Merge, Default)]
@@ -218,62 +252,6 @@ pub trait FilterConfig {
 
 pub trait SinkConfig {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult;
-}
-
-#[derive(Clone, Debug)]
-pub struct EventWriter {
-    context: EventContext,
-    output: StageSender,
-    chain_info: Option<ChainWellKnownInfo>,
-    pub mapping_config: MapperConfig,
-}
-
-impl EventWriter {
-    pub fn new(
-        output: StageSender,
-        chain_info: Option<ChainWellKnownInfo>,
-        mapping_config: MapperConfig,
-    ) -> Self {
-        EventWriter {
-            context: EventContext::default(),
-            output,
-            chain_info,
-            mapping_config,
-        }
-    }
-
-    pub fn append(&self, data: EventData) -> Result<(), Error> {
-        let evt = Event {
-            context: self.context.clone(),
-            data,
-            fingerprint: None,
-        };
-
-        self.output.send(evt)?;
-
-        Ok(())
-    }
-
-    pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
-        extra_context.merge(self.context.clone());
-
-        EventWriter {
-            context: extra_context,
-            output: self.output.clone(),
-            chain_info: self.chain_info.clone(),
-            mapping_config: self.mapping_config.clone(),
-        }
-    }
-
-    pub fn compute_timestamp(&self, slot: u64) -> Option<u64> {
-        self.chain_info
-            .as_ref()
-            .map(|info| info.shelley_known_time + (slot - info.shelley_known_slot))
-    }
-}
-
-pub trait EventSource {
-    fn write_events(&self, writer: &EventWriter) -> Result<(), Error>;
 }
 
 pub type StageReceiver = std::sync::mpsc::Receiver<Event>;

@@ -16,10 +16,9 @@ use serde_derive::Deserialize;
 
 use crate::{
     framework::{
-        new_inter_stage_channel, ChainWellKnownInfo, Error, EventWriter, PartialBootstrapResult,
-        SourceConfig,
+        new_inter_stage_channel, ChainWellKnownInfo, Error, PartialBootstrapResult, SourceConfig,
     },
-    mapping::MapperConfig,
+    mapper::{Config as MapperConfig, EventWriter},
     sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
 };
 

@@ -3,7 +3,7 @@ use std::str::FromStr;
 use clap::ArgMatches;
 use oura::{
     framework::*,
-    mapping::MapperConfig,
+    mapper::Config as MapperConfig,
     sources::common::{AddressArg, BearerKind},
 };
 
