@@ -1,5 +1,5 @@
 use pallas::ledger::alonzo::{
-    crypto, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
+    crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset, TransactionBody,
     TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
 };
 
@@ -9,9 +9,15 @@ use super::{framework::EventWriter, map::ToBech32};
 
 impl EventWriter {
     fn crawl_metadata(&self, metadata: &Metadata) -> Result<(), Error> {
-        for (label, value) in metadata.iter() {
-            let record = self.to_metadata_record(label, value)?;
+        for (label, content) in metadata.iter() {
+            let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
+
+            match label {
+                Metadatum::Int(721) => self.crawl_metadata_label_721(content)?,
+                Metadatum::Text(x) if x == "721" => self.crawl_metadata_label_721(content)?,
+                _ => (),
+            };
         }
 
         Ok(())
