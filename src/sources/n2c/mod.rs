@@ -18,10 +18,7 @@ use pallas::{
 
 use crate::{
     framework::{Error, EventData},
-    mappers::{
-        all_in_one::RootMapper,
-        framework::{EventMapper, EventWriter},
-    },
+    mapper::EventWriter,
 };
 
 #[derive(Debug)]
@@ -50,11 +47,11 @@ impl BlockLike for Content {
 }
 
 #[derive(Debug)]
-pub struct ChainObserver(RootMapper, EventWriter);
+pub struct ChainObserver(EventWriter);
 
 impl ChainObserver {
     fn new(writer: EventWriter) -> Self {
-        Self(RootMapper {}, writer)
+        Self(writer)
     }
 }
 
@@ -64,18 +61,18 @@ impl Observer<Content> for ChainObserver {
         _cursor: &Option<Point>,
         content: &Content,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        let Self(writer) = self;
         let Content(block) = content;
-        let Self(mapper, writer) = self;
 
-        mapper.map_events(block, writer)?;
+        writer.crawl(block)?;
 
         Ok(())
     }
 
     fn on_rollback(&self, point: &Point) -> Result<(), Error> {
-        self.1.append(EventData::RollBack {
+        self.0.append(EventData::RollBack {
             block_slot: point.0,
-            block_hash: hex::encode(point.1),
+            block_hash: hex::encode(&point.1),
         })
     }
 

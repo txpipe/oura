@@ -22,7 +22,7 @@ use std::sync::mpsc::{Receiver, SyncSender};
 
 use crate::{
     framework::{Error, EventData},
-    mappers::framework::EventWriter,
+    mapper::EventWriter,
 };
 
 #[derive(Debug)]
@@ -66,7 +66,8 @@ impl BlockObserver for Block2EventMapper {
 
         match maybe_block {
             Ok(alonzo::BlockWrapper(_, block)) => {
-                block.write_events(&writer)?;
+                let Self(writer) = self;
+                writer.crawl(&block)?;
             }
             Err(err) => {
                 log::error!("{:?}", err);
@@ -100,7 +101,7 @@ impl Observer<Content> for ChainObserver {
 
         self.event_writer.append(EventData::RollBack {
             block_slot: point.0,
-            block_hash: hex::encode(point.1),
+            block_hash: hex::encode(&point.1),
         })
     }
 }

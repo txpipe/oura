@@ -5,7 +5,7 @@ use serde_derive::Deserialize;
 pub type Error = Box<dyn std::error::Error>;
 
 #[derive(Deserialize, Clone, Debug, Default)]
-pub struct MapperConfig {
+pub struct Config {
     #[serde(default)]
     pub include_transaction_details: bool,
 }
@@ -15,20 +15,20 @@ pub struct EventWriter {
     context: EventContext,
     output: StageSender,
     chain_info: Option<ChainWellKnownInfo>,
-    pub mapping_config: MapperConfig,
+    pub(crate) config: Config,
 }
 
 impl EventWriter {
     pub fn new(
         output: StageSender,
         chain_info: Option<ChainWellKnownInfo>,
-        mapping_config: MapperConfig,
+        config: Config,
     ) -> Self {
         EventWriter {
             context: EventContext::default(),
             output,
             chain_info,
-            mapping_config,
+            config,
         }
     }
 
@@ -44,6 +44,21 @@ impl EventWriter {
         Ok(())
     }
 
+    pub fn append_from<T>(&self, source: T) -> Result<(), Error>
+    where
+        T: Into<EventData>,
+    {
+        let evt = Event {
+            context: self.context.clone(),
+            data: source.into(),
+            fingerprint: None,
+        };
+
+        self.output.send(evt)?;
+
+        Ok(())
+    }
+
     pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
         extra_context.merge(self.context.clone());
 
@@ -51,7 +66,7 @@ impl EventWriter {
             context: extra_context,
             output: self.output.clone(),
             chain_info: self.chain_info.clone(),
-            mapping_config: self.mapping_config.clone(),
+            config: self.config.clone(),
         }
     }
 

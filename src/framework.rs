@@ -67,10 +67,22 @@ pub struct MetadataRecord {
     pub content: MetadatumRendition,
 }
 
+impl From<MetadataRecord> for EventData {
+    fn from(x: MetadataRecord) -> Self {
+        EventData::Metadata(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TxInputRecord {
     pub tx_id: String,
     pub index: u64,
+}
+
+impl From<TxInputRecord> for EventData {
+    fn from(x: TxInputRecord) -> Self {
+        EventData::TxInput(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,6 +92,12 @@ pub struct OutputAssetRecord {
     pub amount: u64,
 }
 
+impl From<OutputAssetRecord> for EventData {
+    fn from(x: OutputAssetRecord) -> Self {
+        EventData::OutputAsset(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TxOutputRecord {
     pub address: String,
@@ -87,11 +105,23 @@ pub struct TxOutputRecord {
     pub assets: Option<Vec<OutputAssetRecord>>,
 }
 
+impl From<TxOutputRecord> for EventData {
+    fn from(x: TxOutputRecord) -> Self {
+        EventData::TxOutput(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MintRecord {
     pub policy: String,
     pub asset: String,
     pub quantity: i64,
+}
+
+impl From<MintRecord> for EventData {
+    fn from(x: MintRecord) -> Self {
+        EventData::Mint(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -110,6 +140,12 @@ pub struct TransactionRecord {
     pub inputs: Option<Vec<TxInputRecord>>,
     pub outputs: Option<Vec<TxOutputRecord>>,
     pub mint: Option<Vec<MintRecord>>,
+}
+
+impl From<TransactionRecord> for EventData {
+    fn from(x: TransactionRecord) -> Self {
+        EventData::Transaction(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Merge, Default)]
