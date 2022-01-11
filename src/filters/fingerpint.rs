@@ -9,8 +9,8 @@ use log::{debug, warn};
 use serde_derive::Deserialize;
 
 use crate::framework::{
-    new_inter_stage_channel, Error, Event, EventData, FilterConfig, MetadataRecord, MintRecord,
-    OutputAssetRecord, PartialBootstrapResult, StageReceiver,
+    new_inter_stage_channel, CIP25AssetRecord, Error, Event, EventData, FilterConfig,
+    MetadataRecord, MintRecord, OutputAssetRecord, PartialBootstrapResult, StageReceiver,
 };
 
 struct FingerprintBuilder {
@@ -182,6 +182,12 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&Some(*block_slot))
             .with_prefix("back")
             .append_slice(block_hash)?,
+        EventData::CIP25Asset(CIP25AssetRecord { policy, asset, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("cip25")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(policy)?
+            .append_slice(asset)?,
     };
 
     b.build()

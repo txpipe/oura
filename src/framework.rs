@@ -74,6 +74,24 @@ impl From<MetadataRecord> for EventData {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CIP25AssetRecord {
+    pub version: String,
+    pub policy: String,
+    pub asset: String,
+    pub name: Option<String>,
+    pub image: Option<String>,
+    pub media_type: Option<String>,
+    pub description: Option<String>,
+    pub raw_json: JsonValue,
+}
+
+impl From<CIP25AssetRecord> for EventData {
+    fn from(x: CIP25AssetRecord) -> Self {
+        EventData::CIP25Asset(x)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TxInputRecord {
     pub tx_id: String,
     pub index: u64,
@@ -181,6 +199,7 @@ pub enum EventData {
     TxOutput(TxOutputRecord),
     OutputAsset(OutputAssetRecord),
     Metadata(MetadataRecord),
+    CIP25Asset(CIP25AssetRecord),
     Mint(MintRecord),
     Collateral {
         tx_id: String,

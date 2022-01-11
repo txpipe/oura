@@ -3,8 +3,8 @@ use std::fmt::{Display, Write};
 use crossterm::style::{Attribute, Color, Stylize};
 
 use crate::framework::{
-    Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord, TransactionRecord,
-    TxInputRecord, TxOutputRecord,
+    CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
+    TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 pub struct LogLine {
@@ -207,6 +207,25 @@ impl LogLine {
                 prefix: "COLLAT",
                 color: Color::Blue,
                 content: format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+                source,
+                max_width,
+            },
+            EventData::CIP25Asset(CIP25AssetRecord {
+                policy,
+                asset,
+                name,
+                image,
+                ..
+            }) => LogLine {
+                prefix: "CIP25",
+                color: Color::DarkYellow,
+                content: format!(
+                    "{{ policy: {}, asset: {}, name: {}, image: {} }}",
+                    policy,
+                    asset,
+                    name.as_deref().unwrap_or("?"),
+                    image.as_deref().unwrap_or("?")
+                ),
                 source,
                 max_width,
             },
