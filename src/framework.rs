@@ -208,7 +208,7 @@ pub enum EventData {
         tx_id: String,
         index: u64,
     },
-    NativeScript,
+    NativeScript {},
     PlutusScript {
         data: String,
     },
