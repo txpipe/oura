@@ -53,7 +53,8 @@ openssl = { version = "0.10", optional = true, features = ["vendored"] }
 
 [features]
 default = []
-fingerprint = ["murmur3"]
+webhook = ["reqwest"]
+tuisink = ["tui"]
 kafkasink = ["kafka", "openssl"]
 elasticsink = ["elasticsearch", "tokio"]
-tuisink = ["tui"]
+fingerprint = ["murmur3"]
