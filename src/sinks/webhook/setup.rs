@@ -29,7 +29,10 @@ pub struct Config {
 fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
     let mut headers = HeaderMap::new();
 
-    headers.insert(header::CONTENT_TYPE, HeaderValue::try_from("application/json")?);
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::try_from("application/json")?,
+    );
 
     if let Some(auth_value) = &config.authorization {
         let auth_value = HeaderValue::try_from(auth_value)?;
@@ -59,14 +62,18 @@ impl SinkConfig for Config {
             .build()?;
 
         let url = self.url.clone();
+
         let error_policy = self
             .error_policy
             .as_ref()
-            .map(|x| x.clone())
+            .cloned()
             .unwrap_or(ErrorPolicy::Exit);
+
         let max_retries = self.max_retries.unwrap_or(DEFAULT_MAX_RETRIES);
+
         let backoff_delay =
             Duration::from_millis(self.backoff_delay.unwrap_or(DEFAULT_BACKOFF_DELAY));
+
         let handle = std::thread::spawn(move || {
             request_loop(
                 input,
@@ -74,7 +81,7 @@ impl SinkConfig for Config {
                 &url,
                 &error_policy,
                 max_retries,
-                &backoff_delay,
+                backoff_delay,
             )
             .expect("request loop failed")
         });
