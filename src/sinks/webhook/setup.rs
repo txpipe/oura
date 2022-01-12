@@ -9,9 +9,8 @@ use super::run::request_loop;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub enum ErrorPolicy {
-    Retry,
     Continue,
     Exit,
 }
@@ -36,7 +35,7 @@ fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
         headers.insert(name, value);
     }
 
-    if let Some(auth_value) = config.authorization {
+    if let Some(auth_value) = &config.authorization {
         let auth_value = HeaderValue::try_from(auth_value)?;
         headers.insert(header::AUTHORIZATION, auth_value);
     }
@@ -44,16 +43,36 @@ fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
     Ok(headers)
 }
 
+const DEFAULT_MAX_RETRIES: usize = 20;
+const DEFAULT_BACKOFF_DELAY: u64 = 5_000;
+
 impl SinkConfig for Config {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let client = reqwest::blocking::ClientBuilder::new()
             .user_agent(APP_USER_AGENT)
             .default_headers(build_headers_map(self)?)
             .timeout(Duration::from_millis(self.timeout.unwrap_or(30000)))
-            .build();
+            .build()?;
 
+        let url = self.url.clone();
+        let error_policy = self
+            .error_policy
+            .as_ref()
+            .map(|x| x.clone())
+            .unwrap_or(ErrorPolicy::Exit);
+        let max_retries = self.max_retries.unwrap_or(DEFAULT_MAX_RETRIES);
+        let backoff_delay =
+            Duration::from_millis(self.backoff_delay.unwrap_or(DEFAULT_BACKOFF_DELAY));
         let handle = std::thread::spawn(move || {
-            request_loop(input, client, url, &self.error_policy).expect("request loop failed")
+            request_loop(
+                input,
+                &client,
+                &url,
+                &error_policy,
+                max_retries,
+                &backoff_delay,
+            )
+            .expect("request loop failed")
         });
 
         Ok(handle)

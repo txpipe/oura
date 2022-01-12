@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use reqwest::blocking::{Client, Request};
+use reqwest::blocking::Client;
 use serde::Serialize;
 
 use crate::framework::{Error, Event, StageReceiver};
@@ -30,22 +30,27 @@ impl From<Event> for RequestBody {
 
 fn execute_fallible_request(
     client: &Client,
-    request: Request,
+    url: &str,
+    body: &RequestBody,
     policy: &ErrorPolicy,
     retry_quota: usize,
     backoff_delay: &Duration,
 ) -> Result<(), Error> {
+    let request = client.post(url).json(body).build()?;
     let result = client.execute(request);
 
     match (result, policy, retry_quota) {
-        (Err(x), ErrorPolicy::Retry, 0) => Err("max retries reached".into()),
-        (Err(x), ErrorPolicy::Retry, quota) => {
-            std::thread::sleep(backoff_delay.clone());
-            execute_fallible_request(client, request, policy, retry_quota - 1, backoff_delay)
-        }
-        (Err(x), ErrorPolicy::Continue, _) => Ok(()),
-        (Err(x), ErrorPolicy::Exit, _) => Err(x.into()),
         (Ok(_), _, _) => Ok(()),
+        (Err(x), ErrorPolicy::Exit, 0) => Err(x.into()),
+        (Err(x), ErrorPolicy::Continue, 0) => {
+            log::warn!("failed to send webhook request: {:?}", x);
+            Ok(())
+        }
+        (Err(x), _, quota) => {
+            log::warn!("failed attempt to execute webhook request: {:?}", x);
+            std::thread::sleep(backoff_delay.clone());
+            execute_fallible_request(client, url, body, policy, quota - 1, backoff_delay)
+        }
     }
 }
 
@@ -56,14 +61,18 @@ pub(crate) fn request_loop(
     error_policy: &ErrorPolicy,
     max_retries: usize,
     backoff_delay: &Duration,
-) {
+) -> Result<(), Error> {
     loop {
         let event = input.recv().unwrap();
-        let client = client.clone();
         let body = RequestBody::from(event);
 
-        let request = client.post(url).json(&body).build().unwrap();
-        execute_fallible_request(&client, request, error_policy, max_retries, &backoff_delay)
-            .unwrap();
+        execute_fallible_request(
+            &client,
+            url,
+            &body,
+            error_policy,
+            max_retries,
+            &backoff_delay,
+        )?;
     }
 }
