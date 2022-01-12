@@ -71,6 +71,7 @@ pub(crate) fn request_loop(
 ) -> Result<(), Error> {
     loop {
         let event = input.recv().unwrap();
+        log::info!("{:?}", event);
         let body = json!(RequestBody::from(event));
 
         execute_fallible_request(
