@@ -63,6 +63,7 @@ pub(crate) fn request_loop(
         let body = RequestBody::from(event);
 
         let request = client.post(url).json(&body).build().unwrap();
-        execute_fallible_request(&client, request, error_policy, max_retries, &backoff_delay).unwrap();
+        execute_fallible_request(&client, request, error_policy, max_retries, &backoff_delay)
+            .unwrap();
     }
 }
