@@ -11,6 +11,9 @@ use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 use serde_derive::Deserialize;
 
+#[cfg(feature = "webhook")]
+use oura::sinks::webhook::Config as WebhookConfig;
+
 #[cfg(feature = "kafkasink")]
 use oura::sinks::kafka::Config as KafkaConfig;
 
@@ -68,6 +71,9 @@ impl FilterConfig for Filter {
 enum Sink {
     Terminal(TerminalConfig),
 
+    #[cfg(feature = "webhook")]
+    Webhook(WebhookConfig),
+
     #[cfg(feature = "kafkasink")]
     Kafka(KafkaConfig),
 
@@ -79,6 +85,9 @@ impl SinkConfig for Sink {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),
+
+            #[cfg(feature = "webhook")]
+            Sink::Webhook(c) => c.bootstrap(input),
 
             #[cfg(feature = "kafkasink")]
             Sink::Kafka(c) => c.bootstrap(input),
