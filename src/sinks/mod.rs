@@ -1,5 +1,7 @@
 pub mod terminal;
 
+pub mod webhook;
+
 #[cfg(feature = "tuisink")]
 pub mod tui;
 
