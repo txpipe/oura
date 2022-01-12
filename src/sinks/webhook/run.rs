@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use reqwest::blocking::Client;
 use serde::Serialize;
+use serde_json::{json, Value as JsonValue};
 
 use crate::framework::{Error, Event, StageReceiver};
 
@@ -31,16 +32,22 @@ impl From<Event> for RequestBody {
 fn execute_fallible_request(
     client: &Client,
     url: &str,
-    body: &RequestBody,
+    body: &JsonValue,
     policy: &ErrorPolicy,
     retry_quota: usize,
     backoff_delay: &Duration,
 ) -> Result<(), Error> {
     let request = client.post(url).json(body).build()?;
-    let result = client.execute(request);
+
+    let result = client
+        .execute(request)
+        .and_then(|res| res.error_for_status());
 
     match (result, policy, retry_quota) {
-        (Ok(_), _, _) => Ok(()),
+        (Ok(_), _, _) => {
+            log::info!("successful http request to webhook");
+            Ok(())
+        },
         (Err(x), ErrorPolicy::Exit, 0) => Err(x.into()),
         (Err(x), ErrorPolicy::Continue, 0) => {
             log::warn!("failed to send webhook request: {:?}", x);
@@ -64,7 +71,7 @@ pub(crate) fn request_loop(
 ) -> Result<(), Error> {
     loop {
         let event = input.recv().unwrap();
-        let body = RequestBody::from(event);
+        let body = json!(RequestBody::from(event));
 
         execute_fallible_request(
             &client,

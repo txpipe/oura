@@ -19,7 +19,7 @@ pub enum ErrorPolicy {
 pub struct Config {
     url: String,
     authorization: Option<String>,
-    headers: HashMap<String, String>,
+    headers: Option<HashMap<String, String>>,
     timeout: Option<u64>,
     error_policy: Option<ErrorPolicy>,
     max_retries: Option<usize>,
@@ -29,15 +29,19 @@ pub struct Config {
 fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
     let mut headers = HeaderMap::new();
 
-    for (name, value) in config.headers.iter() {
-        let name = HeaderName::try_from(name)?;
-        let value = HeaderValue::try_from(value)?;
-        headers.insert(name, value);
-    }
+    headers.insert(header::CONTENT_TYPE, HeaderValue::try_from("application/json")?);
 
     if let Some(auth_value) = &config.authorization {
         let auth_value = HeaderValue::try_from(auth_value)?;
         headers.insert(header::AUTHORIZATION, auth_value);
+    }
+
+    if let Some(custom) = &config.headers {
+        for (name, value) in custom.iter() {
+            let name = HeaderName::try_from(name)?;
+            let value = HeaderValue::try_from(value)?;
+            headers.insert(name, value);
+        }
     }
 
     Ok(headers)
