@@ -68,7 +68,7 @@ If the available out-of-the-box features don't satisfiy your particular use-case
   - [ ] AWS SQS queue
   - [ ] AWS Lambda call
   - [ ] GCP PubSub
-  - [ ] webhook (http post)
+  - [x] webhook (http post)
   - [x] terminal (append-only, tail-like)
   - [ ] TUI
 - Filters
