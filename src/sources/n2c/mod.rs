@@ -19,6 +19,7 @@ use pallas::{
 use crate::{
     framework::{Error, EventData},
     mapper::EventWriter,
+    utils::SwallowResult,
 };
 
 #[derive(Debug)]
@@ -64,7 +65,9 @@ impl Observer<Content> for ChainObserver {
         let Self(writer) = self;
         let Content(block) = content;
 
-        writer.crawl(block)?;
+        writer
+            .crawl(block)
+            .ok_or_warn("error crawling block for events");
 
         Ok(())
     }
