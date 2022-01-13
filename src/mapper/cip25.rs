@@ -91,14 +91,14 @@ impl EventWriter {
     }
 
     pub(crate) fn crawl_metadata_label_721(&self, content: &Metadatum) -> Result<(), Error> {
-        let version = self
-            .search_cip25_version(content)
-            .unwrap_or_else(|| "1.0".to_string());
-
         let entries = match content {
             Metadatum::Map(map) => map,
             _ => return Err("expected 721 content to be a map".into()),
         };
+
+        let version = self
+            .search_cip25_version(content)
+            .unwrap_or_else(|| "1.0".to_string());
 
         for (key, sub_content) in entries.iter() {
             if let Some(policy) = is_policy_key(key) {
