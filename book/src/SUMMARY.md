@@ -20,6 +20,7 @@
     - [Terminal](./sinks/terminal.md)
     - [Kafka](./sinks/kafka.md)
     - [Elasticsearch](./sinks/elastic.md)
+    - [Webhook](./sinks/webhook.md)
 - [Reference](reference/README.md)
     - [Data Dictionary](./reference/data_dictionary.md)
 - [Guides](./guides/README.md)
