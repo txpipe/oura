@@ -43,14 +43,14 @@ pub type PartialBootstrapResult = Result<(JoinHandle<()>, StageReceiver), Error>
 
 pub type BootstrapResult = Result<JoinHandle<()>, Error>;
 
-pub trait SourceConfig {
+pub trait SourceProvider {
     fn bootstrap(&self) -> PartialBootstrapResult;
 }
 
-pub trait FilterConfig {
+pub trait FilterProvider {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult;
 }
 
-pub trait SinkConfig {
+pub trait SinkProvider {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult;
 }

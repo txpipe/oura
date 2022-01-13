@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use reqwest::header::{self, HeaderMap, HeaderName, HeaderValue};
 use serde_derive::Deserialize;
 
-use crate::{pipelining::{BootstrapResult, SinkConfig, StageReceiver}, Error};
+use crate::{pipelining::{BootstrapResult, SinkProvider, StageReceiver}, Error};
 
 use super::run::request_loop;
 
@@ -17,13 +17,13 @@ pub enum ErrorPolicy {
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
-    url: String,
-    authorization: Option<String>,
-    headers: Option<HashMap<String, String>>,
-    timeout: Option<u64>,
-    error_policy: Option<ErrorPolicy>,
-    max_retries: Option<usize>,
-    backoff_delay: Option<u64>,
+    pub url: String,
+    pub authorization: Option<String>,
+    pub headers: Option<HashMap<String, String>>,
+    pub timeout: Option<u64>,
+    pub error_policy: Option<ErrorPolicy>,
+    pub max_retries: Option<usize>,
+    pub backoff_delay: Option<u64>,
 }
 
 fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
@@ -53,7 +53,7 @@ fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
 const DEFAULT_MAX_RETRIES: usize = 20;
 const DEFAULT_BACKOFF_DELAY: u64 = 5_000;
 
-impl SinkConfig for Config {
+impl SinkProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let client = reqwest::blocking::ClientBuilder::new()
             .user_agent(APP_USER_AGENT)

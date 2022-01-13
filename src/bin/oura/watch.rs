@@ -3,7 +3,7 @@ use std::str::FromStr;
 use clap::ArgMatches;
 use oura::{
     mapper::Config as MapperConfig,
-    sources::{AddressArg, BearerKind}, pipelining::{SourceConfig, PartialBootstrapResult, SinkConfig},
+    sources::{AddressArg, BearerKind}, pipelining::{SourceProvider, PartialBootstrapResult, SinkProvider},
 };
 
 use serde_derive::Deserialize;
@@ -36,7 +36,7 @@ enum WatchSource {
     N2N(N2NConfig),
 }
 
-impl SourceConfig for WatchSource {
+impl SourceProvider for WatchSource {
     fn bootstrap(&self) -> PartialBootstrapResult {
         match self {
             WatchSource::N2C(c) => c.bootstrap(),

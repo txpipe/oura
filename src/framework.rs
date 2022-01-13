@@ -1,8 +1,7 @@
-use std::{collections::BTreeMap, fmt::Display, thread::JoinHandle};
+use std::{collections::BTreeMap, fmt::Display};
 
 use merge::Merge;
 
-use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 

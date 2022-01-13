@@ -11,7 +11,7 @@ use pallas::ouroboros::network::{
 use serde::{de::Visitor, Deserializer};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{config::ChainWellKnownInfo, Error};
+use crate::{Error, mapper::ChainWellKnownInfo};
 
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {

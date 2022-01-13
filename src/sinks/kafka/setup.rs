@@ -3,7 +3,7 @@ use std::time::Duration;
 use kafka::{client::RequiredAcks, producer::Producer};
 use serde_derive::Deserialize;
 
-use crate::pipelining::{BootstrapResult, SinkConfig, StageReceiver};
+use crate::pipelining::{BootstrapResult, SinkProvider, StageReceiver};
 
 use super::run::producer_loop;
 
@@ -15,13 +15,13 @@ pub enum PartitionStrategy {
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
-    brokers: Vec<String>,
-    topic: String,
-    ack_timeout_secs: Option<u64>,
-    paritioning: Option<PartitionStrategy>,
+    pub brokers: Vec<String>,
+    pub topic: String,
+    pub ack_timeout_secs: Option<u64>,
+    pub paritioning: Option<PartitionStrategy>,
 }
 
-impl SinkConfig for Config {
+impl SinkProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let mut builder = Producer::from_hosts(self.brokers.clone());
 

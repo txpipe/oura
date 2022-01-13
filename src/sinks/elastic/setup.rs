@@ -10,7 +10,7 @@ use elasticsearch::{
 
 use serde_derive::Deserialize;
 
-use crate::pipelining::{BootstrapResult, SinkConfig, StageReceiver};
+use crate::pipelining::{BootstrapResult, SinkProvider, StageReceiver};
 
 use super::run::writer_loop;
 
@@ -32,15 +32,15 @@ impl From<&CredentialsConfig> for ESCredentials {
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
-    url: String,
-    index: String,
-    credentials: Option<CredentialsConfig>,
+    pub url: String,
+    pub index: String,
+    pub credentials: Option<CredentialsConfig>,
 
     #[serde(default)]
-    idempotency: bool,
+    pub idempotency: bool,
 }
 
-impl SinkConfig for Config {
+impl SinkProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let pool = SingleNodeConnectionPool::new(Url::parse(&self.url)?);
         let mut transport =

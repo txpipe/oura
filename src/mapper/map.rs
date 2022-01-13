@@ -18,7 +18,7 @@ use crate::framework::{
 
 use crate::framework::Error;
 
-use super::framework::EventWriter;
+use super::EventWriter;
 
 pub trait ToHex {
     fn to_hex(&self) -> String;

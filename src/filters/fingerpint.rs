@@ -12,7 +12,7 @@ use crate::{
     framework::{
         CIP25AssetRecord, Error, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
     },
-    pipelining::{new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver},
+    pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
 
 struct FingerprintBuilder {
@@ -200,7 +200,7 @@ pub struct Config {
     pub seed: Option<u32>,
 }
 
-impl FilterConfig for Config {
+impl FilterProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 

@@ -5,13 +5,13 @@ use std::thread;
 use serde_derive::Deserialize;
 
 use crate::pipelining::{
-    new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver,
+    new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver,
 };
 
 #[derive(Debug, Deserialize)]
 pub struct Config {}
 
-impl FilterConfig for Config {
+impl FilterProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 

@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
 use oura::pipelining::{
-    BootstrapResult, FilterConfig, PartialBootstrapResult, SinkConfig, SourceConfig, StageReceiver,
+    BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider, StageReceiver,
 };
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
@@ -35,7 +35,7 @@ enum Source {
     N2N(N2NConfig),
 }
 
-impl SourceConfig for Source {
+impl SourceProvider for Source {
     fn bootstrap(&self) -> PartialBootstrapResult {
         match self {
             Source::N2C(c) => c.bootstrap(),
@@ -54,7 +54,7 @@ enum Filter {
     Fingerprint(FingerprintConfig),
 }
 
-impl FilterConfig for Filter {
+impl FilterProvider for Filter {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         match self {
             Filter::Noop(c) => c.bootstrap(input),
@@ -81,7 +81,7 @@ enum Sink {
     Elastic(ElasticConfig),
 }
 
-impl SinkConfig for Sink {
+impl SinkProvider for Sink {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),

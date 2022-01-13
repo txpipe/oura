@@ -7,7 +7,7 @@ use serde_json::Value as JsonValue;
 
 use crate::{framework::{
     Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-}, pipelining::{FilterConfig, StageReceiver, new_inter_stage_channel, PartialBootstrapResult}};
+}, pipelining::{FilterProvider, StageReceiver, new_inter_stage_channel, PartialBootstrapResult}};
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(tag = "predicate", content = "argument", rename_all = "snake_case")]
@@ -95,10 +95,10 @@ impl Predicate {
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    check: Predicate,
+    pub check: Predicate,
 }
 
-impl FilterConfig for Config {
+impl FilterProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 

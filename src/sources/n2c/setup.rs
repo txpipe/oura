@@ -15,9 +15,10 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    mapper::{Config as MapperConfig, EventWriter},
-    pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceConfig},
-    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg}, Error, config::ChainWellKnownInfo,
+    mapper::{ChainWellKnownInfo, Config as MapperConfig, EventWriter},
+    pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
+    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
+    Error,
 };
 
 use super::run::observe_forever;
@@ -63,7 +64,7 @@ fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
     Multiplexer::setup(tcp, &[0, 5])
 }
 
-impl SourceConfig for Config {
+impl SourceProvider for Config {
     fn bootstrap(&self) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
