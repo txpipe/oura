@@ -95,7 +95,7 @@ impl FromStr for MagicArg {
     }
 }
 
-pub fn deserialize_magic_arg<'de, D>(deserializer: D) -> Result<Option<MagicArg>, D::Error>
+pub(crate) fn deserialize_magic_arg<'de, D>(deserializer: D) -> Result<Option<MagicArg>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -134,7 +134,7 @@ where
     deserializer.deserialize_any(MagicArgVisitor)
 }
 
-pub fn find_end_of_chain(
+pub(crate) fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::framework::Error> {
