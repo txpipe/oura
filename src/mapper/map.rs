@@ -349,11 +349,14 @@ impl EventWriter {
         Ok(record)
     }
 
-    pub fn to_block_event(&self, source: &Block) -> Result<EventData, Error> {
+    pub fn to_block_event(&self, source: &Block, hash: &[u8]) -> Result<EventData, Error> {
         Ok(EventData::Block {
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),
+            hash: hex::encode(hash),
+            number: source.header.header_body.block_number,
+            slot: source.header.header_body.slot,
         })
     }
 }

@@ -22,14 +22,19 @@ impl LogLine {
                 body_size,
                 issuer_vkey,
                 tx_count,
+                slot,
+                hash,
+                number,
                 ..
             } => {
                 LogLine {
                     prefix: "BLOCK",
                     color: Color::Magenta,
                     content: format!(
-                    "{{ hash: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
-                    &source.context.block_hash.as_ref().unwrap_or(&"".to_string()),
+                    "{{ slot: {}, hash: {}, number: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
+                    slot,
+                    hash,
+                    number,
                     body_size,
                     tx_count,
                     issuer_vkey,
