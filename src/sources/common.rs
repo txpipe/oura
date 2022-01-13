@@ -38,7 +38,7 @@ impl FromStr for BearerKind {
 
 /// A serialization-friendly chain Point struct using a hex-encoded hash
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PointArg(u64, String);
+pub struct PointArg(pub u64, pub String);
 
 impl TryInto<Point> for &PointArg {
     type Error = Error;
@@ -71,7 +71,7 @@ impl FromStr for PointArg {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct MagicArg(u64);
+pub struct MagicArg(pub u64);
 
 impl Deref for MagicArg {
     type Target = u64;
