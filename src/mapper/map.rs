@@ -12,8 +12,8 @@ use bech32::{self, ToBase32};
 use serde_json::{json, Value as JsonValue};
 
 use crate::framework::{
-    EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord, StakeCredential,
-    TransactionRecord, TxInputRecord, TxOutputRecord,
+    BlockRecord, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+    StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 use crate::framework::Error;
@@ -349,8 +349,8 @@ impl EventWriter {
         Ok(record)
     }
 
-    pub fn to_block_event(&self, source: &Block, hash: &[u8]) -> Result<EventData, Error> {
-        Ok(EventData::Block {
+    pub fn to_block_record(&self, source: &Block, hash: &[u8]) -> Result<BlockRecord, Error> {
+        Ok(BlockRecord {
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),

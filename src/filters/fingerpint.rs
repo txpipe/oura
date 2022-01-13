@@ -97,9 +97,17 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&event.context.slot)
             .with_prefix("blck")
             .append_optional(&event.context.block_hash)?,
+        EventData::BlockEnd { .. } => b
+            .with_slot(&event.context.slot)
+            .with_prefix("blckend")
+            .append_optional(&event.context.block_hash)?,
         EventData::Transaction { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("tx")
+            .append_optional(&event.context.tx_hash)?,
+        EventData::TransactionEnd { .. } => b
+            .with_slot(&event.context.slot)
+            .with_prefix("txend")
             .append_optional(&event.context.tx_hash)?,
         EventData::TxInput { .. } => b
             .with_slot(&event.context.slot)
