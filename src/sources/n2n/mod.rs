@@ -23,6 +23,7 @@ use std::sync::mpsc::{Receiver, SyncSender};
 use crate::{
     framework::{Error, EventData},
     mapper::EventWriter,
+    utils::SwallowResult,
 };
 
 #[derive(Debug)]
@@ -67,7 +68,10 @@ impl BlockObserver for Block2EventMapper {
         match maybe_block {
             Ok(alonzo::BlockWrapper(_, block)) => {
                 let Self(writer) = self;
-                writer.crawl(&block)?;
+
+                writer
+                    .crawl(&block)
+                    .ok_or_warn("error crawling block for events");
             }
             Err(err) => {
                 log::error!("{:?}", err);
