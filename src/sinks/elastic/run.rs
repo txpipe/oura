@@ -4,7 +4,10 @@ use serde::Serialize;
 use serde_json::json;
 use std::sync::Arc;
 
-use crate::framework::{Error, Event, StageReceiver};
+use crate::{
+    framework::{Error, Event},
+    pipelining::StageReceiver,
+};
 
 #[derive(Serialize)]
 struct ESRecord {

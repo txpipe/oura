@@ -5,7 +5,7 @@ use pallas::ledger::alonzo::{
 
 use crate::framework::{Error, EventContext};
 
-use super::{framework::EventWriter, map::ToBech32};
+use super::{map::ToBech32, EventWriter};
 
 impl EventWriter {
     fn crawl_metadata(&self, metadata: &Metadata) -> Result<(), Error> {

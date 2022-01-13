@@ -5,9 +5,11 @@ use std::thread;
 use serde_derive::Deserialize;
 use serde_json::Value as JsonValue;
 
-use crate::framework::{
-    new_inter_stage_channel, Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition,
-    MintRecord, OutputAssetRecord, PartialBootstrapResult, StageReceiver,
+use crate::{
+    framework::{
+        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+    },
+    pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -96,10 +98,10 @@ impl Predicate {
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    check: Predicate,
+    pub check: Predicate,
 }
 
-impl FilterConfig for Config {
+impl FilterProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
