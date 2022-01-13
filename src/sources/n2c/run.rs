@@ -86,7 +86,11 @@ impl Observer<Content> for ChainObserver {
     }
 }
 
-pub(crate) fn observe_forever(mut channel: Channel, writer: EventWriter, from: Point) -> Result<(), Error> {
+pub(crate) fn observe_forever(
+    mut channel: Channel,
+    writer: EventWriter,
+    from: Point,
+) -> Result<(), Error> {
     let observer = ChainObserver::new(writer);
     let agent = Consumer::<Content, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;

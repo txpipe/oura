@@ -3,7 +3,8 @@ use std::str::FromStr;
 use clap::ArgMatches;
 use oura::{
     mapper::Config as MapperConfig,
-    sources::{AddressArg, BearerKind}, pipelining::{SourceProvider, PartialBootstrapResult, SinkProvider},
+    pipelining::{PartialBootstrapResult, SinkProvider, SourceProvider},
+    sources::{AddressArg, BearerKind},
 };
 
 use serde_derive::Deserialize;

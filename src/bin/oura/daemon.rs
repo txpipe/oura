@@ -4,7 +4,8 @@ use clap::ArgMatches;
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
 use oura::pipelining::{
-    BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider, StageReceiver,
+    BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
+    StageReceiver,
 };
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;

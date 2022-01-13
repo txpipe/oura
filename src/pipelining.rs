@@ -38,7 +38,6 @@ pub fn new_inter_stage_channel(buffer_size: Option<usize>) -> StageChannel {
     std::sync::mpsc::sync_channel(buffer_size.unwrap_or(DEFAULT_INTER_STAGE_BUFFER_SIZE))
 }
 
-
 pub type PartialBootstrapResult = Result<(JoinHandle<()>, StageReceiver), Error>;
 
 pub type BootstrapResult = Result<JoinHandle<()>, Error>;
