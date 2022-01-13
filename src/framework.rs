@@ -158,18 +158,23 @@ pub enum StakeCredential {
     Scripthash(String),
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BlockRecord {
+    pub body_size: usize,
+    pub issuer_vkey: String,
+    pub tx_count: usize,
+    pub slot: u64,
+    pub hash: String,
+    pub number: u64,
+}
+
 #[derive(Serialize, Deserialize, Display, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum EventData {
-    Block {
-        body_size: usize,
-        issuer_vkey: String,
-        tx_count: usize,
-        slot: u64,
-        hash: String,
-        number: u64,
-    },
+    Block(BlockRecord),
+    BlockEnd(BlockRecord),
     Transaction(TransactionRecord),
+    TransactionEnd(TransactionRecord),
     TxInput(TxInputRecord),
     TxOutput(TxOutputRecord),
     OutputAsset(OutputAssetRecord),

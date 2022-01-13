@@ -40,7 +40,13 @@ impl ChainWellKnownInfo {
 #[derive(Deserialize, Clone, Debug, Default)]
 pub struct Config {
     #[serde(default)]
+    pub include_block_end_events: bool,
+
+    #[serde(default)]
     pub include_transaction_details: bool,
+    
+    #[serde(default)]
+    pub include_transaction_end_events: bool,
 }
 
 #[derive(Clone, Debug)]
