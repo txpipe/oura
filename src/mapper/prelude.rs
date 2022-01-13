@@ -44,7 +44,7 @@ pub struct Config {
 
     #[serde(default)]
     pub include_transaction_details: bool,
-    
+
     #[serde(default)]
     pub include_transaction_end_events: bool,
 }
