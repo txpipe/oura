@@ -176,8 +176,8 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_block(&self, block: &Block) -> Result<(), Error> {
-        let data = self.to_block_event(block)?;
+    fn crawl_block(&self, block: &Block, hash: &[u8]) -> Result<(), Error> {
+        let data = self.to_block_event(block, hash)?;
         self.append(data)?;
 
         for (idx, tx) in block.transaction_bodies.iter().enumerate() {
@@ -211,13 +211,13 @@ impl EventWriter {
         let hash = crypto::hash_block_header(&block.header)?;
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(hash)),
+            block_hash: Some(hex::encode(&hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
             ..EventContext::default()
         });
 
-        child.crawl_block(block)
+        child.crawl_block(block, &hash)
     }
 }
