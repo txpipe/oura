@@ -1,17 +1,56 @@
-use crate::framework::{ChainWellKnownInfo, Event, EventContext, EventData, StageSender};
+use crate::{
+    framework::{Event, EventContext, EventData},
+    pipelining::StageSender,
+};
 use merge::Merge;
 use serde_derive::Deserialize;
 
-pub type Error = Box<dyn std::error::Error>;
+use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
+use serde_derive::Serialize;
+
+use crate::Error;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ChainWellKnownInfo {
+    pub shelley_known_slot: u64,
+    pub shelley_known_hash: String,
+    pub shelley_known_time: u64,
+}
+
+impl ChainWellKnownInfo {
+    pub fn try_from_magic(magic: u64) -> Result<ChainWellKnownInfo, Error> {
+        match magic {
+            MAINNET_MAGIC => Ok(ChainWellKnownInfo {
+                shelley_known_slot: 4492799,
+                shelley_known_hash:
+                    "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457".to_string(),
+                shelley_known_time: 1596059071,
+            }),
+            TESTNET_MAGIC => Ok(ChainWellKnownInfo {
+                shelley_known_slot: 1598399,
+                shelley_known_hash:
+                    "7e16781b40ebf8b6da18f7b5e8ade855d6738095ef2f1c58c77e88b6e45997a4".to_string(),
+                shelley_known_time: 1595967596,
+            }),
+            _ => Err("can't infer well-known chain infro from specified magic".into()),
+        }
+    }
+}
 
 #[derive(Deserialize, Clone, Debug, Default)]
 pub struct Config {
     #[serde(default)]
+    pub include_block_end_events: bool,
+
+    #[serde(default)]
     pub include_transaction_details: bool,
+
+    #[serde(default)]
+    pub include_transaction_end_events: bool,
 }
 
 #[derive(Clone, Debug)]
-pub struct EventWriter {
+pub(crate) struct EventWriter {
     context: EventContext,
     output: StageSender,
     chain_info: Option<ChainWellKnownInfo>,
@@ -75,9 +114,4 @@ impl EventWriter {
             .as_ref()
             .map(|info| info.shelley_known_time + (slot - info.shelley_known_slot))
     }
-}
-
-/// IoC for mapping raw data into Oura events
-pub trait EventMapper<S> {
-    fn map_events(&self, source: &S, writer: &EventWriter) -> Result<(), Error>;
 }

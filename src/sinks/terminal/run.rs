@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::framework::StageReceiver;
+use crate::pipelining::StageReceiver;
 use crate::utils::throttle::Throttle;
 
 pub type Error = Box<dyn std::error::Error>;

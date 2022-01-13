@@ -8,9 +8,11 @@ use std::{
 use log::{debug, warn};
 use serde_derive::Deserialize;
 
-use crate::framework::{
-    new_inter_stage_channel, CIP25AssetRecord, Error, Event, EventData, FilterConfig,
-    MetadataRecord, MintRecord, OutputAssetRecord, PartialBootstrapResult, StageReceiver,
+use crate::{
+    framework::{
+        CIP25AssetRecord, Error, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
+    },
+    pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
 
 struct FingerprintBuilder {
@@ -95,9 +97,17 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&event.context.slot)
             .with_prefix("blck")
             .append_optional(&event.context.block_hash)?,
+        EventData::BlockEnd { .. } => b
+            .with_slot(&event.context.slot)
+            .with_prefix("blckend")
+            .append_optional(&event.context.block_hash)?,
         EventData::Transaction { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("tx")
+            .append_optional(&event.context.tx_hash)?,
+        EventData::TransactionEnd { .. } => b
+            .with_slot(&event.context.slot)
+            .with_prefix("txend")
             .append_optional(&event.context.tx_hash)?,
         EventData::TxInput { .. } => b
             .with_slot(&event.context.slot)
@@ -198,7 +208,7 @@ pub struct Config {
     pub seed: Option<u32>,
 }
 
-impl FilterConfig for Config {
+impl FilterProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 

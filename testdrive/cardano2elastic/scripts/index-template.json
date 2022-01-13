@@ -64,7 +64,44 @@
                         "label": {
                             "type": "keyword"
                         },
-                        "content": {
+                        "map_json": {
+                            "enabled": false
+                        },
+                        "array_json": {
+                            "enabled": false
+                        },
+                        "bytes_hex": {
+                            "enabled": false
+                        },
+                        "text_scalar": {
+                            "type": "text"
+                        },
+                        "int_scalar": {
+                            "type": "long"
+                        }
+                    }
+                },
+                "cip25_asset": {
+                    "properties": {
+                        "policy": {
+                            "type": "keyword"
+                        },
+                        "asset": {
+                            "type": "keyword"
+                        },
+                        "name": {
+                            "type": "text"
+                        },
+                        "mediatType": {
+                            "type": "keyword"
+                        },
+                        "image": {
+                            "type": "keyword"
+                        },
+                        "description": {
+                            "type": "text"
+                        },
+                        "raw_json": {
                             "enabled": false
                         }
                     }
@@ -160,6 +197,29 @@
                         },
                         "total_output": {
                             "type": "long"
+                        },
+                        "metadata": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "keyword"
+                                },
+                                "map_json": {
+                                    "enabled": false
+                                },
+                                "array_json": {
+                                    "enabled": false
+                                },
+                                "bytes_hex": {
+                                    "enabled": false
+                                },
+                                "text_scalar": {
+                                    "type": "text"
+                                },
+                                "int_scalar": {
+                                    "type": "long"
+                                }
+                            }
                         }
                     }
                 },

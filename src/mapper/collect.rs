@@ -6,7 +6,7 @@ use crate::framework::{
     Error, MetadataRecord, MintRecord, OutputAssetRecord, TxInputRecord, TxOutputRecord,
 };
 
-use super::framework::EventWriter;
+use super::EventWriter;
 
 impl EventWriter {
     pub fn collect_input_records(&self, source: &[TransactionInput]) -> Vec<TxInputRecord> {

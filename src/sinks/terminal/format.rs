@@ -3,7 +3,7 @@ use std::fmt::{Display, Write};
 use crossterm::style::{Attribute, Color, Stylize};
 
 use crate::framework::{
-    CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
+    BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
     TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
@@ -18,22 +18,46 @@ pub struct LogLine {
 impl LogLine {
     pub fn new(source: Event, max_width: usize) -> LogLine {
         match &source.data {
-            EventData::Block {
+            EventData::Block(BlockRecord {
                 body_size,
                 issuer_vkey,
                 tx_count,
+                slot,
+                hash,
+                number,
                 ..
-            } => {
+            }) => {
                 LogLine {
                     prefix: "BLOCK",
                     color: Color::Magenta,
                     content: format!(
-                    "{{ hash: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
-                    &source.context.block_hash.as_ref().unwrap_or(&"".to_string()),
+                    "{{ slot: {}, hash: {}, number: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
+                    slot,
+                    hash,
+                    number,
                     body_size,
                     tx_count,
                     issuer_vkey,
                     source.context.timestamp.unwrap_or_default(),
+                ),
+                    source,
+                    max_width,
+                }
+            }
+            EventData::BlockEnd(BlockRecord {
+                slot,
+                hash,
+                number,
+                ..
+            }) => {
+                LogLine {
+                    prefix: "ENDBLK",
+                    color: Color::DarkMagenta,
+                    content: format!(
+                    "{{ slot: {}, hash: {}, number: {} }}",
+                    slot,
+                    hash,
+                    number,
                 ),
                     source,
                     max_width,
@@ -50,6 +74,16 @@ impl LogLine {
                 content: format!(
                     "{{ total_output: {}, fee: {}, hash: {:?}, ttl: {:?} }}",
                     total_output, fee, &source.context.tx_hash, ttl
+                ),
+                source,
+                max_width,
+            },
+            EventData::TransactionEnd(TransactionRecord { .. }) => LogLine {
+                prefix: "ENDTX",
+                color: Color::DarkBlue,
+                content: format!(
+                    "{{ hash: {:?} }}",
+                    &source.context.tx_hash
                 ),
                 source,
                 max_width,

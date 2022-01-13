@@ -3,9 +3,9 @@ use pallas::ledger::alonzo::{
     TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
 };
 
-use crate::framework::{Error, EventContext};
+use crate::framework::{Error, EventContext, EventData};
 
-use super::{framework::EventWriter, map::ToBech32};
+use super::{map::ToBech32, EventWriter};
 
 impl EventWriter {
     fn crawl_metadata(&self, metadata: &Metadata) -> Result<(), Error> {
@@ -121,7 +121,8 @@ impl EventWriter {
         aux_data: Option<&AuxiliaryData>,
     ) -> Result<(), Error> {
         let record = self.to_transaction_record(tx, aux_data)?;
-        self.append_from(record)?;
+
+        self.append_from(record.clone())?;
 
         for component in tx.iter() {
             match component {
@@ -173,12 +174,17 @@ impl EventWriter {
             self.crawl_auxdata(aux_data)?;
         }
 
+        if self.config.include_transaction_end_events {
+            self.append(EventData::TransactionEnd(record))?;
+        }
+
         Ok(())
     }
 
-    fn crawl_block(&self, block: &Block) -> Result<(), Error> {
-        let data = self.to_block_event(block)?;
-        self.append(data)?;
+    fn crawl_block(&self, block: &Block, hash: &[u8]) -> Result<(), Error> {
+        let record = self.to_block_record(block, hash)?;
+
+        self.append(EventData::Block(record.clone()))?;
 
         for (idx, tx) in block.transaction_bodies.iter().enumerate() {
             let aux_data = block
@@ -204,6 +210,10 @@ impl EventWriter {
             child.crawl_transaction(tx, aux_data)?;
         }
 
+        if self.config.include_block_end_events {
+            self.append(EventData::BlockEnd(record))?;
+        }
+
         Ok(())
     }
 
@@ -211,13 +221,13 @@ impl EventWriter {
         let hash = crypto::hash_block_header(&block.header)?;
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(hash)),
+            block_hash: Some(hex::encode(&hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
             ..EventContext::default()
         });
 
-        child.crawl_block(block)
+        child.crawl_block(block, &hash)
     }
 }

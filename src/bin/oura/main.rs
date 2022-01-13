@@ -5,7 +5,7 @@ use std::process;
 
 use clap::{App, AppSettings, Arg};
 
-type Error = oura::framework::Error;
+type Error = oura::Error;
 
 fn main() {
     let args = App::new("app")

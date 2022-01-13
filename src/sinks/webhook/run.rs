@@ -3,7 +3,10 @@ use std::time::Duration;
 use reqwest::blocking::Client;
 use serde::Serialize;
 
-use crate::framework::{Error, Event, StageReceiver};
+use crate::{
+    framework::{Error, Event},
+    pipelining::StageReceiver,
+};
 
 use super::ErrorPolicy;
 

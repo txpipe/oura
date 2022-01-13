@@ -11,7 +11,7 @@ use pallas::ouroboros::network::{
 use serde::{de::Visitor, Deserializer};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::framework::{ChainWellKnownInfo, Error};
+use crate::{mapper::ChainWellKnownInfo, Error};
 
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {
@@ -38,7 +38,7 @@ impl FromStr for BearerKind {
 
 /// A serialization-friendly chain Point struct using a hex-encoded hash
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PointArg(u64, String);
+pub struct PointArg(pub u64, pub String);
 
 impl TryInto<Point> for &PointArg {
     type Error = Error;
@@ -71,7 +71,7 @@ impl FromStr for PointArg {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct MagicArg(u64);
+pub struct MagicArg(pub u64);
 
 impl Deref for MagicArg {
     type Target = u64;
@@ -95,7 +95,7 @@ impl FromStr for MagicArg {
     }
 }
 
-pub fn deserialize_magic_arg<'de, D>(deserializer: D) -> Result<Option<MagicArg>, D::Error>
+pub(crate) fn deserialize_magic_arg<'de, D>(deserializer: D) -> Result<Option<MagicArg>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -134,7 +134,7 @@ where
     deserializer.deserialize_any(MagicArgVisitor)
 }
 
-pub fn find_end_of_chain(
+pub(crate) fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::framework::Error> {

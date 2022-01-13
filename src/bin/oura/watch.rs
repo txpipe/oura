@@ -2,15 +2,17 @@ use std::str::FromStr;
 
 use clap::ArgMatches;
 use oura::{
-    framework::*,
     mapper::Config as MapperConfig,
-    sources::common::{AddressArg, BearerKind},
+    pipelining::{PartialBootstrapResult, SinkProvider, SourceProvider},
+    sources::{AddressArg, BearerKind},
 };
 
 use serde_derive::Deserialize;
 
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
+
+use crate::Error;
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PeerMode {
@@ -35,7 +37,7 @@ enum WatchSource {
     N2N(N2NConfig),
 }
 
-impl SourceConfig for WatchSource {
+impl SourceProvider for WatchSource {
     fn bootstrap(&self) -> PartialBootstrapResult {
         match self {
             WatchSource::N2C(c) => c.bootstrap(),
@@ -78,19 +80,24 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         (false, BearerKind::Unix) => PeerMode::AsClient,
     };
 
+    let mapper = MapperConfig {
+        include_block_end_events: true,
+        ..Default::default()
+    };
+
     let source_setup = match mode {
         PeerMode::AsNode => WatchSource::N2N(N2NConfig {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
-            mapper: MapperConfig::default(),
+            mapper,
             since,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
-            mapper: MapperConfig::default(),
+            mapper,
             since,
         }),
     };

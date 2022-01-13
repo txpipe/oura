@@ -1,7 +1,10 @@
 use kafka::producer::{Producer, Record};
 use log::debug;
 
-use crate::framework::{Error, Event, StageReceiver};
+use crate::{
+    framework::{Error, Event},
+    pipelining::StageReceiver,
+};
 
 use super::PartitionStrategy;
 
