@@ -8,9 +8,11 @@ use std::{
 use log::{debug, warn};
 use serde_derive::Deserialize;
 
-use crate::framework::{
-    new_inter_stage_channel, CIP25AssetRecord, Error, Event, EventData, FilterConfig,
-    MetadataRecord, MintRecord, OutputAssetRecord, PartialBootstrapResult, StageReceiver,
+use crate::{
+    framework::{
+        CIP25AssetRecord, Error, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
+    },
+    pipelining::{new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver},
 };
 
 struct FingerprintBuilder {

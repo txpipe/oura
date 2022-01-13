@@ -3,7 +3,7 @@ use std::time::Duration;
 use kafka::{client::RequiredAcks, producer::Producer};
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, SinkConfig, StageReceiver};
+use crate::pipelining::{BootstrapResult, SinkConfig, StageReceiver};
 
 use super::run::producer_loop;
 

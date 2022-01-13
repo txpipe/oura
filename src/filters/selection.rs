@@ -5,10 +5,9 @@ use std::thread;
 use serde_derive::Deserialize;
 use serde_json::Value as JsonValue;
 
-use crate::framework::{
-    new_inter_stage_channel, Event, EventData, FilterConfig, MetadataRecord, MetadatumRendition,
-    MintRecord, OutputAssetRecord, PartialBootstrapResult, StageReceiver,
-};
+use crate::{framework::{
+    Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+}, pipelining::{FilterConfig, StageReceiver, new_inter_stage_channel, PartialBootstrapResult}};
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(tag = "predicate", content = "argument", rename_all = "snake_case")]

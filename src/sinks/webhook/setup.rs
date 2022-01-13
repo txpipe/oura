@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use reqwest::header::{self, HeaderMap, HeaderName, HeaderValue};
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, Error, SinkConfig, StageReceiver};
+use crate::{pipelining::{BootstrapResult, SinkConfig, StageReceiver}, Error};
 
 use super::run::request_loop;
 

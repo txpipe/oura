@@ -15,15 +15,11 @@ use pallas::ouroboros::network::{
 use serde_derive::Deserialize;
 
 use crate::{
-    framework::{
-        new_inter_stage_channel, ChainWellKnownInfo, Error, PartialBootstrapResult, SourceConfig,
-    },
     mapper::{Config as MapperConfig, EventWriter},
-    sources::{
-        common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
-        n2n::{fetch_blocks_forever, observe_headers_forever},
-    },
+    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg}, config::ChainWellKnownInfo, pipelining::{SourceConfig, PartialBootstrapResult, new_inter_stage_channel}, Error,
 };
+
+use super::run::{fetch_blocks_forever, observe_headers_forever};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

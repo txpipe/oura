@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use serde_derive::Deserialize;
 
-use crate::framework::{BootstrapResult, SinkConfig, StageReceiver};
+use crate::pipelining::{BootstrapResult, SinkConfig, StageReceiver};
 
 use super::run::reducer_loop;
 

@@ -2,15 +2,16 @@ use std::str::FromStr;
 
 use clap::ArgMatches;
 use oura::{
-    framework::*,
     mapper::Config as MapperConfig,
-    sources::common::{AddressArg, BearerKind},
+    sources::{AddressArg, BearerKind}, pipelining::{SourceConfig, PartialBootstrapResult, SinkConfig},
 };
 
 use serde_derive::Deserialize;
 
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
+
+use crate::Error;
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PeerMode {

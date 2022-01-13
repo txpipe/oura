@@ -4,7 +4,7 @@ use std::thread;
 
 use serde_derive::Deserialize;
 
-use crate::framework::{
+use crate::pipelining::{
     new_inter_stage_channel, FilterConfig, PartialBootstrapResult, StageReceiver,
 };
 

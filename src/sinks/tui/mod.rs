@@ -5,10 +5,7 @@ use std::{
     time::Duration,
 };
 
-use crate::{
-    framework::{Event, StageReceiver},
-    utils::throttle::Throttle,
-};
+use crate::{framework::Event, utils::throttle::Throttle, pipelining::StageReceiver};
 
 pub type Error = Box<dyn std::error::Error>;
 

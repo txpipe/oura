@@ -1,4 +1,4 @@
-use crate::framework::{ChainWellKnownInfo, Event, EventContext, EventData, StageSender};
+use crate::{framework::{Event, EventContext, EventData}, config::ChainWellKnownInfo, pipelining::StageSender};
 use merge::Merge;
 use serde_derive::Deserialize;
 

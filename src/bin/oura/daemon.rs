@@ -3,7 +3,7 @@ use std::thread::JoinHandle;
 use clap::ArgMatches;
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
-use oura::framework::{
+use oura::pipelining::{
     BootstrapResult, FilterConfig, PartialBootstrapResult, SinkConfig, SourceConfig, StageReceiver,
 };
 use oura::sinks::terminal::Config as TerminalConfig;
