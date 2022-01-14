@@ -35,8 +35,8 @@ docker run -d -v $(pwd)/daemon.toml:/etc/oura/daemon.toml \
 
 Images are also tagged with the corresponding version number. It is highly recommended to use a fixed image version in production environments to avoid the effects of new features being included in each release (please remember Oura hasn't reached v1 stability guarantees).
 
-To use a versioned image, replace the `latest` tag by the desired version with the `v` prefix. For example, to use version `0.3.7`, use the following image:
+To use a versioned image, replace the `latest` tag by the desired version with the `v` prefix. For example, to use version `1.0.0`, use the following image:
 
 ```
-ghcr.io/txpipe/oura:v0.3.7
+ghcr.io/txpipe/oura:v1.0.0
 ```
