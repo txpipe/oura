@@ -57,3 +57,15 @@ spec:
         - name: mock-config
           configMap:
             name: endpoint
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: endpoint
+spec:
+  selector:
+    app: endpoint
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

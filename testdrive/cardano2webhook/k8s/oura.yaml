@@ -16,7 +16,7 @@ data:
 
     [sink]
     type = "Webhook"
-    url = "https://endpoint:5000/events"
+    url = "http://endpoint:5000/events"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: ghcr.io/txpipe/oura:v0.3.9
+        image: ghcr.io/txpipe/oura:v1.0.0
         env:
           - name: "RUST_LOG"
             value: "info"
