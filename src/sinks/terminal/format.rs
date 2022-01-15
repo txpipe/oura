@@ -303,7 +303,7 @@ impl Display for LogLine {
 
             match self.content.len() {
                 x if x > max_width => {
-                    let partial = &self.content[..max_width - 3];
+                    let partial: String = self.content.chars().take(max_width - 3).collect();
                     partial.with(Color::Grey).fmt(f)?;
                     f.write_str("...")?;
                 }
