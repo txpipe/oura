@@ -26,6 +26,12 @@ fn main() {
                     "point in the chain to start reading from, expects format `slot,hex-hash`",
                 ))
                 .arg(
+                    Arg::new("throttle")
+                        .long("throttle")
+                        .takes_value(true)
+                        .help("milliseconds to wait between output lines (for easier reading)"),
+                )
+                .arg(
                     Arg::new("mode")
                         .long("mode")
                         .takes_value(true)
