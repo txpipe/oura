@@ -78,7 +78,9 @@ impl EventWriter {
             fingerprint: None,
         };
 
-        self.output.send(evt)?;
+        self.output
+            .send(evt)
+            .expect("error sending event through output stage, pipeline must have crashed.");
 
         Ok(())
     }
@@ -87,15 +89,7 @@ impl EventWriter {
     where
         T: Into<EventData>,
     {
-        let evt = Event {
-            context: self.context.clone(),
-            data: source.into(),
-            fingerprint: None,
-        };
-
-        self.output.send(evt)?;
-
-        Ok(())
+        self.append(source.into())
     }
 
     pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
