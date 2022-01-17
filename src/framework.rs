@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt::Display};
+use std::fmt::Display;
 
 use merge::Merge;
 
@@ -221,7 +221,7 @@ pub enum EventData {
     MoveInstantaneousRewardsCert {
         from_reserves: bool,
         from_treasury: bool,
-        to_stake_credentials: Option<BTreeMap<StakeCredential, i64>>,
+        to_stake_credentials: Option<Vec<(StakeCredential, i64)>>,
         to_other_pot: Option<u64>,
     },
     RollBack {
