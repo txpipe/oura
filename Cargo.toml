@@ -1,11 +1,11 @@
 [package]
 name = "oura"
 description = "The tail of Cardano"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 repository = "https://github.com/txpipe/oura"
 homepage = "https://github.com/txpipe/oura"
-documentation = "https://docs.rs/oura/0.1.0/oura/"
+documentation = "https://docs.rs/oura"
 license = "Apache-2.0"
 readme = "README.md"
 authors = [
