@@ -6,7 +6,7 @@ use std::{
 };
 
 use log::{debug, warn};
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::{
     framework::{

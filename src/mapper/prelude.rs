@@ -3,10 +3,10 @@ use crate::{
     pipelining::StageSender,
 };
 use merge::Merge;
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use pallas::ouroboros::network::handshake::{MAINNET_MAGIC, TESTNET_MAGIC};
-use serde_derive::Serialize;
+use serde::Serialize;
 
 use crate::Error;
 

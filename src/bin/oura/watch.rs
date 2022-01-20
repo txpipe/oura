@@ -7,7 +7,7 @@ use oura::{
     sources::{AddressArg, BearerKind},
 };
 
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use merge::Merge;
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
 use serde_json::Value as JsonValue;

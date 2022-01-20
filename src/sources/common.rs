@@ -9,7 +9,7 @@ use pallas::ouroboros::network::{
     multiplexer::Channel,
 };
 use serde::{de::Visitor, Deserializer};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{mapper::ChainWellKnownInfo, Error};
 

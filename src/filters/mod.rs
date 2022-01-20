@@ -2,4 +2,4 @@ pub mod noop;
 pub mod selection;
 
 #[cfg(feature = "fingerprint")]
-pub mod fingerpint;
+pub mod fingerprint;

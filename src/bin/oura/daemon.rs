@@ -10,7 +10,7 @@ use oura::pipelining::{
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 #[cfg(feature = "webhook")]
 use oura::sinks::webhook::Config as WebhookConfig;
@@ -25,7 +25,7 @@ use oura::filters::noop::Config as NoopFilterConfig;
 use oura::filters::selection::Config as SelectionConfig;
 
 #[cfg(feature = "fingerprint")]
-use oura::filters::fingerpint::Config as FingerprintConfig;
+use oura::filters::fingerprint::Config as FingerprintConfig;
 
 use crate::Error;
 
