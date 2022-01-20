@@ -80,6 +80,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         (false, BearerKind::Unix) => PeerMode::AsClient,
     };
 
+    let throttle = match args.is_present("throttle") {
+        true => Some(args.value_of_t("throttle")?),
+        false => None,
+    };
+
     let mapper = MapperConfig {
         include_block_end_events: true,
         ..Default::default()
@@ -102,7 +107,9 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         }),
     };
 
-    let sink_setup = oura::sinks::terminal::Config::default();
+    let sink_setup = oura::sinks::terminal::Config {
+        throttle_min_span_millis: throttle,
+    };
 
     let (source_handle, source_output) = source_setup.bootstrap()?;
     let sink_handle = sink_setup.bootstrap(source_output)?;
