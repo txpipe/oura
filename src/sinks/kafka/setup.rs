@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use kafka::{client::RequiredAcks, producer::Producer};
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::pipelining::{BootstrapResult, SinkProvider, StageReceiver};
 

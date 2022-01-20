@@ -12,7 +12,7 @@ use pallas::ouroboros::network::{
     multiplexer::{Channel, Multiplexer},
 };
 
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::{
     mapper::{ChainWellKnownInfo, Config as MapperConfig, EventWriter},

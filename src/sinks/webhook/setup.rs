@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
 use reqwest::header::{self, HeaderMap, HeaderName, HeaderValue};
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},

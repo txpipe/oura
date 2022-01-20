@@ -2,7 +2,7 @@
 
 use std::thread;
 
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::pipelining::{
     new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver,
