@@ -18,11 +18,7 @@ pub struct Config {
 
 impl SinkProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        let format = self
-            .format
-            .as_ref()
-            .map(|x| x.clone())
-            .unwrap_or(OutputFormat::JSONL);
+        let format = self.format.as_ref().cloned().unwrap_or(OutputFormat::JSONL);
 
         let mut output = stdout();
 

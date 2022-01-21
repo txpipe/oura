@@ -11,13 +11,17 @@ fn write(event: Event, format: &OutputFormat, output: &mut impl Write) -> Result
         OutputFormat::JSONL => {
             let buf = json!(event).to_string();
             output.write_all(buf.as_bytes())?;
-            output.write(b"\n")?;
+            output.write_all(b"\n")?;
             Ok(())
         }
     }
 }
 
-pub fn consumer_loop(format: OutputFormat, input: StageReceiver, output: &mut impl Write) -> Result<(), Error> {
+pub fn consumer_loop(
+    format: OutputFormat,
+    input: StageReceiver,
+    output: &mut impl Write,
+) -> Result<(), Error> {
     loop {
         let evt = input.recv()?;
         write(evt, &format, output)?;
