@@ -8,6 +8,8 @@ use oura::pipelining::{
     StageReceiver,
 };
 use oura::sinks::terminal::Config as TerminalConfig;
+use oura::sinks::writer::Config as WriterConfig;
+
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 use serde::Deserialize;
@@ -71,6 +73,7 @@ impl FilterProvider for Filter {
 #[serde(tag = "type")]
 enum Sink {
     Terminal(TerminalConfig),
+    Writer(WriterConfig),
 
     #[cfg(feature = "webhook")]
     Webhook(WebhookConfig),
@@ -86,6 +89,7 @@ impl SinkProvider for Sink {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),
+            Sink::Writer(c) => c.bootstrap(input),
 
             #[cfg(feature = "webhook")]
             Sink::Webhook(c) => c.bootstrap(input),
