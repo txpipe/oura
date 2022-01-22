@@ -14,7 +14,9 @@ use serde::Deserialize;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 
+#[cfg(feature = "logs")]
 use oura::sinks::logs::Config as LogsConfig;
+
 use oura::sinks::stdout::Config as StdoutConfig;
 
 use crate::Error;
@@ -53,6 +55,7 @@ impl SourceProvider for DumpSource {
 
 enum DumpSink {
     Stdout(StdoutConfig),
+    #[cfg(feature = "logs")]
     Logs(LogsConfig),
 }
 
@@ -60,6 +63,7 @@ impl SinkProvider for DumpSink {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         match self {
             DumpSink::Stdout(c) => c.bootstrap(input),
+            #[cfg(feature = "logs")]
             DumpSink::Logs(c) => c.bootstrap(input),
         }
     }
@@ -100,8 +104,9 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let output: Option<String> = match args.is_present("output") {
+        #[cfg(feature = "logs")]
         true => Some(args.value_of_t("output")?),
-        false => None,
+        _ => None,
     };
 
     let mapper = MapperConfig {
@@ -127,11 +132,12 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let sink_setup = match &output {
+        #[cfg(feature = "logs")]
         Some(x) => DumpSink::Logs(LogsConfig {
             output_path: Some(x.to_owned()),
             ..Default::default()
         }),
-        None => DumpSink::Stdout(StdoutConfig {
+        _ => DumpSink::Stdout(StdoutConfig {
             ..Default::default()
         }),
     };
