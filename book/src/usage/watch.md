@@ -2,6 +2,8 @@
 
 The `watch` mode provides a quick way to tail the latest events from the blockchain. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is sent into the terminal in a human-readable fashion.
 
+The output is colorized by type of event and dynamically truncated to fit the width of the terminal. The speed of the output lines is throttled to facilitate visual inspection of each even, othwerwise, all events for a block would be output simultaneously.
+
 ## Usage
 
 To start _Oura_ in watch mode, use the following command from your terminal:

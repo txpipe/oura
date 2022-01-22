@@ -67,7 +67,7 @@ impl SinkProvider for DumpSink {
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Error)
+        .filter_module("oura::dump", log::LevelFilter::Info)
         .init();
 
     let socket = args.value_of_t("socket")?;
@@ -99,7 +99,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         (false, BearerKind::Unix) => PeerMode::AsClient,
     };
 
-    let output = match args.is_present("output") {
+    let output: Option<String> = match args.is_present("output") {
         true => Some(args.value_of_t("output")?),
         false => None,
     };
@@ -126,9 +126,9 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         }),
     };
 
-    let sink_setup = match output {
+    let sink_setup = match &output {
         Some(x) => DumpSink::Logs(LogsConfig {
-            output_path: Some(x),
+            output_path: Some(x.to_owned()),
             ..Default::default()
         }),
         None => DumpSink::Stdout(StdoutConfig {
@@ -138,6 +138,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let (source_handle, source_output) = source_setup.bootstrap()?;
     let sink_handle = sink_setup.bootstrap(source_output)?;
+
+    log::info!(
+        "Oura started dumping events to {}",
+        output.as_deref().unwrap_or("stdout")
+    );
 
     sink_handle.join().map_err(|_| "error in sink thread")?;
     source_handle.join().map_err(|_| "error in source thread")?;

@@ -27,8 +27,8 @@ pub struct Config {
     pub compress_files: Option<bool>,
 }
 
-const DEFAULT_MAX_BYTES_PER_FILE: usize = 50 * 1024;
-const DEFAULT_MAX_TOTAL_FILES: usize = 30;
+const DEFAULT_MAX_BYTES_PER_FILE: usize = 50 * 1024 * 1024;
+const DEFAULT_MAX_TOTAL_FILES: usize = 200;
 
 fn build_witer(config: &Config) -> Result<impl Write, Error> {
     let output_path = match &config.output_path {
