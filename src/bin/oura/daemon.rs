@@ -7,8 +7,11 @@ use oura::pipelining::{
     BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
     StageReceiver,
 };
+use oura::sinks::stdout::Config as StdoutConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
-use oura::sinks::writer::Config as WriterConfig;
+
+#[cfg(feature = "logs")]
+use oura::sinks::logs::Config as WriterConfig;
 
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
@@ -73,7 +76,10 @@ impl FilterProvider for Filter {
 #[serde(tag = "type")]
 enum Sink {
     Terminal(TerminalConfig),
-    Writer(WriterConfig),
+    Stdout(StdoutConfig),
+
+    #[cfg(feature = "logs")]
+    Logs(WriterConfig),
 
     #[cfg(feature = "webhook")]
     Webhook(WebhookConfig),
@@ -89,7 +95,10 @@ impl SinkProvider for Sink {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         match self {
             Sink::Terminal(c) => c.bootstrap(input),
-            Sink::Writer(c) => c.bootstrap(input),
+            Sink::Stdout(c) => c.bootstrap(input),
+
+            #[cfg(feature = "logs")]
+            Sink::Logs(c) => c.bootstrap(input),
 
             #[cfg(feature = "webhook")]
             Sink::Webhook(c) => c.bootstrap(input),
