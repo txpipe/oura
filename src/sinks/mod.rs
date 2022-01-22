@@ -1,5 +1,5 @@
-pub mod terminal;
 pub mod stdout;
+pub mod terminal;
 
 #[cfg(feature = "logs")]
 pub mod logs;
