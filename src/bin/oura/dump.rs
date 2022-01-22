@@ -3,7 +3,9 @@ use std::str::FromStr;
 use clap::ArgMatches;
 use oura::{
     mapper::Config as MapperConfig,
-    pipelining::{PartialBootstrapResult, SinkProvider, SourceProvider},
+    pipelining::{
+        BootstrapResult, PartialBootstrapResult, SinkProvider, SourceProvider, StageReceiver,
+    },
     sources::{AddressArg, BearerKind},
 };
 
@@ -12,18 +14,15 @@ use serde::Deserialize;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 
+use oura::sinks::logs::Config as LogsConfig;
+use oura::sinks::stdout::Config as StdoutConfig;
+
 use crate::Error;
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PeerMode {
     AsNode,
     AsClient,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub enum Output {
-    Stdout,
-    FileRotate,
 }
 
 impl FromStr for PeerMode {
@@ -38,16 +37,30 @@ impl FromStr for PeerMode {
     }
 }
 
-enum WatchSource {
+enum DumpSource {
     N2C(N2CConfig),
     N2N(N2NConfig),
 }
 
-impl SourceProvider for WatchSource {
+impl SourceProvider for DumpSource {
     fn bootstrap(&self) -> PartialBootstrapResult {
         match self {
-            WatchSource::N2C(c) => c.bootstrap(),
-            WatchSource::N2N(c) => c.bootstrap(),
+            DumpSource::N2C(c) => c.bootstrap(),
+            DumpSource::N2N(c) => c.bootstrap(),
+        }
+    }
+}
+
+enum DumpSink {
+    Stdout(StdoutConfig),
+    Logs(LogsConfig),
+}
+
+impl SinkProvider for DumpSink {
+    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
+        match self {
+            DumpSink::Stdout(c) => c.bootstrap(input),
+            DumpSink::Logs(c) => c.bootstrap(input),
         }
     }
 }
@@ -86,8 +99,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         (false, BearerKind::Unix) => PeerMode::AsClient,
     };
 
-    let throttle = match args.is_present("throttle") {
-        true => Some(args.value_of_t("throttle")?),
+    let output = match args.is_present("output") {
+        true => Some(args.value_of_t("output")?),
         false => None,
     };
 
@@ -97,14 +110,14 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let source_setup = match mode {
-        PeerMode::AsNode => WatchSource::N2N(N2NConfig {
+        PeerMode::AsNode => DumpSource::N2N(N2NConfig {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
             mapper,
             since,
         }),
-        PeerMode::AsClient => WatchSource::N2C(N2CConfig {
+        PeerMode::AsClient => DumpSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
             magic,
             well_known: None,
@@ -113,8 +126,14 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         }),
     };
 
-    let sink_setup = oura::sinks::terminal::Config {
-        throttle_min_span_millis: throttle,
+    let sink_setup = match output {
+        Some(x) => DumpSink::Logs(LogsConfig {
+            output_path: Some(x),
+            ..Default::default()
+        }),
+        None => DumpSink::Stdout(StdoutConfig {
+            ..Default::default()
+        }),
     };
 
     let (source_handle, source_output) = source_setup.bootstrap()?;
