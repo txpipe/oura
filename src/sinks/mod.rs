@@ -1,5 +1,8 @@
 pub mod terminal;
-pub mod writer;
+pub mod stdout;
+
+#[cfg(feature = "logs")]
+pub mod logs;
 
 #[cfg(feature = "webhook")]
 pub mod webhook;
