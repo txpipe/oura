@@ -54,7 +54,7 @@ _Oura_ running in `daemon` mode can be configured to use custom filters to pinpo
 
 If the available out-of-the-box features don't satisfiy your particular use-case, _Oura_ can be used a library in your Rust project to setup tailor-made pipelines. Each component (sources, filters, sinks, etc) in _Oura_ aims at being self-contained and reusable. For example, custom filters and sinks can be built while reusing the existing sources.
 
-## Features
+## Feature Status
 
 - Sources
   - [x] chain-sync full-block (node-to-client)
@@ -82,3 +82,11 @@ If the available out-of-the-box features don't satisfiy your particular use-case
   - [ ] policy info from metadata service
   - [ ] input tx info from Blockfrost api
   - [ ] address translation from ADAHandle
+
+## Contributing
+
+All contributions are welcome, but please read the [contributing guide](.github/CONTRIBUTING.md#scope) of the project before starting to code.
+
+## License
+
+This project is licensed under the Apache-2.0 license. Please see the [LICENSE](LICENSE.md) file for more details.
