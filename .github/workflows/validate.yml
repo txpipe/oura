@@ -33,6 +33,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --all-features
 
   test:
     name: Test Suite
@@ -52,6 +53,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all-features
 
   lints:
     name: Lints
