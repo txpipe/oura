@@ -14,17 +14,17 @@ kind: StatefulSet
 metadata:
   name: cardano-node
 spec:
-  
+
   # REDACTED: here goes your normal cardano node sts / deployment spec
 
   template:
     spec:
-      
+
       # REDACTED: here goes your normal cardano node pod specs
 
       containers:
       - name: main
-        
+
         # REDACTED: here goes your normal cardano node container properties
 
         # add a new volume mount to enable the socket to be

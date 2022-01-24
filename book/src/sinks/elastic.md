@@ -29,5 +29,5 @@ This section configures the auth mechanism against Elasticsearch. You can remove
 We currently only implement _basic_ auth, other mechanisms will be implemented at some point.
 
 - `type`: the mechanism to use for authentication, only `Basic` is currenty implemented
-- `username`: username of the user with access to Elasticsearch 
-- `password`: password of the user with access to Elasticsearch 
+- `username`: username of the user with access to Elasticsearch
+- `password`: password of the user with access to Elasticsearch
