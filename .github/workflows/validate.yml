@@ -79,3 +79,6 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+      - name: Check EditorConfig Compliance
+        uses: editorconfig-checker/action-editorconfig-checker@v1
