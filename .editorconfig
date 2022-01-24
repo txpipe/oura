@@ -1,3 +1,4 @@
+# editorconfig.org
 root = true
 
 [*]
@@ -6,8 +7,15 @@ insert_final_newline = true
 charset = utf-8
 trim_trailing_whitespace = true
 
+[**.json]
+end_of_line = lf
+insert_final_newline = false
+charset = utf-8
+trim_trailing_whitespace = true
+
 [.gitignore]
 end_of_line = lf
+insert_final_newline = false
 charset = utf-8
 trim_trailing_whitespace = true
 
