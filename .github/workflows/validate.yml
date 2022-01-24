@@ -5,7 +5,7 @@ on:
     branches:
      - '**'
     tags-ignore:
-     - v* 
+     - v*
 
 name: Validate
 

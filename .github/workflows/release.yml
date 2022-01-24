@@ -63,7 +63,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install pkg-config libssl-dev
-      
+
       - name: Prev Build | Get Dependencies [MacOS]
         if: matrix.os == 'macOS-latest'
         run: |
@@ -118,11 +118,11 @@ jobs:
         with:
           name: ${{ matrix.name }}
           path: ${{ matrix.name }}
-  
+
   # Creates a GitHub Container package using multi-arch docker builds
   container_build:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
       packages: write
@@ -141,7 +141,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1 
+        uses: docker/login-action@v1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -188,4 +188,3 @@ jobs:
         with:
           files: oura-*/oura-*
           body_path: RELEASE.md
-  

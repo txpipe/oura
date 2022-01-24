@@ -2,7 +2,7 @@
 
 ## Ways to Contribute
 
-_ALL_ contributions are welcome: 
+_ALL_ contributions are welcome:
 
 - if you want to report a bug, please create a github issue following some [basic guidelines](#bug-report).
 - if you want request a feature, please create a github issue following some [basic guidelines](#feature-request).
@@ -10,7 +10,7 @@ _ALL_ contributions are welcome:
 
 ## License
 
-This project is licensed under the Apache-2.0 license. 
+This project is licensed under the Apache-2.0 license.
 
 All contributions to the project will be licensed under the same terms. Please make sure you agree with these terms before working on your contribution.
 
