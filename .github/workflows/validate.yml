@@ -101,9 +101,9 @@ jobs:
           to: 'json'
       - run: |
           TMP_JSON_FILE=$(mktemp)
-          echo ${{ steps.yaml2json.outputs.data }} >> ${TMP_JSON_FILE}
+          echo ${{ steps.yaml2json.outputs.data }} | tee ${TMP_JSON_FILE} | jq
           echo "dependabotJsonFile=${TMP_JSON_FILE}" >> $GITHUB_ENV
-          cat ${{ env.dependabotJsonFile }}
+          
       - name: Validate Dependabot Config
         uses: emagers/json-schema-validation@v1.0.0
         with:
