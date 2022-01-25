@@ -95,12 +95,12 @@ jobs:
       - run: |
           TMP_JSON_FILE=$(mktemp)
           echo ${{ steps.yaml2json.outputs.data }} >> ${TMP_JSON_FILE}
-          echo "steps.yaml2json.outputs.file=${TMP_JSON_FILE}" >> $GITHUB_ENV
+          echo "dependabotJsonFile=${TMP_JSON_FILE}" >> $GITHUB_ENV
       - name: Validate Dependabot Config
         uses: emagers/json-schema-validation@v1.0.0
         with:
           schema: .github/workflows/dependabot-2.0.json
-          testFile: ${{ steps.yaml2json.outputs.file }}
+          testFile: ${{ env.dependabotJsonFile }}
       - uses: marocchino/sticky-pull-request-comment@v2
         if: always()
         with:
