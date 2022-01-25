@@ -40,7 +40,7 @@ impl TimeProvider for NaiveProvider {
 
         if slot < config.start_slot {
             return Err(
-                "naive time provider can't compute wallclock for slots after start_slot".into(),
+                "naive time provider can't compute wallclock for slots prior to start_slot".into(),
             );
         }
 
