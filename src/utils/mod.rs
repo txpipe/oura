@@ -2,6 +2,8 @@ use crate::framework::Error;
 
 pub mod throttle;
 
+pub(crate) mod time;
+
 pub(crate) trait SwallowResult {
     fn ok_or_warn(self, context: &'static str);
 }

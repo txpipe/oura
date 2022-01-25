@@ -1,4 +1,5 @@
 use minicbor::data::Tag;
+use std::fmt::Debug;
 
 use log::{info, warn};
 
@@ -55,8 +56,13 @@ impl BlockLike for Content {
     }
 }
 
-#[derive(Debug)]
 struct Block2EventMapper(EventWriter);
+
+impl Debug for Block2EventMapper {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Block2EventMapper").finish()
+    }
+}
 
 impl BlockObserver for Block2EventMapper {
     fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
@@ -80,10 +86,16 @@ impl BlockObserver for Block2EventMapper {
     }
 }
 
-#[derive(Debug)]
 struct ChainObserver {
     block_requests: SyncSender<Point>,
     event_writer: EventWriter,
+}
+
+// workaround to put a stop on excessive debug requirement coming from Pallas
+impl Debug for ChainObserver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("ChainObserver").finish()
+    }
 }
 
 impl Observer<Content> for ChainObserver {
