@@ -88,8 +88,8 @@ jobs:
       - name: Validate Dependabot Config
         uses: emagers/json-schema-validation@v1.0.0
         with:
-          schema: .github\workflows\dependabot-2.0.json
-          testFile: .github\dependabot.yml
+          schema: .github/workflows/dependabot-2.0.json
+          testFile: .github/dependabot.yml
       - uses: marocchino/sticky-pull-request-comment@v2
         if: always()
         with:
