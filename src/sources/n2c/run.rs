@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use log::{error, info};
 
 use pallas::{
@@ -43,8 +45,14 @@ impl BlockLike for Content {
     }
 }
 
-#[derive(Debug)]
 struct ChainObserver(EventWriter);
+
+// workaround to put a stop on excessive debug requirement coming from Pallas
+impl Debug for ChainObserver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("ChainObserver").finish()
+    }
+}
 
 impl ChainObserver {
     fn new(writer: EventWriter) -> Self {
