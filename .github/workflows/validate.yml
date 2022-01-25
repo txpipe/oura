@@ -85,17 +85,21 @@ jobs:
       - name: Check EditorConfig Compliance
         uses: editorconfig-checker/action-editorconfig-checker@v1
 
+      - name: Convert YAML to JSON
       - uses: fabasoad/yaml-json-xml-converter-action@main
         id: yaml2json
         with:
           path: '.github/dependabot.yml'
           from: 'yaml'
           to: 'json'
+      - run: |
+        TMP_JSON_FILE=$(mktemp)
+        echo ${{ steps.yaml2json.outputs.data }} > ${TMP_JSON_FILE}
       - name: Validate Dependabot Config
         uses: emagers/json-schema-validation@v1.0.0
         with:
           schema: .github/workflows/dependabot-2.0.json
-          testFile: ${{ steps.yaml2json.outputs.data }}
+          testFile: ${TMP_JSON_FILE}
       - uses: marocchino/sticky-pull-request-comment@v2
         if: always()
         with:
