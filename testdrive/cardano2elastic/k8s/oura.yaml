@@ -52,7 +52,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 key: elastic
-                name: sink-es-elastic-user 
+                name: sink-es-elastic-user
         resources:
           requests:
             memory: 100Mi

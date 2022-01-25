@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      
+
       - uses: peaceiris/actions-mdbook@v1
         with:
           mdbook-version: 'latest'

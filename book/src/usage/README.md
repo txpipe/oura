@@ -5,4 +5,3 @@ _Oura_ provides three different execution modes:
 - [Dameon](daemon.md): a fully-configurable pipeline that runs in the background. Sources, filters and sinks can be combined to fulfil particular use-cases.
 - [Watch](watch.md): to watch live block events from a node directly in the terminal. It is meant for humans, it uses colors and throttling to facilitate reading.
 - [Dump](dump.md): to dump live block events from a node into rotation log files or stdout. It uses JSONL format for persistence of the events.
-

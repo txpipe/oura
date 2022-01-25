@@ -1,6 +1,6 @@
 # Selection Filter
 
-A filter that evaluates a set of configurable predicates against each event in the pipeline to decide which records should be sent to the following stage. 
+A filter that evaluates a set of configurable predicates against each event in the pipeline to decide which records should be sent to the following stage.
 
 Not every use-case requires each and every event to be processed. For example, a pipeline interested in creating a 'metadata' search engine might not care about transactions outputs. With a similar logic, a pipeline aggregating transaction amounts might not care about metadata. The _selection filter_ provides a way to optimize the pipeline so that only relevant events are processed.
 

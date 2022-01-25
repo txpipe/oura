@@ -5,7 +5,7 @@ on:
     branches:
      - '**'
     tags-ignore:
-     - v* 
+     - v*
 
 name: Validate
 
@@ -81,6 +81,9 @@ jobs:
         with:
           command: clippy
           args: --all-features -- -D warnings
+
+      - name: Check EditorConfig Compliance
+        uses: editorconfig-checker/action-editorconfig-checker@v1
 
       - name: Validate Dependabot Config
         uses: marocchino/validate-dependabot@v1

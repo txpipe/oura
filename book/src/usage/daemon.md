@@ -4,7 +4,7 @@ _Oura's_ `daemon` mode processes data in the background, without any live output
 
 ## Start Daemon Mode
 
-To start _Oura_ in _daemon mode_, use the following command: 
+To start _Oura_ in _daemon mode_, use the following command:
 
 ```
 oura dameon
