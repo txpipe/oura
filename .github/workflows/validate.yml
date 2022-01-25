@@ -86,10 +86,12 @@ jobs:
         uses: editorconfig-checker/action-editorconfig-checker@v1
 
       - name: Validate Dependabot Config
-        uses: marocchino/validate-dependabot@v1
-        id: validate
+        uses: emagers/json-schema-validation@v1.0.0
+        with:
+          schema: .github\workflows\dependabot-2.0.json
+          testFile: .github\dependabot.yml
       - uses: marocchino/sticky-pull-request-comment@v2
         if: always()
         with:
           header: validate-dependabot
-          message: ${{ steps.validate.outputs.markdown }}          
+          message: ${{ steps.validate.outputs.markdown }}
