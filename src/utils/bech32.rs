@@ -21,7 +21,7 @@ impl Default for Bech32Config {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Bech32Provider(Bech32Config);
 
 impl Bech32Provider {
@@ -37,12 +37,6 @@ impl Bech32Provider {
         )?;
 
         Ok(enc)
-    }
-}
-
-impl Default for Bech32Provider {
-    fn default() -> Self {
-        Self(Default::default())
     }
 }
 
