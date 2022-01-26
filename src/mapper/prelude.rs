@@ -1,7 +1,10 @@
 use crate::{
     framework::{Event, EventContext, EventData},
     pipelining::StageSender,
-    utils::time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime, TimeProvider},
+    utils::{
+        bech32::{Bech32Config, Bech32Provider},
+        time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime, TimeProvider},
+    },
 };
 use merge::Merge;
 use serde::Deserialize;
@@ -20,6 +23,7 @@ pub struct ChainWellKnownInfo {
     pub shelley_known_slot: u64,
     pub shelley_known_hash: String,
     pub shelley_known_time: u64,
+    pub address_hrp: String,
 }
 
 impl ChainWellKnownInfo {
@@ -31,6 +35,7 @@ impl ChainWellKnownInfo {
                 shelley_known_hash:
                     "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de".to_string(),
                 shelley_known_time: 1596059091,
+                address_hrp: "addr".to_string(),
             }),
             TESTNET_MAGIC => Ok(ChainWellKnownInfo {
                 shelley_slot_length: 1,
@@ -38,6 +43,7 @@ impl ChainWellKnownInfo {
                 shelley_known_hash:
                     "02b1c561715da9e540411123a6135ee319b02f60b9a11a603d3305556c04329f".to_string(),
                 shelley_known_time: 1595967616,
+                address_hrp: "addr_test".to_string(),
             }),
             _ => Err("can't infer well-known chain infro from specified magic".into()),
         }
@@ -68,6 +74,14 @@ impl TryFrom<ChainWellKnownInfo> for Point {
     }
 }
 
+impl From<ChainWellKnownInfo> for Bech32Config {
+    fn from(other: ChainWellKnownInfo) -> Self {
+        Bech32Config {
+            address_hrp: other.address_hrp,
+        }
+    }
+}
+
 #[derive(Deserialize, Clone, Debug, Default)]
 pub struct Config {
     #[serde(default)]
@@ -85,6 +99,7 @@ pub(crate) struct EventWriter {
     context: EventContext,
     output: StageSender,
     time_provider: Option<NaiveTime>,
+    pub(crate) bech32_provider: Bech32Provider,
     pub(crate) config: Config,
 }
 
@@ -97,7 +112,9 @@ impl EventWriter {
         EventWriter {
             context: EventContext::default(),
             output,
-            time_provider: well_known.map(|x| NaiveTime::new(x.into())),
+            time_provider: well_known.clone().map(|x| NaiveTime::new(x.into())),
+            bech32_provider: well_known
+                .map_or_else(Bech32Provider::default, |x| Bech32Provider::new(x.into())),
             config,
         }
     }
@@ -126,10 +143,12 @@ impl EventWriter {
     pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
         extra_context.merge(self.context.clone());
 
+        // TODO: too much cloning, lets move to lifecycles here
         EventWriter {
             context: extra_context,
             output: self.output.clone(),
             time_provider: self.time_provider.clone(),
+            bech32_provider: self.bech32_provider.clone(),
             config: self.config.clone(),
         }
     }

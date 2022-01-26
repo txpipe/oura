@@ -5,7 +5,7 @@ use pallas::ledger::alonzo::{
 
 use crate::framework::{Error, EventContext, EventData};
 
-use super::{map::ToBech32, EventWriter};
+use super::EventWriter;
 
 impl EventWriter {
     fn crawl_metadata(&self, metadata: &Metadata) -> Result<(), Error> {
@@ -81,7 +81,10 @@ impl EventWriter {
         self.append(record.into())?;
 
         let child = &self.child_writer(EventContext {
-            output_address: output.address.try_to_bech32("addr")?.into(),
+            output_address: self
+                .bech32_provider
+                .encode_address(output.address.as_slice())?
+                .into(),
             ..EventContext::default()
         });
 
