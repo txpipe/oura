@@ -113,10 +113,8 @@ impl EventWriter {
             context: EventContext::default(),
             output,
             time_provider: well_known.clone().map(|x| NaiveTime::new(x.into())),
-            bech32_provider: well_known.map_or_else(
-                || Bech32Provider::default(),
-                |x| Bech32Provider::new(x.into()),
-            ),
+            bech32_provider: well_known
+                .map_or_else(Bech32Provider::default, |x| Bech32Provider::new(x.into())),
             config,
         }
     }
