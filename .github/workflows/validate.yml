@@ -55,8 +55,8 @@ jobs:
           command: test
           args: --all-features
 
-  lints:
-    name: Lints
+  lints-rust:
+    name: Lint Rust
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -80,7 +80,21 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --all-features -- -D warnings
+
+  lints-others:
+    name: Lint Support Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
 
       - name: Check EditorConfig Compliance
         uses: editorconfig-checker/action-editorconfig-checker@v1
+
+  lints:
+    name: Lint Rust & Support Files
+    runs-on: ubuntu-latest
+    needs: [lints-rust, lints-others]
+    steps:
+     - run: echo "All lints successful"
