@@ -2,6 +2,7 @@ use crate::framework::Error;
 
 pub mod throttle;
 
+pub(crate) mod bech32;
 pub(crate) mod time;
 
 pub(crate) trait SwallowResult {

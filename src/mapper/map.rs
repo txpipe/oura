@@ -7,8 +7,6 @@ use pallas::ledger::alonzo::{
 };
 use pallas::ledger::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
 
-use bech32::{self, ToBase32};
-
 use serde_json::{json, Value as JsonValue};
 
 use crate::framework::{
@@ -36,17 +34,6 @@ impl From<&alonzo::StakeCredential> for StakeCredential {
             alonzo::StakeCredential::AddrKeyhash(x) => StakeCredential::AddrKeyhash(x.to_hex()),
             alonzo::StakeCredential::Scripthash(x) => StakeCredential::Scripthash(x.to_hex()),
         }
-    }
-}
-
-pub trait ToBech32 {
-    fn try_to_bech32(&self, hrp: &str) -> Result<String, Error>;
-}
-
-impl ToBech32 for Vec<u8> {
-    fn try_to_bech32(&self, hrp: &str) -> Result<String, Error> {
-        let enc = bech32::encode(hrp, self.to_base32(), bech32::Variant::Bech32)?;
-        Ok(enc)
     }
 }
 
@@ -157,8 +144,9 @@ impl EventWriter {
         output: &TransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
         Ok(TxOutputRecord {
-            // TODO: add correct bech32 prefix depending on network
-            address: output.address.try_to_bech32("addr")?,
+            address: self
+                .bech32_provider
+                .encode_address(output.address.as_slice())?,
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
         })
@@ -358,18 +346,5 @@ impl EventWriter {
             number: source.header.header_body.block_number,
             slot: source.header.header_body.slot,
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::ToBech32;
-
-    #[test]
-    fn beach32_encodes_ok() {
-        let bytes = hex::decode("01ec6ad5daee9febbe300c6160a36d4daf0c5266ae2fe8245cbb581390629814d8165fd547b6f3f6f55842a5f042bcb113e8e86627bc071f37").unwrap();
-        let bech32 = bytes.try_to_bech32("addr").unwrap();
-
-        assert_eq!(bech32, "addr1q8kx44w6a607h03sp3skpgmdfkhsc5nx4ch7sfzuhdvp8yrznq2ds9jl64rmdulk74vy9f0sg27tzylgapnz00q8rumsuhj834");
     }
 }
