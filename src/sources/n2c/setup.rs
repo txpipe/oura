@@ -15,9 +15,10 @@ use pallas::ouroboros::network::{
 use serde::Deserialize;
 
 use crate::{
-    mapper::{ChainWellKnownInfo, Config as MapperConfig, EventWriter},
+    mapper::{Config as MapperConfig, EventWriter},
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
+    utils::{ChainWellKnownInfo, WithUtils},
     Error,
 };
 
@@ -32,6 +33,7 @@ pub struct Config {
 
     pub since: Option<PointArg>,
 
+    #[deprecated(note = "chain info is now pipeline-wide, use utils")]
     pub well_known: Option<ChainWellKnownInfo>,
 
     #[serde(default)]
@@ -64,36 +66,31 @@ fn setup_tcp_multiplexer(address: &str) -> Result<Multiplexer, Error> {
     Multiplexer::setup(tcp, &[0, 5])
 }
 
-impl SourceProvider for Config {
+impl SourceProvider for WithUtils<Config> {
     fn bootstrap(&self) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
-        let mut muxer = match self.address.0 {
-            BearerKind::Tcp => setup_tcp_multiplexer(&self.address.1)?,
+        let mut muxer = match self.inner.address.0 {
+            BearerKind::Tcp => setup_tcp_multiplexer(&self.inner.address.1)?,
             #[cfg(target_family = "unix")]
-            BearerKind::Unix => setup_unix_multiplexer(&self.address.1)?,
+            BearerKind::Unix => setup_unix_multiplexer(&self.inner.address.1)?,
         };
 
-        let magic = match &self.magic {
+        let magic = match &self.inner.magic {
             Some(m) => *m.deref(),
             None => MAINNET_MAGIC,
         };
 
-        let well_known = match &self.well_known {
-            Some(info) => info.clone(),
-            None => ChainWellKnownInfo::try_from_magic(magic)?,
-        };
-
-        let writer = EventWriter::new(output_tx, well_known.clone().into(), self.mapper.clone());
+        let writer = EventWriter::new(output_tx, self.utils.clone(), self.inner.mapper.clone());
 
         let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
 
         let mut cs_channel = muxer.use_channel(5);
 
-        let since: Point = match &self.since {
+        let since: Point = match &self.inner.since {
             Some(arg) => arg.try_into()?,
-            None => find_end_of_chain(&mut cs_channel, &well_known)?,
+            None => find_end_of_chain(&mut cs_channel, &self.utils.well_known)?,
         };
 
         info!("starting from chain point: {:?}", &since);

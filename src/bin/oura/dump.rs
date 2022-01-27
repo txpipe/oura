@@ -1,23 +1,21 @@
-use std::str::FromStr;
+use serde::Deserialize;
+use std::{str::FromStr, sync::Arc};
 
 use clap::ArgMatches;
+
 use oura::{
     mapper::Config as MapperConfig,
-    pipelining::{
-        BootstrapResult, PartialBootstrapResult, SinkProvider, SourceProvider, StageReceiver,
-    },
-    sources::{AddressArg, BearerKind},
+    pipelining::{BootstrapResult, SinkProvider, SourceProvider, StageReceiver},
+    sources::{AddressArg, BearerKind, MagicArg},
+    utils::{ChainWellKnownInfo, Utils, WithUtils},
 };
 
-use serde::Deserialize;
-
+use oura::sinks::stdout::Config as StdoutConfig;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 
 #[cfg(feature = "logs")]
 use oura::sinks::logs::Config as LogsConfig;
-
-use oura::sinks::stdout::Config as StdoutConfig;
 
 use crate::Error;
 
@@ -42,15 +40,6 @@ impl FromStr for PeerMode {
 enum DumpSource {
     N2C(N2CConfig),
     N2N(N2NConfig),
-}
-
-impl SourceProvider for DumpSource {
-    fn bootstrap(&self) -> PartialBootstrapResult {
-        match self {
-            DumpSource::N2C(c) => c.bootstrap(),
-            DumpSource::N2N(c) => c.bootstrap(),
-        }
-    }
 }
 
 enum DumpSink {
@@ -85,8 +74,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let magic = match args.is_present("magic") {
-        true => Some(args.value_of_t("magic")?),
-        false => None,
+        true => args.value_of_t("magic")?,
+        false => MagicArg::default(),
     };
 
     let since = match args.is_present("since") {
@@ -114,17 +103,22 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         ..Default::default()
     };
 
+    let well_known = ChainWellKnownInfo::try_from_magic(*magic)?;
+
+    let utils = Arc::new(Utils::new(well_known));
+
+    #[allow(deprecated)]
     let source_setup = match mode {
         PeerMode::AsNode => DumpSource::N2N(N2NConfig {
             address: AddressArg(bearer, socket),
-            magic,
+            magic: Some(magic),
             well_known: None,
             mapper,
             since,
         }),
         PeerMode::AsClient => DumpSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
-            magic,
+            magic: Some(magic),
             well_known: None,
             mapper,
             since,
@@ -142,7 +136,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         }),
     };
 
-    let (source_handle, source_output) = source_setup.bootstrap()?;
+    let (source_handle, source_output) = match source_setup {
+        DumpSource::N2C(c) => WithUtils::new(c, utils).bootstrap()?,
+        DumpSource::N2N(c) => WithUtils::new(c, utils).bootstrap()?,
+    };
+
     let sink_handle = sink_setup.bootstrap(source_output)?;
 
     log::info!(

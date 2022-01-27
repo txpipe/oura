@@ -1,21 +1,28 @@
-use std::thread::JoinHandle;
+use std::{sync::Arc, thread::JoinHandle};
 
 use clap::ArgMatches;
 use config::{Config, ConfigError, Environment, File};
 use log::debug;
-use oura::pipelining::{
-    BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
-    StageReceiver,
+use serde::Deserialize;
+
+use oura::{
+    pipelining::{
+        BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
+        StageReceiver,
+    },
+    utils::{ChainWellKnownInfo, Utils, WithUtils},
+    Error,
 };
+
+use oura::filters::noop::Config as NoopFilterConfig;
+use oura::filters::selection::Config as SelectionConfig;
 use oura::sinks::stdout::Config as StdoutConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
+use oura::sources::n2c::Config as N2CConfig;
+use oura::sources::n2n::Config as N2NConfig;
 
 #[cfg(feature = "logs")]
 use oura::sinks::logs::Config as WriterConfig;
-
-use oura::sources::n2c::Config as N2CConfig;
-use oura::sources::n2n::Config as N2NConfig;
-use serde::Deserialize;
 
 #[cfg(feature = "webhook")]
 use oura::sinks::webhook::Config as WebhookConfig;
@@ -26,13 +33,8 @@ use oura::sinks::kafka::Config as KafkaConfig;
 #[cfg(feature = "elasticsink")]
 use oura::sinks::elastic::Config as ElasticConfig;
 
-use oura::filters::noop::Config as NoopFilterConfig;
-use oura::filters::selection::Config as SelectionConfig;
-
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
-
-use crate::Error;
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
@@ -41,12 +43,10 @@ enum Source {
     N2N(N2NConfig),
 }
 
-impl SourceProvider for Source {
-    fn bootstrap(&self) -> PartialBootstrapResult {
-        match self {
-            Source::N2C(c) => c.bootstrap(),
-            Source::N2N(c) => c.bootstrap(),
-        }
+fn bootstrap_source(config: Source, utils: Arc<Utils>) -> PartialBootstrapResult {
+    match config {
+        Source::N2C(config) => WithUtils::new(config, utils).bootstrap(),
+        Source::N2N(config) => WithUtils::new(config, utils).bootstrap(),
     }
 }
 
@@ -120,6 +120,8 @@ struct ConfigRoot {
     filters: Vec<Filter>,
 
     sink: Sink,
+
+    chain: Option<ChainWellKnownInfo>,
 }
 
 impl ConfigRoot {
@@ -145,10 +147,14 @@ impl ConfigRoot {
 }
 
 /// Sets up the whole pipeline from configuration
-fn bootstrap(config: &ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
+fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
+    let well_known = config.chain.unwrap_or_default();
+
+    let utils = Arc::new(Utils::new(well_known));
+
     let mut threads = Vec::with_capacity(10);
 
-    let (source_handle, source_rx) = config.source.bootstrap()?;
+    let (source_handle, source_rx) = bootstrap_source(config.source, utils)?;
     threads.push(source_handle);
 
     let mut last_rx = source_rx;
@@ -177,7 +183,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     debug!("daemon starting with this config: {:?}", root);
 
-    let threads = bootstrap(&root)?;
+    let threads = bootstrap(root)?;
 
     // TODO: refactor into new loop that monitors thread health
     for handle in threads {

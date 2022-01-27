@@ -1,5 +1,5 @@
 mod framework;
-mod utils;
+pub mod utils;
 
 pub mod filters;
 pub mod mapper;
