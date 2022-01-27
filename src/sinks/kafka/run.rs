@@ -2,7 +2,7 @@ use kafka::producer::{Producer, Record};
 use log::debug;
 
 use crate::{
-    framework::{Error, Event},
+    model::{Error, Event},
     pipelining::StageReceiver,
 };
 

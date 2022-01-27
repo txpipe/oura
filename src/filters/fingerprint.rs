@@ -9,7 +9,7 @@ use log::{debug, warn};
 use serde::Deserialize;
 
 use crate::{
-    framework::{
+    model::{
         CIP25AssetRecord, Error, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},

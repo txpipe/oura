@@ -5,7 +5,7 @@ use serde_json::json;
 use std::sync::Arc;
 
 use crate::{
-    framework::{Error, Event},
+    model::{Error, Event},
     pipelining::StageReceiver,
 };
 

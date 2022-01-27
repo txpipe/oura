@@ -4,7 +4,7 @@ use reqwest::blocking::Client;
 use serde::Serialize;
 
 use crate::{
-    framework::{Error, Event},
+    model::{Error, Event},
     pipelining::StageReceiver,
 };
 
