@@ -1,4 +1,4 @@
-use crate::framework::Error;
+use crate::model::Error;
 
 pub mod throttle;
 

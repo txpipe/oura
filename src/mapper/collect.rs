@@ -2,7 +2,7 @@ use pallas::ledger::alonzo::{
     AuxiliaryData, Multiasset, TransactionInput, TransactionOutput, Value,
 };
 
-use crate::framework::{
+use crate::model::{
     Error, MetadataRecord, MintRecord, OutputAssetRecord, TxInputRecord, TxOutputRecord,
 };
 

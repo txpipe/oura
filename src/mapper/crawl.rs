@@ -3,7 +3,7 @@ use pallas::ledger::alonzo::{
     TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
 };
 
-use crate::framework::{Error, EventContext, EventData};
+use crate::model::{Error, EventContext, EventData};
 
 use super::EventWriter;
 

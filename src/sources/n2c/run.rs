@@ -15,8 +15,8 @@ use pallas::{
 };
 
 use crate::{
-    framework::{Error, EventData},
     mapper::EventWriter,
+    model::{Error, EventData},
     utils::SwallowResult,
 };
 

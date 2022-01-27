@@ -19,8 +19,8 @@ use pallas::{
 use std::sync::mpsc::{Receiver, SyncSender};
 
 use crate::{
-    framework::{Error, EventData},
     mapper::EventWriter,
+    model::{Error, EventData},
     utils::SwallowResult,
 };
 

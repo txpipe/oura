@@ -1,4 +1,4 @@
-mod framework;
+pub mod model;
 mod utils;
 
 pub mod filters;
