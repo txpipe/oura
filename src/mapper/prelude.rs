@@ -1,5 +1,5 @@
 use crate::{
-    framework::{Event, EventContext, EventData},
+    model::{Event, EventContext, EventData},
     pipelining::StageSender,
     utils::{
         bech32::{Bech32Config, Bech32Provider},

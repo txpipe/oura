@@ -7,8 +7,6 @@ use strum_macros::Display;
 
 use serde_json::Value as JsonValue;
 
-pub type Error = Box<dyn std::error::Error>;
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum MetadatumRendition {

@@ -1,6 +1,6 @@
 use std::thread::JoinHandle;
 
-use crate::{framework::Event, Error};
+use crate::{model::Event, Error};
 
 pub type StageReceiver = std::sync::mpsc::Receiver<Event>;
 
