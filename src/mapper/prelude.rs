@@ -43,6 +43,17 @@ impl EventWriter {
         }
     }
 
+    #[allow(unused)]
+    pub fn standalone(
+        output: StageSender,
+        well_known: Option<ChainWellKnownInfo>,
+        config: Config,
+    ) -> Self {
+        let utils = Arc::new(Utils::new(well_known.unwrap_or_default()));
+
+        Self::new(output, utils, config)
+    }
+
     pub fn append(&self, data: EventData) -> Result<(), Error> {
         let evt = Event {
             context: self.context.clone(),
