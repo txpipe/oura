@@ -16,10 +16,9 @@
 #
 
 %global pkg_name oura
-%global pkg_version 1643296126.4fe73af
 %global rustflags '-Clink-arg=-Wl,-z,relro,-z,now'
 Name:           %{pkg_name}
-Version:        %{pkg_version}
+Version:        643296126.4fe73af
 Release:        0
 Summary:	The tail of Cardano
 License:        Apache-2.0
