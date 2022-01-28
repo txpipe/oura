@@ -30,7 +30,7 @@ BuildRequires:  cargo-packaging
 
 %description
 We have tools to "explore" the Cardano blockchain, which are useful when you know what you're looking for.
-We argue that there's a different, complementary use-case which is to "observe" the blockchain and react 
+We argue that there's a different, complementary use-case which is to "observe" the blockchain and react
 to particular event patterns.
 
 %prep
