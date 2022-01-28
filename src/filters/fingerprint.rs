@@ -9,10 +9,9 @@ use log::{debug, warn};
 use serde::Deserialize;
 
 use crate::{
-    model::{
-        CIP25AssetRecord, Error, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
-    },
+    model::{CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord},
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
+    Error,
 };
 
 struct FingerprintBuilder {

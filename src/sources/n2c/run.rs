@@ -14,11 +14,7 @@ use pallas::{
     },
 };
 
-use crate::{
-    mapper::EventWriter,
-    model::{Error, EventData},
-    utils::SwallowResult,
-};
+use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
 
 #[derive(Debug)]
 struct Content(Block);

@@ -14,7 +14,7 @@ use crate::model::{
     StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
-use crate::model::Error;
+use crate::Error;
 
 use super::EventWriter;
 

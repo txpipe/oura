@@ -18,11 +18,7 @@ use pallas::{
 
 use std::sync::mpsc::{Receiver, SyncSender};
 
-use crate::{
-    mapper::EventWriter,
-    model::{Error, EventData},
-    utils::SwallowResult,
-};
+use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
 
 #[derive(Debug)]
 pub struct Content(u32, Header);

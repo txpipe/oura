@@ -2,7 +2,7 @@ use serde_json::Value as JsonValue;
 
 use pallas::ledger::alonzo::Metadatum;
 
-use crate::model::{CIP25AssetRecord, Error};
+use crate::{model::CIP25AssetRecord, Error};
 
 use super::EventWriter;
 

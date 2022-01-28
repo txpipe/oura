@@ -2,8 +2,9 @@ use pallas::ledger::alonzo::{
     AuxiliaryData, Multiasset, TransactionInput, TransactionOutput, Value,
 };
 
-use crate::model::{
-    Error, MetadataRecord, MintRecord, OutputAssetRecord, TxInputRecord, TxOutputRecord,
+use crate::{
+    model::{MetadataRecord, MintRecord, OutputAssetRecord, TxInputRecord, TxOutputRecord},
+    Error,
 };
 
 use super::EventWriter;
