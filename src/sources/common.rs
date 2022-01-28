@@ -11,7 +11,7 @@ use pallas::ouroboros::network::{
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
-use crate::{mapper::ChainWellKnownInfo, Error};
+use crate::{utils::ChainWellKnownInfo, Error};
 
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {
@@ -92,6 +92,12 @@ impl FromStr for MagicArg {
         };
 
         Ok(m)
+    }
+}
+
+impl Default for MagicArg {
+    fn default() -> Self {
+        Self(MAINNET_MAGIC)
     }
 }
 

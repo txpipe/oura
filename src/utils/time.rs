@@ -4,7 +4,7 @@
 
 use serde::Deserialize;
 
-use crate::Error;
+use crate::{utils::ChainWellKnownInfo, Error};
 
 /// Abstraction available to stages to deal with blockchain time conversions
 pub(crate) trait TimeProvider {
@@ -17,6 +17,16 @@ pub struct NaiveConfig {
     pub slot_length: u32,
     pub start_slot: u64,
     pub start_timestamp: u64,
+}
+
+impl NaiveConfig {
+    pub(crate) fn from_well_known(info: &ChainWellKnownInfo) -> Self {
+        Self {
+            slot_length: info.shelley_slot_length,
+            start_slot: info.shelley_known_slot,
+            start_timestamp: info.shelley_known_time,
+        }
+    }
 }
 
 /// A naive, standalone implementation of a time provider

@@ -145,7 +145,8 @@ impl EventWriter {
     ) -> Result<TxOutputRecord, Error> {
         Ok(TxOutputRecord {
             address: self
-                .bech32_provider
+                .utils
+                .bech32
                 .encode_address(output.address.as_slice())?,
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),

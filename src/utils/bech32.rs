@@ -6,11 +6,20 @@
 use bech32::{self, ToBase32};
 use serde::Deserialize;
 
+use super::ChainWellKnownInfo;
 use crate::Error;
 
 #[derive(Clone, Deserialize)]
 pub struct Bech32Config {
     pub address_hrp: String,
+}
+
+impl Bech32Config {
+    pub(crate) fn from_well_known(info: &ChainWellKnownInfo) -> Self {
+        Self {
+            address_hrp: info.address_hrp.to_owned(),
+        }
+    }
 }
 
 impl Default for Bech32Config {

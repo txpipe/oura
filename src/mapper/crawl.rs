@@ -85,7 +85,8 @@ impl EventWriter {
 
         let child = &self.child_writer(EventContext {
             output_address: self
-                .bech32_provider
+                .utils
+                .bech32
                 .encode_address(output.address.as_slice())?
                 .into(),
             ..EventContext::default()

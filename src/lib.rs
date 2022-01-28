@@ -1,5 +1,5 @@
 pub mod model;
-mod utils;
+pub mod utils;
 
 pub mod filters;
 pub mod mapper;

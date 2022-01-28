@@ -1,10 +1,11 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
 
 use clap::ArgMatches;
 use oura::{
     mapper::Config as MapperConfig,
-    pipelining::{PartialBootstrapResult, SinkProvider, SourceProvider},
-    sources::{AddressArg, BearerKind},
+    pipelining::{SinkProvider, SourceProvider},
+    sources::{AddressArg, BearerKind, MagicArg},
+    utils::{ChainWellKnownInfo, Utils, WithUtils},
 };
 
 use serde::Deserialize;
@@ -37,15 +38,6 @@ enum WatchSource {
     N2N(N2NConfig),
 }
 
-impl SourceProvider for WatchSource {
-    fn bootstrap(&self) -> PartialBootstrapResult {
-        match self {
-            WatchSource::N2C(c) => c.bootstrap(),
-            WatchSource::N2N(c) => c.bootstrap(),
-        }
-    }
-}
-
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
     env_logger::builder()
         .filter_level(log::LevelFilter::Error)
@@ -62,8 +54,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let magic = match args.is_present("magic") {
-        true => Some(args.value_of_t("magic")?),
-        false => None,
+        true => args.value_of_t("magic")?,
+        false => MagicArg::default(),
     };
 
     let since = match args.is_present("since") {
@@ -90,17 +82,22 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         ..Default::default()
     };
 
+    let well_known = ChainWellKnownInfo::try_from_magic(*magic)?;
+
+    let utils = Arc::new(Utils::new(well_known));
+
+    #[allow(deprecated)]
     let source_setup = match mode {
         PeerMode::AsNode => WatchSource::N2N(N2NConfig {
             address: AddressArg(bearer, socket),
-            magic,
+            magic: Some(magic),
             well_known: None,
             mapper,
             since,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
-            magic,
+            magic: Some(magic),
             well_known: None,
             mapper,
             since,
@@ -111,7 +108,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         throttle_min_span_millis: throttle,
     };
 
-    let (source_handle, source_output) = source_setup.bootstrap()?;
+    let (source_handle, source_output) = match source_setup {
+        WatchSource::N2C(c) => WithUtils::new(c, utils).bootstrap()?,
+        WatchSource::N2N(c) => WithUtils::new(c, utils).bootstrap()?,
+    };
+
     let sink_handle = sink_setup.bootstrap(source_output)?;
 
     sink_handle.join().map_err(|_| "error in sink thread")?;
