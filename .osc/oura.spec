@@ -24,9 +24,9 @@ Release:        0
 Summary:	The tail of Cardano
 License:        Apache-2.0
 URL:            https://github.com/txpipe/oura
-Source0:         %{name}-%{version}.tar.xz
-Source1:         vendor.tar.xz
-Source2:         cargo_config
+Source0:        %{name}-%{version}.tar.xz
+Source1:        vendor.tar.xz
+Source2:        cargo_config
 BuildRequires:  cargo-packaging
 
 %description
