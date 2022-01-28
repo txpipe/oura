@@ -2,7 +2,7 @@ use std::fmt::{Display, Write};
 
 use crossterm::style::{Attribute, Color, Stylize};
 
-use crate::framework::{
+use crate::model::{
     BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
     TransactionRecord, TxInputRecord, TxOutputRecord,
 };

@@ -143,7 +143,7 @@ where
 pub(crate) fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,
-) -> Result<Point, crate::framework::Error> {
+) -> Result<Point, crate::Error> {
     let point = Point(
         well_known.shelley_known_slot,
         hex::decode(&well_known.shelley_known_hash)?,

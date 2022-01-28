@@ -9,12 +9,12 @@ use pallas::ledger::alonzo::{NetworkId, TransactionBody, TransactionBodyComponen
 
 use serde_json::{json, Value as JsonValue};
 
-use crate::framework::{
+use crate::model::{
     BlockRecord, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
     StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
-use crate::framework::Error;
+use crate::Error;
 
 use super::EventWriter;
 

@@ -11,15 +11,15 @@ use pallas::ouroboros::network::{
     handshake::{MAINNET_MAGIC, TESTNET_MAGIC},
     machines::primitives::Point,
 };
+
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    framework::Error,
-    utils::{
-        bech32::{Bech32Config, Bech32Provider},
-        time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime},
-    },
+use crate::utils::{
+    bech32::{Bech32Config, Bech32Provider},
+    time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime},
 };
+
+use crate::Error;
 
 pub mod throttle;
 

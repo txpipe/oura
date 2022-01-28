@@ -6,9 +6,7 @@ use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
 use crate::{
-    framework::{
-        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-    },
+    model::{Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord},
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
 
