@@ -26,7 +26,7 @@ pub struct Config {
 }
 
 #[derive(Clone)]
-pub(crate) struct EventWriter {
+pub struct EventWriter {
     context: EventContext,
     output: StageSender,
     pub(crate) config: Config,
