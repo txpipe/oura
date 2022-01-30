@@ -10,7 +10,10 @@ use elasticsearch::{
 
 use serde::Deserialize;
 
-use crate::pipelining::{BootstrapResult, SinkProvider, StageReceiver};
+use crate::{
+    pipelining::{BootstrapResult, SinkProvider, StageReceiver},
+    utils::WithUtils,
+};
 
 use super::run::writer_loop;
 
@@ -40,22 +43,23 @@ pub struct Config {
     pub idempotency: bool,
 }
 
-impl SinkProvider for Config {
+impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        let pool = SingleNodeConnectionPool::new(Url::parse(&self.url)?);
+        let pool = SingleNodeConnectionPool::new(Url::parse(&self.inner.url)?);
         let mut transport =
             TransportBuilder::new(pool).cert_validation(CertificateValidation::None);
 
-        if let Some(creds) = &self.credentials {
+        if let Some(creds) = &self.inner.credentials {
             transport = transport.auth(creds.into());
         };
 
         let client = Elasticsearch::new(transport.build()?);
 
-        let index = self.index.clone();
-        let idempotency = self.idempotency;
+        let index = self.inner.index.clone();
+        let idempotency = self.inner.idempotency;
+        let utils = self.utils.clone();
         let handle = std::thread::spawn(move || {
-            writer_loop(input, client, index, idempotency).expect("writer loop failed")
+            writer_loop(input, client, index, idempotency, utils).expect("writer loop failed")
         });
 
         Ok(handle)

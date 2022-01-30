@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::{
     bech32::{Bech32Config, Bech32Provider},
+    cursor::FileProvider as CursorProvider,
     time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime},
 };
 
@@ -24,6 +25,7 @@ use crate::Error;
 pub mod throttle;
 
 pub(crate) mod bech32;
+pub(crate) mod cursor;
 pub(crate) mod time;
 
 pub(crate) trait SwallowResult {
@@ -101,6 +103,7 @@ pub struct Utils {
     pub(crate) well_known: ChainWellKnownInfo,
     pub(crate) time: Option<NaiveTime>,
     pub(crate) bech32: Bech32Provider,
+    pub(crate) cursor: CursorProvider,
 }
 
 impl Utils {
@@ -108,6 +111,7 @@ impl Utils {
         Self {
             time: NaiveTime::new(TimeConfig::from_well_known(&well_known)).into(),
             bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
+            cursor: CursorProvider::initialize(),
             well_known,
         }
     }

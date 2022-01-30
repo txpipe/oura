@@ -11,7 +11,10 @@ use pallas::ouroboros::network::{
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
-use crate::{utils::ChainWellKnownInfo, Error};
+use crate::{
+    utils::{cursor::CursorProvider, ChainWellKnownInfo, Utils},
+    Error,
+};
 
 #[derive(Debug, Deserialize)]
 pub enum BearerKind {
@@ -37,10 +40,10 @@ impl FromStr for BearerKind {
 }
 
 /// A serialization-friendly chain Point struct using a hex-encoded hash
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PointArg(pub u64, pub String);
 
-impl TryInto<Point> for &PointArg {
+impl TryInto<Point> for PointArg {
     type Error = Error;
 
     fn try_into(self) -> Result<Point, Self::Error> {
@@ -49,8 +52,8 @@ impl TryInto<Point> for &PointArg {
     }
 }
 
-impl From<&Point> for PointArg {
-    fn from(other: &Point) -> Self {
+impl From<Point> for PointArg {
+    fn from(other: Point) -> Self {
         PointArg(other.0, hex::encode(&other.1))
     }
 }
@@ -67,6 +70,12 @@ impl FromStr for PointArg {
         } else {
             Err("Can't parse chain point value, expecting `slot,hex-hash` format".into())
         }
+    }
+}
+
+impl ToString for PointArg {
+    fn to_string(&self) -> String {
+        format!("{},{}", self.0, self.1)
     }
 }
 
@@ -155,5 +164,22 @@ pub(crate) fn find_end_of_chain(
     match agent.output {
         Some(tip) => Ok(tip.0),
         None => Err("failure acquiring end of chain".into()),
+    }
+}
+
+pub(crate) fn define_start_point(
+    explicit_arg: &Option<PointArg>,
+    utils: &Utils,
+    cs_channel: &mut Channel,
+) -> Result<Point, Error> {
+    let cursor = utils.cursor.read_cursor();
+
+    match (cursor, explicit_arg) {
+        // if we have a cursor, we use it
+        (Some(cursor), _) => cursor.try_into(),
+        // if we have an explicit argument, we use it
+        (None, Some(arg)) => arg.clone().try_into(),
+        // no cursor and not explicit arg, then start from chain tip
+        _ => find_end_of_chain(cs_channel, &utils.well_known),
     }
 }

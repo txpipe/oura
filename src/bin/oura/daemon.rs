@@ -91,24 +91,22 @@ enum Sink {
     Elastic(ElasticConfig),
 }
 
-impl SinkProvider for Sink {
-    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        match self {
-            Sink::Terminal(c) => c.bootstrap(input),
-            Sink::Stdout(c) => c.bootstrap(input),
+fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
+    match config {
+        Sink::Terminal(c) => c.bootstrap(input),
+        Sink::Stdout(c) => c.bootstrap(input),
 
-            #[cfg(feature = "logs")]
-            Sink::Logs(c) => c.bootstrap(input),
+        #[cfg(feature = "logs")]
+        Sink::Logs(c) => c.bootstrap(input),
 
-            #[cfg(feature = "webhook")]
-            Sink::Webhook(c) => c.bootstrap(input),
+        #[cfg(feature = "webhook")]
+        Sink::Webhook(c) => c.bootstrap(input),
 
-            #[cfg(feature = "kafkasink")]
-            Sink::Kafka(c) => c.bootstrap(input),
+        #[cfg(feature = "kafkasink")]
+        Sink::Kafka(c) => c.bootstrap(input),
 
-            #[cfg(feature = "elasticsink")]
-            Sink::Elastic(c) => c.bootstrap(input),
-        }
+        #[cfg(feature = "elasticsink")]
+        Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
@@ -154,7 +152,7 @@ fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
 
     let mut threads = Vec::with_capacity(10);
 
-    let (source_handle, source_rx) = bootstrap_source(config.source, utils)?;
+    let (source_handle, source_rx) = bootstrap_source(config.source, utils.clone())?;
     threads.push(source_handle);
 
     let mut last_rx = source_rx;
@@ -165,7 +163,7 @@ fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
         last_rx = filter_rx;
     }
 
-    let sink_handle = config.sink.bootstrap(last_rx)?;
+    let sink_handle = bootstrap_sink(config.sink, last_rx, utils)?;
     threads.push(sink_handle);
 
     Ok(threads)

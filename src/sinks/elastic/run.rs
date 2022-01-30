@@ -4,7 +4,15 @@ use serde::Serialize;
 use serde_json::json;
 use std::sync::Arc;
 
-use crate::{model::Event, pipelining::StageReceiver, Error};
+use crate::{
+    model::{Event, EventData},
+    pipelining::StageReceiver,
+    utils::{
+        cursor::{CursorProvider, PointArg},
+        SwallowResult, Utils,
+    },
+    Error,
+};
 
 #[derive(Serialize)]
 struct ESRecord {
@@ -86,11 +94,21 @@ async fn index_event_without_id<'b>(
     index_event(client, parts, event).await
 }
 
+fn evaluate_checkpoint(event: &Event, utils: &Utils) {
+    if let EventData::Block(x) = &event.data {
+        utils
+            .cursor
+            .write_cursor(PointArg(x.slot, x.hash.to_owned()))
+            .ok_or_warn("failed to set cursor")
+    }
+}
+
 pub fn writer_loop(
     input: StageReceiver,
     client: Elasticsearch,
     index: String,
     idempotency: bool,
+    utils: Arc<Utils>,
 ) -> Result<(), Error> {
     let client = Arc::new(client);
 
@@ -103,6 +121,9 @@ pub fn writer_loop(
         let index = index.to_owned();
         let event = input.recv().unwrap();
         let client = client.clone();
+
+        evaluate_checkpoint(&event, &utils);
+
         rt.block_on(async move {
             let result = match idempotency {
                 true => index_event_with_id(client, &index, event).await,
