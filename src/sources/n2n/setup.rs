@@ -18,7 +18,7 @@ use crate::{
     mapper::{Config as MapperConfig, EventWriter},
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::{
-        common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
+        common::{AddressArg, BearerKind, MagicArg, PointArg},
         define_start_point,
     },
     utils::{ChainWellKnownInfo, WithUtils},
