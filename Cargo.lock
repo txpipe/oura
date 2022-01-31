@@ -819,6 +819,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "minicbor"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c75adbf3b9509b2e5debc0d3bc4e1f44d9e86c821cace902bb80197798cd4f5a"
+
+[[package]]
 name = "minicbor-derive"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1037,7 +1043,7 @@ dependencies = [
  "kafka",
  "log 0.4.14",
  "merge",
- "minicbor",
+ "minicbor 0.13.0",
  "murmur3",
  "net2",
  "openssl",
@@ -1076,7 +1082,7 @@ dependencies = [
  "cryptoxide",
  "hex",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "minicbor-derive",
 ]
 
@@ -1087,7 +1093,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4130ea7c71df6e494e48f64e1f69adb84d2f7fd4503e4ea839129b07e0af5b65"
 dependencies = [
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -1100,7 +1106,7 @@ checksum = "b614a318270f6704bfec8ff103cdd44385c9a435ee9a440a606fbed0909b621b"
 dependencies = [
  "hex",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -1113,7 +1119,7 @@ checksum = "1939a6f766078d1b264187e3d95464890ec205a3fb241a85579fb4ad780f83a5"
 dependencies = [
  "itertools",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -1126,7 +1132,7 @@ checksum = "f0fad2dea9dec8c16dccc679056eca3439e75af48bc1cbc59d9f4ed08fd2c49d"
 dependencies = [
  "hex",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "pallas-machines",
  "pallas-multiplexer",
 ]
@@ -1139,7 +1145,7 @@ checksum = "5f35ae7792afc2f8007505dc4734df1adcafb0471402e701f867cf3ac78cbbc8"
 dependencies = [
  "hex",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "pallas-multiplexer",
 ]
 
@@ -1163,7 +1169,7 @@ dependencies = [
  "hex",
  "itertools",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.12.1",
  "pallas-machines",
  "pallas-multiplexer",
 ]
