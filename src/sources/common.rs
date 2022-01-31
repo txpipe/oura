@@ -175,11 +175,17 @@ pub(crate) fn define_start_point(
     let cursor = utils.cursor.read_cursor();
 
     match (cursor, explicit_arg) {
-        // if we have a cursor, we use it
-        (Some(cursor), _) => cursor.try_into(),
-        // if we have an explicit argument, we use it
-        (None, Some(arg)) => arg.clone().try_into(),
-        // no cursor and not explicit arg, then start from chain tip
-        _ => find_end_of_chain(cs_channel, &utils.well_known),
+        (Some(cursor), _) => {
+            log::info!("found persisted cursor, will use as starting point");
+            cursor.try_into()
+        }
+        (None, Some(arg)) => {
+            log::info!("explicit 'since' argument, will use as starting point");
+            arg.clone().try_into()
+        }
+        _ => {
+            log::info!("no starting point specified, will use tip of chain");
+            find_end_of_chain(cs_channel, &utils.well_known)
+        }
     }
 }

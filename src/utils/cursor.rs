@@ -60,7 +60,7 @@ impl FileProvider {
             Ok(data) => Ok(Some(data.parse()?)),
             Err(err) => match err.kind() {
                 std::io::ErrorKind::NotFound => Ok(None),
-                _ => Err(err.into()),
+                _ => Err(format!("failed loading cursor file: {}", err).into()),
             },
         }
     }
