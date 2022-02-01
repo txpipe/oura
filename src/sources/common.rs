@@ -12,7 +12,7 @@ use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    utils::{cursor::CursorProvider, ChainWellKnownInfo, Utils},
+    utils::{ChainWellKnownInfo, Utils},
     Error,
 };
 
@@ -172,7 +172,7 @@ pub(crate) fn define_start_point(
     utils: &Utils,
     cs_channel: &mut Channel,
 ) -> Result<Point, Error> {
-    let cursor = utils.cursor.read_cursor();
+    let cursor = utils.get_cursor_if_any();
 
     match (cursor, explicit_arg) {
         (Some(cursor), _) => {

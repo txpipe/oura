@@ -14,19 +14,23 @@ use pallas::ouroboros::network::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{
-    bech32::{Bech32Config, Bech32Provider},
-    cursor::FileProvider as CursorProvider,
-    time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime},
+use crate::{
+    model::Event,
+    utils::{
+        bech32::{Bech32Config, Bech32Provider},
+        time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime},
+    },
 };
 
 use crate::Error;
 
+pub mod cursor;
 pub mod throttle;
 
 pub(crate) mod bech32;
-pub(crate) mod cursor;
 pub(crate) mod time;
+
+mod facade;
 
 pub(crate) trait SwallowResult {
     fn ok_or_warn(self, context: &'static str);
@@ -103,15 +107,16 @@ pub struct Utils {
     pub(crate) well_known: ChainWellKnownInfo,
     pub(crate) time: Option<NaiveTime>,
     pub(crate) bech32: Bech32Provider,
-    pub(crate) cursor: CursorProvider,
+    pub(crate) cursor: Option<cursor::Provider>,
 }
 
 impl Utils {
-    pub fn new(well_known: ChainWellKnownInfo) -> Self {
+    // TODO: refactor this using the builder pattern
+    pub fn new(well_known: ChainWellKnownInfo, cursor: Option<cursor::Provider>) -> Self {
         Self {
             time: NaiveTime::new(TimeConfig::from_well_known(&well_known)).into(),
             bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
-            cursor: CursorProvider::initialize(),
+            cursor,
             well_known,
         }
     }

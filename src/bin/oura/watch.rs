@@ -84,7 +84,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let well_known = ChainWellKnownInfo::try_from_magic(*magic)?;
 
-    let utils = Arc::new(Utils::new(well_known));
+    let utils = Arc::new(Utils::new(well_known, None));
 
     #[allow(deprecated)]
     let source_setup = match mode {

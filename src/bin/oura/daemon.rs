@@ -10,7 +10,7 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
-    utils::{ChainWellKnownInfo, Utils, WithUtils},
+    utils::{cursor, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
 
@@ -97,7 +97,7 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
         Sink::Stdout(c) => c.bootstrap(input),
 
         #[cfg(feature = "logs")]
-        Sink::Logs(c) => c.bootstrap(input),
+        Sink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "webhook")]
         Sink::Webhook(c) => c.bootstrap(input),
@@ -120,6 +120,8 @@ struct ConfigRoot {
     sink: Sink,
 
     chain: Option<ChainWellKnownInfo>,
+
+    cursor: Option<cursor::Config>,
 }
 
 impl ConfigRoot {
@@ -144,26 +146,40 @@ impl ConfigRoot {
     }
 }
 
+fn bootstrap_utils(chain: Option<ChainWellKnownInfo>, cursor: Option<cursor::Config>) -> Utils {
+    let well_known = chain.unwrap_or_default();
+
+    let cursor = cursor.map(|c| cursor::Provider::initialize(c));
+
+    Utils::new(well_known, cursor)
+}
+
 /// Sets up the whole pipeline from configuration
 fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
-    let well_known = config.chain.unwrap_or_default();
+    let ConfigRoot {
+        source,
+        filters,
+        sink,
+        chain,
+        cursor,
+    } = config;
 
-    let utils = Arc::new(Utils::new(well_known));
+    let utils = Arc::new(bootstrap_utils(chain, cursor));
 
     let mut threads = Vec::with_capacity(10);
 
-    let (source_handle, source_rx) = bootstrap_source(config.source, utils.clone())?;
+    let (source_handle, source_rx) = bootstrap_source(source, utils.clone())?;
     threads.push(source_handle);
 
     let mut last_rx = source_rx;
 
-    for filter in config.filters.iter() {
+    for filter in filters.iter() {
         let (filter_handle, filter_rx) = filter.bootstrap(last_rx)?;
         threads.push(filter_handle);
         last_rx = filter_rx;
     }
 
-    let sink_handle = bootstrap_sink(config.sink, last_rx, utils)?;
+    let sink_handle = bootstrap_sink(sink, last_rx, utils)?;
     threads.push(sink_handle);
 
     Ok(threads)
