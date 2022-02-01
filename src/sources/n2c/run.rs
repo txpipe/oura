@@ -36,8 +36,8 @@ impl DecodePayload for Content {
 
 impl BlockLike for Content {
     fn block_point(&self) -> Result<Point, Box<dyn std::error::Error>> {
-        let hash = crypto::hash_block_header(&self.0.header)?;
-        Ok(Point(self.0.header.header_body.slot, Vec::from(hash)))
+        let hash = crypto::hash_block_header(&self.0.header);
+        Ok(Point(self.0.header.header_body.slot, hash.to_vec()))
     }
 }
 
