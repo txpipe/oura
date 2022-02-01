@@ -14,8 +14,8 @@ authors = [
 
 
 [dependencies]
-pallas = "0.3.9"
-# pallas = { path = "../pallas/pallas" }
+pallas = "0.4.0"
+#pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.8.1"
@@ -29,7 +29,7 @@ serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.78"
 strum = "0.23"
 strum_macros = "0.23"
-minicbor = "0.12.1"
+minicbor = "0.13"
 
 # feature logs
 file-rotate = { version = "0.5.3", optional = true }
