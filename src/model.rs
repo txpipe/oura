@@ -164,6 +164,7 @@ pub struct BlockRecord {
     pub slot: u64,
     pub hash: String,
     pub number: u64,
+    pub previous_hash: String,
 }
 
 #[derive(Serialize, Deserialize, Display, Debug, Clone)]
