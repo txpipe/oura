@@ -149,7 +149,7 @@ impl ConfigRoot {
 fn bootstrap_utils(chain: Option<ChainWellKnownInfo>, cursor: Option<cursor::Config>) -> Utils {
     let well_known = chain.unwrap_or_default();
 
-    let cursor = cursor.map(|c| cursor::Provider::initialize(c));
+    let cursor = cursor.map(cursor::Provider::initialize);
 
     Utils::new(well_known, cursor)
 }
