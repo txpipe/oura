@@ -353,6 +353,7 @@ impl EventWriter {
             hash: hex::encode(hash),
             number: source.header.header_body.block_number,
             slot: source.header.header_body.slot,
+            previous_hash: hex::encode(source.header.header_body.prev_hash),
         })
     }
 }
