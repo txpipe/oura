@@ -2,7 +2,10 @@ use std::io::stdout;
 
 use serde::Deserialize;
 
-use crate::pipelining::{BootstrapResult, SinkProvider, StageReceiver};
+use crate::{
+    pipelining::{BootstrapResult, SinkProvider, StageReceiver},
+    utils::WithUtils,
+};
 
 use super::run::jsonl_writer_loop;
 
@@ -22,15 +25,17 @@ pub struct Config {
     pub format: Option<Format>,
 }
 
-impl SinkProvider for Config {
+impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        let format = self.format.as_ref().cloned().unwrap_or(Format::JSONL);
+        let format = self.inner.format.as_ref().cloned().unwrap_or(Format::JSONL);
 
         let mut output = stdout();
 
+        let utils = self.utils.clone();
+
         let handle = std::thread::spawn(move || match format {
             Format::JSONL => {
-                jsonl_writer_loop(input, &mut output).expect("writer sink loop failed")
+                jsonl_writer_loop(input, &mut output, utils).expect("writer sink loop failed")
             }
         });
 

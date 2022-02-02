@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
+    utils::WithUtils,
     Error,
 };
 
@@ -56,26 +57,29 @@ fn build_headers_map(config: &Config) -> Result<HeaderMap, Error> {
 const DEFAULT_MAX_RETRIES: usize = 20;
 const DEFAULT_BACKOFF_DELAY: u64 = 5_000;
 
-impl SinkProvider for Config {
+impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let client = reqwest::blocking::ClientBuilder::new()
             .user_agent(APP_USER_AGENT)
-            .default_headers(build_headers_map(self)?)
-            .timeout(Duration::from_millis(self.timeout.unwrap_or(30000)))
+            .default_headers(build_headers_map(&self.inner)?)
+            .timeout(Duration::from_millis(self.inner.timeout.unwrap_or(30000)))
             .build()?;
 
-        let url = self.url.clone();
+        let url = self.inner.url.clone();
 
         let error_policy = self
+            .inner
             .error_policy
             .as_ref()
             .cloned()
             .unwrap_or(ErrorPolicy::Exit);
 
-        let max_retries = self.max_retries.unwrap_or(DEFAULT_MAX_RETRIES);
+        let max_retries = self.inner.max_retries.unwrap_or(DEFAULT_MAX_RETRIES);
 
         let backoff_delay =
-            Duration::from_millis(self.backoff_delay.unwrap_or(DEFAULT_BACKOFF_DELAY));
+            Duration::from_millis(self.inner.backoff_delay.unwrap_or(DEFAULT_BACKOFF_DELAY));
+
+        let utils = self.utils.clone();
 
         let handle = std::thread::spawn(move || {
             request_loop(
@@ -85,6 +89,7 @@ impl SinkProvider for Config {
                 &error_policy,
                 max_retries,
                 backoff_delay,
+                utils,
             )
             .expect("request loop failed")
         });

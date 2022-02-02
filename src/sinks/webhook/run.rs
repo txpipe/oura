@@ -1,9 +1,9 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use reqwest::blocking::Client;
 use serde::Serialize;
 
-use crate::{model::Event, pipelining::StageReceiver, Error};
+use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
 
 use super::ErrorPolicy;
 
@@ -67,9 +67,14 @@ pub(crate) fn request_loop(
     error_policy: &ErrorPolicy,
     max_retries: usize,
     backoff_delay: Duration,
+    utils: Arc<Utils>,
 ) -> Result<(), Error> {
     loop {
         let event = input.recv().unwrap();
+
+        // notify progress to the pipeline
+        utils.track_sink_progress(&event);
+
         let body = RequestBody::from(event);
 
         execute_fallible_request(client, url, &body, error_policy, max_retries, backoff_delay)?;

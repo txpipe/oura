@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use kafka::producer::{Producer, Record};
 use log::debug;
 
-use crate::{model::Event, pipelining::StageReceiver, Error};
+use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
 
 use super::PartitionStrategy;
 
@@ -17,11 +19,16 @@ pub fn producer_loop(
     mut producer: Producer,
     topic: String,
     partitioning: PartitionStrategy,
+    utils: Arc<Utils>,
 ) -> Result<(), Error> {
     loop {
-        let evt = input.recv()?;
-        let json = serde_json::to_vec(&evt)?;
-        let key = define_event_key(&evt, &partitioning);
+        let event = input.recv()?;
+
+        // notify the pipeline where we are
+        utils.track_sink_progress(&event);
+
+        let json = serde_json::to_vec(&event)?;
+        let key = define_event_key(&event, &partitioning);
 
         match key {
             Some(key) => {
@@ -34,6 +41,6 @@ pub fn producer_loop(
             }
         };
 
-        debug!("pushed event to kafka: {:?}", &evt);
+        debug!("pushed event to kafka: {:?}", &event);
     }
 }
