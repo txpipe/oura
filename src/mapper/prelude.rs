@@ -49,7 +49,7 @@ impl EventWriter {
         well_known: Option<ChainWellKnownInfo>,
         config: Config,
     ) -> Self {
-        let utils = Arc::new(Utils::new(well_known.unwrap_or_default()));
+        let utils = Arc::new(Utils::new(well_known.unwrap_or_default(), None));
 
         Self::new(output, utils, config)
     }

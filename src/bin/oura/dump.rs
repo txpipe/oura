@@ -48,13 +48,12 @@ enum DumpSink {
     Logs(LogsConfig),
 }
 
-impl SinkProvider for DumpSink {
-    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        match self {
-            DumpSink::Stdout(c) => c.bootstrap(input),
-            #[cfg(feature = "logs")]
-            DumpSink::Logs(c) => c.bootstrap(input),
-        }
+fn bootstrap_sink(sink: DumpSink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
+    match sink {
+        DumpSink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "logs")]
+        DumpSink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
@@ -105,7 +104,9 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let well_known = ChainWellKnownInfo::try_from_magic(*magic)?;
 
-    let utils = Arc::new(Utils::new(well_known));
+    // TODO: map add cli arg to enable / disable cursor
+
+    let utils = Arc::new(Utils::new(well_known, None));
 
     #[allow(deprecated)]
     let source_setup = match mode {
@@ -137,11 +138,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let (source_handle, source_output) = match source_setup {
-        DumpSource::N2C(c) => WithUtils::new(c, utils).bootstrap()?,
-        DumpSource::N2N(c) => WithUtils::new(c, utils).bootstrap()?,
+        DumpSource::N2C(c) => WithUtils::new(c, utils.clone()).bootstrap()?,
+        DumpSource::N2N(c) => WithUtils::new(c, utils.clone()).bootstrap()?,
     };
 
-    let sink_handle = sink_setup.bootstrap(source_output)?;
+    let sink_handle = bootstrap_sink(sink_setup, source_output, utils)?;
 
     log::info!(
         "Oura started dumping events to {}",

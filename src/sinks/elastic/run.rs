@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 use std::sync::Arc;
 
-use crate::{model::Event, pipelining::StageReceiver, Error};
+use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
 
 #[derive(Serialize)]
 struct ESRecord {
@@ -91,6 +91,7 @@ pub fn writer_loop(
     client: Elasticsearch,
     index: String,
     idempotency: bool,
+    utils: Arc<Utils>,
 ) -> Result<(), Error> {
     let client = Arc::new(client);
 
@@ -100,9 +101,14 @@ pub fn writer_loop(
         .build()?;
 
     loop {
-        let index = index.to_owned();
         let event = input.recv().unwrap();
+
+        // notify the pipeline where we are
+        utils.track_sink_progress(&event);
+
+        let index = index.to_owned();
         let client = client.clone();
+
         rt.block_on(async move {
             let result = match idempotency {
                 true => index_event_with_id(client, &index, event).await,

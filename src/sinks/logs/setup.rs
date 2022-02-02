@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
+    utils::WithUtils,
     Error,
 };
 
@@ -53,18 +54,23 @@ fn build_witer(config: &Config) -> Result<impl Write, Error> {
     Ok(writer)
 }
 
-impl SinkProvider for Config {
+impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        let mut output = build_witer(self)?;
+        let mut output = build_witer(&self.inner)?;
 
         let format = self
+            .inner
             .output_format
             .as_ref()
             .cloned()
             .unwrap_or(Format::JSONL);
 
+        let utils = self.utils.clone();
+
         let handle = std::thread::spawn(move || match format {
-            Format::JSONL => jsonl_writer_loop(input, &mut output).expect("logs sink loop failed"),
+            Format::JSONL => {
+                jsonl_writer_loop(input, &mut output, utils).expect("logs sink loop failed")
+            }
         });
 
         Ok(handle)

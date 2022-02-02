@@ -10,7 +10,7 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
-    utils::{ChainWellKnownInfo, Utils, WithUtils},
+    utils::{cursor, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
 
@@ -91,24 +91,22 @@ enum Sink {
     Elastic(ElasticConfig),
 }
 
-impl SinkProvider for Sink {
-    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        match self {
-            Sink::Terminal(c) => c.bootstrap(input),
-            Sink::Stdout(c) => c.bootstrap(input),
+fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
+    match config {
+        Sink::Terminal(c) => WithUtils::new(c, utils).bootstrap(input),
+        Sink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
 
-            #[cfg(feature = "logs")]
-            Sink::Logs(c) => c.bootstrap(input),
+        #[cfg(feature = "logs")]
+        Sink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
 
-            #[cfg(feature = "webhook")]
-            Sink::Webhook(c) => c.bootstrap(input),
+        #[cfg(feature = "webhook")]
+        Sink::Webhook(c) => WithUtils::new(c, utils).bootstrap(input),
 
-            #[cfg(feature = "kafkasink")]
-            Sink::Kafka(c) => c.bootstrap(input),
+        #[cfg(feature = "kafkasink")]
+        Sink::Kafka(c) => WithUtils::new(c, utils).bootstrap(input),
 
-            #[cfg(feature = "elasticsink")]
-            Sink::Elastic(c) => c.bootstrap(input),
-        }
+        #[cfg(feature = "elasticsink")]
+        Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
@@ -122,6 +120,8 @@ struct ConfigRoot {
     sink: Sink,
 
     chain: Option<ChainWellKnownInfo>,
+
+    cursor: Option<cursor::Config>,
 }
 
 impl ConfigRoot {
@@ -146,26 +146,40 @@ impl ConfigRoot {
     }
 }
 
+fn bootstrap_utils(chain: Option<ChainWellKnownInfo>, cursor: Option<cursor::Config>) -> Utils {
+    let well_known = chain.unwrap_or_default();
+
+    let cursor = cursor.map(cursor::Provider::initialize);
+
+    Utils::new(well_known, cursor)
+}
+
 /// Sets up the whole pipeline from configuration
 fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
-    let well_known = config.chain.unwrap_or_default();
+    let ConfigRoot {
+        source,
+        filters,
+        sink,
+        chain,
+        cursor,
+    } = config;
 
-    let utils = Arc::new(Utils::new(well_known));
+    let utils = Arc::new(bootstrap_utils(chain, cursor));
 
     let mut threads = Vec::with_capacity(10);
 
-    let (source_handle, source_rx) = bootstrap_source(config.source, utils)?;
+    let (source_handle, source_rx) = bootstrap_source(source, utils.clone())?;
     threads.push(source_handle);
 
     let mut last_rx = source_rx;
 
-    for filter in config.filters.iter() {
+    for filter in filters.iter() {
         let (filter_handle, filter_rx) = filter.bootstrap(last_rx)?;
         threads.push(filter_handle);
         last_rx = filter_rx;
     }
 
-    let sink_handle = config.sink.bootstrap(last_rx)?;
+    let sink_handle = bootstrap_sink(sink, last_rx, utils)?;
     threads.push(sink_handle);
 
     Ok(threads)

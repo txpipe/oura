@@ -84,7 +84,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let well_known = ChainWellKnownInfo::try_from_magic(*magic)?;
 
-    let utils = Arc::new(Utils::new(well_known));
+    let utils = Arc::new(Utils::new(well_known, None));
 
     #[allow(deprecated)]
     let source_setup = match mode {
@@ -109,11 +109,11 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     };
 
     let (source_handle, source_output) = match source_setup {
-        WatchSource::N2C(c) => WithUtils::new(c, utils).bootstrap()?,
-        WatchSource::N2N(c) => WithUtils::new(c, utils).bootstrap()?,
+        WatchSource::N2C(c) => WithUtils::new(c, utils.clone()).bootstrap()?,
+        WatchSource::N2N(c) => WithUtils::new(c, utils.clone()).bootstrap()?,
     };
 
-    let sink_handle = sink_setup.bootstrap(source_output)?;
+    let sink_handle = WithUtils::new(sink_setup, utils).bootstrap(source_output)?;
 
     sink_handle.join().map_err(|_| "error in sink thread")?;
     source_handle.join().map_err(|_| "error in source thread")?;

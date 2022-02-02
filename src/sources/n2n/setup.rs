@@ -17,7 +17,10 @@ use serde::Deserialize;
 use crate::{
     mapper::{Config as MapperConfig, EventWriter},
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
-    sources::common::{find_end_of_chain, AddressArg, BearerKind, MagicArg, PointArg},
+    sources::{
+        common::{AddressArg, BearerKind, MagicArg, PointArg},
+        define_start_point,
+    },
     utils::{ChainWellKnownInfo, WithUtils},
     Error,
 };
@@ -88,10 +91,7 @@ impl SourceProvider for WithUtils<Config> {
 
         let mut cs_channel = muxer.use_channel(2);
 
-        let since: Point = match &self.inner.since {
-            Some(arg) => arg.try_into()?,
-            None => find_end_of_chain(&mut cs_channel, &self.utils.well_known)?,
-        };
+        let since: Point = define_start_point(&self.inner.since, &self.utils, &mut cs_channel)?;
 
         info!("starting from chain point: {:?}", &since);
 
