@@ -127,9 +127,10 @@ impl EventWriter {
     fn crawl_transaction(
         &self,
         tx: &TransactionBody,
+        tx_hash: &str,
         aux_data: Option<&AuxiliaryData>,
     ) -> Result<(), Error> {
-        let record = self.to_transaction_record(tx, aux_data)?;
+        let record = self.to_transaction_record(tx, tx_hash, aux_data)?;
 
         self.append_from(record.clone())?;
 
@@ -206,11 +207,11 @@ impl EventWriter {
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
-                tx_hash: Some(tx_hash),
+                tx_hash: Some(tx_hash.to_owned()),
                 ..EventContext::default()
             });
 
-            child.crawl_transaction(tx, aux_data)?;
+            child.crawl_transaction(tx, &tx_hash, aux_data)?;
         }
 
         if self.config.include_block_end_events {
