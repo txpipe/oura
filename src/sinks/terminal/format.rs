@@ -67,23 +67,24 @@ impl LogLine {
                 total_output,
                 fee,
                 ttl,
+                hash,
                 ..
             }) => LogLine {
                 prefix: "TX",
                 color: Color::DarkBlue,
                 content: format!(
-                    "{{ total_output: {}, fee: {}, hash: {:?}, ttl: {:?} }}",
-                    total_output, fee, &source.context.tx_hash, ttl
+                    "{{ total_output: {}, fee: {}, hash: {}, ttl: {:?} }}",
+                    total_output, fee, hash, ttl
                 ),
                 source,
                 max_width,
             },
-            EventData::TransactionEnd(TransactionRecord { .. }) => LogLine {
+            EventData::TransactionEnd(TransactionRecord { hash, .. }) => LogLine {
                 prefix: "ENDTX",
                 color: Color::DarkBlue,
                 content: format!(
-                    "{{ hash: {:?} }}",
-                    &source.context.tx_hash
+                    "{{ hash: {} }}",
+                    hash
                 ),
                 source,
                 max_width,
