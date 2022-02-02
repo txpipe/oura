@@ -93,17 +93,17 @@ enum Sink {
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
     match config {
-        Sink::Terminal(c) => c.bootstrap(input),
-        Sink::Stdout(c) => c.bootstrap(input),
+        Sink::Terminal(c) => WithUtils::new(c, utils).bootstrap(input),
+        Sink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "logs")]
         Sink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "webhook")]
-        Sink::Webhook(c) => c.bootstrap(input),
+        Sink::Webhook(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "kafkasink")]
-        Sink::Kafka(c) => c.bootstrap(input),
+        Sink::Kafka(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "elasticsink")]
         Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),

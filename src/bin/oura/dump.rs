@@ -50,7 +50,7 @@ enum DumpSink {
 
 fn bootstrap_sink(sink: DumpSink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
     match sink {
-        DumpSink::Stdout(c) => c.bootstrap(input),
+        DumpSink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "logs")]
         DumpSink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
