@@ -12,7 +12,7 @@ impl Utils {
     }
 
     /// To be used by sink stages to track progress
-    pub fn track_progress(&self, event: &Event) {
+    pub fn track_sink_progress(&self, event: &Event) {
         let point = match (event.context.slot, &event.context.block_hash) {
             (Some(slot), Some(hash)) => cursor::PointArg(slot, hash.to_owned()),
             _ => return,
@@ -21,5 +21,7 @@ impl Utils {
         if let Some(cursor) = &self.cursor {
             cursor.set_cursor(point).ok_or_warn("failed to set cursor")
         }
+
+        // TODO: add here future telemetry implementation
     }
 }

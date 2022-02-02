@@ -13,7 +13,7 @@ pub fn jsonl_writer_loop(
         let evt = input.recv()?;
 
         // notify pipeline about the progress
-        utils.track_progress(&evt);
+        utils.track_sink_progress(&evt);
 
         let buf = json!(evt).to_string();
         output.write_all(buf.as_bytes())?;

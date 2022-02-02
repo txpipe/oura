@@ -25,7 +25,7 @@ pub fn producer_loop(
         let event = input.recv()?;
 
         // notify the pipeline where we are
-        utils.track_progress(&event);
+        utils.track_sink_progress(&event);
 
         let json = serde_json::to_vec(&event)?;
         let key = define_event_key(&event, &partitioning);

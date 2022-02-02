@@ -104,7 +104,7 @@ pub fn writer_loop(
         let event = input.recv().unwrap();
 
         // notify the pipeline where we are
-        utils.track_progress(&event);
+        utils.track_sink_progress(&event);
 
         let index = index.to_owned();
         let client = client.clone();

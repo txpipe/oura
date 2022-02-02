@@ -73,7 +73,7 @@ pub(crate) fn request_loop(
         let event = input.recv().unwrap();
 
         // notify progress to the pipeline
-        utils.track_progress(&event);
+        utils.track_sink_progress(&event);
 
         let body = RequestBody::from(event);
 

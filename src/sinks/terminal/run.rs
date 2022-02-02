@@ -31,7 +31,7 @@ pub fn reducer_loop(
         let evt = input.recv()?;
 
         // notify progress to the pipeline
-        utils.track_progress(&evt);
+        utils.track_sink_progress(&evt);
 
         throttle.wait_turn();
         let line = LogLine::new(evt, width as usize);
