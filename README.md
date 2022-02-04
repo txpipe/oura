@@ -54,34 +54,60 @@ _Oura_ running in `daemon` mode can be configured to use custom filters to pinpo
 
 If the available out-of-the-box features don't satisfiy your particular use-case, _Oura_ can be used a library in your Rust project to setup tailor-made pipelines. Each component (sources, filters, sinks, etc) in _Oura_ aims at being self-contained and reusable. For example, custom filters and sinks can be built while reusing the existing sources.
 
+## How it Works
+
+Oura is in its essence just a pipeline for proccessing events. Each stage of the pipeline fulfills a different roles:
+
+- Source Stages: are in charge of pulling data from the blockchain and mapping the raw blocks into smaller, more granular events. Each event is then sent through the output port of the stage for further processing.
+- Filter Stages: receive individual events from the source stage and apply some sort of transformation to each one. The transformations applied will depend on the particular use-case, but they usually revolve around selecting relevant events and enriching them with extra information.
+- Sink Stages: receive the final events from the filter stage and submits the payload to some external system, database or service for further processing.
+
+![diagram](assets/diagram.png)
+
 ## Feature Status
 
 - Sources
   - [x] chain-sync full-block (node-to-client)
   - [ ] chain-sync headers-only (node-to-node)
   - [x] chain-sync + block-fetch (node-to-node)
-  - [ ] shared file system
 - Sinks
   - [x] Kafka topic
   - [x] Elasticsearch index / data stream
+  - [x] Rotating log files with compression
   - [ ] Redis streams
   - [ ] AWS SQS queue
   - [ ] AWS Lambda call
   - [ ] GCP PubSub
   - [x] webhook (http post)
   - [x] terminal (append-only, tail-like)
-  - [ ] TUI
+- Events / Parsers
+  - [x] block events (start, end)
+  - [x] transaction events (inputs, outputs, assets)
+  - [x] metadata events (labels, content)
+  - [x] mint events (policy, asset, quantity)
+  - [x] pool registrations events
+  - [x] delegation events
+  - [x] CIP-25 metadata parser (image, files)
+  - [ ] CIP-15 metadata parser
 - Filters
-  - [x] by event type (block, tx, mint, cert, etc)
-  - [x] by asset subject (policy, name, etc)
-  - [x] by metadata keys
-  - [ ] by block property (size, tx count)
-  - [ ] by tx property (fee, has native script, has plutus script, etc)
-  - [ ] by utxo property (address, asset, amount range)
-- Enrichment
-  - [ ] policy info from metadata service
-  - [ ] input tx info from Blockfrost api
-  - [ ] address translation from ADAHandle
+  - [x] cherry pick by event type (block, tx, mint, cert, etc)
+  - [x] cherry pick by asset subject (policy, name, etc)
+  - [x] cherry pick by metadata keys
+  - [ ] cherry pick by block property (size, tx count)
+  - [ ] cherry pick by tx property (fee, has native script, has plutus script, etc)
+  - [ ] cherry pick by utxo property (address, asset, amount range)
+  - [ ] enrich events with policy info from external metadata service
+  - [ ] enrich input tx info from Blockfrost API
+  - [ ] enrich addresses descriptions using ADAHandle
+- Other
+  - [x] stateful chain cursor to recover from restarts
+  - [ ] buffer stage to hold blocks until they reach a certain depth
+
+## Known Limitations
+
+- Oura only knows how to process blocks from the Shelley era. We are working on adding support for Byron in a future release.
+- Oura reads events from minted blocks / transactions. Support for querying the mempool is planned for a future release.
+- Oura will notify about chain rollbacks as a new event. The business logic for "undoing" the already processed events is a responsability of the consumer. We're working on adding support for a "buffer" filter stage which can hold blocks until they reach a configurable depth (number of confirmations).
 
 ## Contributing
 
