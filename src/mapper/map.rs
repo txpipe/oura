@@ -261,9 +261,12 @@ impl EventWriter {
     pub fn to_transaction_record(
         &self,
         body: &TransactionBody,
+        tx_hash: &str,
         aux_data: Option<&AuxiliaryData>,
     ) -> Result<TransactionRecord, Error> {
         let mut record = TransactionRecord::default();
+
+        record.hash.push_str(tx_hash);
 
         for component in body.iter() {
             match component {
@@ -353,6 +356,7 @@ impl EventWriter {
             hash: hex::encode(hash),
             number: source.header.header_body.block_number,
             slot: source.header.header_body.slot,
+            previous_hash: hex::encode(source.header.header_body.prev_hash),
         })
     }
 }

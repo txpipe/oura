@@ -114,6 +114,7 @@ impl From<MintRecord> for EventData {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TransactionRecord {
+    pub hash: String,
     pub fee: u64,
     pub ttl: Option<u64>,
     pub validity_interval_start: Option<u64>,
@@ -164,6 +165,7 @@ pub struct BlockRecord {
     pub slot: u64,
     pub hash: String,
     pub number: u64,
+    pub previous_hash: String,
 }
 
 #[derive(Serialize, Deserialize, Display, Debug, Clone)]
