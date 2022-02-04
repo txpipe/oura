@@ -6,7 +6,7 @@ use pallas::ledger::alonzo::{
 use pallas::crypto::hash::Hash;
 
 use crate::{
-    model::{EventContext, EventData},
+    model::{EventContext, EventData, MetadataRecord, MetadatumRendition},
     Error,
 };
 
@@ -18,11 +18,34 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            match label {
-                Metadatum::Int(721) => self.crawl_metadata_label_721(content)?,
-                Metadatum::Text(x) if x == "721" => self.crawl_metadata_label_721(content)?,
-                _ => (),
+            // CIP25 block 6768751
+
+            println!("---");
+            println!("{:?}", metadata);
+
+            let label: Result<_, Error> = match label {
+                &Metadatum::Int(x) => Ok(x),
+                // Text is sometimes seen instead of Int
+                Metadatum::Text(x) => x.parse().map_err(|_| "Bad metadata label.".into()),
+                _ => Err("Bad metadata label type.".into()),
             };
+
+            // See:
+            //
+            //   * https://github.com/cardano-foundation/CIPs/blob/master/CIP-0010/registry.json
+            //   * https://github.com/cardano-foundation/CIPs
+            //
+            match label? {
+                // 674 => self.crawl_metadata_cip20(content),
+                721 => self.crawl_metadata_label_721(content),
+                61284 => self.crawl_metadata_cip15(content),
+                _ => self.append(EventData::Metadata(MetadataRecord {
+                    label: "TEST".to_string(),
+                    content: MetadatumRendition::TextScalar(
+                        "PARSE ERROR".to_string()
+                    ),
+                })),
+            }?;
         }
 
         Ok(())
