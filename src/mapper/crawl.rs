@@ -41,9 +41,7 @@ impl EventWriter {
                 61284 => self.crawl_metadata_cip15(content),
                 _ => self.append(EventData::Metadata(MetadataRecord {
                     label: "TEST".to_string(),
-                    content: MetadatumRendition::TextScalar(
-                        "PARSE ERROR".to_string()
-                    ),
+                    content: MetadatumRendition::TextScalar("PARSE ERROR".to_string()),
                 })),
             }?;
         }
