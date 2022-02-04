@@ -44,6 +44,11 @@ type = "Z"
 # custom config fields for this sink type
 foo = "123"
 bar = "789"
+
+# optional cursor settings, remove seaction to disable feature
+[cursor]
+type = "File"
+path = "/var/oura/cursor"
 ```
 
 ### The `source` section
@@ -57,6 +62,10 @@ This section specifies a collection of filters that are applied in sequence to e
 ### The `sink` section
 
 This section specifies the destination of the data. The special `type` field must always be present and containing a value matching any of the available built-in sinks. The rest of the fields in the section will depend on the selected `type`. See the [sinks](../sinks/index.md) section for a list of available options.
+
+### The `cursor` section
+
+This section specifies how to configure the "cursor" feature. A cursor is a reference of the current position of the pipeline. If the pipeline needs to restart for whatever reason, and a cursor is available, the pipeline will start reading from that point in the chain. Removing the section from the config will disable the cursor feature.
 
 ### Full Example
 
