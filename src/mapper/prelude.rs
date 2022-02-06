@@ -23,6 +23,9 @@ pub struct Config {
 
     #[serde(default)]
     pub include_transaction_end_events: bool,
+
+    #[serde(default)]
+    pub include_block_cbor: bool,
 }
 
 #[derive(Clone)]

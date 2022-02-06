@@ -69,7 +69,7 @@ impl BlockObserver for Block2EventMapper {
                 let Self(writer) = self;
 
                 writer
-                    .crawl(&block)
+                    .crawl_with_cbor(&block, &body)
                     .ok_or_warn("error crawling block for events");
             }
             Err(err) => {
