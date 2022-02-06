@@ -1,0 +1,19 @@
+on:
+  pull_request:
+    # Sequence of patterns matched against refs/heads
+    branches:    
+      - main
+      
+name: Integration tests
+
+jobs:
+  <job-id>:
+    name: Check
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout sources
+          uses: actions/checkout@v2
+        - uses: balchua/microk8s-actions@v0.2.1
+          with:
+            channel: 'latest/stable'
+          
