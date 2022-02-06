@@ -30,4 +30,7 @@ charset = utf-8
 trim_trailing_whitespace = true
 
 [README.md]
+end_of_line = lf
+insert_final_newline = false
+charset = utf-8
 trim_trailing_whitespace = true
