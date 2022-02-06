@@ -38,6 +38,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v1
         with:
+          flavor: |
+            latest=true
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push
