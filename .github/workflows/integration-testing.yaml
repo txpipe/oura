@@ -17,10 +17,17 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - uses: balchua/microk8s-actions@v0.2.1
+      - name: Set-up microk8s instance with registry
+        uses: balchua/microk8s-actions@v0.2.1
         with:
           channel: 'latest/stable'
           addons: '["registry"]'
+
+      - name: Test MicroK8s
+        id: myactions
+        run: |
+          kubectl get no
+          kubectl get pods -A -o wide
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -30,11 +37,6 @@ jobs:
         uses: docker/metadata-action@v1
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ env.REGISTRY }}
 
       - name: Build and push
         uses: docker/build-push-action@v2
