@@ -36,7 +36,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v1
+        uses: docker/metadata-action@v3
         with:
           tags: |
             type=raw,value=latest
