@@ -24,10 +24,6 @@ jobs:
             os: ubuntu-latest
             name: oura-x86_64-unknown-linux-musl.tar.gz
 
-          - target: i686-unknown-linux-musl
-            os: ubuntu-latest
-            name: oura-i686-unknown-linux-musl.tar.gz
-
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
             name: oura-aarch64-unknown-linux-musl.tar.gz
@@ -47,10 +43,6 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             name: oura-x86_64-pc-windows-msvc.zip
-
-          - target: i686-pc-windows-msvc
-            os: windows-latest
-            name: oura-i686-pc-windows-msvc.zip
 
           - target: aarch64-pc-windows-msvc
             os: windows-latest
