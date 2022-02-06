@@ -6,6 +6,10 @@ on:
 
 name: Integration tests
 
+env:
+  REGISTRY: localhost:32000
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   microk8s:
     name: Set-up MicroK8s single node instance
