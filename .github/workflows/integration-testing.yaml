@@ -1,19 +1,22 @@
 on:
   pull_request:
     # Sequence of patterns matched against refs/heads
-    branches:    
+    branches:
       - main
-      
+
 name: Integration tests
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  <job-id>:
-    name: Check
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout sources
-          uses: actions/checkout@v2
-        - uses: balchua/microk8s-actions@v0.2.1
-          with:
-            channel: 'latest/stable'
-          
+  microk8s:
+    name: Set-up MicroK8s single node instance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - uses: balchua/microk8s-actions@v0.2.1
+        with:
+          channel: 'latest/stable'
