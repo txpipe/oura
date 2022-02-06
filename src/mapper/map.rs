@@ -348,7 +348,12 @@ impl EventWriter {
         Ok(record)
     }
 
-    pub fn to_block_record(&self, source: &Block, hash: &Hash<32>) -> Result<BlockRecord, Error> {
+    pub fn to_block_record(
+        &self,
+        source: &Block,
+        hash: &Hash<32>,
+        cbor: &[u8],
+    ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
@@ -357,6 +362,10 @@ impl EventWriter {
             number: source.header.header_body.block_number,
             slot: source.header.header_body.slot,
             previous_hash: hex::encode(source.header.header_body.prev_hash),
+            cbor_hex: match self.config.include_block_cbor {
+                true => hex::encode(cbor).into(),
+                false => None,
+            },
         })
     }
 }

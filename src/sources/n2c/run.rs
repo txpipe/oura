@@ -17,7 +17,7 @@ use pallas::{
 use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
 
 #[derive(Debug)]
-struct Content(Block);
+struct Content(Block, Vec<u8>);
 
 impl EncodePayload for Content {
     fn encode_payload(&self, _e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
@@ -30,7 +30,7 @@ impl DecodePayload for Content {
         d.tag()?;
         let bytes = d.bytes()?;
         let BlockWrapper(_, block) = BlockWrapper::decode_fragment(bytes)?;
-        Ok(Content(block))
+        Ok(Content(block, Vec::from(bytes)))
     }
 }
 
@@ -63,10 +63,10 @@ impl Observer<Content> for ChainObserver {
         content: &Content,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let Self(writer) = self;
-        let Content(block) = content;
+        let Content(block, cbor) = content;
 
         writer
-            .crawl(block)
+            .crawl_with_cbor(block, cbor)
             .ok_or_warn("error crawling block for events");
 
         Ok(())

@@ -191,8 +191,8 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_block(&self, block: &Block, hash: &Hash<32>) -> Result<(), Error> {
-        let record = self.to_block_record(block, hash)?;
+    fn crawl_block(&self, block: &Block, hash: &Hash<32>, cbor: &[u8]) -> Result<(), Error> {
+        let record = self.to_block_record(block, hash, cbor)?;
 
         self.append(EventData::Block(record.clone()))?;
 
@@ -221,6 +221,21 @@ impl EventWriter {
         Ok(())
     }
 
+    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
+        let hash = crypto::hash_block_header(&block.header);
+
+        let child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(&hash)),
+            block_number: Some(block.header.header_body.block_number),
+            slot: Some(block.header.header_body.slot),
+            timestamp: self.compute_timestamp(block.header.header_body.slot),
+            ..EventContext::default()
+        });
+
+        child.crawl_block(block, &hash, cbor)
+    }
+
+    #[deprecated(note = "use crawl_with_cbor instead")]
     pub fn crawl(&self, block: &Block) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
@@ -232,6 +247,6 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_block(block, &hash)
+        child.crawl_block(block, &hash, &[])
     }
 }
