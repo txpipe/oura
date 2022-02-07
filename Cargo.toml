@@ -22,7 +22,7 @@ bech32 = "0.8.1"
 clap = "3.0.13"
 log = "0.4.14"
 env_logger = "0.9.0"
-crossterm = "0.22"
+crossterm = "0.23"
 merge = "0.1.0"
 config = { version = "0.11.0", default-features = false, features = ["toml"] }
 serde = { version = "1.0.136", features = ["derive"] }
