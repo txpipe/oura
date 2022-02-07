@@ -554,7 +554,10 @@ magic = &lt;network magic&gt;
 since = [&lt;slot&gt;, &quot;&lt;block hash&gt;&quot;]
 
 [source.mapper]
+include_block_end_events = &lt;bool&gt;
 include_transaction_details = &lt;bool&gt;
+include_transaction_end_events = &lt;bool&gt;
+include_block_cbor = &lt;bool&gt;
 </code></pre>
 <h3 id="section-source"><a class="header" href="#section-source">Section <code>source</code>:</a></h3>
 <ul>
@@ -566,7 +569,12 @@ include_transaction_details = &lt;bool&gt;
 <h3 id="section-sourcemapper"><a class="header" href="#section-sourcemapper">Section <code>source.mapper</code></a></h3>
 <p>This section provides options to tweak the behaviour of how raw chain data is mapped into <em>Oura</em> events.</p>
 <ul>
+<li><code>include_block_end_events</code>: instructs the mapper to include an event for when the mapper
+finishes crawling a block record.</li>
 <li><code>include_transaction_details</code>: instructs the mapper to include all details in the transaction event payload (inputs, outputs, metadata, mint, etc)</li>
+<li><code>include_transaction_end_events</code>: instructs the mapper to include an event for when the mapper
+finishes crawling a transaction record.</li>
+<li><code>include_block_cbor</code>: instructs the mapper to include the hex of the cbor in the block record.</li>
 </ul>
 <h2 id="examples-3"><a class="header" href="#examples-3">Examples</a></h2>
 <p>Connecting to a local Cardano node in mainnet through unix sockets:</p>
@@ -597,6 +605,7 @@ magic = &quot;mainnet&quot;
 
 [source.mapper]
 include_transaction_details = true
+include_block_cbor = true
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="node-to-client"><a class="header" href="#node-to-client">Node-to-Client</a></h1>
 <p>The Node-to-Client (N2C) source uses Ouroboros mini-protocols to connect to a local Cardano node through a unix socket bearer and fetches block data using the ChainSync mini-protocol instantiated to &quot;full blocks&quot;.</p>
@@ -609,7 +618,10 @@ magic = &lt;network magic&gt;
 since = [&lt;slot&gt;, &quot;&lt;block hash&gt;&quot;]
 
 [source.mapper]
+include_block_end_events = &lt;bool&gt;
 include_transaction_details = &lt;bool&gt;
+include_transaction_end_events = &lt;bool&gt;
+include_block_cbor = &lt;bool&gt;
 </code></pre>
 <h3 id="section-source-1"><a class="header" href="#section-source-1">Section <code>source</code>:</a></h3>
 <ul>
@@ -621,7 +633,12 @@ include_transaction_details = &lt;bool&gt;
 <h3 id="section-sourcemapper-1"><a class="header" href="#section-sourcemapper-1">Section <code>source.mapper</code></a></h3>
 <p>This section provides options to tweak the behaviour of how raw chain data is mapped into <em>Oura</em> events.</p>
 <ul>
+<li><code>include_block_end_events</code>: instructs the mapper to include an event for when the mapper
+finishes crawling a block record.</li>
 <li><code>include_transaction_details</code>: instructs the mapper to include all details in the transaction event payload (inputs, outputs, metadata, mint, etc)</li>
+<li><code>include_transaction_end_events</code>: instructs the mapper to include an event for when the mapper
+finishes crawling a transaction record.</li>
+<li><code>include_block_cbor</code>: instructs the mapper to include the hex of the cbor in the block record.</li>
 </ul>
 <h2 id="examples-4"><a class="header" href="#examples-4">Examples</a></h2>
 <p>Connecting to a local Cardano node in mainnet through unix sockets:</p>
@@ -652,6 +669,7 @@ magic = &quot;mainnet&quot;
 
 [source.mapper]
 include_transaction_details = true
+include_block_cbor = true
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="sinks"><a class="header" href="#sinks">Sinks</a></h1>
 <p>Sinks are the &quot;destination&quot; of the events processed by <em>Oura</em>. They are the concrete link between the internal representation of the data records and the corresponding external service interested in the data. Typical sinks include: database engines, stream-processing engines, web API calls and FaaS solutions.</p>

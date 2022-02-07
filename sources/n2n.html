@@ -144,7 +144,10 @@ magic = &lt;network magic&gt;
 since = [&lt;slot&gt;, &quot;&lt;block hash&gt;&quot;]
 
 [source.mapper]
+include_block_end_events = &lt;bool&gt;
 include_transaction_details = &lt;bool&gt;
+include_transaction_end_events = &lt;bool&gt;
+include_block_cbor = &lt;bool&gt;
 </code></pre>
 <h3 id="section-source"><a class="header" href="#section-source">Section <code>source</code>:</a></h3>
 <ul>
@@ -156,7 +159,12 @@ include_transaction_details = &lt;bool&gt;
 <h3 id="section-sourcemapper"><a class="header" href="#section-sourcemapper">Section <code>source.mapper</code></a></h3>
 <p>This section provides options to tweak the behaviour of how raw chain data is mapped into <em>Oura</em> events.</p>
 <ul>
+<li><code>include_block_end_events</code>: instructs the mapper to include an event for when the mapper
+finishes crawling a block record.</li>
 <li><code>include_transaction_details</code>: instructs the mapper to include all details in the transaction event payload (inputs, outputs, metadata, mint, etc)</li>
+<li><code>include_transaction_end_events</code>: instructs the mapper to include an event for when the mapper
+finishes crawling a transaction record.</li>
+<li><code>include_block_cbor</code>: instructs the mapper to include the hex of the cbor in the block record.</li>
 </ul>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <p>Connecting to a local Cardano node in mainnet through unix sockets:</p>
@@ -187,6 +195,7 @@ magic = &quot;mainnet&quot;
 
 [source.mapper]
 include_transaction_details = true
+include_block_cbor = true
 </code></pre>
 
                     </main>
