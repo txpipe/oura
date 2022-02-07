@@ -13,7 +13,10 @@ magic = <network magic>
 since = [<slot>, "<block hash>"]
 
 [source.mapper]
+include_block_end_events = <bool>
 include_transaction_details = <bool>
+include_transaction_end_events = <bool>
+include_block_cbor = <bool>
 ```
 
 ### Section `source`:
@@ -27,7 +30,12 @@ include_transaction_details = <bool>
 
 This section provides options to tweak the behaviour of how raw chain data is mapped into _Oura_ events.
 
+- `include_block_end_events`: instructs the mapper to include an event for when the mapper
+  finishes crawling a block record.
 - `include_transaction_details`: instructs the mapper to include all details in the transaction event payload (inputs, outputs, metadata, mint, etc)
+- `include_transaction_end_events`: instructs the mapper to include an event for when the mapper
+  finishes crawling a transaction record.
+- `include_block_cbor`: instructs the mapper to include the hex of the cbor in the block record.
 
 ## Examples
 
@@ -70,4 +78,5 @@ magic = "mainnet"
 
 [source.mapper]
 include_transaction_details = true
+include_block_cbor = true
 ```
