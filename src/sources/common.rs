@@ -3,9 +3,11 @@ use std::{ops::Deref, str::FromStr};
 
 use log::info;
 use pallas::ouroboros::network::{
-    chainsync::TipFinder,
-    handshake::{MAINNET_MAGIC, TESTNET_MAGIC},
-    machines::{primitives::Point, run_agent},
+    miniprotocols::{
+        chainsync::TipFinder,
+        handshake::{MAINNET_MAGIC, TESTNET_MAGIC},
+        run_agent, Point,
+    },
     multiplexer::Channel,
 };
 use serde::{de::Visitor, Deserializer};

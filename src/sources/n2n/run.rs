@@ -4,13 +4,15 @@ use std::fmt::Debug;
 use log::{info, warn};
 
 use pallas::{
-    ledger::alonzo::{self, crypto, Fragment, Header},
+    ledger::{
+        alonzo::{self, crypto, Fragment, Header},
+        byron,
+    },
     ouroboros::network::{
-        blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
-        chainsync::{BlockLike, Consumer, Observer},
-        machines::{
-            primitives::Point, run_agent, DecodePayload, EncodePayload, PayloadDecoder,
-            PayloadEncoder,
+        miniprotocols::{
+            blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
+            chainsync::{BlockLike, Consumer, Observer},
+            run_agent, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,
         },
         multiplexer::Channel,
     },
@@ -62,6 +64,7 @@ impl Debug for Block2EventMapper {
 
 impl BlockObserver for Block2EventMapper {
     fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
+        // byron::Block::decode_fragment(&body[..]);
         let maybe_block = alonzo::BlockWrapper::decode_fragment(&body[..]);
 
         match maybe_block {

@@ -5,10 +5,9 @@ use log::{error, info};
 use pallas::{
     ledger::alonzo::{crypto, Block, BlockWrapper, Fragment},
     ouroboros::network::{
-        chainsync::{BlockLike, Consumer, Observer, Tip},
-        machines::{
-            primitives::Point, run_agent, DecodePayload, EncodePayload, PayloadDecoder,
-            PayloadEncoder,
+        miniprotocols::{
+            chainsync::{BlockLike, Consumer, Observer, Tip},
+            run_agent, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,
         },
         multiplexer::Channel,
     },
