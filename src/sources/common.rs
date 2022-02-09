@@ -2,12 +2,8 @@ use core::fmt;
 use std::{ops::Deref, str::FromStr};
 
 use log::info;
-use pallas::ouroboros::network::{
-    miniprotocols::{
-        chainsync::TipFinder,
-        handshake::{MAINNET_MAGIC, TESTNET_MAGIC},
-        run_agent, Point,
-    },
+use pallas::network::{
+    miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
     multiplexer::Channel,
 };
 use serde::{de::Visitor, Deserializer};

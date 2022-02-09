@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use minicbor::bytes::ByteVec;
 use pallas::crypto::hash::Hash;
-use pallas::ledger::alonzo::{
+use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
     InstantaneousRewardTarget, Metadatum, Relay, TransactionInput, TransactionOutput, Value,
 };
-use pallas::ledger::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
+use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
 
 use serde_json::{json, Value as JsonValue};
 

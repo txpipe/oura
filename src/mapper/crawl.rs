@@ -1,4 +1,4 @@
-use pallas::ledger::alonzo::{
+use pallas::ledger::primitives::alonzo::{
     crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset, TransactionBody,
     TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
 };

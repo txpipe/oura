@@ -3,8 +3,9 @@ use std::fmt::Debug;
 use log::{error, info};
 
 use pallas::{
-    ledger::alonzo::{crypto, Block, BlockWrapper, Fragment},
-    ouroboros::network::{
+    ledger::primitives::alonzo::{crypto, Block, BlockWrapper},
+    ledger::primitives::Fragment,
+    network::{
         miniprotocols::{
             chainsync::{BlockLike, Consumer, Observer, Tip},
             run_agent, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,

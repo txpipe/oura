@@ -4,11 +4,11 @@ use std::fmt::Debug;
 use log::{info, warn};
 
 use pallas::{
-    ledger::{
-        alonzo::{self, crypto, Fragment, Header},
-        byron,
+    ledger::primitives::{
+        alonzo::{self, crypto, Header},
+        Fragment,
     },
-    ouroboros::network::{
+    network::{
         miniprotocols::{
             blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
             chainsync::{BlockLike, Consumer, Observer},

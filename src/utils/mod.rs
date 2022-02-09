@@ -7,10 +7,7 @@
 
 use std::sync::Arc;
 
-use pallas::ouroboros::network::miniprotocols::{
-    handshake::{MAINNET_MAGIC, TESTNET_MAGIC},
-    Point,
-};
+use pallas::network::miniprotocols::{Point, MAINNET_MAGIC, TESTNET_MAGIC};
 
 use serde::{Deserialize, Serialize};
 

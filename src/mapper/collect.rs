@@ -1,4 +1,4 @@
-use pallas::ledger::alonzo::{
+use pallas::ledger::primitives::alonzo::{
     AuxiliaryData, Multiasset, TransactionInput, TransactionOutput, Value,
 };
 
