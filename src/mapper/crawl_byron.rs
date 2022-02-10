@@ -12,7 +12,21 @@ impl EventWriter {
         cbor: &[u8],
     ) -> Result<(), Error> {
         // TODO: actually crawl byron block
-        log::warn!("byron block crawling not implemented");
+        match block {
+            byron::Block::MainBlock(x) => {
+                log::warn!(
+                    "[not implemented] byron main block: {:?}",
+                    x.header.consensus_data.0
+                );
+            }
+            byron::Block::EbBlock(x) => {
+                log::warn!(
+                    "[not implemented] byron boundary block: {:?}",
+                    x.header.consensus_data
+                );
+            }
+        }
+
         Ok(())
     }
 
