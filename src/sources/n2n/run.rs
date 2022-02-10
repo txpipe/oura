@@ -1,19 +1,11 @@
-use minicbor::data::Tag;
 use std::fmt::Debug;
 
 use log::{info, warn};
 
 use pallas::{
-    ledger::primitives::{
-        alonzo::{self, crypto, Header},
-        Fragment,
-    },
+    ledger::primitives::{alonzo, probing, Fragment},
     network::{
-        miniprotocols::{
-            blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
-            chainsync::{BlockLike, Consumer, Observer},
-            run_agent, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,
-        },
+        miniprotocols::{blockfetch, chainsync, run_agent, Point},
         multiplexer::Channel,
     },
 };
@@ -22,37 +14,7 @@ use std::sync::mpsc::{Receiver, SyncSender};
 
 use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
 
-#[derive(Debug)]
-pub struct Content(u32, Header);
-
-impl EncodePayload for Content {
-    fn encode_payload(&self, e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
-        e.array(2)?;
-        e.u32(self.0)?;
-        e.tag(Tag::Cbor)?;
-        e.bytes(&self.1.encode_fragment()?)?;
-
-        Ok(())
-    }
-}
-
-impl DecodePayload for Content {
-    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Box<dyn std::error::Error>> {
-        d.array()?;
-        let unknown = d.u32()?; // WTF is this value?
-        d.tag()?;
-        let bytes = d.bytes()?;
-        let header = Header::decode_fragment(bytes)?;
-        Ok(Content(unknown, header))
-    }
-}
-
-impl BlockLike for Content {
-    fn block_point(&self) -> Result<Point, Box<dyn std::error::Error>> {
-        let hash = crypto::hash_block_header(&self.1);
-        Ok(Point(self.1.header_body.slot, hash.to_vec()))
-    }
-}
+use super::header::MultiEraHeader;
 
 struct Block2EventMapper(EventWriter);
 
@@ -62,24 +24,25 @@ impl Debug for Block2EventMapper {
     }
 }
 
-impl BlockObserver for Block2EventMapper {
+impl blockfetch::Observer for Block2EventMapper {
     fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
-        // byron::Block::decode_fragment(&body[..]);
-        let maybe_block = alonzo::BlockWrapper::decode_fragment(&body[..]);
+        let Self(writer) = self;
 
-        match maybe_block {
-            Ok(alonzo::BlockWrapper(_, block)) => {
-                let Self(writer) = self;
-
+        match probing::probe_block_cbor(&body) {
+            probing::BlockInference::Byron => {
                 writer
-                    .crawl_with_cbor(&block, &body)
+                    .crawl_from_byron_cbor(&body)
                     .ok_or_warn("error crawling block for events");
             }
-            Err(err) => {
-                log::error!("{:?}", err);
-                log::info!("{}", hex::encode(body));
+            probing::BlockInference::Shelley => {
+                writer
+                    .crawl_from_shelley_cbor(&body)
+                    .ok_or_warn("error crawling block for events");
             }
-        };
+            probing::BlockInference::Inconclusive => {
+                log::error!("can't infer primitive block from cbor, inconslusive probing. CBOR hex for debubbing: {}", hex::encode(body));
+            }
+        }
 
         Ok(())
     }
@@ -97,8 +60,8 @@ impl Debug for ChainObserver {
     }
 }
 
-impl Observer<Content> for ChainObserver {
-    fn on_block(&self, cursor: &Option<Point>, _content: &Content) -> Result<(), Error> {
+impl chainsync::Observer<MultiEraHeader> for ChainObserver {
+    fn on_block(&self, cursor: &Option<Point>, _content: &MultiEraHeader) -> Result<(), Error> {
         info!("requesting block fetch for point {:?}", cursor);
 
         if let Some(cursor) = cursor {
@@ -124,7 +87,7 @@ pub(crate) fn fetch_blocks_forever(
     input: Receiver<Point>,
 ) -> Result<(), Error> {
     let observer = Block2EventMapper(event_writer);
-    let agent = BlockClient::initial(input, observer);
+    let agent = blockfetch::OnDemandClient::initial(input, observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);
 
@@ -142,7 +105,7 @@ pub(crate) fn observe_headers_forever(
         block_requests,
     };
 
-    let agent = Consumer::<Content, _>::initial(vec![from], observer);
+    let agent = chainsync::Consumer::<MultiEraHeader, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);
 

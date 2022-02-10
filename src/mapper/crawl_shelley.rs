@@ -1,6 +1,8 @@
+use pallas::ledger::primitives::{byron, Fragment};
+
 use pallas::ledger::primitives::alonzo::{
-    crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset, TransactionBody,
-    TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
+    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset,
+    TransactionBody, TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
 };
 
 use pallas::crypto::hash::Hash;
@@ -124,7 +126,7 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_transaction(
+    fn crawl_shelley_transaction(
         &self,
         tx: &TransactionBody,
         tx_hash: &str,
@@ -191,7 +193,12 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_block(&self, block: &Block, hash: &Hash<32>, cbor: &[u8]) -> Result<(), Error> {
+    fn crawl_shelley_block(
+        &self,
+        block: &Block,
+        hash: &Hash<32>,
+        cbor: &[u8],
+    ) -> Result<(), Error> {
         let record = self.to_block_record(block, hash, cbor)?;
 
         self.append(EventData::Block(record.clone()))?;
@@ -211,7 +218,7 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_transaction(tx, &tx_hash, aux_data)?;
+            child.crawl_shelley_transaction(tx, &tx_hash, aux_data)?;
         }
 
         if self.config.include_block_end_events {
@@ -221,6 +228,7 @@ impl EventWriter {
         Ok(())
     }
 
+    #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
@@ -232,10 +240,10 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_block(block, &hash, cbor)
+        child.crawl_shelley_block(block, &hash, cbor)
     }
 
-    #[deprecated(note = "use crawl_with_cbor instead")]
+    #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl(&self, block: &Block) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
@@ -247,6 +255,22 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_block(block, &hash, &[])
+        child.crawl_shelley_block(block, &hash, &[])
+    }
+
+    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
+        let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
+
+        let hash = crypto::hash_block_header(&block.header);
+
+        let child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(&hash)),
+            block_number: Some(block.header.header_body.block_number),
+            slot: Some(block.header.header_body.slot),
+            timestamp: self.compute_timestamp(block.header.header_body.slot),
+            ..EventContext::default()
+        });
+
+        child.crawl_shelley_block(&block, &hash, cbor)
     }
 }

@@ -66,7 +66,7 @@ impl Observer<Content> for ChainObserver {
         let Content(block, cbor) = content;
 
         writer
-            .crawl_with_cbor(block, cbor)
+            .crawl_with_cbor(&block, &cbor)
             .ok_or_warn("error crawling block for events");
 
         Ok(())

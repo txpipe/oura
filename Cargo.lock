@@ -1070,7 +1070,7 @@ dependencies = [
 [[package]]
 name = "pallas"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#1f969c9b144db1057ca8935892b8c0ee9dc91f19"
+source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
 dependencies = [
  "pallas-crypto",
  "pallas-miniprotocols",
@@ -1081,7 +1081,7 @@ dependencies = [
 [[package]]
 name = "pallas-crypto"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#1f969c9b144db1057ca8935892b8c0ee9dc91f19"
+source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1093,7 +1093,7 @@ dependencies = [
 [[package]]
 name = "pallas-miniprotocols"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#1f969c9b144db1057ca8935892b8c0ee9dc91f19"
+source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
 dependencies = [
  "hex",
  "itertools",
@@ -1106,7 +1106,7 @@ dependencies = [
 [[package]]
 name = "pallas-multiplexer"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#1f969c9b144db1057ca8935892b8c0ee9dc91f19"
+source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1116,7 +1116,7 @@ dependencies = [
 [[package]]
 name = "pallas-primitives"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#1f969c9b144db1057ca8935892b8c0ee9dc91f19"
+source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
 dependencies = [
  "hex",
  "log 0.4.14",
