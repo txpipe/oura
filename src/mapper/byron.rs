@@ -68,7 +68,22 @@ impl EventWriter {
 
         let mut record = TransactionRecord {
             hash: tx_hash.to_owned(),
-            fee: source.compute_fee_with_defaults()?,
+            // TODO: we have a problem with here. AFAIK, there's no reference to the tx fee in the
+            // block contents. This leaves us with the two alternative: a) compute the value, b)
+            // omit the value.
+            //
+            // Computing the value is not trivial, the linear policy is easy to
+            // implement, but tracking the parameters for each epoch means hardcoding values or
+            // doing some extra queries.
+            //
+            // Ommiting the value elegantly would require turning the property data type into an
+            // option, which is a breaking change.
+            //
+            // Chossing the lesser evil, going to send a `0` in the field and add a comment to the
+            // docs notifying about this as a known issue to be fixed in v2.
+
+            //fee: source.compute_fee_with_defaults()?,
+            fee: 0,
             input_count: input_records.len(),
             output_count: output_records.len(),
             total_output: output_records.iter().map(|o| o.amount).sum(),
