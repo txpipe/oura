@@ -78,6 +78,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "base58"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6107fe1be6682a68940da878d9e9f5e90ca5745b3dec9fd1bb393c8777d4f581"
+
+[[package]]
 name = "base64"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -574,7 +580,7 @@ checksum = "31f4c6746584866f0feabcc69893c5b51beef3831656a968ed7ae254cdc4fd03"
 dependencies = [
  "bytes",
  "fnv",
- "itoa 1.0.1",
+ "itoa",
 ]
 
 [[package]]
@@ -608,9 +614,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
-version = "0.14.16"
+version = "0.14.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7ec3e62bdc98a2f0393a5048e4c30ef659440ea6e0e572965103e72bd836f55"
+checksum = "043f0e083e9901b6cc658a77d1eb86f4fc650bbb977a4337dd63192826aa85dd"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -621,7 +627,7 @@ dependencies = [
  "http-body",
  "httparse",
  "httpdate",
- "itoa 0.4.8",
+ "itoa",
  "pin-project-lite",
  "socket2",
  "tokio",
@@ -693,12 +699,6 @@ checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
 dependencies = [
  "either",
 ]
-
-[[package]]
-name = "itoa"
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "itoa"
@@ -1070,7 +1070,8 @@ dependencies = [
 [[package]]
 name = "pallas"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b62ef70ad75fa9cafa13208aa5ce6bdec1057c28022cbc1a56fedba1cee5cea"
 dependencies = [
  "pallas-crypto",
  "pallas-miniprotocols",
@@ -1081,7 +1082,8 @@ dependencies = [
 [[package]]
 name = "pallas-crypto"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3513509e94a957c476501921e172050059854597b0297a5ecfcec491b78fc495"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1093,7 +1095,8 @@ dependencies = [
 [[package]]
 name = "pallas-miniprotocols"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6afd7c704d19c101d96ab4862cc967b416f87d662144294e01d53cfed5d5fe15"
 dependencies = [
  "hex",
  "itertools",
@@ -1106,7 +1109,8 @@ dependencies = [
 [[package]]
 name = "pallas-multiplexer"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cab5469041a0b5db9127dd5360e983d8d9c610655757e0c780fc544272cc1f8f"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1116,8 +1120,10 @@ dependencies = [
 [[package]]
 name = "pallas-primitives"
 version = "0.5.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6abf87eec355275bd943eb6965c57666d9faeaf0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "243f610ce64a75b8b337e79bbf68a73b17b5e6882e61637a0e88b933651ba386"
 dependencies = [
+ "base58",
  "hex",
  "log 0.4.14",
  "minicbor",
@@ -1471,7 +1477,7 @@ version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d23c1ba4cf0efd44be32017709280b32d1cea5c3f1275c3b6d9e8bc54f758085"
 dependencies = [
- "itoa 1.0.1",
+ "itoa",
  "ryu",
  "serde",
 ]
@@ -1483,7 +1489,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3491c14715ca2294c4d6a88f15e84739788c1d030eed8c110436aafdaa2f3fd"
 dependencies = [
  "form_urlencoded",
- "itoa 1.0.1",
+ "itoa",
  "ryu",
  "serde",
 ]

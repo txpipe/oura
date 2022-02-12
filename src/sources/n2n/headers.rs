@@ -9,6 +9,7 @@ use crate::Error;
 
 #[derive(Debug)]
 pub enum MultiEraHeader {
+    ByronBoundary(byron::EbbHead),
     Byron(byron::BlockHead),
     Shelley(alonzo::Header),
 }
@@ -24,22 +25,28 @@ impl DecodePayload for MultiEraHeader {
         d.array()?;
         let variant = d.u32()?; // WTF is this value?
 
-        log::info!("found multi-era header variant: {}", variant);
-
         match variant {
             // byron
             0 => {
                 d.array()?;
 
-                // not sure what these values are, can't find a reference anywhere
-                let _mystery_values: (u8, u64) = d.decode()?;
+                // can't find a reference anywhere about the structure of these values, but they
+                // seem to provide the variant of header
+                let (block_type, _): (u8, u64) = d.decode()?;
 
                 d.tag()?;
                 let bytes = d.bytes()?;
 
-                let header = byron::BlockHead::decode_fragment(bytes).unwrap();
-
-                Ok(MultiEraHeader::Byron(header))
+                match block_type {
+                    0 => {
+                        let header = byron::EbbHead::decode_fragment(bytes).unwrap();
+                        Ok(MultiEraHeader::ByronBoundary(header))
+                    }
+                    _ => {
+                        let header = byron::BlockHead::decode_fragment(bytes).unwrap();
+                        Ok(MultiEraHeader::Byron(header))
+                    }
+                }
             }
             // shelley
             _ => {
@@ -53,25 +60,17 @@ impl DecodePayload for MultiEraHeader {
     }
 }
 
-// TODO: un-hardcode these values
-const BYRON_SLOT_LENGTH: u64 = 20; // seconds
-const BYRON_EPOCH_LENGTH: u64 = 5 * 24 * 60 * 60; // 5 days
-
-fn byron_sub_epoch_slot_to_absolute(epoch: u64, sub_epoch_slot: u64) -> u64 {
-    ((epoch * BYRON_EPOCH_LENGTH) / BYRON_SLOT_LENGTH) + sub_epoch_slot
-}
-
 impl chainsync::BlockLike for MultiEraHeader {
     fn block_point(&self) -> Result<Point, Error> {
         match self {
+            MultiEraHeader::ByronBoundary(x) => {
+                let hash = x.to_hash();
+                let slot = x.to_abs_slot();
+                Ok(Point(slot, hash.to_vec()))
+            }
             MultiEraHeader::Byron(x) => {
-                let hash = byron::crypto::hash_main_block_header(x);
-
-                let slot = byron_sub_epoch_slot_to_absolute(
-                    x.consensus_data.0.epoch,
-                    x.consensus_data.0.slot,
-                );
-
+                let hash = x.to_hash();
+                let slot = x.consensus_data.0.to_abs_slot();
                 Ok(Point(slot, hash.to_vec()))
             }
             MultiEraHeader::Shelley(x) => {

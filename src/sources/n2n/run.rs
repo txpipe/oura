@@ -14,7 +14,7 @@ use std::sync::mpsc::{Receiver, SyncSender};
 
 use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
 
-use super::header::MultiEraHeader;
+use super::headers::MultiEraHeader;
 
 struct Block2EventMapper(EventWriter);
 
