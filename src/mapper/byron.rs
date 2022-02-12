@@ -91,8 +91,8 @@ impl EventWriter {
         };
 
         if self.config.include_transaction_details {
-            record.inputs = input_records.clone().into();
-            record.outputs = output_records.clone().into();
+            record.inputs = input_records.into();
+            record.outputs = output_records.into();
         }
 
         Ok(record)
@@ -200,7 +200,7 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_byron_block(&block, &hash, cbor)?;
+            child.crawl_byron_block(&block, hash, cbor)?;
         }
 
         Ok(())

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use log::{info, warn};
 
 use pallas::{
-    ledger::primitives::{alonzo, probing, Fragment},
+    ledger::primitives::probing,
     network::{
         miniprotocols::{blockfetch, chainsync, run_agent, Point},
         multiplexer::Channel,

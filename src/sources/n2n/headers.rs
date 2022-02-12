@@ -15,7 +15,7 @@ pub enum MultiEraHeader {
 }
 
 impl EncodePayload for MultiEraHeader {
-    fn encode_payload(&self, e: &mut PayloadEncoder) -> Result<(), Error> {
+    fn encode_payload(&self, _e: &mut PayloadEncoder) -> Result<(), Error> {
         todo!()
     }
 }
@@ -74,7 +74,7 @@ impl chainsync::BlockLike for MultiEraHeader {
                 Ok(Point(slot, hash.to_vec()))
             }
             MultiEraHeader::Shelley(x) => {
-                let hash = alonzo::crypto::hash_block_header(&x);
+                let hash = alonzo::crypto::hash_block_header(x);
                 Ok(Point(x.header_body.slot, hash.to_vec()))
             }
         }

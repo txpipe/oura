@@ -1,4 +1,4 @@
-use pallas::ledger::primitives::{byron, Fragment};
+use pallas::ledger::primitives::Fragment;
 
 use pallas::ledger::primitives::alonzo::{
     self, crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset,
