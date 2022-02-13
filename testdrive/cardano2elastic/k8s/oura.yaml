@@ -59,10 +59,10 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:20
+          image: ghcr.io/txpipe/oura-testdrive:22
           env:
             - name: "RUST_LOG"
-              value: "info"
+              value: "warn"
             - name: "OURA_SINK_CREDENTIALS_PASSWORD"
               valueFrom:
                 secretKeyRef:
