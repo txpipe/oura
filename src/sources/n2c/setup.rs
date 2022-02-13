@@ -6,9 +6,8 @@ use net2::TcpStreamExt;
 
 use log::info;
 
-use pallas::ouroboros::network::{
-    handshake::{n2c, MAINNET_MAGIC},
-    machines::{primitives::Point, run_agent},
+use pallas::network::{
+    miniprotocols::{handshake::n2c, run_agent, Point, MAINNET_MAGIC},
     multiplexer::{Channel, Multiplexer},
 };
 
