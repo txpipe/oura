@@ -1,3 +1,4 @@
+pub mod assert;
 pub mod stdout;
 pub mod terminal;
 
