@@ -2,44 +2,17 @@ use std::fmt::Debug;
 
 use log::{error, info};
 
-use pallas::{
-    ledger::primitives::alonzo::{crypto, Block, BlockWrapper},
-    ledger::primitives::Fragment,
-    network::{
-        miniprotocols::{
-            chainsync::{BlockLike, Consumer, Observer, Tip},
-            run_agent, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,
-        },
-        multiplexer::Channel,
+use pallas::network::{
+    miniprotocols::{
+        chainsync::{Consumer, Observer, Tip},
+        run_agent, Point,
     },
+    multiplexer::Channel,
 };
 
-use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
+use crate::{mapper::EventWriter, model::EventData, Error};
 
-#[derive(Debug)]
-struct Content(Block, Vec<u8>);
-
-impl EncodePayload for Content {
-    fn encode_payload(&self, _e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
-    }
-}
-
-impl DecodePayload for Content {
-    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Box<dyn std::error::Error>> {
-        d.tag()?;
-        let bytes = d.bytes()?;
-        let BlockWrapper(_, block) = BlockWrapper::decode_fragment(bytes)?;
-        Ok(Content(block, Vec::from(bytes)))
-    }
-}
-
-impl BlockLike for Content {
-    fn block_point(&self) -> Result<Point, Box<dyn std::error::Error>> {
-        let hash = crypto::hash_block_header(&self.0.header);
-        Ok(Point(self.0.header.header_body.slot, hash.to_vec()))
-    }
-}
+use super::blocks::MultiEraBlock;
 
 struct ChainObserver(EventWriter);
 
@@ -56,18 +29,18 @@ impl ChainObserver {
     }
 }
 
-impl Observer<Content> for ChainObserver {
+impl Observer<MultiEraBlock> for ChainObserver {
     fn on_block(
         &self,
         _cursor: &Option<Point>,
-        content: &Content,
+        content: &MultiEraBlock,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let Self(writer) = self;
-        let Content(block, cbor) = content;
 
-        writer
-            .crawl_with_cbor(&block, &cbor)
-            .ok_or_warn("error crawling block for events");
+        match content {
+            MultiEraBlock::Byron(model, cbor) => writer.crawl_byron_with_cbor(model, cbor)?,
+            MultiEraBlock::Shelley(model, cbor) => writer.crawl_shelley_with_cbor(model, cbor)?,
+        };
 
         Ok(())
     }
@@ -96,7 +69,7 @@ pub(crate) fn observe_forever(
     from: Point,
 ) -> Result<(), Error> {
     let observer = ChainObserver::new(writer);
-    let agent = Consumer::<Content, _>::initial(vec![from], observer);
+    let agent = Consumer::<MultiEraBlock, _>::initial(vec![from], observer);
     let agent = run_agent(agent, &mut channel)?;
     error!("chainsync agent final state: {:?}", agent.state);
 

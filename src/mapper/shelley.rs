@@ -258,9 +258,12 @@ impl EventWriter {
         child.crawl_shelley_block(block, &hash, &[])
     }
 
-    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
-
+    /// Mapper entry-point for decoded Shelley blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we already have a decoded block (for example, N2C). The raw CBOR is also
+    /// passed through in case we need to attach it to outbound events.
+    pub fn crawl_shelley_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
         let child = self.child_writer(EventContext {
@@ -272,5 +275,18 @@ impl EventWriter {
         });
 
         child.crawl_shelley_block(&block, &hash, cbor)
+    }
+
+    /// Mapper entry-point for raw Shelley cbor blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we haven't decoded the CBOR yet (for example, N2N).
+    ///
+    /// We use Alonzo primitives since they are backward compatible with
+    /// Shelley. In this way, we can avoid having to fork the crawling procedure
+    /// for each different hard-fork.
+    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
+        let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
+        self.crawl_shelley_with_cbor(&block, cbor)
     }
 }

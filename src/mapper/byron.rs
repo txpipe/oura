@@ -157,7 +157,7 @@ impl EventWriter {
         })
     }
 
-    fn crawl_byron_block(
+    fn crawl_byron_main_block(
         &self,
         block: &byron::MainBlock,
         hash: &Hash<32>,
@@ -186,9 +186,12 @@ impl EventWriter {
         Ok(())
     }
 
-    pub fn crawl_from_byron_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let block = byron::Block::decode_fragment(cbor)?;
-
+    /// Mapper entry-point for decoded Byron blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we already have a decoded block (for example, N2C). The raw CBOR is also
+    /// passed through in case we need to attach it to outbound events.
+    pub fn crawl_byron_with_cbor(&self, block: &byron::Block, cbor: &[u8]) -> Result<(), Error> {
         if let byron::Block::MainBlock(block) = block {
             let hash = &block.header.to_hash();
 
@@ -200,9 +203,18 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_byron_block(&block, hash, cbor)?;
+            child.crawl_byron_main_block(&block, hash, cbor)?;
         }
 
         Ok(())
+    }
+
+    /// Mapper entry-point for raw Byron cbor blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we haven't decoded the CBOR yet (for example, N2N).
+    pub fn crawl_from_byron_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
+        let block = byron::Block::decode_fragment(cbor)?;
+        self.crawl_byron_with_cbor(&block, cbor)
     }
 }

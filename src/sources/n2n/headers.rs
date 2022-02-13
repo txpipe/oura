@@ -31,7 +31,7 @@ impl DecodePayload for MultiEraHeader {
                 d.array()?;
 
                 // can't find a reference anywhere about the structure of these values, but they
-                // seem to provide the variant of header
+                // seem to provide the Byron-specific variant of the header
                 let (block_type, _): (u8, u64) = d.decode()?;
 
                 d.tag()?;
