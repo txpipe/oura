@@ -21,6 +21,10 @@ data:
     max_bytes_per_file = 50_000_000
     max_total_files = 200
     compression = true
+
+    [cursor]
+    type = "File"
+    path = "/var/oura/cursor"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -28,10 +32,10 @@ metadata:
   name: oura
 spec:
   accessModes:
-   - ReadWriteOnce
+    - ReadWriteOnce
   resources:
-   requests:
-    storage: 3Gi
+    requests:
+      storage: 3Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,29 +54,29 @@ spec:
         app: oura
     spec:
       containers:
-      - name: main
-        image: ghcr.io/txpipe/oura-testdrive:17
-        env:
-          - name: "RUST_LOG"
-            value: "info"
-        resources:
-          requests:
-            memory: 100Mi
-            cpu: 50m
-          limits:
-            memory: 500Mi
-            cpu: 200m
-        args:
-          - "daemon"
-        volumeMounts:
-          - mountPath: /etc/oura
-            name: oura-config
-          - mountPath: /var/oura
-            name: oura-logs
+        - name: main
+          image: ghcr.io/txpipe/oura-testdrive:20
+          env:
+            - name: "RUST_LOG"
+              value: "info"
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 50m
+            limits:
+              memory: 500Mi
+              cpu: 200m
+          args:
+            - "daemon"
+          volumeMounts:
+            - mountPath: /etc/oura
+              name: oura-config
+            - mountPath: /var/oura
+              name: oura-var
       volumes:
-      - name: oura-config
-        configMap:
-          name: oura
-      - name: oura-logs
-        persistentVolumeClaim:
-          claimName: oura
+        - name: oura-config
+          configMap:
+            name: oura
+        - name: oura-var
+          persistentVolumeClaim:
+            claimName: oura

@@ -25,6 +25,21 @@ data:
     [sink.credentials]
     type = "Basic"
     username = "elastic"
+
+    [cursor]
+    type = "File"
+    path = "/var/oura/cursor"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oura
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,29 +58,34 @@ spec:
         app: oura
     spec:
       containers:
-      - name: main
-        image: ghcr.io/txpipe/oura:v0.3.10
-        env:
-          - name: "RUST_LOG"
-            value: "info"
-          - name: "OURA_SINK_CREDENTIALS_PASSWORD"
-            valueFrom:
-              secretKeyRef:
-                key: elastic
-                name: sink-es-elastic-user
-        resources:
-          requests:
-            memory: 100Mi
-            cpu: 50m
-          limits:
-            memory: 500Mi
-            cpu: 200m
-        args:
-          - "daemon"
-        volumeMounts:
-          - mountPath: /etc/oura
-            name: oura-config
+        - name: main
+          image: ghcr.io/txpipe/oura-testdrive:20
+          env:
+            - name: "RUST_LOG"
+              value: "info"
+            - name: "OURA_SINK_CREDENTIALS_PASSWORD"
+              valueFrom:
+                secretKeyRef:
+                  key: elastic
+                  name: sink-es-elastic-user
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 50m
+            limits:
+              memory: 500Mi
+              cpu: 200m
+          args:
+            - "daemon"
+          volumeMounts:
+            - mountPath: /etc/oura
+              name: oura-config
+            - mountPath: /var/oura
+              name: oura-var
       volumes:
-      - name: oura-config
-        configMap:
-          name: oura
+        - name: oura-config
+          configMap:
+            name: oura
+        - name: oura-var
+          persistentVolumeClaim:
+            claimName: oura
