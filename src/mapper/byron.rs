@@ -193,7 +193,7 @@ impl EventWriter {
     /// passed through in case we need to attach it to outbound events.
     pub fn crawl_byron_with_cbor(&self, block: &byron::Block, cbor: &[u8]) -> Result<(), Error> {
         if let byron::Block::MainBlock(block) = block {
-            let hash = &block.header.to_hash();
+            let hash = block.header.to_hash();
 
             let child = self.child_writer(EventContext {
                 block_hash: Some(hex::encode(&hash)),
@@ -203,7 +203,7 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_byron_main_block(&block, hash, cbor)?;
+            child.crawl_byron_main_block(block, &hash, cbor)?;
         }
 
         Ok(())

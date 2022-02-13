@@ -274,7 +274,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(&block, &hash, cbor)
+        child.crawl_shelley_block(block, &hash, cbor)
     }
 
     /// Mapper entry-point for raw Shelley cbor blocks
