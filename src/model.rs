@@ -158,7 +158,15 @@ pub enum StakeCredential {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+pub enum Era {
+    Byron,
+    Shelley,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockRecord {
+    pub era: Era,
     pub body_size: usize,
     pub issuer_vkey: String,
     pub tx_count: usize,

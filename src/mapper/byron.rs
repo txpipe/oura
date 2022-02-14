@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use super::map::ToHex;
 use super::EventWriter;
-use crate::model::{BlockRecord, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
+use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
@@ -143,6 +143,7 @@ impl EventWriter {
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
+            era: Era::Byron,
             body_size: cbor.len() as usize,
             issuer_vkey: source.header.consensus_data.1.to_hex(),
             tx_count: source.body.tx_payload.len(),
