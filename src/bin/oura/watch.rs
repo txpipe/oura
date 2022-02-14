@@ -94,6 +94,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             well_known: None,
             mapper,
             since,
+            intersections: None,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
@@ -101,6 +102,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             well_known: None,
             mapper,
             since,
+            intersections: None,
         }),
     };
 

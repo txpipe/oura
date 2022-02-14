@@ -97,7 +97,7 @@ pub(crate) fn fetch_blocks_forever(
 pub(crate) fn observe_headers_forever(
     mut channel: Channel,
     event_writer: EventWriter,
-    from: Point,
+    from: Vec<Point>,
     block_requests: SyncSender<Point>,
 ) -> Result<(), Error> {
     let observer = ChainObserver {
@@ -105,7 +105,7 @@ pub(crate) fn observe_headers_forever(
         block_requests,
     };
 
-    let agent = chainsync::Consumer::<MultiEraHeader, _>::initial(vec![from], observer);
+    let agent = chainsync::Consumer::<MultiEraHeader, _>::initial(from, observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);
 

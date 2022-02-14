@@ -66,10 +66,10 @@ impl Observer<MultiEraBlock> for ChainObserver {
 pub(crate) fn observe_forever(
     mut channel: Channel,
     writer: EventWriter,
-    from: Point,
+    from: Vec<Point>,
 ) -> Result<(), Error> {
     let observer = ChainObserver::new(writer);
-    let agent = Consumer::<MultiEraBlock, _>::initial(vec![from], observer);
+    let agent = Consumer::<MultiEraBlock, _>::initial(from, observer);
     let agent = run_agent(agent, &mut channel)?;
     error!("chainsync agent final state: {:?}", agent.state);
 

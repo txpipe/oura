@@ -167,23 +167,40 @@ pub(crate) fn find_end_of_chain(
 
 pub(crate) fn define_start_point(
     explicit_arg: &Option<PointArg>,
+    intersections: &Option<Vec<PointArg>>,
     utils: &Utils,
     cs_channel: &mut Channel,
-) -> Result<Point, Error> {
+) -> Result<Vec<Point>, Error> {
     let cursor = utils.get_cursor_if_any();
 
-    match (cursor, explicit_arg) {
-        (Some(cursor), _) => {
+    match (cursor, explicit_arg, intersections) {
+        (Some(cursor), _, _) => {
             log::info!("found persisted cursor, will use as starting point");
-            cursor.try_into()
+
+            Ok(vec![cursor.try_into()?])
         }
-        (None, Some(arg)) => {
+        (None, Some(arg), _) => {
             log::info!("explicit 'since' argument, will use as starting point");
-            arg.clone().try_into()
+            Ok(vec![arg.clone().try_into()?])
+        }
+        (None, None, Some(intersections)) => {
+            log::info!("intersections argument, will use as starting point");
+
+            let mut points = Vec::new();
+
+            for intersection in intersections {
+                let point = intersection.clone().try_into()?;
+
+                points.push(point);
+            }
+
+            Ok(points)
         }
         _ => {
             log::info!("no starting point specified, will use tip of chain");
-            find_end_of_chain(cs_channel, &utils.well_known)
+            let point = find_end_of_chain(cs_channel, &utils.well_known)?;
+
+            Ok(vec![point])
         }
     }
 }
