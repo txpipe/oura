@@ -16,6 +16,7 @@ use oura::{
 
 use oura::filters::noop::Config as NoopFilterConfig;
 use oura::filters::selection::Config as SelectionConfig;
+use oura::sinks::assert::Config as AssertConfig;
 use oura::sinks::stdout::Config as StdoutConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
@@ -77,6 +78,7 @@ impl FilterProvider for Filter {
 enum Sink {
     Terminal(TerminalConfig),
     Stdout(StdoutConfig),
+    Assert(AssertConfig),
 
     #[cfg(feature = "logs")]
     Logs(WriterConfig),
@@ -95,6 +97,7 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
     match config {
         Sink::Terminal(c) => WithUtils::new(c, utils).bootstrap(input),
         Sink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
+        Sink::Assert(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "logs")]
         Sink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
