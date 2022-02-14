@@ -30,3 +30,15 @@ pub(crate) fn block_previous_hash_matches(state: &State) -> Outcome {
         _ => Outcome::Unknown,
     }
 }
+
+pub(crate) fn tx_records_matches_block_count(state: &State) -> Outcome {
+    match &state.current_event {
+        Some(event) => match &event.data {
+            crate::model::EventData::BlockEnd(block) => {
+                Outcome::from(block.tx_count == state.tx_count_in_block)
+            }
+            _ => Outcome::Unknown,
+        },
+        _ => Outcome::Unknown,
+    }
+}
