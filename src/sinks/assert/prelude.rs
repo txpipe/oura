@@ -12,6 +12,7 @@ pub(crate) struct State {
 pub(crate) enum Outcome {
     Pass,
     Fail,
+    NotApplicable,
     Unknown,
 }
 

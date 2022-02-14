@@ -34,6 +34,7 @@ macro_rules! execute_assertion {
                 Outcome::Unknown => {
                     log::warn!("unknown assertion outcome: {}", name);
                 }
+                Outcome::NotApplicable => (),
             };
         }
     };

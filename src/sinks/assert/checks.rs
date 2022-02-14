@@ -39,7 +39,7 @@ pub(crate) fn tx_records_matches_block_count(state: &State) -> Outcome {
             EventData::BlockEnd(block) => {
                 Outcome::from(block.tx_count == state.tx_records_since_block)
             }
-            _ => Outcome::Unknown,
+            _ => Outcome::NotApplicable,
         },
         _ => Outcome::Unknown,
     }
@@ -50,11 +50,11 @@ pub(crate) fn tx_has_input_and_output(state: &State) -> Outcome {
         Some(event) => match &event.data {
             EventData::Transaction(tx) => match (&tx.inputs, &tx.outputs) {
                 (Some(inputs), Some(outputs)) => {
-                    Outcome::from(inputs.len() > 1 && outputs.len() > 1)
+                    Outcome::from(inputs.len() > 0 && outputs.len() > 0)
                 }
                 _ => Outcome::Unknown,
             },
-            _ => Outcome::Unknown,
+            _ => Outcome::NotApplicable,
         },
         _ => Outcome::Unknown,
     }
