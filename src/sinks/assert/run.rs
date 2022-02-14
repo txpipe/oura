@@ -11,7 +11,7 @@ use super::checks::*;
 use super::prelude::*;
 use super::Config;
 
-macro_rules! execute_assertion {
+macro_rules! run_check {
     ($config:expr, $state:expr, $func:ident) => {
         let outcome = $func($state);
         let name = stringify!($func);
@@ -79,11 +79,11 @@ pub fn assertion_loop(
 
         state = reduce_state(state, event);
 
-        execute_assertion!(&config, &state, block_depth_doesnt_skip_numbers);
-        execute_assertion!(&config, &state, block_slot_increases);
-        execute_assertion!(&config, &state, block_previous_hash_matches);
-        execute_assertion!(&config, &state, event_timestamp_increases);
-        execute_assertion!(&config, &state, tx_records_matches_block_count);
-        execute_assertion!(&config, &state, tx_has_input_and_output);
+        run_check!(&config, &state, block_depth_doesnt_skip_numbers);
+        run_check!(&config, &state, block_slot_increases);
+        run_check!(&config, &state, block_previous_hash_matches);
+        run_check!(&config, &state, event_timestamp_increases);
+        run_check!(&config, &state, tx_records_matches_block_count);
+        run_check!(&config, &state, tx_has_input_and_output);
     }
 }
