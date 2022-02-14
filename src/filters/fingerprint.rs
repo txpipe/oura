@@ -222,12 +222,13 @@ impl FilterProvider for Config {
                 Ok(value) => {
                     debug!("computed fingerprint {}", value);
                     msg.fingerprint = Some(value);
-                    output_tx.send(msg).expect("error sending filter message");
                 }
                 Err(err) => {
                     warn!("failed to compute fingerprint: {}, event: {:?}", err, msg);
                 }
             }
+
+            output_tx.send(msg).expect("error sending filter message");
         });
 
         Ok((handle, output_rx))
