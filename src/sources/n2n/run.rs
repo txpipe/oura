@@ -70,11 +70,11 @@ impl chainsync::Observer<HeaderContent> for ChainObserver {
         content: chainsync::HeaderContent,
         _tip: &chainsync::Tip,
     ) -> Result<(), Error> {
-        let header = MultiEraHeader::try_from(content).unwrap();
-        let cursor = header.read_cursor().unwrap();
+        let header = MultiEraHeader::try_from(content)?;
+        let cursor = header.read_cursor()?;
 
         info!("requesting block fetch for point {:?}", cursor);
-        self.block_requests.send(cursor.clone())?;
+        self.block_requests.send(cursor)?;
 
         Ok(())
     }
