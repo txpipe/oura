@@ -1,8 +1,6 @@
 use pallas::{
-    ledger::primitives::{alonzo, byron, Fragment},
-    network::miniprotocols::{
-        chainsync, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,
-    },
+    ledger::primitives::{alonzo, byron},
+    network::miniprotocols::{chainsync::HeaderContent, Point},
 };
 
 use crate::Error;
@@ -14,54 +12,31 @@ pub enum MultiEraHeader {
     Shelley(alonzo::Header),
 }
 
-impl EncodePayload for MultiEraHeader {
-    fn encode_payload(&self, _e: &mut PayloadEncoder) -> Result<(), Error> {
-        todo!()
-    }
-}
+impl TryFrom<HeaderContent> for MultiEraHeader {
+    type Error = Error;
 
-impl DecodePayload for MultiEraHeader {
-    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Error> {
-        d.array()?;
-        let variant = d.u32()?; // WTF is this value?
-
-        match variant {
-            // byron
-            0 => {
-                d.array()?;
-
-                // can't find a reference anywhere about the structure of these values, but they
-                // seem to provide the Byron-specific variant of the header
-                let (block_type, _): (u8, u64) = d.decode()?;
-
-                d.tag()?;
-                let bytes = d.bytes()?;
-
-                match block_type {
-                    0 => {
-                        let header = byron::EbbHead::decode_fragment(bytes).unwrap();
-                        Ok(MultiEraHeader::ByronBoundary(header))
-                    }
-                    _ => {
-                        let header = byron::BlockHead::decode_fragment(bytes).unwrap();
-                        Ok(MultiEraHeader::Byron(header))
-                    }
+    fn try_from(value: HeaderContent) -> Result<Self, Self::Error> {
+        match value {
+            HeaderContent::Byron(variant, _, bytes) => match variant {
+                0 => {
+                    let header = minicbor::decode(&bytes)?;
+                    Ok(MultiEraHeader::ByronBoundary(header))
                 }
-            }
-            // shelley
-            _ => {
-                d.tag()?;
-                let bytes = d.bytes()?;
-                let header = alonzo::Header::decode_fragment(bytes)?;
-
+                _ => {
+                    let header = minicbor::decode(&bytes)?;
+                    Ok(MultiEraHeader::Byron(header))
+                }
+            },
+            HeaderContent::Shelley(bytes) => {
+                let header = minicbor::decode(&bytes)?;
                 Ok(MultiEraHeader::Shelley(header))
             }
         }
     }
 }
 
-impl chainsync::BlockLike for MultiEraHeader {
-    fn block_point(&self) -> Result<Point, Error> {
+impl MultiEraHeader {
+    pub fn read_cursor(&self) -> Result<Point, Error> {
         match self {
             MultiEraHeader::ByronBoundary(x) => {
                 let hash = x.to_hash();

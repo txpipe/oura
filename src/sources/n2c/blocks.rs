@@ -1,39 +1,32 @@
 use std::ops::Deref;
 
 use pallas::{
-    ledger::primitives::{alonzo, byron, probing, Fragment},
-    network::miniprotocols::{
-        chainsync, DecodePayload, EncodePayload, PayloadDecoder, PayloadEncoder, Point,
-    },
+    ledger::primitives::{alonzo, byron, probing},
+    network::miniprotocols::{chainsync::BlockContent, Point},
 };
 
 use crate::Error;
 
 #[derive(Debug)]
 pub(crate) enum MultiEraBlock {
-    Byron(Box<byron::Block>, Vec<u8>),
-    Shelley(Box<alonzo::Block>, Vec<u8>),
+    Byron(Box<byron::Block>),
+    Shelley(Box<alonzo::Block>),
 }
 
-impl EncodePayload for MultiEraBlock {
-    fn encode_payload(&self, _e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
-        todo!()
-    }
-}
+impl TryFrom<BlockContent> for MultiEraBlock {
+    type Error = Error;
 
-impl DecodePayload for MultiEraBlock {
-    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Box<dyn std::error::Error>> {
-        d.tag()?;
-        let bytes = d.bytes()?;
+    fn try_from(value: BlockContent) -> Result<Self, Self::Error> {
+        let bytes = value.deref();
 
         match probing::probe_block_cbor(bytes) {
             probing::BlockInference::Byron => {
-                let block = byron::Block::decode_fragment(bytes)?;
-                Ok(MultiEraBlock::Byron(Box::new(block), Vec::from(bytes)))
+                let block = minicbor::decode(bytes)?;
+                Ok(MultiEraBlock::Byron(Box::new(block)))
             }
             probing::BlockInference::Shelley => {
-                let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(bytes)?;
-                Ok(MultiEraBlock::Shelley(Box::new(block), Vec::from(bytes)))
+                let alonzo::BlockWrapper(_, block) = minicbor::decode(bytes)?;
+                Ok(MultiEraBlock::Shelley(Box::new(block)))
             }
             probing::BlockInference::Inconclusive => {
                 log::error!("CBOR hex for debubbing: {}", hex::encode(bytes));
@@ -43,10 +36,11 @@ impl DecodePayload for MultiEraBlock {
     }
 }
 
-impl chainsync::BlockLike for MultiEraBlock {
-    fn block_point(&self) -> Result<Point, Error> {
+#[allow(unused)]
+impl MultiEraBlock {
+    fn read_cursor(&self) -> Result<Point, Error> {
         match self {
-            MultiEraBlock::Byron(x, _) => match x.deref() {
+            MultiEraBlock::Byron(x) => match x.deref() {
                 byron::Block::EbBlock(x) => {
                     let hash = x.header.to_hash();
                     let slot = x.header.to_abs_slot();
@@ -58,7 +52,7 @@ impl chainsync::BlockLike for MultiEraBlock {
                     Ok(Point(slot, hash.to_vec()))
                 }
             },
-            MultiEraBlock::Shelley(x, _) => {
+            MultiEraBlock::Shelley(x) => {
                 let hash = alonzo::crypto::hash_block_header(&x.header);
                 Ok(Point(x.header.header_body.slot, hash.to_vec()))
             }
