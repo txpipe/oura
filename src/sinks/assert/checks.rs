@@ -50,7 +50,7 @@ pub(crate) fn tx_has_input_and_output(state: &State) -> Outcome {
         Some(event) => match &event.data {
             EventData::Transaction(tx) => match (&tx.inputs, &tx.outputs) {
                 (Some(inputs), Some(outputs)) => {
-                    Outcome::from(inputs.len() > 0 && outputs.len() > 0)
+                    Outcome::from(!inputs.is_empty() && !outputs.is_empty())
                 }
                 _ => Outcome::Unknown,
             },
