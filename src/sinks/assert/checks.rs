@@ -1,3 +1,5 @@
+use crate::model::EventData;
+
 use super::prelude::*;
 
 pub(crate) fn block_depth_doesnt_skip_numbers(state: &State) -> Outcome {
@@ -34,9 +36,24 @@ pub(crate) fn block_previous_hash_matches(state: &State) -> Outcome {
 pub(crate) fn tx_records_matches_block_count(state: &State) -> Outcome {
     match &state.current_event {
         Some(event) => match &event.data {
-            crate::model::EventData::BlockEnd(block) => {
-                Outcome::from(block.tx_count == state.tx_count_in_block)
+            EventData::BlockEnd(block) => {
+                Outcome::from(block.tx_count == state.tx_records_since_block)
             }
+            _ => Outcome::Unknown,
+        },
+        _ => Outcome::Unknown,
+    }
+}
+
+pub(crate) fn tx_has_input_and_output(state: &State) -> Outcome {
+    match &state.current_event {
+        Some(event) => match &event.data {
+            EventData::Transaction(tx) => match (&tx.inputs, &tx.outputs) {
+                (Some(inputs), Some(outputs)) => {
+                    Outcome::from(inputs.len() > 1 && outputs.len() > 1)
+                }
+                _ => Outcome::Unknown,
+            },
             _ => Outcome::Unknown,
         },
         _ => Outcome::Unknown,

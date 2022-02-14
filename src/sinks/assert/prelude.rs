@@ -6,7 +6,7 @@ pub(crate) struct State {
     pub previous_event: Option<Event>,
     pub current_block: Option<BlockRecord>,
     pub previous_block: Option<BlockRecord>,
-    pub tx_count_in_block: usize,
+    pub tx_records_since_block: usize,
 }
 
 pub(crate) enum Outcome {

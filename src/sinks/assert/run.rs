@@ -44,11 +44,11 @@ fn reduce_state(current: State, event: Event) -> State {
         EventData::Block(r) => State {
             previous_block: current.current_block,
             current_block: Some(r.clone()),
-            tx_count_in_block: 0,
+            tx_records_since_block: 0,
             ..current
         },
         EventData::Transaction(_) => State {
-            tx_count_in_block: current.tx_count_in_block + 1,
+            tx_records_since_block: current.tx_records_since_block + 1,
             ..current
         },
         _ => current,
@@ -83,5 +83,6 @@ pub fn assertion_loop(
         execute_assertion!(&config, &state, block_previous_hash_matches);
         execute_assertion!(&config, &state, event_timestamp_increases);
         execute_assertion!(&config, &state, tx_records_matches_block_count);
+        execute_assertion!(&config, &state, tx_has_input_and_output);
     }
 }
