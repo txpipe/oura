@@ -1,36 +1,15 @@
 use std::sync::Arc;
 
 use crate::{
-    model::{BlockRecord, Event, EventData},
+    model::{Event, EventData},
     pipelining::StageReceiver,
     utils::Utils,
     Error,
 };
 
+use super::checks::*;
+use super::prelude::*;
 use super::Config;
-
-#[derive(Default, Debug)]
-struct State {
-    current_event: Option<Event>,
-    previous_event: Option<Event>,
-    current_block: Option<BlockRecord>,
-    previous_block: Option<BlockRecord>,
-}
-
-enum Outcome {
-    Pass,
-    Fail,
-    Unknown,
-}
-
-impl From<bool> for Outcome {
-    fn from(other: bool) -> Self {
-        match other {
-            true => Outcome::Pass,
-            false => Outcome::Fail,
-        }
-    }
-}
 
 macro_rules! execute_assertion {
     ($config:expr, $state:expr, $func:ident) => {
@@ -60,48 +39,6 @@ macro_rules! execute_assertion {
     };
 }
 
-fn block_depth_doesnt_skip_numbers(state: &State) -> Outcome {
-    match (&state.previous_block, &state.current_block) {
-        (Some(prev), Some(curr)) => Outcome::from((curr.number - prev.number) == 1),
-        _ => Outcome::Unknown,
-    }
-}
-
-fn block_slot_increases(state: &State) -> Outcome {
-    match (&state.previous_block, &state.current_block) {
-        (Some(prev), Some(curr)) => Outcome::from(prev.slot < curr.slot),
-        _ => Outcome::Unknown,
-    }
-}
-
-fn event_timestamp_increases(state: &State) -> Outcome {
-    match (&state.previous_event, &state.current_event) {
-        (Some(prev), Some(curr)) => match (prev.context.timestamp, curr.context.timestamp) {
-            (Some(prev), Some(curr)) => Outcome::from(prev <= curr),
-            _ => Outcome::Unknown,
-        },
-        _ => Outcome::Unknown,
-    }
-}
-
-fn block_previous_hash_matches(state: &State) -> Outcome {
-    match (&state.previous_block, &state.current_block) {
-        (Some(prev), Some(curr)) => Outcome::from(curr.previous_hash == prev.hash),
-        _ => Outcome::Unknown,
-    }
-}
-
-/*
-fn cbor_decoding_is_isomorphic(state: &State) -> bool {
-    match state.latest_event {
-        Some(event) => match event.data {
-            EventData::Block(block) => {
-
-            }
-        }
-    }
-}
- */
 fn reduce_state(current: State, event: Event) -> State {
     let state = match &event.data {
         EventData::Block(r) => State {
@@ -112,13 +49,11 @@ fn reduce_state(current: State, event: Event) -> State {
         _ => current,
     };
 
-    let state = State {
+    State {
         previous_event: state.current_event,
         current_event: Some(event),
         ..state
-    };
-
-    state
+    }
 }
 
 pub fn assertion_loop(

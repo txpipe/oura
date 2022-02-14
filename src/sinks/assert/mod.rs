@@ -1,3 +1,5 @@
+mod checks;
+mod prelude;
 mod run;
 mod setup;
 
