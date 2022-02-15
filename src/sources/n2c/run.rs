@@ -1,12 +1,9 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Deref};
 
 use log::{error, info};
 
 use pallas::network::{
-    miniprotocols::{
-        chainsync::{Consumer, Observer, Tip},
-        run_agent, Point,
-    },
+    miniprotocols::{chainsync, run_agent, Point},
     multiplexer::Channel,
 };
 
@@ -23,23 +20,32 @@ impl Debug for ChainObserver {
     }
 }
 
+impl Deref for ChainObserver {
+    type Target = EventWriter;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl ChainObserver {
     fn new(writer: EventWriter) -> Self {
         Self(writer)
     }
 }
 
-impl Observer<MultiEraBlock> for ChainObserver {
-    fn on_block(
+impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
+    fn on_roll_forward(
         &self,
-        _cursor: &Option<Point>,
-        content: &MultiEraBlock,
+        content: chainsync::BlockContent,
+        _tip: &chainsync::Tip,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let Self(writer) = self;
+        let cbor = Vec::from(content.deref());
+        let block = MultiEraBlock::try_from(content)?;
 
-        match content {
-            MultiEraBlock::Byron(model, cbor) => writer.crawl_byron_with_cbor(model, cbor)?,
-            MultiEraBlock::Shelley(model, cbor) => writer.crawl_shelley_with_cbor(model, cbor)?,
+        match block {
+            MultiEraBlock::Byron(model) => self.crawl_byron_with_cbor(&model, &cbor)?,
+            MultiEraBlock::Shelley(model) => self.crawl_shelley_with_cbor(&model, &cbor)?,
         };
 
         Ok(())
@@ -52,7 +58,7 @@ impl Observer<MultiEraBlock> for ChainObserver {
         })
     }
 
-    fn on_intersect_found(&self, point: &Point, _tip: &Tip) -> Result<(), Error> {
+    fn on_intersect_found(&self, point: &Point, _tip: &chainsync::Tip) -> Result<(), Error> {
         info!("intersect found {:?}", point);
         Ok(())
     }
@@ -69,7 +75,7 @@ pub(crate) fn observe_forever(
     from: Vec<Point>,
 ) -> Result<(), Error> {
     let observer = ChainObserver::new(writer);
-    let agent = Consumer::<MultiEraBlock, _>::initial(from, observer);
+    let agent = chainsync::BlockConsumer::initial(from, observer);
     let agent = run_agent(agent, &mut channel)?;
     error!("chainsync agent final state: {:?}", agent.state);
 

@@ -5,7 +5,11 @@ use log::{info, warn};
 use pallas::{
     ledger::primitives::probing,
     network::{
-        miniprotocols::{blockfetch, chainsync, run_agent, Point},
+        miniprotocols::{
+            blockfetch,
+            chainsync::{self, HeaderContent},
+            run_agent, Point,
+        },
         multiplexer::Channel,
     },
 };
@@ -60,13 +64,17 @@ impl Debug for ChainObserver {
     }
 }
 
-impl chainsync::Observer<MultiEraHeader> for ChainObserver {
-    fn on_block(&self, cursor: &Option<Point>, _content: &MultiEraHeader) -> Result<(), Error> {
-        info!("requesting block fetch for point {:?}", cursor);
+impl chainsync::Observer<HeaderContent> for ChainObserver {
+    fn on_roll_forward(
+        &self,
+        content: chainsync::HeaderContent,
+        _tip: &chainsync::Tip,
+    ) -> Result<(), Error> {
+        let header = MultiEraHeader::try_from(content)?;
+        let cursor = header.read_cursor()?;
 
-        if let Some(cursor) = cursor {
-            self.block_requests.send(cursor.clone())?;
-        }
+        info!("requesting block fetch for point {:?}", cursor);
+        self.block_requests.send(cursor)?;
 
         Ok(())
     }
@@ -105,7 +113,7 @@ pub(crate) fn observe_headers_forever(
         block_requests,
     };
 
-    let agent = chainsync::Consumer::<MultiEraHeader, _>::initial(from, observer);
+    let agent = chainsync::HeaderConsumer::initial(from, observer);
     let agent = run_agent(agent, &mut channel)?;
     warn!("chainsync agent final state: {:?}", agent.state);
 
