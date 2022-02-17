@@ -9,9 +9,8 @@ data:
     type = "N2N"
     address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
     magic = "mainnet"
-
-    # it will start from way back, so we get a lot of data
-    since = [4492799, "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"]
+    since = [0, "f0f7892b5c333cffc4b3c4344de48af4cc63f55e44936196f365a9ef2244134f"]
+    min_depth = 6
 
     [[filters]]
     type = "Fingerprint"
@@ -19,7 +18,7 @@ data:
     [sink]
     type = "Elastic"
     url = "https://sink-es-http:9200"
-    index = "oura.sink.v0.mainnet"
+    index = "oura.sink.v1.mainnet"
     idempotency = true
 
     [sink.credentials]
@@ -59,7 +58,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:22
+          image: ghcr.io/txpipe/oura-testdrive:24
           env:
             - name: "RUST_LOG"
               value: "warn"

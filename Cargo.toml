@@ -12,8 +12,8 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.5.0-alpha.2"
-# pallas = { path = "../pallas/pallas" }
+# pallas = "0.5.0-alpha.2"
+pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.8.1"
