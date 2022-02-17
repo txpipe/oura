@@ -36,9 +36,8 @@ impl TryFrom<BlockContent> for MultiEraBlock {
     }
 }
 
-#[allow(unused)]
 impl MultiEraBlock {
-    fn read_cursor(&self) -> Result<Point, Error> {
+    pub(crate) fn read_cursor(&self) -> Result<Point, Error> {
         match self {
             MultiEraBlock::Byron(x) => match x.deref() {
                 byron::Block::EbBlock(x) => {

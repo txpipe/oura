@@ -40,6 +40,16 @@ pub struct Config {
 
     #[serde(default)]
     pub mapper: MapperConfig,
+
+    /// Min block depth (# confirmations) required
+    ///
+    /// The min depth a block requires to be considered safe to send down the
+    /// pipeline. This value is used to configure a rollback buffer used
+    /// internally by the stage. A high value (eg: ~6) will reduce the
+    /// probability of seeing rollbacks events. The trade-off is that the stage
+    /// will need some time to fill up the buffer before sending the 1st event.
+    #[serde(default)]
+    pub min_depth: usize,
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
@@ -96,9 +106,10 @@ impl SourceProvider for WithUtils<Config> {
 
         let (headers_tx, headers_rx) = std::sync::mpsc::sync_channel(100);
 
+        let min_depth = self.inner.min_depth;
         let cs_writer = writer.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, cs_writer, since, headers_tx)
+            observe_headers_forever(cs_channel, cs_writer, since, headers_tx, min_depth)
                 .expect("chainsync loop failed");
         });
 
