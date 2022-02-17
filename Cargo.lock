@@ -1069,9 +1069,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.5.0-alpha.1"
+version = "0.5.0-alpha.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdd5e773cae1309528041ddd3ee2b6300cf2c9db57f9e2507cbca2abb46f28c2"
+checksum = "94643e265185da36ee52026351f4b06fcc371b04eefaf433867536318c5e7d70"
 dependencies = [
  "pallas-crypto",
  "pallas-miniprotocols",
