@@ -1,4 +1,4 @@
-use pallas::ledger::primitives::Fragment;
+use pallas::ledger::primitives::{Era, Fragment};
 
 use pallas::ledger::primitives::alonzo::{
     self, crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset,
@@ -198,8 +198,9 @@ impl EventWriter {
         block: &Block,
         hash: &Hash<32>,
         cbor: &[u8],
+        era: Era,
     ) -> Result<(), Error> {
-        let record = self.to_block_record(block, hash, cbor)?;
+        let record = self.to_block_record(block, hash, cbor, era)?;
 
         self.append(EventData::Block(record.clone()))?;
 
@@ -229,7 +230,7 @@ impl EventWriter {
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
-    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
+    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8], era: Era) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
         let child = self.child_writer(EventContext {
@@ -240,11 +241,11 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, cbor)
+        child.crawl_shelley_block(block, &hash, cbor, era)
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
-    pub fn crawl(&self, block: &Block) -> Result<(), Error> {
+    pub fn crawl(&self, block: &Block, era: Era) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
         let child = self.child_writer(EventContext {
@@ -255,7 +256,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, &[])
+        child.crawl_shelley_block(block, &hash, &[], era)
     }
 
     /// Mapper entry-point for decoded Shelley blocks
@@ -263,7 +264,12 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we already have a decoded block (for example, N2C). The raw CBOR is also
     /// passed through in case we need to attach it to outbound events.
-    pub fn crawl_shelley_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
+    pub fn crawl_shelley_with_cbor(
+        &self,
+        block: &Block,
+        cbor: &[u8],
+        era: Era,
+    ) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
         let child = self.child_writer(EventContext {
@@ -274,7 +280,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, cbor)
+        child.crawl_shelley_block(block, &hash, cbor, era)
     }
 
     /// Mapper entry-point for raw Shelley cbor blocks
@@ -285,8 +291,8 @@ impl EventWriter {
     /// We use Alonzo primitives since they are backward compatible with
     /// Shelley. In this way, we can avoid having to fork the crawling procedure
     /// for each different hard-fork.
-    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
+    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Era) -> Result<(), Error> {
         let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
-        self.crawl_shelley_with_cbor(&block, cbor)
+        self.crawl_shelley_with_cbor(&block, cbor, era)
     }
 }

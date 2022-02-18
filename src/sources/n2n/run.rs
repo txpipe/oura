@@ -35,7 +35,7 @@ impl blockfetch::Observer for Block2EventMapper {
                 }
                 _ => {
                     writer
-                        .crawl_from_shelley_cbor(&body)
+                        .crawl_from_shelley_cbor(&body, era)
                         .ok_or_warn("error crawling block for events");
                 }
             },

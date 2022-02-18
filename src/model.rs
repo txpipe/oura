@@ -2,10 +2,15 @@ use std::fmt::Display;
 
 use merge::Merge;
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{self, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use strum_macros::Display;
 
 use serde_json::Value as JsonValue;
+
+pub use pallas::ledger::primitives::Era;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -158,14 +163,9 @@ pub enum StakeCredential {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "lowercase")]
-pub enum Era {
-    Byron,
-    Shelley,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockRecord {
+    #[serde(serialize_with = "serialize_era")]
+    #[serde(deserialize_with = "deserialize_era")]
     pub era: Era,
     pub body_size: usize,
     pub issuer_vkey: String,
@@ -175,6 +175,52 @@ pub struct BlockRecord {
     pub number: u64,
     pub previous_hash: String,
     pub cbor_hex: Option<String>,
+}
+
+fn serialize_era<S>(era: &Era, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let era_str = match era {
+        Era::Byron => "byron",
+        Era::Shelley => "shelley",
+        Era::Allegra => "allegra",
+        Era::Mary => "mary",
+        Era::Alonzo => "alonzo",
+    };
+
+    serializer.serialize_str(era_str)
+}
+
+struct EraVisitor;
+
+impl<'de> Visitor<'de> for EraVisitor {
+    type Value = Era;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("\"byron\", \"shelley\", \"allegra\", \"mary\", or \"alonzo\"")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        match value {
+            "byron" => Ok(Era::Byron),
+            "shelley" => Ok(Era::Shelley),
+            "allegra" => Ok(Era::Allegra),
+            "mary" => Ok(Era::Mary),
+            "alonzo" => Ok(Era::Alonzo),
+            _ => Err(E::custom(format!("invalid era: {}", value))),
+        }
+    }
+}
+
+fn deserialize_era<'de, D>(deserializer: D) -> Result<Era, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_str(EraVisitor)
 }
 
 #[derive(Serialize, Deserialize, Display, Debug, Clone)]
