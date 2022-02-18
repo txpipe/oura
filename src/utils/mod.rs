@@ -27,6 +27,9 @@ pub mod throttle;
 pub(crate) mod bech32;
 pub(crate) mod time;
 
+#[cfg(feature = "metrics")]
+pub(crate) mod metrics;
+
 mod facade;
 
 pub(crate) trait SwallowResult {
@@ -105,6 +108,9 @@ pub struct Utils {
     pub(crate) time: Option<NaiveTime>,
     pub(crate) bech32: Bech32Provider,
     pub(crate) cursor: Option<cursor::Provider>,
+
+    #[cfg(feature = "metrics")]
+    pub(crate) metrics: metrics::Provider,
 }
 
 impl Utils {
@@ -115,6 +121,9 @@ impl Utils {
             bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
             cursor,
             well_known,
+
+            #[cfg(feature = "metrics")]
+            metrics: metrics::Provider::start().unwrap(), //.expect("metric server started"),
         }
     }
 }

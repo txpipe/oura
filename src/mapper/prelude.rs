@@ -64,6 +64,8 @@ impl EventWriter {
             fingerprint: None,
         };
 
+        self.utils.track_source_progress(&evt);
+
         self.output
             .send(evt)
             .expect("error sending event through output stage, pipeline must have crashed.");
