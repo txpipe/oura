@@ -198,7 +198,7 @@ impl EventWriter {
         block: &Block,
         hash: &Hash<32>,
         cbor: &[u8],
-        era: Era,
+        era: Option<Era>,
     ) -> Result<(), Error> {
         let record = self.to_block_record(block, hash, cbor, era)?;
 
@@ -230,7 +230,7 @@ impl EventWriter {
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
-    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8], era: Era) -> Result<(), Error> {
+    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
         let child = self.child_writer(EventContext {
@@ -241,11 +241,11 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, cbor, era)
+        child.crawl_shelley_block(block, &hash, cbor, None)
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
-    pub fn crawl(&self, block: &Block, era: Era) -> Result<(), Error> {
+    pub fn crawl(&self, block: &Block) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
         let child = self.child_writer(EventContext {
@@ -256,7 +256,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, &[], era)
+        child.crawl_shelley_block(block, &hash, &[], None)
     }
 
     /// Mapper entry-point for decoded Shelley blocks
@@ -268,7 +268,7 @@ impl EventWriter {
         &self,
         block: &Block,
         cbor: &[u8],
-        era: Era,
+        era: Option<Era>,
     ) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
@@ -291,7 +291,7 @@ impl EventWriter {
     /// We use Alonzo primitives since they are backward compatible with
     /// Shelley. In this way, we can avoid having to fork the crawling procedure
     /// for each different hard-fork.
-    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Era) -> Result<(), Error> {
+    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Option<Era>) -> Result<(), Error> {
         let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
         self.crawl_shelley_with_cbor(&block, cbor, era)
     }

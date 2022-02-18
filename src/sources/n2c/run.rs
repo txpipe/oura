@@ -67,7 +67,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 }
                 MultiEraBlock::AlonzoCompatible(model, era) => self
                     .event_writer
-                    .crawl_shelley_with_cbor(&model, &cbor, era)?,
+                    .crawl_shelley_with_cbor(&model, &cbor, Some(era))?,
             };
         }
 
