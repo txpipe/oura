@@ -356,10 +356,7 @@ impl EventWriter {
         era: Option<Era>,
     ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
-            era: match self.config.include_block_era {
-                true => era,
-                false => None,
-            },
+            era,
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),

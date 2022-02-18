@@ -143,10 +143,7 @@ impl EventWriter {
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
-            era: match self.config.include_block_era {
-                true => Some(Era::Byron),
-                false => None,
-            },
+            era: Some(Era::Byron),
             body_size: cbor.len() as usize,
             issuer_vkey: source.header.consensus_data.1.to_hex(),
             tx_count: source.body.tx_payload.len(),
