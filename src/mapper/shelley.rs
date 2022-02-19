@@ -268,7 +268,7 @@ impl EventWriter {
         &self,
         block: &Block,
         cbor: &[u8],
-        era: model::Era,
+        era: Era,
     ) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
