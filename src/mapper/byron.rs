@@ -194,12 +194,13 @@ impl EventWriter {
     pub fn crawl_byron_with_cbor(&self, block: &byron::Block, cbor: &[u8]) -> Result<(), Error> {
         if let byron::Block::MainBlock(block) = block {
             let hash = block.header.to_hash();
+            let abs_slot = block.header.consensus_data.0.to_abs_slot();
 
             let child = self.child_writer(EventContext {
                 block_hash: Some(hex::encode(&hash)),
                 block_number: Some(block.header.consensus_data.2[0]),
-                slot: Some(block.header.consensus_data.0.to_abs_slot()),
-                //timestamp: self.compute_timestamp(block.header.header_body.slot),
+                slot: Some(abs_slot),
+                timestamp: self.compute_timestamp(abs_slot),
                 ..EventContext::default()
             });
 
