@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use pallas::{
-    ledger::primitives::probing,
+    ledger::primitives::{probing, Era},
     network::{
         miniprotocols::{blockfetch, chainsync, run_agent, Point},
         multiplexer::Channel,
@@ -26,18 +26,20 @@ impl blockfetch::Observer for Block2EventMapper {
     fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
         let Self(writer) = self;
 
-        match probing::probe_block_cbor(&body) {
-            probing::BlockInference::Byron => {
-                writer
-                    .crawl_from_byron_cbor(&body)
-                    .ok_or_warn("error crawling block for events");
-            }
-            probing::BlockInference::Shelley => {
-                writer
-                    .crawl_from_shelley_cbor(&body)
-                    .ok_or_warn("error crawling block for events");
-            }
-            probing::BlockInference::Inconclusive => {
+        match probing::probe_block_cbor_era(&body) {
+            probing::Outcome::Matched(era) => match era {
+                Era::Byron => {
+                    writer
+                        .crawl_from_byron_cbor(&body)
+                        .ok_or_warn("error crawling block for events");
+                }
+                _ => {
+                    writer
+                        .crawl_from_shelley_cbor(&body)
+                        .ok_or_warn("error crawling block for events");
+                }
+            },
+            probing::Outcome::Inconclusive => {
                 log::error!("can't infer primitive block from cbor, inconslusive probing. CBOR hex for debubbing: {}", hex::encode(body));
             }
         }

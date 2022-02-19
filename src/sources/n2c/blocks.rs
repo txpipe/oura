@@ -10,7 +10,7 @@ use crate::Error;
 #[derive(Debug)]
 pub(crate) enum MultiEraBlock {
     Byron(Box<byron::Block>),
-    Shelley(Box<alonzo::Block>),
+    AlonzoCompatible(Box<alonzo::Block>),
 }
 
 impl TryFrom<BlockContent> for MultiEraBlock {
@@ -19,16 +19,18 @@ impl TryFrom<BlockContent> for MultiEraBlock {
     fn try_from(value: BlockContent) -> Result<Self, Self::Error> {
         let bytes = value.deref();
 
-        match probing::probe_block_cbor(bytes) {
-            probing::BlockInference::Byron => {
-                let block = minicbor::decode(bytes)?;
-                Ok(MultiEraBlock::Byron(Box::new(block)))
-            }
-            probing::BlockInference::Shelley => {
-                let alonzo::BlockWrapper(_, block) = minicbor::decode(bytes)?;
-                Ok(MultiEraBlock::Shelley(Box::new(block)))
-            }
-            probing::BlockInference::Inconclusive => {
+        match probing::probe_block_cbor_era(bytes) {
+            probing::Outcome::Matched(era) => match era {
+                pallas::ledger::primitives::Era::Byron => {
+                    let block = minicbor::decode(bytes)?;
+                    Ok(MultiEraBlock::Byron(Box::new(block)))
+                }
+                _ => {
+                    let alonzo::BlockWrapper(_, block) = minicbor::decode(bytes)?;
+                    Ok(MultiEraBlock::AlonzoCompatible(Box::new(block)))
+                }
+            },
+            probing::Outcome::Inconclusive => {
                 log::error!("CBOR hex for debubbing: {}", hex::encode(bytes));
                 Err("can't infer primitive block from cbor, inconslusive probing".into())
             }
@@ -51,7 +53,7 @@ impl MultiEraBlock {
                     Ok(Point(slot, hash.to_vec()))
                 }
             },
-            MultiEraBlock::Shelley(x) => {
+            MultiEraBlock::AlonzoCompatible(x) => {
                 let hash = alonzo::crypto::hash_block_header(&x.header);
                 Ok(Point(x.header.header_body.slot, hash.to_vec()))
             }

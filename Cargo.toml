@@ -12,8 +12,8 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-# pallas = "0.5.0-alpha.2"
-pallas = { path = "../pallas/pallas" }
+pallas = "0.5.0-alpha.3"
+# pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.8.1"
@@ -45,7 +45,7 @@ kafka = { version = "0.8.0", optional = true }
 
 # feature: elasticsink
 elasticsearch = { version = "7.14.0-alpha.1", optional = true }
-tokio = { version = "1.15.0", optional = true, features = ["rt"] }
+tokio = { version = "1.17.0", optional = true, features = ["rt"] }
 
 # feature: fingerprint
 murmur3 = { version = "0.5.1", optional = true }

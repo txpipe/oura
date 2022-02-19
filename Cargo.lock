@@ -244,7 +244,7 @@ dependencies = [
  "bitflags",
  "crossterm_winapi",
  "libc",
- "mio",
+ "mio 0.7.14",
  "parking_lot 0.11.2",
  "signal-hook",
  "signal-hook-mio",
@@ -260,7 +260,7 @@ dependencies = [
  "bitflags",
  "crossterm_winapi",
  "libc",
- "mio",
+ "mio 0.7.14",
  "parking_lot 0.12.0",
  "signal-hook",
  "signal-hook-mio",
@@ -879,6 +879,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "mio"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba272f85fa0b41fc91872be579b3bbe0f56b792aa361a380eb669469f68dafb2"
+dependencies = [
+ "libc",
+ "log 0.4.14",
+ "miow",
+ "ntapi",
+ "winapi",
+]
+
+[[package]]
 name = "miow"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1069,7 +1082,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.5.0-alpha.2"
+version = "0.5.0-alpha.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97019172c117757afe1d1b3a1864aa0d443a07f466105b3c4c1d6708a6013203"
 dependencies = [
  "pallas-crypto",
  "pallas-miniprotocols",
@@ -1079,7 +1094,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-crypto"
-version = "0.5.0-alpha.2"
+version = "0.5.0-alpha.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91675632c08908b190f6ff17a84becf4efffded6d5147796cb5b03d5b20df30e"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1090,7 +1107,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.5.0-alpha.2"
+version = "0.5.0-alpha.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c60cc84d5a4f2e8cbbedf6c6d997638e6632af3148829c61271f332431ce6db"
 dependencies = [
  "hex",
  "itertools",
@@ -1102,7 +1121,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.5.0-alpha.2"
+version = "0.5.0-alpha.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a17bb5203d38dd89da0d75dc14f7a1848d0d76fbdc49cff27cc04f022fd1b567"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1111,7 +1132,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.5.0-alpha.2"
+version = "0.5.0-alpha.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52a113aec8418e98ca476c4a4f720e84f8866842ae809d63dcc7b1847ea91f0d"
 dependencies = [
  "base58",
  "hex",
@@ -1524,7 +1547,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29fd5867f1c4f2c5be079aee7a2adf1152ebb04a4bc4d341f504b7dece607ed4"
 dependencies = [
  "libc",
- "mio",
+ "mio 0.7.14",
  "signal-hook",
 ]
 
@@ -1688,16 +1711,17 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.16.1"
+version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c27a64b625de6d309e8c57716ba93021dccf1b3b5c97edd6d3dd2d2135afc0a"
+checksum = "2af73ac49756f3f7c01172e34a23e5d0216f6c32333757c2c61feb2bbff5a5ee"
 dependencies = [
  "bytes",
  "libc",
  "memchr",
- "mio",
+ "mio 0.8.0",
  "num_cpus",
  "pin-project-lite",
+ "socket2",
  "winapi",
 ]
 
