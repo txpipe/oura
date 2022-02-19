@@ -93,7 +93,7 @@ impl EventWriter {
 
     pub fn compute_timestamp(&self, slot: u64) -> Option<u64> {
         match &self.utils.time {
-            Some(provider) => provider.slot_to_wallclock(slot).ok(),
+            Some(provider) => provider.slot_to_wallclock(slot).into(),
             _ => None,
         }
     }
