@@ -2,15 +2,25 @@ use std::fmt::Display;
 
 use merge::Merge;
 
-use serde::{
-    de::{self, Visitor},
-    Deserialize, Deserializer, Serialize, Serializer,
-};
-use strum_macros::Display;
-
+use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
-pub use pallas::ledger::primitives::Era;
+use strum_macros::Display;
+
+// We're duplicate the Era struct from Pallas for two reasons: a) we need it to
+// be serializable and we don't want to impose serde dependency on Pallas and b)
+// we prefer not to add dependencies to Pallas outside of the sources that
+// actually use it on an attempt to make the pipeline agnostic of particular
+// implementation details.
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Era {
+    Undefined,
+    Byron,
+    Shelley,
+    Allegra,
+    Mary,
+    Alonzo,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -164,9 +174,7 @@ pub enum StakeCredential {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockRecord {
-    #[serde(serialize_with = "serialize_era")]
-    #[serde(deserialize_with = "deserialize_era")]
-    pub era: Option<Era>,
+    pub era: Era,
     pub body_size: usize,
     pub issuer_vkey: String,
     pub tx_count: usize,
@@ -175,72 +183,6 @@ pub struct BlockRecord {
     pub number: u64,
     pub previous_hash: String,
     pub cbor_hex: Option<String>,
-}
-
-fn serialize_era<S>(era: &Option<Era>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let era = era.map(|e| match e {
-        Era::Byron => "byron",
-        Era::Shelley => "shelley",
-        Era::Allegra => "allegra",
-        Era::Mary => "mary",
-        Era::Alonzo => "alonzo",
-    });
-
-    if era.is_some() {
-        serializer.serialize_some(&era)
-    } else {
-        serializer.serialize_none()
-    }
-}
-
-struct EraVisitor;
-
-impl<'de> Visitor<'de> for EraVisitor {
-    type Value = Option<Era>;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("\"byron\", \"shelley\", \"allegra\", \"mary\", or \"alonzo\"")
-    }
-
-    fn visit_none<E>(self) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(None)
-    }
-
-    fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(self)
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        let era = match value {
-            "byron" => Ok(Era::Byron),
-            "shelley" => Ok(Era::Shelley),
-            "allegra" => Ok(Era::Allegra),
-            "mary" => Ok(Era::Mary),
-            "alonzo" => Ok(Era::Alonzo),
-            _ => Err(E::custom(format!("invalid era: {}", value))),
-        };
-
-        era.map(Some)
-    }
-}
-
-fn deserialize_era<'de, D>(deserializer: D) -> Result<Option<Era>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    deserializer.deserialize_option(EraVisitor)
 }
 
 #[derive(Serialize, Deserialize, Display, Debug, Clone)]

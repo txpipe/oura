@@ -1,4 +1,4 @@
-use pallas::ledger::primitives::{Era, Fragment};
+use pallas::ledger::primitives::Fragment;
 
 use pallas::ledger::primitives::alonzo::{
     self, crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset,
@@ -8,7 +8,7 @@ use pallas::ledger::primitives::alonzo::{
 use pallas::crypto::hash::Hash;
 
 use crate::{
-    model::{EventContext, EventData},
+    model::{Era, EventContext, EventData},
     Error,
 };
 
@@ -198,7 +198,7 @@ impl EventWriter {
         block: &Block,
         hash: &Hash<32>,
         cbor: &[u8],
-        era: Option<Era>,
+        era: Era,
     ) -> Result<(), Error> {
         let record = self.to_block_record(block, hash, cbor, era)?;
 
@@ -241,7 +241,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, cbor, None)
+        child.crawl_shelley_block(block, &hash, cbor, Era::Undefined)
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
@@ -256,7 +256,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_shelley_block(block, &hash, &[], None)
+        child.crawl_shelley_block(block, &hash, &[], Era::Undefined)
     }
 
     /// Mapper entry-point for decoded Shelley blocks
@@ -268,7 +268,7 @@ impl EventWriter {
         &self,
         block: &Block,
         cbor: &[u8],
-        era: Option<Era>,
+        era: model::Era,
     ) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
@@ -291,7 +291,7 @@ impl EventWriter {
     /// We use Alonzo primitives since they are backward compatible with
     /// Shelley. In this way, we can avoid having to fork the crawling procedure
     /// for each different hard-fork.
-    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Option<Era>) -> Result<(), Error> {
+    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Era) -> Result<(), Error> {
         let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
         self.crawl_shelley_with_cbor(&block, cbor, era)
     }

@@ -19,6 +19,7 @@ impl LogLine {
     pub fn new(source: Event, max_width: usize) -> LogLine {
         match &source.data {
             EventData::Block(BlockRecord {
+                era,
                 body_size,
                 issuer_vkey,
                 tx_count,
@@ -31,7 +32,8 @@ impl LogLine {
                     prefix: "BLOCK",
                     color: Color::Magenta,
                     content: format!(
-                    "{{ slot: {}, hash: {}, number: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
+                    "{{ era: {:?}, slot: {}, hash: {}, number: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
+                    era,
                     slot,
                     hash,
                     number,

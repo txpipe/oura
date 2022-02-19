@@ -353,7 +353,7 @@ impl EventWriter {
         source: &Block,
         hash: &Hash<32>,
         cbor: &[u8],
-        era: Option<Era>,
+        era: Era,
     ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
             era,
