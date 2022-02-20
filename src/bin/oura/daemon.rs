@@ -10,7 +10,7 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
-    utils::{cursor, ChainWellKnownInfo, Utils, WithUtils},
+    utils::{cursor, metrics, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
 
@@ -125,6 +125,8 @@ struct ConfigRoot {
     chain: Option<ChainWellKnownInfo>,
 
     cursor: Option<cursor::Config>,
+
+    metrics: Option<metrics::Config>,
 }
 
 impl ConfigRoot {
@@ -149,12 +151,23 @@ impl ConfigRoot {
     }
 }
 
-fn bootstrap_utils(chain: Option<ChainWellKnownInfo>, cursor: Option<cursor::Config>) -> Utils {
+fn bootstrap_utils(
+    chain: Option<ChainWellKnownInfo>,
+    cursor: Option<cursor::Config>,
+    metrics: Option<metrics::Config>,
+) -> Utils {
     let well_known = chain.unwrap_or_default();
+    let mut utils = Utils::new(well_known);
 
-    let cursor = cursor.map(cursor::Provider::initialize);
+    if let Some(cursor) = cursor {
+        utils = utils.with_cursor(cursor);
+    }
 
-    Utils::new(well_known, cursor)
+    if let Some(metrics) = metrics {
+        utils = utils.with_metrics(metrics);
+    }
+
+    utils
 }
 
 /// Sets up the whole pipeline from configuration
@@ -165,9 +178,10 @@ fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
         sink,
         chain,
         cursor,
+        metrics,
     } = config;
 
-    let utils = Arc::new(bootstrap_utils(chain, cursor));
+    let utils = Arc::new(bootstrap_utils(chain, cursor, metrics));
 
     let mut threads = Vec::with_capacity(10);
 

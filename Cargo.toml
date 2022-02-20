@@ -28,6 +28,7 @@ serde_json = "1.0.78"
 strum = "0.23"
 strum_macros = "0.23"
 minicbor = "0.13"
+prometheus_exporter = { version = "0.8.4", default-features = false }
 
 # feature logs
 file-rotate = { version = "0.6.0", optional = true }

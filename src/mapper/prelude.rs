@@ -52,7 +52,7 @@ impl EventWriter {
         well_known: Option<ChainWellKnownInfo>,
         config: Config,
     ) -> Self {
-        let utils = Arc::new(Utils::new(well_known.unwrap_or_default(), None));
+        let utils = Arc::new(Utils::new(well_known.unwrap_or_default()));
 
         Self::new(output, utils, config)
     }
@@ -63,6 +63,8 @@ impl EventWriter {
             data,
             fingerprint: None,
         };
+
+        self.utils.track_source_progress(&evt);
 
         self.output
             .send(evt)
