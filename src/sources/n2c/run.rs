@@ -65,9 +65,9 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 MultiEraBlock::Byron(model) => {
                     self.event_writer.crawl_byron_with_cbor(&model, &cbor)?
                 }
-                MultiEraBlock::AlonzoCompatible(model) => {
-                    self.event_writer.crawl_shelley_with_cbor(&model, &cbor)?
-                }
+                MultiEraBlock::AlonzoCompatible(model, era) => self
+                    .event_writer
+                    .crawl_shelley_with_cbor(&model, &cbor, era.into())?,
             };
         }
 

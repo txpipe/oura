@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use pallas::{
-    ledger::primitives::{alonzo, byron, probing},
+    ledger::primitives::{alonzo, byron, probing, Era},
     network::miniprotocols::{chainsync::BlockContent, Point},
 };
 
@@ -10,7 +10,7 @@ use crate::Error;
 #[derive(Debug)]
 pub(crate) enum MultiEraBlock {
     Byron(Box<byron::Block>),
-    AlonzoCompatible(Box<alonzo::Block>),
+    AlonzoCompatible(Box<alonzo::Block>, Era),
 }
 
 impl TryFrom<BlockContent> for MultiEraBlock {
@@ -27,7 +27,7 @@ impl TryFrom<BlockContent> for MultiEraBlock {
                 }
                 _ => {
                     let alonzo::BlockWrapper(_, block) = minicbor::decode(bytes)?;
-                    Ok(MultiEraBlock::AlonzoCompatible(Box::new(block)))
+                    Ok(MultiEraBlock::AlonzoCompatible(Box::new(block), era))
                 }
             },
             probing::Outcome::Inconclusive => {
@@ -53,7 +53,7 @@ impl MultiEraBlock {
                     Ok(Point(slot, hash.to_vec()))
                 }
             },
-            MultiEraBlock::AlonzoCompatible(x) => {
+            MultiEraBlock::AlonzoCompatible(x, _) => {
                 let hash = alonzo::crypto::hash_block_header(&x.header);
                 Ok(Point(x.header.header_body.slot, hash.to_vec()))
             }

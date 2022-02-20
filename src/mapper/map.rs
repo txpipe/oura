@@ -11,7 +11,7 @@ use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, Transaction
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
-    BlockRecord, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
     StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
@@ -353,8 +353,10 @@ impl EventWriter {
         source: &Block,
         hash: &Hash<32>,
         cbor: &[u8],
+        era: Era,
     ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
+            era,
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),
