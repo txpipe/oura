@@ -22,13 +22,11 @@ use crate::{
 use crate::Error;
 
 pub mod cursor;
+pub mod metrics;
 pub mod throttle;
 
 pub(crate) mod bech32;
 pub(crate) mod time;
-
-#[cfg(feature = "metrics")]
-pub(crate) mod metrics;
 
 mod facade;
 
@@ -122,22 +120,36 @@ pub struct Utils {
     pub(crate) time: Option<NaiveTime>,
     pub(crate) bech32: Bech32Provider,
     pub(crate) cursor: Option<cursor::Provider>,
-
-    #[cfg(feature = "metrics")]
-    pub(crate) metrics: metrics::Provider,
+    pub(crate) metrics: Option<metrics::Provider>,
 }
 
+// TODO: refactor this using the builder pattern
 impl Utils {
-    // TODO: refactor this using the builder pattern
-    pub fn new(well_known: ChainWellKnownInfo, cursor: Option<cursor::Provider>) -> Self {
+    pub fn new(well_known: ChainWellKnownInfo) -> Self {
         Self {
             time: NaiveTime::new(well_known.clone()).into(),
             bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
-            cursor,
             well_known,
+            cursor: None,
+            metrics: None,
+        }
+    }
 
-            #[cfg(feature = "metrics")]
-            metrics: metrics::Provider::start().unwrap(), //.expect("metric server started"),
+    pub fn with_cursor(self, config: cursor::Config) -> Self {
+        let provider = cursor::Provider::initialize(config);
+
+        Self {
+            cursor: provider.into(),
+            ..self
+        }
+    }
+
+    pub fn with_metrics(self, config: metrics::Config) -> Self {
+        let provider = metrics::Provider::initialize(&config).expect("metric server started");
+
+        Self {
+            metrics: provider.into(),
+            ..self
         }
     }
 }

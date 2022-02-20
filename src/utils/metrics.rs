@@ -1,14 +1,19 @@
 ///! An utility to keep track of the progress of the pipeline as a whole
-use prometheus_exporter::{
-    prometheus::{register_counter, register_int_gauge, Counter, IntGauge},
-};
+use prometheus_exporter::prometheus::{register_counter, register_int_gauge, Counter, IntGauge};
 
 use merge::Merge;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     model::{Event, EventData},
     Error,
 };
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    binding: Option<String>,
+    endpoint: Option<String>,
+}
 
 #[derive(Clone)]
 pub struct Tip {
@@ -32,9 +37,16 @@ pub(crate) struct Provider {
 }
 
 impl Provider {
-    pub(crate) fn start() -> Result<Self, Error> {
-        let binding = "0.0.0.0:9186".parse()?;
-        prometheus_exporter::start(binding)?;
+    pub(crate) fn initialize(config: &Config) -> Result<Self, Error> {
+        let binding = config
+            .binding
+            .as_deref()
+            .unwrap_or("0.0.0.0:9186")
+            .parse()?;
+
+        let endpoint = config.endpoint.as_deref().unwrap_or("/metrics");
+
+        prometheus_exporter::Builder::new(binding).with_endpoint(endpoint)?;
 
         let provider = Provider {
             chain_tip: register_int_gauge!(
