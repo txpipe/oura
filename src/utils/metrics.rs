@@ -44,9 +44,13 @@ impl Provider {
             .unwrap_or("0.0.0.0:9186")
             .parse()?;
 
-        let endpoint = config.endpoint.as_deref().unwrap_or("/metrics");
+        let mut builder = prometheus_exporter::Builder::new(binding);
 
-        prometheus_exporter::Builder::new(binding).with_endpoint(endpoint)?;
+        if let Some(endpoint) = &config.endpoint {
+            builder.with_endpoint(endpoint)?;
+        }
+
+        builder.start()?;
 
         let provider = Provider {
             chain_tip: register_int_gauge!(
@@ -80,6 +84,10 @@ impl Provider {
         };
 
         Ok(provider)
+    }
+
+    pub(crate) fn on_chain_tip(&self, tip: u64) {
+        self.chain_tip.set(tip as i64);
     }
 
     pub(crate) fn on_source_event(&self, event: &Event) {

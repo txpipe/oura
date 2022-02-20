@@ -34,10 +34,9 @@ impl Utils {
         }
     }
 
-    pub fn track_chain_tip(&self, tip: impl Into<metrics::Tip>) {
-        //self.metrics.update_chain_state(metrics::ChainState {
-        //    tip: Some(tip.into()),
-        //    ..Default::default()
-        //})
+    pub fn track_chain_tip(&self, tip: u64) {
+        if let Some(metrics) = &self.metrics {
+            metrics.on_chain_tip(tip);
+        }
     }
 }

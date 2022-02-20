@@ -75,7 +75,7 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
     fn on_roll_forward(
         &mut self,
         content: chainsync::HeaderContent,
-        _tip: &chainsync::Tip,
+        tip: &chainsync::Tip,
     ) -> Result<(), Error> {
         // parse the header and extract the point of the chain
         let header = MultiEraHeader::try_from(content)?;
@@ -96,6 +96,9 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
         }
 
         log_buffer_state(&self.chain_buffer);
+
+        // notify chain tip to the pipeline metrics
+        self.event_writer.utils.track_chain_tip(tip.1);
 
         Ok(())
     }
