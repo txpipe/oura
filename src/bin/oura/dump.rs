@@ -106,7 +106,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     // TODO: map add cli arg to enable / disable cursor
 
-    let utils = Arc::new(Utils::new(well_known, None));
+    let utils = Arc::new(Utils::new(well_known));
 
     #[allow(deprecated)]
     let source_setup = match mode {
