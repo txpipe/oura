@@ -33,7 +33,6 @@ pub struct Config {
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
 
-    #[deprecated(note = "use intersections instead")]
     pub since: Option<PointArg>,
 
     pub intersections: Option<Vec<PointArg>>,
