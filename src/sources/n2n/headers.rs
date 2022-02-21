@@ -9,27 +9,27 @@ use crate::Error;
 pub enum MultiEraHeader {
     ByronBoundary(byron::EbbHead),
     Byron(byron::BlockHead),
-    Shelley(alonzo::Header),
+    AlonzoCompatible(alonzo::Header),
 }
 
 impl TryFrom<HeaderContent> for MultiEraHeader {
     type Error = Error;
 
     fn try_from(value: HeaderContent) -> Result<Self, Self::Error> {
-        match value {
-            HeaderContent::Byron(variant, _, bytes) => match variant {
-                0 => {
-                    let header = minicbor::decode(&bytes)?;
+        match value.variant {
+            0 => match value.byron_prefix {
+                Some((0, _)) => {
+                    let header = minicbor::decode(&value.cbor)?;
                     Ok(MultiEraHeader::ByronBoundary(header))
                 }
                 _ => {
-                    let header = minicbor::decode(&bytes)?;
+                    let header = minicbor::decode(&value.cbor)?;
                     Ok(MultiEraHeader::Byron(header))
                 }
             },
-            HeaderContent::Shelley(bytes) => {
-                let header = minicbor::decode(&bytes)?;
-                Ok(MultiEraHeader::Shelley(header))
+            _ => {
+                let header = minicbor::decode(&value.cbor)?;
+                Ok(MultiEraHeader::AlonzoCompatible(header))
             }
         }
     }
@@ -48,7 +48,7 @@ impl MultiEraHeader {
                 let slot = x.consensus_data.0.to_abs_slot();
                 Ok(Point(slot, hash.to_vec()))
             }
-            MultiEraHeader::Shelley(x) => {
+            MultiEraHeader::AlonzoCompatible(x) => {
                 let hash = alonzo::crypto::hash_block_header(x);
                 Ok(Point(x.header_body.slot, hash.to_vec()))
             }

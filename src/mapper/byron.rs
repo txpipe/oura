@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use super::map::ToHex;
 use super::EventWriter;
-use crate::model::{BlockRecord, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
+use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
@@ -143,6 +143,7 @@ impl EventWriter {
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
         Ok(BlockRecord {
+            era: Era::Byron,
             body_size: cbor.len() as usize,
             issuer_vkey: source.header.consensus_data.1.to_hex(),
             tx_count: source.body.tx_payload.len(),
@@ -194,12 +195,13 @@ impl EventWriter {
     pub fn crawl_byron_with_cbor(&self, block: &byron::Block, cbor: &[u8]) -> Result<(), Error> {
         if let byron::Block::MainBlock(block) = block {
             let hash = block.header.to_hash();
+            let abs_slot = block.header.consensus_data.0.to_abs_slot();
 
             let child = self.child_writer(EventContext {
                 block_hash: Some(hex::encode(&hash)),
                 block_number: Some(block.header.consensus_data.2[0]),
-                slot: Some(block.header.consensus_data.0.to_abs_slot()),
-                //timestamp: self.compute_timestamp(block.header.header_body.slot),
+                slot: Some(abs_slot),
+                timestamp: self.compute_timestamp(abs_slot),
                 ..EventContext::default()
             });
 

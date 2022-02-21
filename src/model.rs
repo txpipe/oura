@@ -3,9 +3,24 @@ use std::fmt::Display;
 use merge::Merge;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
+
 use strum_macros::Display;
 
-use serde_json::Value as JsonValue;
+// We're duplicate the Era struct from Pallas for two reasons: a) we need it to
+// be serializable and we don't want to impose serde dependency on Pallas and b)
+// we prefer not to add dependencies to Pallas outside of the sources that
+// actually use it on an attempt to make the pipeline agnostic of particular
+// implementation details.
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Era {
+    Undefined,
+    Byron,
+    Shelley,
+    Allegra,
+    Mary,
+    Alonzo,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -159,6 +174,7 @@ pub enum StakeCredential {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockRecord {
+    pub era: Era,
     pub body_size: usize,
     pub issuer_vkey: String,
     pub tx_count: usize,

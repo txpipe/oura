@@ -15,13 +15,14 @@ use crate::{
     model::Event,
     utils::{
         bech32::{Bech32Config, Bech32Provider},
-        time::{NaiveConfig as TimeConfig, NaiveProvider as NaiveTime},
+        time::NaiveProvider as NaiveTime,
     },
 };
 
 use crate::Error;
 
 pub mod cursor;
+pub mod metrics;
 pub mod throttle;
 
 pub(crate) mod bech32;
@@ -50,6 +51,10 @@ impl SwallowResult for Result<(), Error> {
 /// values.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ChainWellKnownInfo {
+    pub byron_slot_length: u32,
+    pub byron_known_slot: u64,
+    pub byron_known_hash: String,
+    pub byron_known_time: u64,
     pub shelley_slot_length: u32,
     pub shelley_known_slot: u64,
     pub shelley_known_hash: String,
@@ -61,6 +66,11 @@ impl ChainWellKnownInfo {
     /// Hardcoded values for mainnet
     pub fn mainnet() -> Self {
         ChainWellKnownInfo {
+            byron_slot_length: 20,
+            byron_known_slot: 0,
+            byron_known_time: 1506203091,
+            byron_known_hash: "f0f7892b5c333cffc4b3c4344de48af4cc63f55e44936196f365a9ef2244134f"
+                .to_string(),
             shelley_slot_length: 1,
             shelley_known_slot: 4492800,
             shelley_known_hash: "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de"
@@ -73,6 +83,11 @@ impl ChainWellKnownInfo {
     /// Hardcoded values for testnet
     pub fn testnet() -> Self {
         ChainWellKnownInfo {
+            byron_slot_length: 20,
+            byron_known_slot: 1031,
+            byron_known_time: 1564020236,
+            byron_known_hash: "388a82f053603f3552717d61644a353188f2d5500f4c6354cc1ad27a36a7ea91"
+                .to_string(),
             shelley_slot_length: 1,
             shelley_known_slot: 1598400,
             shelley_known_hash: "02b1c561715da9e540411123a6135ee319b02f60b9a11a603d3305556c04329f"
@@ -105,16 +120,36 @@ pub struct Utils {
     pub(crate) time: Option<NaiveTime>,
     pub(crate) bech32: Bech32Provider,
     pub(crate) cursor: Option<cursor::Provider>,
+    pub(crate) metrics: Option<metrics::Provider>,
 }
 
+// TODO: refactor this using the builder pattern
 impl Utils {
-    // TODO: refactor this using the builder pattern
-    pub fn new(well_known: ChainWellKnownInfo, cursor: Option<cursor::Provider>) -> Self {
+    pub fn new(well_known: ChainWellKnownInfo) -> Self {
         Self {
-            time: NaiveTime::new(TimeConfig::from_well_known(&well_known)).into(),
+            time: NaiveTime::new(well_known.clone()).into(),
             bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
-            cursor,
             well_known,
+            cursor: None,
+            metrics: None,
+        }
+    }
+
+    pub fn with_cursor(self, config: cursor::Config) -> Self {
+        let provider = cursor::Provider::initialize(config);
+
+        Self {
+            cursor: provider.into(),
+            ..self
+        }
+    }
+
+    pub fn with_metrics(self, config: metrics::Config) -> Self {
+        let provider = metrics::Provider::initialize(&config).expect("metric server started");
+
+        Self {
+            metrics: provider.into(),
+            ..self
         }
     }
 }

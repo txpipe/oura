@@ -36,7 +36,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
     fn on_roll_forward(
         &mut self,
         content: chainsync::BlockContent,
-        _tip: &chainsync::Tip,
+        tip: &chainsync::Tip,
     ) -> Result<(), Box<dyn std::error::Error>> {
         // parse the block and extract the point of the chain
         let cbor = Vec::from(content.deref());
@@ -65,13 +65,16 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 MultiEraBlock::Byron(model) => {
                     self.event_writer.crawl_byron_with_cbor(&model, &cbor)?
                 }
-                MultiEraBlock::Shelley(model) => {
-                    self.event_writer.crawl_shelley_with_cbor(&model, &cbor)?
-                }
+                MultiEraBlock::AlonzoCompatible(model, era) => self
+                    .event_writer
+                    .crawl_shelley_with_cbor(&model, &cbor, era.into())?,
             };
         }
 
         log_buffer_state(&self.chain_buffer);
+
+        // notify chain tip to the pipeline metrics
+        self.event_writer.utils.track_chain_tip(tip.1);
 
         Ok(())
     }
