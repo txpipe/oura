@@ -35,6 +35,8 @@ pub struct Config {
 
     pub since: Option<PointArg>,
 
+    pub intersections: Option<Vec<PointArg>>,
+
     #[deprecated(note = "chain info is now pipeline-wide, use utils")]
     pub well_known: Option<ChainWellKnownInfo>,
 
@@ -100,7 +102,12 @@ impl SourceProvider for WithUtils<Config> {
 
         let mut cs_channel = muxer.use_channel(5);
 
-        let since: Point = define_start_point(&self.inner.since, &self.utils, &mut cs_channel)?;
+        let since: Vec<Point> = define_start_point(
+            &self.inner.since,
+            &self.inner.intersections,
+            &self.utils,
+            &mut cs_channel,
+        )?;
 
         info!("starting from chain point: {:?}", &since);
 

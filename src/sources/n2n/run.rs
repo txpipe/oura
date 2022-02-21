@@ -142,7 +142,7 @@ pub(crate) fn fetch_blocks_forever(
 pub(crate) fn observe_headers_forever(
     mut channel: Channel,
     event_writer: EventWriter,
-    from: Point,
+    from: Vec<Point>,
     block_requests: SyncSender<Point>,
     min_depth: usize,
 ) -> Result<(), Error> {
@@ -153,7 +153,7 @@ pub(crate) fn observe_headers_forever(
         block_requests,
     };
 
-    let agent = chainsync::HeaderConsumer::initial(vec![from], observer);
+    let agent = chainsync::HeaderConsumer::initial(from, observer);
     let agent = run_agent(agent, &mut channel)?;
     log::warn!("chainsync agent final state: {:?}", agent.state);
 

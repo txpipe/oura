@@ -117,6 +117,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             min_depth: 0,
             mapper,
             since,
+            intersections: None,
         }),
         PeerMode::AsClient => DumpSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
@@ -125,6 +126,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             min_depth: 0,
             mapper,
             since,
+            intersections: None,
         }),
     };
 
