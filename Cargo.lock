@@ -844,6 +844,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "minicbor"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61a5ea6f16a33fd9d1c5f2585bf7f3beb0005f9bbed4f675d5eba2c2f5c8c2c7"
+
+[[package]]
 name = "minicbor-derive"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1084,7 +1090,7 @@ dependencies = [
  "kafka",
  "log 0.4.14",
  "merge",
- "minicbor",
+ "minicbor 0.14.0",
  "murmur3",
  "net2",
  "openssl",
@@ -1119,7 +1125,7 @@ checksum = "e1e9fe452dbace6731f6f594101c90f7a4e4c30046ef68902b4454b90a91396c"
 dependencies = [
  "cryptoxide",
  "hex",
- "minicbor",
+ "minicbor 0.13.2",
  "rand_core",
  "thiserror",
 ]
@@ -1133,7 +1139,7 @@ dependencies = [
  "hex",
  "itertools",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.13.2",
  "net2",
  "pallas-multiplexer",
 ]
@@ -1158,7 +1164,7 @@ dependencies = [
  "base58",
  "hex",
  "log 0.4.14",
- "minicbor",
+ "minicbor 0.13.2",
  "minicbor-derive",
  "pallas-crypto",
 ]
