@@ -39,6 +39,13 @@ impl blockfetch::Observer for Block2EventMapper {
                         .ok_or_warn("error crawling block for events");
                 }
             },
+            // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
+            // assumption?
+            probing::Outcome::GenesisBlock => {
+                writer
+                    .crawl_from_byron_cbor(&body)
+                    .ok_or_warn("error crawling block for events");
+            }
             probing::Outcome::Inconclusive => {
                 log::error!("can't infer primitive block from cbor, inconslusive probing. CBOR hex for debubbing: {}", hex::encode(body));
             }

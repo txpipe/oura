@@ -30,6 +30,12 @@ impl TryFrom<BlockContent> for MultiEraBlock {
                     Ok(MultiEraBlock::AlonzoCompatible(Box::new(block), era))
                 }
             },
+            // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
+            // assumption?
+            probing::Outcome::GenesisBlock => {
+                let block = minicbor::decode(bytes)?;
+                Ok(MultiEraBlock::Byron(Box::new(block)))
+            }
             probing::Outcome::Inconclusive => {
                 log::error!("CBOR hex for debubbing: {}", hex::encode(bytes));
                 Err("can't infer primitive block from cbor, inconslusive probing".into())
