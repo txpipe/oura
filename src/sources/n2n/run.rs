@@ -10,7 +10,7 @@ use pallas::{
 
 use std::sync::mpsc::{Receiver, SyncSender};
 
-use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
+use crate::{mapper::EventWriter, utils::SwallowResult, Error};
 
 use super::headers::MultiEraHeader;
 
@@ -35,10 +35,17 @@ impl blockfetch::Observer for Block2EventMapper {
                 }
                 _ => {
                     writer
-                        .crawl_from_shelley_cbor(&body)
+                        .crawl_from_shelley_cbor(&body, era.into())
                         .ok_or_warn("error crawling block for events");
                 }
             },
+            // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
+            // assumption?
+            probing::Outcome::GenesisBlock => {
+                writer
+                    .crawl_from_byron_cbor(&body)
+                    .ok_or_warn("error crawling block for events");
+            }
             probing::Outcome::Inconclusive => {
                 log::error!("can't infer primitive block from cbor, inconslusive probing. CBOR hex for debubbing: {}", hex::encode(body));
             }
@@ -66,8 +73,8 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     log::info!(
         "rollback buffer state, size: {}, oldest: {:?}, latest: {:?}",
         buffer.size(),
-        buffer.oldest().map(|x| x.0),
-        buffer.latest().map(|x| x.0)
+        buffer.oldest(),
+        buffer.latest(),
     );
 }
 
@@ -112,11 +119,7 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
             }
             chainsync::RollbackEffect::OutOfScope => {
                 log::debug!("rollback out of buffer scope, sending event down the pipeline");
-
-                self.event_writer.append(EventData::RollBack {
-                    block_slot: point.0,
-                    block_hash: hex::encode(&point.1),
-                })?;
+                self.event_writer.append_rollback_event(point)?;
             }
         }
 
@@ -142,7 +145,7 @@ pub(crate) fn fetch_blocks_forever(
 pub(crate) fn observe_headers_forever(
     mut channel: Channel,
     event_writer: EventWriter,
-    from: Point,
+    known_points: Option<Vec<Point>>,
     block_requests: SyncSender<Point>,
     min_depth: usize,
 ) -> Result<(), Error> {
@@ -153,7 +156,7 @@ pub(crate) fn observe_headers_forever(
         block_requests,
     };
 
-    let agent = chainsync::HeaderConsumer::initial(vec![from], observer);
+    let agent = chainsync::HeaderConsumer::initial(known_points, observer);
     let agent = run_agent(agent, &mut channel)?;
     log::warn!("chainsync agent final state: {:?}", agent.state);
 

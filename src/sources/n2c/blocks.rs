@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use pallas::{
-    ledger::primitives::{alonzo, byron, probing},
+    ledger::primitives::{alonzo, byron, probing, Era},
     network::miniprotocols::{chainsync::BlockContent, Point},
 };
 
@@ -10,7 +10,7 @@ use crate::Error;
 #[derive(Debug)]
 pub(crate) enum MultiEraBlock {
     Byron(Box<byron::Block>),
-    AlonzoCompatible(Box<alonzo::Block>),
+    AlonzoCompatible(Box<alonzo::Block>, Era),
 }
 
 impl TryFrom<BlockContent> for MultiEraBlock {
@@ -27,9 +27,15 @@ impl TryFrom<BlockContent> for MultiEraBlock {
                 }
                 _ => {
                     let alonzo::BlockWrapper(_, block) = minicbor::decode(bytes)?;
-                    Ok(MultiEraBlock::AlonzoCompatible(Box::new(block)))
+                    Ok(MultiEraBlock::AlonzoCompatible(Box::new(block), era))
                 }
             },
+            // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
+            // assumption?
+            probing::Outcome::GenesisBlock => {
+                let block = minicbor::decode(bytes)?;
+                Ok(MultiEraBlock::Byron(Box::new(block)))
+            }
             probing::Outcome::Inconclusive => {
                 log::error!("CBOR hex for debubbing: {}", hex::encode(bytes));
                 Err("can't infer primitive block from cbor, inconslusive probing".into())
@@ -45,17 +51,17 @@ impl MultiEraBlock {
                 byron::Block::EbBlock(x) => {
                     let hash = x.header.to_hash();
                     let slot = x.header.to_abs_slot();
-                    Ok(Point(slot, hash.to_vec()))
+                    Ok(Point::Specific(slot, hash.to_vec()))
                 }
                 byron::Block::MainBlock(x) => {
                     let hash = x.header.to_hash();
                     let slot = x.header.consensus_data.0.to_abs_slot();
-                    Ok(Point(slot, hash.to_vec()))
+                    Ok(Point::Specific(slot, hash.to_vec()))
                 }
             },
-            MultiEraBlock::AlonzoCompatible(x) => {
+            MultiEraBlock::AlonzoCompatible(x, _) => {
                 let hash = alonzo::crypto::hash_block_header(&x.header);
-                Ok(Point(x.header.header_body.slot, hash.to_vec()))
+                Ok(Point::Specific(x.header.header_body.slot, hash.to_vec()))
             }
         }
     }

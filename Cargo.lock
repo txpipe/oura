@@ -562,12 +562,9 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
 name = "heck"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
-dependencies = [
- "unicode-segmentation",
-]
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"
@@ -1104,9 +1101,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.5.0-alpha.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97019172c117757afe1d1b3a1864aa0d443a07f466105b3c4c1d6708a6013203"
+checksum = "05851f9052fa9f8cb82f17eca09731ee06fd7e71ced4410c1ba34fb1188f08fc"
 dependencies = [
  "pallas-crypto",
  "pallas-miniprotocols",
@@ -1116,9 +1113,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-crypto"
-version = "0.5.0-alpha.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91675632c08908b190f6ff17a84becf4efffded6d5147796cb5b03d5b20df30e"
+checksum = "26b3d6c207cdaf012a1216dade8e0dcd4fd3c2a1ac67502a317b3d515183b087"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1129,9 +1126,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.5.0-alpha.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c60cc84d5a4f2e8cbbedf6c6d997638e6632af3148829c61271f332431ce6db"
+checksum = "ffb9c03313216a8d2df8aa9d028213c4b5ea73751b4bcb202989657927a38db5"
 dependencies = [
  "hex",
  "itertools",
@@ -1143,9 +1140,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.5.0-alpha.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a17bb5203d38dd89da0d75dc14f7a1848d0d76fbdc49cff27cc04f022fd1b567"
+checksum = "4c2e716075627be053d360049c715e204567721612a0220b2e52c015b8270579"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1154,9 +1151,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.5.0-alpha.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52a113aec8418e98ca476c4a4f720e84f8866842ae809d63dcc7b1847ea91f0d"
+checksum = "27d58c43453f292c1ee81b8969ba4d560b7e6b29eeb40f603613fabb7404b0d3"
 dependencies = [
  "base58",
  "hex",
@@ -1534,9 +1531,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d23c1ba4cf0efd44be32017709280b32d1cea5c3f1275c3b6d9e8bc54f758085"
+checksum = "8e8d9fa5c3b304765ce1fd9c4c8a3de2c8db365a5b91be52f186efc675681d95"
 dependencies = [
  "itoa",
  "ryu",
@@ -1660,9 +1657,9 @@ checksum = "cae14b91c7d11c9a851d3fbc80a963198998c2a64eec840477fa92d8ce9b70bb"
 
 [[package]]
 name = "strum_macros"
-version = "0.23.1"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bb0dc7ee9c15cea6199cde9a127fa16a4c5819af85395457ad72d68edc85a38"
+checksum = "6878079b17446e4d3eba6192bb0a2950d5b14f0ed8424b852310e5a94345d0ef"
 dependencies = [
  "heck",
  "proc-macro2",
