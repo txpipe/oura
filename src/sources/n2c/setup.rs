@@ -7,7 +7,7 @@ use net2::TcpStreamExt;
 use log::info;
 
 use pallas::network::{
-    miniprotocols::{handshake::n2c, run_agent, Point, MAINNET_MAGIC},
+    miniprotocols::{handshake::n2c, run_agent, MAINNET_MAGIC},
     multiplexer::{Channel, Multiplexer},
 };
 
@@ -18,7 +18,7 @@ use crate::{
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::{
         common::{AddressArg, BearerKind, MagicArg, PointArg},
-        define_start_point,
+        define_start_point, IntersectArg,
     },
     utils::{ChainWellKnownInfo, WithUtils},
     Error,
@@ -33,9 +33,10 @@ pub struct Config {
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
 
+    #[deprecated(note = "use intersect value instead")]
     pub since: Option<PointArg>,
 
-    pub intersections: Option<Vec<PointArg>>,
+    pub intersect: Option<IntersectArg>,
 
     #[deprecated(note = "chain info is now pipeline-wide, use utils")]
     pub well_known: Option<ChainWellKnownInfo>,
@@ -102,18 +103,20 @@ impl SourceProvider for WithUtils<Config> {
 
         let mut cs_channel = muxer.use_channel(5);
 
-        let since: Vec<Point> = define_start_point(
+        let known_points = define_start_point(
+            &self.inner.intersect,
+            #[allow(deprecated)]
             &self.inner.since,
-            &self.inner.intersections,
             &self.utils,
             &mut cs_channel,
         )?;
 
-        info!("starting from chain point: {:?}", &since);
+        info!("starting chain sync from: {:?}", &known_points);
 
         let min_depth = self.inner.min_depth;
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, writer, since, min_depth).expect("chainsync loop failed");
+            observe_forever(cs_channel, writer, known_points, min_depth)
+                .expect("chainsync loop failed");
         });
 
         Ok((handle, output_rx))

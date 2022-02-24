@@ -109,7 +109,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
 pub(crate) fn observe_forever(
     mut channel: Channel,
     event_writer: EventWriter,
-    from: Vec<Point>,
+    known_points: Option<Vec<Point>>,
     min_depth: usize,
 ) -> Result<(), Error> {
     let observer = ChainObserver {
@@ -119,7 +119,7 @@ pub(crate) fn observe_forever(
         event_writer,
     };
 
-    let agent = chainsync::BlockConsumer::initial(Some(from), observer);
+    let agent = chainsync::BlockConsumer::initial(known_points, observer);
     let agent = run_agent(agent, &mut channel)?;
     log::warn!("chainsync agent final state: {:?}", agent.state);
 

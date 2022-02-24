@@ -141,6 +141,15 @@ where
     deserializer.deserialize_any(MagicArgVisitor)
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", content = "value")]
+pub enum IntersectArg {
+    Tip,
+    Origin,
+    Point(PointArg),
+    Fallbacks(Vec<PointArg>),
+}
+
 pub(crate) fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,
@@ -161,30 +170,61 @@ pub(crate) fn find_end_of_chain(
 }
 
 pub(crate) fn define_start_point(
+    intersect: &Option<IntersectArg>,
     since: &Option<PointArg>,
-    intersections: &Option<Vec<PointArg>>,
     utils: &Utils,
     cs_channel: &mut Channel,
-) -> Result<Vec<Point>, Error> {
+) -> Result<Option<Vec<Point>>, Error> {
     let cursor = utils.get_cursor_if_any();
 
-    match (cursor, since, intersections) {
-        (Some(cursor), _, _) => {
+    match cursor {
+        Some(cursor) => {
             log::info!("found persisted cursor, will use as starting point");
-            Ok(vec![cursor.try_into()?])
+            let points = vec![cursor.try_into()?];
+
+            Ok(Some(points))
         }
-        (None, Some(arg), _) => {
-            log::info!("explicit 'since' argument, will use as starting point");
-            Ok(vec![arg.clone().try_into()?])
-        }
-        (None, None, Some(args)) => {
-            log::info!("intersections argument, will use as starting point");
-            args.iter().map(|x| x.clone().try_into()).collect()
-        }
-        _ => {
-            log::info!("no starting point specified, will use tip of chain");
-            let point = find_end_of_chain(cs_channel, &utils.well_known)?;
-            Ok(vec![point])
-        }
+        None => match intersect {
+            Some(IntersectArg::Fallbacks(x)) => {
+                log::info!("found 'fallbacks' intersect argument, will use as starting point");
+                let points: Result<Vec<_>, _> = x.iter().map(|x| x.clone().try_into()).collect();
+
+                Ok(Some(points?))
+            }
+            Some(IntersectArg::Origin) => {
+                log::info!("found 'origin' instersect argument, will use as starting point");
+
+                Ok(None)
+            }
+            Some(IntersectArg::Point(x)) => {
+                log::info!("found 'point' intersect argument, will use as starting point");
+                let points = vec![x.clone().try_into()?];
+
+                Ok(Some(points))
+            }
+            Some(IntersectArg::Tip) => {
+                log::info!("found 'tip' intersect argument, will use as starting point");
+                let tip = find_end_of_chain(cs_channel, &utils.well_known)?;
+                let points = vec![tip];
+
+                Ok(Some(points))
+            }
+            None => match since {
+                Some(x) => {
+                    log::info!("explicit 'since' argument, will use as starting point");
+                    log::warn!("`since` value is deprecated, please use `intersect`");
+                    let points = vec![x.clone().try_into()?];
+
+                    Ok(Some(points))
+                }
+                None => {
+                    log::info!("no starting point specified, will use tip of chain");
+                    let tip = find_end_of_chain(cs_channel, &utils.well_known)?;
+                    let points = vec![tip];
+
+                    Ok(Some(points))
+                }
+            },
+        },
     }
 }

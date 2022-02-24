@@ -7,7 +7,7 @@ use net2::TcpStreamExt;
 use log::info;
 
 use pallas::network::{
-    miniprotocols::{handshake::n2n, run_agent, Point, MAINNET_MAGIC},
+    miniprotocols::{handshake::n2n, run_agent, MAINNET_MAGIC},
     multiplexer::{Channel, Multiplexer},
 };
 
@@ -18,7 +18,7 @@ use crate::{
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::{
         common::{AddressArg, BearerKind, MagicArg, PointArg},
-        define_start_point,
+        define_start_point, IntersectArg,
     },
     utils::{ChainWellKnownInfo, WithUtils},
     Error,
@@ -33,9 +33,10 @@ pub struct Config {
     #[serde(deserialize_with = "crate::sources::common::deserialize_magic_arg")]
     pub magic: Option<MagicArg>,
 
+    #[deprecated(note = "use intersect value instead")]
     pub since: Option<PointArg>,
 
-    pub intersections: Option<Vec<PointArg>>,
+    pub intersect: Option<IntersectArg>,
 
     #[deprecated(note = "chain info is now pipeline-wide, use utils")]
     pub well_known: Option<ChainWellKnownInfo>,
@@ -102,21 +103,22 @@ impl SourceProvider for WithUtils<Config> {
 
         let mut cs_channel = muxer.use_channel(2);
 
-        let since: Vec<Point> = define_start_point(
+        let known_points = define_start_point(
+            &self.inner.intersect,
+            #[allow(deprecated)]
             &self.inner.since,
-            &self.inner.intersections,
             &self.utils,
             &mut cs_channel,
         )?;
 
-        info!("starting from chain point: {:?}", &since);
+        info!("starting chain sync from: {:?}", &known_points);
 
         let (headers_tx, headers_rx) = std::sync::mpsc::sync_channel(100);
 
         let min_depth = self.inner.min_depth;
         let cs_writer = writer.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, cs_writer, since, headers_tx, min_depth)
+            observe_headers_forever(cs_channel, cs_writer, known_points, headers_tx, min_depth)
                 .expect("chainsync loop failed");
         });
 
