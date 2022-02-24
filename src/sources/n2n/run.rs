@@ -10,7 +10,7 @@ use pallas::{
 
 use std::sync::mpsc::{Receiver, SyncSender};
 
-use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
+use crate::{mapper::EventWriter, utils::SwallowResult, Error};
 
 use super::headers::MultiEraHeader;
 
@@ -66,8 +66,8 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     log::info!(
         "rollback buffer state, size: {}, oldest: {:?}, latest: {:?}",
         buffer.size(),
-        buffer.oldest().map(|x| x.0),
-        buffer.latest().map(|x| x.0)
+        buffer.oldest(),
+        buffer.latest(),
     );
 }
 
@@ -112,11 +112,7 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
             }
             chainsync::RollbackEffect::OutOfScope => {
                 log::debug!("rollback out of buffer scope, sending event down the pipeline");
-
-                self.event_writer.append(EventData::RollBack {
-                    block_slot: point.0,
-                    block_hash: hex::encode(&point.1),
-                })?;
+                self.event_writer.append_rollback_event(point)?;
             }
         }
 
@@ -153,7 +149,7 @@ pub(crate) fn observe_headers_forever(
         block_requests,
     };
 
-    let agent = chainsync::HeaderConsumer::initial(from, observer);
+    let agent = chainsync::HeaderConsumer::initial(Some(from), observer);
     let agent = run_agent(agent, &mut channel)?;
     log::warn!("chainsync agent final state: {:?}", agent.state);
 

@@ -182,7 +182,7 @@ impl TryFrom<ChainWellKnownInfo> for Point {
     type Error = crate::Error;
 
     fn try_from(other: ChainWellKnownInfo) -> Result<Self, Self::Error> {
-        let out = Point(
+        let out = Point::Specific(
             other.shelley_known_slot,
             hex::decode(other.shelley_known_hash)?,
         );

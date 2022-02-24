@@ -45,17 +45,17 @@ impl MultiEraBlock {
                 byron::Block::EbBlock(x) => {
                     let hash = x.header.to_hash();
                     let slot = x.header.to_abs_slot();
-                    Ok(Point(slot, hash.to_vec()))
+                    Ok(Point::Specific(slot, hash.to_vec()))
                 }
                 byron::Block::MainBlock(x) => {
                     let hash = x.header.to_hash();
                     let slot = x.header.consensus_data.0.to_abs_slot();
-                    Ok(Point(slot, hash.to_vec()))
+                    Ok(Point::Specific(slot, hash.to_vec()))
                 }
             },
             MultiEraBlock::AlonzoCompatible(x, _) => {
                 let hash = alonzo::crypto::hash_block_header(&x.header);
-                Ok(Point(x.header.header_body.slot, hash.to_vec()))
+                Ok(Point::Specific(x.header.header_body.slot, hash.to_vec()))
             }
         }
     }

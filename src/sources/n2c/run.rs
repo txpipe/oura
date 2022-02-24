@@ -5,7 +5,7 @@ use pallas::network::{
     multiplexer::Channel,
 };
 
-use crate::{mapper::EventWriter, model::EventData, Error};
+use crate::{mapper::EventWriter, Error};
 
 use super::blocks::MultiEraBlock;
 
@@ -27,8 +27,8 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     log::info!(
         "rollback buffer state, size: {}, oldest: {:?}, latest: {:?}",
         buffer.size(),
-        buffer.oldest().map(|x| x.0),
-        buffer.latest().map(|x| x.0)
+        buffer.oldest(),
+        buffer.latest(),
     );
 }
 
@@ -87,7 +87,8 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 log::debug!("handled rollback within buffer {:?}", point);
 
                 // drain memory blocks afther the rollback slot
-                self.blocks.retain(|x, _| x.0 <= point.0);
+                self.blocks
+                    .retain(|x, _| x.slot_or_default() <= point.slot_or_default());
             }
             chainsync::RollbackEffect::OutOfScope => {
                 log::debug!("rollback out of buffer scope, sending event down the pipeline");
@@ -95,10 +96,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 // clear all the blocks in memory, they are orphan
                 self.blocks.clear();
 
-                self.event_writer.append(EventData::RollBack {
-                    block_slot: point.0,
-                    block_hash: hex::encode(&point.1),
-                })?;
+                self.event_writer.append_rollback_event(point)?;
             }
         }
 
@@ -121,7 +119,7 @@ pub(crate) fn observe_forever(
         event_writer,
     };
 
-    let agent = chainsync::BlockConsumer::initial(from, observer);
+    let agent = chainsync::BlockConsumer::initial(Some(from), observer);
     let agent = run_agent(agent, &mut channel)?;
     log::warn!("chainsync agent final state: {:?}", agent.state);
 

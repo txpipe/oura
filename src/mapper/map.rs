@@ -8,6 +8,7 @@ use pallas::ledger::primitives::alonzo::{
 };
 use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
 
+use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
@@ -369,5 +370,20 @@ impl EventWriter {
                 false => None,
             },
         })
+    }
+
+    pub(crate) fn append_rollback_event(&self, point: &Point) -> Result<(), Error> {
+        let data = match point {
+            Point::Origin => EventData::RollBack {
+                block_slot: 0,
+                block_hash: "".to_string(),
+            },
+            Point::Specific(slot, hash) => EventData::RollBack {
+                block_slot: *slot,
+                block_hash: hex::encode(&hash),
+            },
+        };
+
+        self.append(data)
     }
 }
