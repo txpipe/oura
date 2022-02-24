@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use oura::{
     mapper::Config as MapperConfig,
     pipelining::{SinkProvider, SourceProvider},
-    sources::{AddressArg, BearerKind, MagicArg},
+    sources::{AddressArg, BearerKind, IntersectArg, MagicArg},
     utils::{ChainWellKnownInfo, Utils, WithUtils},
 };
 
@@ -58,8 +58,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => MagicArg::default(),
     };
 
-    let since = match args.is_present("since") {
-        true => Some(args.value_of_t("since")?),
+    let intersect = match args.is_present("since") {
+        true => Some(IntersectArg::Point(args.value_of_t("since")?)),
         false => None,
     };
 
@@ -94,8 +94,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             well_known: None,
             min_depth: 0,
             mapper,
-            since,
-            intersections: None,
+            since: None,
+            intersect,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
@@ -103,8 +103,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             well_known: None,
             min_depth: 0,
             mapper,
-            since,
-            intersections: None,
+            since: None,
+            intersect,
         }),
     };
 
