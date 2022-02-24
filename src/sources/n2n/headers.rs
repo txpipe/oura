@@ -41,16 +41,16 @@ impl MultiEraHeader {
             MultiEraHeader::ByronBoundary(x) => {
                 let hash = x.to_hash();
                 let slot = x.to_abs_slot();
-                Ok(Point(slot, hash.to_vec()))
+                Ok(Point::Specific(slot, hash.to_vec()))
             }
             MultiEraHeader::Byron(x) => {
                 let hash = x.to_hash();
                 let slot = x.consensus_data.0.to_abs_slot();
-                Ok(Point(slot, hash.to_vec()))
+                Ok(Point::Specific(slot, hash.to_vec()))
             }
             MultiEraHeader::AlonzoCompatible(x) => {
                 let hash = alonzo::crypto::hash_block_header(x);
-                Ok(Point(x.header_body.slot, hash.to_vec()))
+                Ok(Point::Specific(x.header_body.slot, hash.to_vec()))
             }
         }
     }
