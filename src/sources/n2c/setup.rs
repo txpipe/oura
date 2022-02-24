@@ -105,6 +105,7 @@ impl SourceProvider for WithUtils<Config> {
 
         let known_points = define_start_point(
             &self.inner.intersect,
+            #[allow(deprecated)]
             &self.inner.since,
             &self.utils,
             &mut cs_channel,
