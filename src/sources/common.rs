@@ -71,7 +71,7 @@ impl ToString for PointArg {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct MagicArg(pub u64);
 
 impl Deref for MagicArg {
