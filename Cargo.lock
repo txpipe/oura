@@ -1126,9 +1126,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffb9c03313216a8d2df8aa9d028213c4b5ea73751b4bcb202989657927a38db5"
+checksum = "2722d69d35a7b1cd54d234540e7816436b5f1b4f4cb6fd0dc602c418a9e915c4"
 dependencies = [
  "hex",
  "itertools",
