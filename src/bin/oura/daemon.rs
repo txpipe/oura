@@ -10,6 +10,7 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
+    sources::MagicArg,
     utils::{cursor, metrics, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
@@ -48,6 +49,13 @@ fn bootstrap_source(config: Source, utils: Arc<Utils>) -> PartialBootstrapResult
     match config {
         Source::N2C(config) => WithUtils::new(config, utils).bootstrap(),
         Source::N2N(config) => WithUtils::new(config, utils).bootstrap(),
+    }
+}
+
+fn infer_magic_from_source(config: &Source) -> Option<MagicArg> {
+    match config {
+        Source::N2C(config) => config.magic.clone(),
+        Source::N2N(config) => config.magic.clone(),
     }
 }
 
@@ -151,13 +159,22 @@ impl ConfigRoot {
     }
 }
 
+fn define_chain_info(
+    explicit: Option<ChainWellKnownInfo>,
+    magic: &MagicArg,
+) -> Result<ChainWellKnownInfo, Error> {
+    match explicit {
+        Some(x) => Ok(x),
+        None => ChainWellKnownInfo::try_from_magic(**magic),
+    }
+}
+
 fn bootstrap_utils(
-    chain: Option<ChainWellKnownInfo>,
+    chain: ChainWellKnownInfo,
     cursor: Option<cursor::Config>,
     metrics: Option<metrics::Config>,
 ) -> Utils {
-    let well_known = chain.unwrap_or_default();
-    let mut utils = Utils::new(well_known);
+    let mut utils = Utils::new(chain);
 
     if let Some(cursor) = cursor {
         utils = utils.with_cursor(cursor);
@@ -180,6 +197,10 @@ fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
         cursor,
         metrics,
     } = config;
+
+    let magic = infer_magic_from_source(&source).unwrap_or_default();
+
+    let chain = define_chain_info(chain, &magic)?;
 
     let utils = Arc::new(bootstrap_utils(chain, cursor, metrics));
 
