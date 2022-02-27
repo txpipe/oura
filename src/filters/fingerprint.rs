@@ -9,7 +9,10 @@ use log::{debug, warn};
 use serde::Deserialize;
 
 use crate::{
-    model::{CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord},
+    model::{
+        CIP25AssetRecord, EpochBoundaryRecord, Event, EventData, MetadataRecord, MintRecord,
+        OutputAssetRecord,
+    },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
     Error,
 };
@@ -100,6 +103,10 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&event.context.slot)
             .with_prefix("blckend")
             .append_optional(&event.context.block_hash)?,
+        EventData::EpochBoundary(EpochBoundaryRecord { hash, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("ebb")
+            .append_to_string(hash)?,
         EventData::Transaction { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("tx")
