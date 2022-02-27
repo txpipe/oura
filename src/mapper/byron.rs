@@ -2,7 +2,10 @@ use std::ops::Deref;
 
 use super::map::ToHex;
 use super::EventWriter;
-use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
+use crate::model::{
+    BlockRecord, EpochBoundaryRecord, Era, EventData, TransactionRecord, TxInputRecord,
+    TxOutputRecord,
+};
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
@@ -68,7 +71,7 @@ impl EventWriter {
 
         let mut record = TransactionRecord {
             hash: tx_hash.to_owned(),
-            // TODO: we have a problem with here. AFAIK, there's no reference to the tx fee in the
+            // TODO: we have a problem here. AFAIK, there's no reference to the tx fee in the
             // block contents. This leaves us with the two alternative: a) compute the value, b)
             // omit the value.
             //
@@ -187,25 +190,74 @@ impl EventWriter {
         Ok(())
     }
 
+    pub fn to_byron_epoch_boundary_record(
+        &self,
+        source: &byron::EbBlock,
+        hash: &Hash<32>,
+        cbor: &[u8],
+    ) -> Result<EpochBoundaryRecord, Error> {
+        Ok(EpochBoundaryRecord {
+            era: Era::Byron,
+            body_size: cbor.len() as usize,
+            hash: hash.to_hex(),
+            number: source.header.consensus_data.difficulty[0],
+            previous_hash: source.header.prev_block.to_hex(),
+            cbor_hex: match self.config.include_block_cbor {
+                true => hex::encode(cbor).into(),
+                false => None,
+            },
+            epoch: source.header.consensus_data.epoch_id,
+        })
+    }
+
+    fn crawl_byron_ebb_block(
+        &self,
+        block: &byron::EbBlock,
+        hash: &Hash<32>,
+        cbor: &[u8],
+    ) -> Result<(), Error> {
+        let record = self.to_byron_epoch_boundary_record(block, hash, cbor)?;
+        self.append_from(record)?;
+        Ok(())
+    }
+
     /// Mapper entry-point for decoded Byron blocks
     ///
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we already have a decoded block (for example, N2C). The raw CBOR is also
     /// passed through in case we need to attach it to outbound events.
     pub fn crawl_byron_with_cbor(&self, block: &byron::Block, cbor: &[u8]) -> Result<(), Error> {
-        if let byron::Block::MainBlock(block) = block {
-            let hash = block.header.to_hash();
-            let abs_slot = block.header.consensus_data.0.to_abs_slot();
+        match block {
+            byron::Block::MainBlock(block) => {
+                let hash = block.header.to_hash();
+                let abs_slot = block.header.consensus_data.0.to_abs_slot();
 
-            let child = self.child_writer(EventContext {
-                block_hash: Some(hex::encode(&hash)),
-                block_number: Some(block.header.consensus_data.2[0]),
-                slot: Some(abs_slot),
-                timestamp: self.compute_timestamp(abs_slot),
-                ..EventContext::default()
-            });
+                let child = self.child_writer(EventContext {
+                    block_hash: Some(hex::encode(&hash)),
+                    block_number: Some(block.header.consensus_data.2[0]),
+                    slot: Some(abs_slot),
+                    timestamp: self.compute_timestamp(abs_slot),
+                    ..EventContext::default()
+                });
 
-            child.crawl_byron_main_block(block, &hash, cbor)?;
+                child.crawl_byron_main_block(block, &hash, cbor)?;
+            }
+            byron::Block::EbBlock(block) => {
+                if self.config.include_byron_ebb {
+                    let hash = block.header.to_hash();
+                    let abs_slot = block.header.to_abs_slot();
+
+                    let child = self.child_writer(EventContext {
+                        block_hash: Some(hex::encode(&hash)),
+                        block_number: Some(block.header.consensus_data.difficulty[0]),
+                        slot: Some(abs_slot),
+                        timestamp: self.compute_timestamp(abs_slot),
+                        ..EventContext::default()
+                    });
+
+                    child.crawl_byron_ebb_block(block, &hash, cbor)?;
+                }
+            }
         }
 
         Ok(())
