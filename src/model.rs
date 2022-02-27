@@ -185,6 +185,23 @@ pub struct BlockRecord {
     pub cbor_hex: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EpochBoundaryRecord {
+    pub era: Era,
+    pub body_size: usize,
+    pub epoch: u64,
+    pub hash: String,
+    pub number: u64,
+    pub previous_hash: String,
+    pub cbor_hex: Option<String>,
+}
+
+impl From<EpochBoundaryRecord> for EventData {
+    fn from(x: EpochBoundaryRecord) -> Self {
+        EventData::EpochBoundary(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Display, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum EventData {
@@ -245,6 +262,7 @@ pub enum EventData {
         block_slot: u64,
         block_hash: String,
     },
+    EpochBoundary(EpochBoundaryRecord),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
