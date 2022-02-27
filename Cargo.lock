@@ -1126,9 +1126,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2722d69d35a7b1cd54d234540e7816436b5f1b4f4cb6fd0dc602c418a9e915c4"
+checksum = "e42028d5e92abe61654a9fb388145b3bb186676e67a8c0e5897d8628081f0cfc"
 dependencies = [
  "hex",
  "itertools",
@@ -1151,9 +1151,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.5.0"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27d58c43453f292c1ee81b8969ba4d560b7e6b29eeb40f603613fabb7404b0d3"
+checksum = "ff279bfa594797d6d18ef55816e4b9124510a6f4ef219738427fc5eb7df880d4"
 dependencies = [
  "base58",
  "hex",
@@ -1885,7 +1885,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand",
  "static_assertions",
 ]
