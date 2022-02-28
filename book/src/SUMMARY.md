@@ -31,6 +31,5 @@
     - [Pipeline Metrics](./advanced/pipeline_metrics.md)
     - [Mapper Options](./advanced/mapper_options.md)
     - [Intersect Options](./advanced/intersect_options.md)
-    - [Well-known Chain Info](./advanced/wellknown_chain_info.md)
 - [Guides](./guides/README.md)
     - [Cardano => Kafka](./guides/cardano_2_kafka.md)
