@@ -2,10 +2,7 @@ use std::ops::Deref;
 
 use super::map::ToHex;
 use super::EventWriter;
-use crate::model::{
-    BlockRecord, EpochBoundaryRecord, Era, EventData, TransactionRecord, TxInputRecord,
-    TxOutputRecord,
-};
+use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
@@ -195,18 +192,20 @@ impl EventWriter {
         source: &byron::EbBlock,
         hash: &Hash<32>,
         cbor: &[u8],
-    ) -> Result<EpochBoundaryRecord, Error> {
-        Ok(EpochBoundaryRecord {
+    ) -> Result<BlockRecord, Error> {
+        Ok(BlockRecord {
             era: Era::Byron,
             body_size: cbor.len() as usize,
             hash: hash.to_hex(),
+            issuer_vkey: Default::default(),
+            tx_count: 0,
             number: source.header.consensus_data.difficulty[0],
+            slot: source.header.to_abs_slot(),
             previous_hash: source.header.prev_block.to_hex(),
             cbor_hex: match self.config.include_block_cbor {
                 true => hex::encode(cbor).into(),
                 false => None,
             },
-            epoch: source.header.consensus_data.epoch_id,
         })
     }
 
@@ -217,7 +216,13 @@ impl EventWriter {
         cbor: &[u8],
     ) -> Result<(), Error> {
         let record = self.to_byron_epoch_boundary_record(block, hash, cbor)?;
-        self.append_from(record)?;
+
+        self.append_from(record.clone())?;
+
+        if self.config.include_block_end_events {
+            self.append(EventData::BlockEnd(record))?;
+        }
+
         Ok(())
     }
 
