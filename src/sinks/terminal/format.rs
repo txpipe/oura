@@ -3,8 +3,8 @@ use std::fmt::{Display, Write};
 use crossterm::style::{Attribute, Color, Stylize};
 
 use crate::model::{
-    BlockRecord, CIP25AssetRecord, EpochBoundaryRecord, Event, EventData, MetadataRecord,
-    MintRecord, OutputAssetRecord, TransactionRecord, TxInputRecord, TxOutputRecord,
+    BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
+    TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 pub struct LogLine {
@@ -58,25 +58,6 @@ impl LogLine {
                     content: format!(
                     "{{ slot: {}, hash: {}, number: {} }}",
                     slot,
-                    hash,
-                    number,
-                ),
-                    source,
-                    max_width,
-                }
-            }
-            EventData::EpochBoundary(EpochBoundaryRecord {
-                epoch,
-                hash,
-                number,
-                ..
-            }) => {
-                LogLine {
-                    prefix: "EBB",
-                    color: Color::DarkMagenta,
-                    content: format!(
-                    "{{ epoch: {}, hash: {}, number: {} }}",
-                    epoch,
                     hash,
                     number,
                 ),
