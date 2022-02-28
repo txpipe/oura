@@ -12,7 +12,7 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.5.0"
+pallas = "0.6.0"
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"
@@ -27,7 +27,7 @@ serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 strum = "0.23"
 strum_macros = "0.24"
-minicbor = "0.13"
+minicbor = "0.14.1"
 prometheus_exporter = { version = "0.8.4", default-features = false }
 
 # feature logs
