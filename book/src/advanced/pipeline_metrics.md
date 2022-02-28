@@ -68,7 +68,7 @@ source_current_slot 2839340
 source_event_count 2277715
 ```
 
-Regardless of the above mechanism, the inteded approach for tracking Oura's metrics is to use a monitoring infrastructure compatible with Prometheus format. Some of the more commons stacks are:
+Regardless of the above mechanism, the inteded approach for tracking Oura's metrics is to use a monitoring infrastructure compatible with Prometheus format. Setting up and managing the monitoring stack is outside the scope of Oura. If you don't have any infrastructure in place, we recommend checking out some of the more commons stacks:
 
 - Prometheus Server + Grafana
 - Metricbeat + Elasticsearch + Kibana
