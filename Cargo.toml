@@ -17,12 +17,12 @@ pallas = "0.6.0"
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.8.1"
-clap = "3.0.14"
+clap = "3.1.3"
 log = "0.4.14"
 env_logger = "0.9.0"
 crossterm = "0.23"
 merge = "0.1.0"
-config = { version = "0.11.0", default-features = false, features = ["toml"] }
+config = { version = "0.12.0", default-features = false, features = ["toml"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 strum = "0.23"

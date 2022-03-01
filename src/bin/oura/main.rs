@@ -4,17 +4,17 @@ mod watch;
 
 use std::process;
 
-use clap::{App, AppSettings, Arg};
+use clap::{Arg, Command};
 
 type Error = oura::Error;
 
 fn main() {
-    let args = App::new("app")
+    let args = Command::new("app")
         .name("oura")
         .about("the tail of cardano")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(
-            App::new("watch")
+            Command::new("watch")
                 .arg(Arg::new("socket").required(true))
                 .arg(
                     Arg::new("bearer")
@@ -40,7 +40,7 @@ fn main() {
                 ),
         )
         .subcommand(
-            App::new("dump")
+            Command::new("dump")
                 .arg(Arg::new("socket").required(true))
                 .arg(
                     Arg::new("bearer")
@@ -66,14 +66,14 @@ fn main() {
                 ),
         )
         .subcommand(
-            App::new("daemon").arg(
+            Command::new("daemon").arg(
                 Arg::new("config")
                     .long("config")
                     .takes_value(true)
                     .help("config file to load by the daemon"),
             ),
         )
-        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .arg_required_else_help(true)
         .get_matches();
 
     let result = match args.subcommand() {
