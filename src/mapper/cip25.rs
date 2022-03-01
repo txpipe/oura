@@ -75,15 +75,13 @@ impl EventWriter {
         policy: &str,
         content: &Metadatum,
     ) -> Result<(), Error> {
-        let entries = match content {
-            Metadatum::Map(map) => map,
-            _ => return Err("expected 721 policy content to be a map".into()),
-        };
-
-        for (key, sub_content) in entries.iter() {
-            if let Some(asset) = is_asset_key(key) {
-                let record = self.to_cip25_asset_record(version, policy, &asset, sub_content)?;
-                self.append_from(record)?;
+        if let Metadatum::Map(entries) = content {
+            for (key, sub_content) in entries.iter() {
+                if let Some(asset) = is_asset_key(key) {
+                    let record =
+                        self.to_cip25_asset_record(version, policy, &asset, sub_content)?;
+                    self.append_from(record)?;
+                }
             }
         }
 
