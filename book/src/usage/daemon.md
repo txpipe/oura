@@ -65,7 +65,7 @@ This section specifies the destination of the data. The special `type` field mus
 
 ### The `cursor` section
 
-This section specifies how to configure the "cursor" feature. A cursor is a reference of the current position of the pipeline. If the pipeline needs to restart for whatever reason, and a cursor is available, the pipeline will start reading from that point in the chain. Removing the section from the config will disable the cursor feature.
+This section specifies how to configure the [cursor feature](../advanced/stateful_cursor.md). A cursor is a reference of the current position of the pipeline. If the pipeline needs to restart for whatever reason, and a cursor is available, the pipeline will start reading from that point in the chain. Removing the section from the config will disable the cursor feature.
 
 ### Full Example
 
