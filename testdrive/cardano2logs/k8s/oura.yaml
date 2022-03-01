@@ -25,6 +25,8 @@ data:
     [cursor]
     type = "File"
     path = "/var/oura/cursor"
+
+    [metrics]
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -55,7 +57,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:22
+          image: ghcr.io/txpipe/oura-testdrive:40
           env:
             - name: "RUST_LOG"
               value: "warn"
@@ -68,6 +70,9 @@ spec:
               cpu: 200m
           args:
             - "daemon"
+          ports:
+            - name: metrics
+              containerPort: 9186
           volumeMounts:
             - mountPath: /etc/oura
               name: oura-config
