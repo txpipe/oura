@@ -40,7 +40,7 @@ This section provides a way to opt-in into advances behaviour of how the raw cha
 
 ## Examples
 
-Connecting to a local Cardano node in mainnet through unix sockets:
+Connecting to a remote Cardano node in mainnet through tcp sockets:
 
 ```toml
 [source]
@@ -49,7 +49,7 @@ address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
 magic = "mainnet"
 ```
 
-Connecting to a local Cardano node in testnet through unix sockets:
+Connecting to a remote Cardano node in testnet through tcp sockets:
 
 ```toml
 [source]
