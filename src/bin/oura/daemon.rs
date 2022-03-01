@@ -139,23 +139,23 @@ struct ConfigRoot {
 
 impl ConfigRoot {
     pub fn new(explicit_file: Option<String>) -> Result<Self, ConfigError> {
-        let mut s = Config::default();
+        let mut s = Config::builder();
 
         // our base config will always be in /etc/oura
-        s.merge(File::with_name("/etc/oura/daemon.toml").required(false))?;
+        s = s.add_source(File::with_name("/etc/oura/daemon.toml").required(false));
 
         // but we can override it by having a file in the working dir
-        s.merge(File::with_name("oura.toml").required(false))?;
+        s = s.add_source(File::with_name("oura.toml").required(false));
 
         // if an explicit file was passed, then we load it as mandatory
         if let Some(explicit) = explicit_file {
-            s.merge(File::with_name(&explicit).required(true))?;
+            s = s.add_source(File::with_name(&explicit).required(true));
         }
 
         // finally, we use env vars to make some last-step overrides
-        s.merge(Environment::with_prefix("OURA").separator("_"))?;
+        s = s.add_source(Environment::with_prefix("OURA").separator("_"));
 
-        s.try_into()
+        s.build()?.try_deserialize()
     }
 }
 
