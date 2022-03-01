@@ -57,7 +57,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:32
+          image: ghcr.io/txpipe/oura-testdrive:40
           env:
             - name: "RUST_LOG"
               value: "warn"

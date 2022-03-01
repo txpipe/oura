@@ -30,7 +30,6 @@ data:
     path = "/var/oura/cursor"
 
     [metrics]
-    endpoint = "/metrics"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -61,7 +60,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:28
+          image: ghcr.io/txpipe/oura-testdrive:40
           env:
             - name: "RUST_LOG"
               value: "warn"
