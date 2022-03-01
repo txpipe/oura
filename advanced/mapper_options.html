@@ -1,0 +1,201 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Mapper Options - Oura</title>
+        <!-- Custom HTML head -->
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../installation/binary_release.html"><strong aria-hidden="true">2.1.</strong> Binary Release</a></li><li class="chapter-item expanded "><a href="../installation/from_source.html"><strong aria-hidden="true">2.2.</strong> From Source</a></li><li class="chapter-item expanded "><a href="../installation/docker.html"><strong aria-hidden="true">2.3.</strong> Docker</a></li><li class="chapter-item expanded "><a href="../installation/kubernetes.html"><strong aria-hidden="true">2.4.</strong> Kubernetes</a></li></ol></li><li class="chapter-item expanded "><a href="../usage/index.html"><strong aria-hidden="true">3.</strong> Usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../usage/watch.html"><strong aria-hidden="true">3.1.</strong> Watch Mode</a></li><li class="chapter-item expanded "><a href="../usage/daemon.html"><strong aria-hidden="true">3.2.</strong> Daemon Mode</a></li><li class="chapter-item expanded "><a href="../usage/dump.html"><strong aria-hidden="true">3.3.</strong> Dump Mode</a></li><li class="chapter-item expanded "><a href="../usage/library.html"><strong aria-hidden="true">3.4.</strong> Library</a></li></ol></li><li class="chapter-item expanded "><a href="../filters/index.html"><strong aria-hidden="true">4.</strong> Filters</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../filters/fingerprint.html"><strong aria-hidden="true">4.1.</strong> Fingerprint</a></li><li class="chapter-item expanded "><a href="../filters/selection.html"><strong aria-hidden="true">4.2.</strong> Selection</a></li></ol></li><li class="chapter-item expanded "><a href="../sources/index.html"><strong aria-hidden="true">5.</strong> Sources</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../sources/n2n.html"><strong aria-hidden="true">5.1.</strong> Node-to-Node</a></li><li class="chapter-item expanded "><a href="../sources/n2c.html"><strong aria-hidden="true">5.2.</strong> Node-to-Client</a></li></ol></li><li class="chapter-item expanded "><a href="../sinks/index.html"><strong aria-hidden="true">6.</strong> Sinks</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../sinks/terminal.html"><strong aria-hidden="true">6.1.</strong> Terminal</a></li><li class="chapter-item expanded "><a href="../sinks/kafka.html"><strong aria-hidden="true">6.2.</strong> Kafka</a></li><li class="chapter-item expanded "><a href="../sinks/elastic.html"><strong aria-hidden="true">6.3.</strong> Elasticsearch</a></li><li class="chapter-item expanded "><a href="../sinks/webhook.html"><strong aria-hidden="true">6.4.</strong> Webhook</a></li><li class="chapter-item expanded "><a href="../sinks/logs.html"><strong aria-hidden="true">6.5.</strong> Logs</a></li></ol></li><li class="chapter-item expanded "><a href="../reference/index.html"><strong aria-hidden="true">7.</strong> Reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../reference/data_dictionary.html"><strong aria-hidden="true">7.1.</strong> Data Dictionary</a></li></ol></li><li class="chapter-item expanded "><a href="../advanced/index.html"><strong aria-hidden="true">8.</strong> Advanced Features</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../advanced/stateful_cursor.html"><strong aria-hidden="true">8.1.</strong> Stateful Cursor</a></li><li class="chapter-item expanded "><a href="../advanced/rollback_buffer.html"><strong aria-hidden="true">8.2.</strong> Rollback Buffer</a></li><li class="chapter-item expanded "><a href="../advanced/pipeline_metrics.html"><strong aria-hidden="true">8.3.</strong> Pipeline Metrics</a></li><li class="chapter-item expanded "><a href="../advanced/mapper_options.html" class="active"><strong aria-hidden="true">8.4.</strong> Mapper Options</a></li><li class="chapter-item expanded "><a href="../advanced/intersect_options.html"><strong aria-hidden="true">8.5.</strong> Intersect Options</a></li></ol></li><li class="chapter-item expanded "><a href="../guides/index.html"><strong aria-hidden="true">9.</strong> Guides</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../guides/cardano_2_kafka.html"><strong aria-hidden="true">9.1.</strong> Cardano =&gt; Kafka</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Oura</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="mapper-options"><a class="header" href="#mapper-options">Mapper Options</a></h1>
+<p>A set of &quot;expensive&quot; event mapping procedures that require an explicit opt-in to be activated.</p>
+<h2 id="context"><a class="header" href="#context">Context</a></h2>
+<p>One of the main concerns of Oura is turning block / tx data into atomic events to send down the pipeline for further processing. The <code>source</code> stage is responsible for executing these mapping procedures.</p>
+<p>Most of the time, this logic is generic enough that it can be reused in different scenarios. For example, the <code>N2N</code> and the <code>N2C</code> sources share the same mapping procedures. If a particular use-case needs to cherry-pick, enrich or alter the data in some way, the recommendation is to handle the transformation in downstream stages, by using any of the built-in filter or by creating new ones.</p>
+<p>There are some exception though, whenever a mapping has a heavy impact on performance, it is better to disable it completely at the <code>source</code> level to avoid paying the overhead associated with the initial processing of the data.</p>
+<h2 id="feature"><a class="header" href="#feature">Feature</a></h2>
+<p>We consider a mapping procedure &quot;expensive&quot; if it involves: handling a relative large amount of data, computing some relatively expensive value or generating redundant data required only for very particular use cases.</p>
+<p>For these expensive procedures, we provide configurable options that instructs an Oura instance running in daemon mode to opt-in on each particular rule.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p>The mapper options can be defined by adding the following configuration in the <code>daemon.toml</code> file:</p>
+<pre><code class="language-toml">[source.mapper]
+include_block_end_events = &lt;bool&gt;
+include_transaction_details = &lt;bool&gt;
+include_transaction_end_events = &lt;bool&gt;
+include_block_cbor = &lt;bool&gt;
+include_byron_ebb = &lt;bool&gt;
+</code></pre>
+<ul>
+<li><code>include_block_end_events</code>: if enabled, the source will output an event signaling the end of a block, duplicating all of the data already sent in the corresponding block start event. Default value is <code>false</code>.</li>
+<li><code>include_transaction_details</code>: if enabled, each transaction event payload will contain an nested version of all of the details of the transaction (inputs, outputs, mint, assets, metadata, etc). Useful when the pipeline needs to process the tx as a unit, instead of handling each sub-object as an independent event. Default value is <code>false</code>.</li>
+<li><code>include_transaction_end_events</code>: if enabled, the source will output an event signaling the end of a transaction, duplicating all of the data already sent in the corresponding transaction start event. Defaul value is <code>false</code>.</li>
+<li><code>include_block_cbor</code>: if enabled, the block event will include the raw, unaltered cbor content received from the node, formatted as an hex string. Useful when some custom cbor decoding is required. Default value is <code>false</code>.</li>
+<li><code>include_byron_ebb</code>: if enabled, a block event will be emmitted for legacy epoch boundary block of the Byron era (deprecated in newer eras). Useful when performing validation on previous block hashes.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../advanced/pipeline_metrics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                            <a rel="next" href="../advanced/intersect_options.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../advanced/pipeline_metrics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                    <a rel="next" href="../advanced/intersect_options.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+    </body>
+</html>
