@@ -170,7 +170,7 @@ argument = &lt;predicate argument&gt;
 </ul>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <p>Allowing only block and transaction events to pass:</p>
-<pre><code>[[filters]]
+<pre><code class="language-toml">[[filters]]
 type = &quot;Selection&quot;
 
 [filters.check]
@@ -178,7 +178,7 @@ predicate = &quot;variant_in&quot;
 argument = [&quot;Block&quot;, &quot;Transaction&quot;]
 </code></pre>
 <p>Using the <code>not</code> predicate to allow all events except the variant <code>Transaction</code>:</p>
-<pre><code>[[filters]]
+<pre><code class="language-toml">[[filters]]
 type = &quot;Selection&quot;
 
 [filters.check]
@@ -187,6 +187,30 @@ predicate = &quot;not&quot;
 [filters.check.argument]
 predicate = &quot;variant_in&quot;
 argument = [&quot;Transaction&quot;]
+</code></pre>
+<p>Using the <code>any_of</code> (aka: &quot;or&quot;) predicate to filter events presenting any of two different policies:</p>
+<pre><code class="language-toml">[filters.check]
+predicate = &quot;any_of&quot;
+
+[[filters.check.argument]]
+predicate = &quot;policy_equals&quot;
+argument = &quot;4bf184e01e0f163296ab253edd60774e2d34367d0e7b6cbc689b567d&quot;
+
+[[filters.check.argument]]
+predicate = &quot;policy_equals&quot;
+argument = &quot;a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559&quot;
+</code></pre>
+<p>Using the <code>all_of</code> (aka: &quot;and&quot;) to filter only &quot;asset&quot; events presenting a particular policy:</p>
+<pre><code class="language-toml">[filters.check]
+predicate = &quot;all_of&quot;
+
+[[filters.check.argument]]
+predicate = &quot;variant_in&quot;
+argument = [&quot;OutputAsset&quot;]
+
+[[filters.check.argument]]
+predicate = &quot;policy_equals&quot;
+argument = &quot;a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559&quot;
 </code></pre>
 
                     </main>
