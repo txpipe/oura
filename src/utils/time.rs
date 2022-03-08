@@ -92,13 +92,17 @@ mod tests {
     fn naive_provider_matches_testnet_values() {
         let provider = NaiveProvider::new(ChainWellKnownInfo::testnet());
 
+        // Byron origin, value copied from:
+        // https://explorer.cardano-testnet.iohkdev.io/en/block?id=8f8602837f7c6f8b8867dd1cbc1842cf51a27eaed2c70ef48325d00f8efb320f
+        assert_slot_matches_timestamp(&provider, 0, 1564010416);
+
         // Byron start, value copied from:
         // https://explorer.cardano-testnet.iohkdev.io/en/block?id=388a82f053603f3552717d61644a353188f2d5500f4c6354cc1ad27a36a7ea91
-        assert_slot_matches_timestamp(&provider, 1031, 1564020236);
+        assert_slot_matches_timestamp(&provider, 1031, 1564031036);
 
         // Byron middle, value copied from:
         // https://explorer.cardano-testnet.iohkdev.io/en/block?id=66102c0b80e1eebc9cddf9cab43c1bf912e4f1963d6f3b8ff948952f8409e779
-        assert_slot_matches_timestamp(&provider, 561595, 1575231516);
+        assert_slot_matches_timestamp(&provider, 561595, 1575242316);
 
         // Shelley start, value copied from:
         // https://explorer.cardano-testnet.iohkdev.io/en/block?id=02b1c561715da9e540411123a6135ee319b02f60b9a11a603d3305556c04329f
