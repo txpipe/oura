@@ -1151,9 +1151,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7aec3c75fb7743b3a16e036318d5b62f4d823c5ee945e4db645d5fdf9f1ce87"
+checksum = "a884deec28ab5e0d26b04bb3c4dfa5907fff6bf728185c46ee9d9f4199b68f42"
 dependencies = [
  "base58",
  "hex",
