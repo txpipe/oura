@@ -68,8 +68,9 @@ Oura is in its essence just a pipeline for proccessing events. Each stage of the
 
 - Sources
   - [x] chain-sync full-block (node-to-client)
-  - [ ] chain-sync headers-only (node-to-node)
   - [x] chain-sync + block-fetch (node-to-node)
+  - [x] Parsing of Shelley-compatible blocks (Shelley, Allegra, Mary, Alonzo)
+  - [x] Parsing of Byron blocks
 - Sinks
   - [x] Kafka topic
   - [x] Elasticsearch index / data stream
@@ -101,13 +102,14 @@ Oura is in its essence just a pipeline for proccessing events. Each stage of the
   - [ ] enrich addresses descriptions using ADAHandle
 - Other
   - [x] stateful chain cursor to recover from restarts
-  - [ ] buffer stage to hold blocks until they reach a certain depth
+  - [x] buffer stage to hold blocks until they reach a certain depth
+  - [x] pipeline metrics to track the progress and performance
 
 ## Known Limitations
 
-- Oura only knows how to process blocks from the Shelley era. We are working on adding support for Byron in a future release.
+- ~~Oura only knows how to process blocks from the Shelley era. We are working on adding support for Byron in a future release.~~ (available since v1.2)
 - Oura reads events from minted blocks / transactions. Support for querying the mempool is planned for a future release.
-- Oura will notify about chain rollbacks as a new event. The business logic for "undoing" the already processed events is a responsability of the consumer. We're working on adding support for a "buffer" filter stage which can hold blocks until they reach a configurable depth (number of confirmations).
+- ~~Oura will notify about chain rollbacks as a new event. The business logic for "undoing" the already processed events is a responsability of the consumer. We're working on adding support for a "buffer" filter stage which can hold blocks until they reach a configurable depth (number of confirmations).~~ (rollback buffer available since v1.2)
 
 ## Contributing
 

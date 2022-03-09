@@ -44,7 +44,7 @@ argument = <predicate argument>
 
 Allowing only block and transaction events to pass:
 
-```
+```toml
 [[filters]]
 type = "Selection"
 
@@ -55,7 +55,7 @@ argument = ["Block", "Transaction"]
 
 Using the `not` predicate to allow all events except the variant `Transaction`:
 
-```
+```toml
 [[filters]]
 type = "Selection"
 
@@ -65,4 +65,34 @@ predicate = "not"
 [filters.check.argument]
 predicate = "variant_in"
 argument = ["Transaction"]
+```
+
+Using the `any_of` (aka: "or") predicate to filter events presenting any of two different policies:
+
+```toml
+[filters.check]
+predicate = "any_of"
+
+[[filters.check.argument]]
+predicate = "policy_equals"
+argument = "4bf184e01e0f163296ab253edd60774e2d34367d0e7b6cbc689b567d"
+
+[[filters.check.argument]]
+predicate = "policy_equals"
+argument = "a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559"
+```
+
+Using the `all_of` (aka: "and") to filter only "asset" events presenting a particular policy:
+
+```toml
+[filters.check]
+predicate = "all_of"
+
+[[filters.check.argument]]
+predicate = "variant_in"
+argument = ["OutputAsset"]
+
+[[filters.check.argument]]
+predicate = "policy_equals"
+argument = "a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559"
 ```
