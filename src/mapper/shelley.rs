@@ -21,7 +21,9 @@ impl EventWriter {
             self.append_from(record)?;
 
             match label {
-                Metadatum::Int(721) => self.crawl_metadata_label_721(content)?,
+                Metadatum::Int(i) if i128::from(*i) == 721i128 => {
+                    self.crawl_metadata_label_721(content)?
+                }
                 Metadatum::Text(x) if x == "721" => self.crawl_metadata_label_721(content)?,
                 _ => (),
             };

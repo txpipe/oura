@@ -1,4 +1,5 @@
 use pallas::{
+    codec::minicbor::decode,
     ledger::primitives::{alonzo, byron},
     network::miniprotocols::{chainsync::HeaderContent, Point},
 };
@@ -19,16 +20,16 @@ impl TryFrom<HeaderContent> for MultiEraHeader {
         match value.variant {
             0 => match value.byron_prefix {
                 Some((0, _)) => {
-                    let header = minicbor::decode(&value.cbor)?;
+                    let header = decode(&value.cbor)?;
                     Ok(MultiEraHeader::ByronBoundary(header))
                 }
                 _ => {
-                    let header = minicbor::decode(&value.cbor)?;
+                    let header = decode(&value.cbor)?;
                     Ok(MultiEraHeader::Byron(header))
                 }
             },
             _ => {
-                let header = minicbor::decode(&value.cbor)?;
+                let header = decode(&value.cbor)?;
                 Ok(MultiEraHeader::AlonzoCompatible(header))
             }
         }

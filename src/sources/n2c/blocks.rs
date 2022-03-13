@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use pallas::{
+    codec::minicbor::decode,
     ledger::primitives::{alonzo, byron, probing, Era},
     network::miniprotocols::{chainsync::BlockContent, Point},
 };
@@ -22,18 +23,18 @@ impl TryFrom<BlockContent> for MultiEraBlock {
         match probing::probe_block_cbor_era(bytes) {
             probing::Outcome::Matched(era) => match era {
                 pallas::ledger::primitives::Era::Byron => {
-                    let block = minicbor::decode(bytes)?;
+                    let block = decode(bytes)?;
                     Ok(MultiEraBlock::Byron(Box::new(block)))
                 }
                 _ => {
-                    let alonzo::BlockWrapper(_, block) = minicbor::decode(bytes)?;
+                    let alonzo::BlockWrapper(_, block) = decode(bytes)?;
                     Ok(MultiEraBlock::AlonzoCompatible(Box::new(block), era))
                 }
             },
             // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
             // assumption?
             probing::Outcome::GenesisBlock => {
-                let block = minicbor::decode(bytes)?;
+                let block = decode(bytes)?;
                 Ok(MultiEraBlock::Byron(Box::new(block)))
             }
             probing::Outcome::Inconclusive => {
