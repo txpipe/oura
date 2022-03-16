@@ -27,7 +27,7 @@ pub enum Era {
 pub enum MetadatumRendition {
     MapJson(JsonValue),
     ArrayJson(JsonValue),
-    IntScalar(i64),
+    IntScalar(i128),
     TextScalar(String),
     BytesHex(String),
 }
