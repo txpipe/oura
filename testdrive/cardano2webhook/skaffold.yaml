@@ -12,7 +12,7 @@ kind: Config
 metadata:
   name: oura
 requires:
-  - configs: [elastic]
+  - configs: [endpoint]
 deploy:
   kubectl:
     manifests:

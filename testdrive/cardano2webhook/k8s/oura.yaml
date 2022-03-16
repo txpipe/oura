@@ -9,7 +9,10 @@ data:
     type = "N2N"
     address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
     magic = "mainnet"
-    since = [4492799, "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"]
+    min_depth = 6
+
+    [source.intersect]
+    type = "Origin"
 
     [[filters]]
     type = "Fingerprint"
@@ -20,32 +23,20 @@ data:
 
     [cursor]
     type = "File"
-    path = "/var/oura/cursor"
+    path = "/var/oura/cursor-test47"
 
     [metrics]
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: oura
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 500Mi
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: oura
-  labels:
-    app: oura
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: oura
+  serviceName: oura
+  replicas: 1
   template:
     metadata:
       labels:
@@ -53,7 +44,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:40
+          image: ghcr.io/txpipe/oura-testdrive:47
           env:
             - name: "RUST_LOG"
               value: "warn"
@@ -66,15 +57,23 @@ spec:
               cpu: 200m
           args:
             - "daemon"
+          ports:
+            - name: metrics
+              containerPort: 9186
           volumeMounts:
             - mountPath: /etc/oura
-              name: oura-config
+              name: config
             - mountPath: /var/oura
-              name: oura-var
+              name: var
       volumes:
-        - name: oura-config
+        - name: config
           configMap:
             name: oura
-        - name: oura-var
-          persistentVolumeClaim:
-            claimName: oura
+  volumeClaimTemplates:
+    - metadata:
+        name: var
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

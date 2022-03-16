@@ -27,7 +27,7 @@ data:
 
     [cursor]
     type = "File"
-    path = "/var/oura/cursor"
+    path = "/var/oura/cursor-test47"
 
     [metrics]
 ---
@@ -60,7 +60,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:40
+          image: ghcr.io/txpipe/oura-testdrive:47
           env:
             - name: "RUST_LOG"
               value: "warn"
