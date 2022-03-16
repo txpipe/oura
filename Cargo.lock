@@ -1101,9 +1101,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.7.0-alpha.0"
+version = "0.7.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "828ace85d351a896206b3703d8ccd11e2a10551310e0021056f5a9391cee1aab"
+checksum = "d7a6609fcd0de4b7289db383a26254d5788f1a48f7a2ebceaf87c6f68a8bea38"
 dependencies = [
  "pallas-codec",
  "pallas-crypto",
@@ -1114,18 +1114,18 @@ dependencies = [
 
 [[package]]
 name = "pallas-codec"
-version = "0.7.0-alpha.0"
+version = "0.7.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e610b5c9027e83d95b1e11c4aeaf658b6ceacdab1d6cefb3dc2a0426c602486d"
+checksum = "eb97576a7a1beb165c2a1a57890a1d38e4825c0e630bef2013d181d8cbc6f51f"
 dependencies = [
  "minicbor",
 ]
 
 [[package]]
 name = "pallas-crypto"
-version = "0.7.0-alpha.0"
+version = "0.7.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2e22d8dda9085644fcfc9732cbf3790df483f1edc4558215833119c78aacf38"
+checksum = "e7171ccdc32c0b307bbe10d7283bedb07d91eac6686bcdf8c7669a062aad736d"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1136,9 +1136,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.7.0-alpha.0"
+version = "0.7.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba5867a5849a33d7f5baafed82dc376bf27caf4a3af4a63a74219a28d137a385"
+checksum = "4b4b288f087c5182ce5fe1f4cd27307c568e38470f1b8d215fd39a5ef201c1ce"
 dependencies = [
  "hex",
  "itertools",
@@ -1150,9 +1150,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.7.0-alpha.0"
+version = "0.7.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25601f5970e74616a9ab441c9a56ff72224ab4fdcdeb936e91325eb6801e9a53"
+checksum = "fef40d430bf43530e8c2db1c122939cdc9f661511505f7af52e546b914b3e81b"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1161,9 +1161,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.7.0-alpha.0"
+version = "0.7.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b218a103ef8321e2a6a3913039d190190f59c4c8d996d829681fbafe266e680"
+checksum = "9737eb28b04e8170daef25fa8632867dd40ffa9f83f309c9fe1d1712523a7bbc"
 dependencies = [
  "base58",
  "hex",
