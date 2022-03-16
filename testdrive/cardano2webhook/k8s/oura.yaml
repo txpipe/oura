@@ -12,7 +12,7 @@ data:
     min_depth = 6
 
     [source.intersect]
-    type = "Origin"
+    type = "Tip"
 
     [[filters]]
     type = "Fingerprint"
@@ -23,7 +23,7 @@ data:
 
     [cursor]
     type = "File"
-    path = "/var/oura/cursor-test47"
+    path = "/var/oura/cursor-test48.2"
 
     [metrics]
 ---
@@ -44,7 +44,7 @@ spec:
     spec:
       containers:
         - name: main
-          image: ghcr.io/txpipe/oura-testdrive:47
+          image: ghcr.io/txpipe/oura-testdrive:48
           env:
             - name: "RUST_LOG"
               value: "warn"
