@@ -35,6 +35,9 @@ use oura::sinks::kafka::Config as KafkaConfig;
 #[cfg(feature = "elasticsink")]
 use oura::sinks::elastic::Config as ElasticConfig;
 
+#[cfg(feature = "aws")]
+use oura::sinks::aws_sqs::Config as AwsSqsConfig;
+
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
 
@@ -99,6 +102,9 @@ enum Sink {
 
     #[cfg(feature = "elasticsink")]
     Elastic(ElasticConfig),
+
+    #[cfg(feature = "aws")]
+    AwsSqs(AwsSqsConfig),
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
@@ -118,6 +124,9 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "elasticsink")]
         Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
+        Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 

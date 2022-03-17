@@ -45,10 +45,16 @@ kafka = { version = "0.8.0", optional = true }
 
 # feature: elasticsink
 elasticsearch = { version = "7.14.0-alpha.1", optional = true }
-tokio = { version = "1.17.0", optional = true, features = ["rt"] }
 
 # feature: fingerprint
 murmur3 = { version = "0.5.1", optional = true }
+
+# feature: aws
+aws-config = { version = "0.8.0", optional = true }
+aws-sdk-sqs = { version = "0.8.0", optional = true }
+
+# features: elasticsearch || aws
+tokio = { version = "1.17.0", optional = true, features = ["rt"] }
 
 # required for CI to complete successfully
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
@@ -61,3 +67,4 @@ tuisink = ["tui"]
 kafkasink = ["kafka", "openssl"]
 elasticsink = ["elasticsearch", "tokio"]
 fingerprint = ["murmur3"]
+aws = ["aws-config", "aws-sdk-sqs", "tokio"]
