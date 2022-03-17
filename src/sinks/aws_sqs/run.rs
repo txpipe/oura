@@ -55,8 +55,6 @@ pub fn writer_loop(
         utils.track_sink_progress(&event);
 
         let client = client.clone();
-        let queue_url = queue_url.clone();
-        let group_id = group_id.clone();
 
         let result = rt.block_on(send_sqs_msg(client, queue_url, group_id, fifo, &event));
 

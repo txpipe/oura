@@ -46,7 +46,7 @@ impl SinkProvider for WithUtils<Config> {
             .inner
             .group_id
             .clone()
-            .unwrap_or("oura-sink".to_string());
+            .unwrap_or_else(|| "oura-sink".to_string());
 
         let utils = self.utils.clone();
         let handle = std::thread::spawn(move || {
