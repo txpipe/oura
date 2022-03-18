@@ -253,3 +253,13 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     Ok(())
 }
+
+/// Creates the clap definition for this sub-command
+pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
+    clap::Command::new("daemon").arg(
+        clap::Arg::new("config")
+            .long("config")
+            .takes_value(true)
+            .help("config file to load by the daemon"),
+    )
+}
