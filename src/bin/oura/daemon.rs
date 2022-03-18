@@ -10,7 +10,7 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
-    sources::MagicArg,
+    sources::{MagicArg, PointArg},
     utils::{cursor, metrics, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
@@ -178,6 +178,16 @@ fn define_chain_info(
     }
 }
 
+fn define_cursor(
+    explicit: Option<PointArg>,
+    config: Option<cursor::Config>,
+) -> Option<cursor::Config> {
+    match (explicit, config) {
+        (Some(x), _) => Some(cursor::Config::Memory(x)),
+        (_, x) => x,
+    }
+}
+
 fn bootstrap_utils(
     chain: ChainWellKnownInfo,
     cursor: Option<cursor::Config>,
@@ -197,7 +207,10 @@ fn bootstrap_utils(
 }
 
 /// Sets up the whole pipeline from configuration
-fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
+fn bootstrap(
+    config: ConfigRoot,
+    explicit_cursor: Option<PointArg>,
+) -> Result<Vec<JoinHandle<()>>, Error> {
     let ConfigRoot {
         source,
         filters,
@@ -210,6 +223,8 @@ fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
     let magic = infer_magic_from_source(&source).unwrap_or_default();
 
     let chain = define_chain_info(chain, &magic)?;
+
+    let cursor = define_cursor(explicit_cursor, cursor);
 
     let utils = Arc::new(bootstrap_utils(chain, cursor, metrics));
 
@@ -240,11 +255,16 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => None,
     };
 
+    let explicit_cursor = match args.is_present("cursor") {
+        true => Some(args.value_of_t("cursor")?),
+        false => None,
+    };
+
     let root = ConfigRoot::new(explicit_config)?;
 
     debug!("daemon starting with this config: {:?}", root);
 
-    let threads = bootstrap(root)?;
+    let threads = bootstrap(root, explicit_cursor)?;
 
     // TODO: refactor into new loop that monitors thread health
     for handle in threads {
@@ -256,10 +276,19 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
 /// Creates the clap definition for this sub-command
 pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
-    clap::Command::new("daemon").arg(
-        clap::Arg::new("config")
-            .long("config")
-            .takes_value(true)
-            .help("config file to load by the daemon"),
-    )
+    clap::Command::new("daemon")
+        .arg(
+            clap::Arg::new("config")
+                .long("config")
+                .takes_value(true)
+                .help("config file to load by the daemon"),
+        )
+        .arg(
+            clap::Arg::new("cursor")
+                .long("cursor")
+                .takes_value(true)
+                .help(
+                    "initial chain cursor, overrides configuration file, expects format `slot,hex-hash`",
+                ),
+        )
 }
