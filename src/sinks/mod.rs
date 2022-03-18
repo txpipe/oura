@@ -15,4 +15,5 @@ pub mod kafka;
 pub mod elastic;
 
 #[cfg(feature = "aws")]
+pub mod aws_lambda;
 pub mod aws_sqs;

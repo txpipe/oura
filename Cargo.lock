@@ -129,6 +129,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-lambda"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4ce37ff9119422e2428461a1285f6c64d4a423d1ba268e93e915d6ab8f712fb0"
+dependencies = [
+ "aws-endpoint",
+ "aws-http",
+ "aws-sig-auth",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-http-tower",
+ "aws-smithy-json",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "http",
+ "tokio-stream",
+ "tower",
+]
+
+[[package]]
 name = "aws-sdk-sqs"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1403,6 +1425,7 @@ name = "oura"
 version = "1.2.2"
 dependencies = [
  "aws-config",
+ "aws-sdk-lambda",
  "aws-sdk-sqs",
  "bech32",
  "clap",
