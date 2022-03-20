@@ -96,6 +96,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             mapper,
             since: None,
             intersect,
+            retry_policy: None,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
@@ -105,6 +106,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             mapper,
             since: None,
             intersect,
+            retry_policy: None,
         }),
     };
 

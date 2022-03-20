@@ -26,6 +26,7 @@ pub mod metrics;
 pub mod throttle;
 
 pub(crate) mod bech32;
+pub(crate) mod retry;
 pub(crate) mod time;
 
 mod facade;
