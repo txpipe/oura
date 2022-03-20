@@ -29,7 +29,7 @@ where
 
                 retry += 1;
 
-                let backoff = compute_backoff_delay(&policy, retry);
+                let backoff = compute_backoff_delay(policy, retry);
 
                 log::debug!(
                     "backoff for {}s until next retry #{}",
