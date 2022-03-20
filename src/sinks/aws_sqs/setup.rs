@@ -1,5 +1,4 @@
-use aws_config::{self, meta::region::RegionProviderChain, RetryConfig};
-use aws_sdk_sqs::{Client, Region};
+use aws_sdk_sqs::{Client, Region, RetryConfig};
 use serde::Deserialize;
 
 use crate::{
@@ -24,11 +23,11 @@ impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let explicit_region = self.inner.region.to_owned();
 
-        let region_provider =
-            RegionProviderChain::first_try(Region::new(explicit_region)).or_default_provider();
-
-        let aws_config = tokio::runtime::Runtime::new()?
-            .block_on(aws_config::from_env().region(region_provider).load());
+        let aws_config = tokio::runtime::Runtime::new()?.block_on(
+            aws_config::from_env()
+                .region(Region::new(explicit_region))
+                .load(),
+        );
 
         let retry_config = RetryConfig::new()
             .with_max_attempts(self.inner.max_retries.unwrap_or(DEFAULT_MAX_RETRIES));
