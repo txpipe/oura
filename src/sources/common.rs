@@ -1,16 +1,20 @@
 use core::fmt;
-use std::{ops::Deref, str::FromStr};
+use std::{net::TcpStream, ops::Deref, str::FromStr, time::Duration};
+
+#[cfg(target_family = "unix")]
+use std::os::unix::net::UnixStream;
 
 use log::info;
+use net2::TcpStreamExt;
 use pallas::network::{
     miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
-    multiplexer::Channel,
+    multiplexer::{Channel, Multiplexer},
 };
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    utils::{ChainWellKnownInfo, Utils},
+    utils::{retry, ChainWellKnownInfo, Utils},
     Error,
 };
 
@@ -139,6 +143,54 @@ where
     }
 
     deserializer.deserialize_any(MagicArgVisitor)
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RetryPolicy {
+    connection_max_retries: u32,
+    connection_max_backoff: u32,
+}
+
+pub fn setup_multiplexer_attempt(
+    bearer: &BearerKind,
+    address: &str,
+    protocols: &[u16],
+) -> Result<Multiplexer, Error> {
+    match bearer {
+        BearerKind::Tcp => {
+            let tcp = TcpStream::connect(address)?;
+            tcp.set_nodelay(true)?;
+            tcp.set_keepalive_ms(Some(30_000u32))?;
+
+            Multiplexer::setup(tcp, protocols)
+        }
+        #[cfg(target_family = "unix")]
+        BearerKind::Unix => {
+            let unix = UnixStream::connect(address)?;
+
+            Multiplexer::setup(unix, protocols)
+        }
+    }
+}
+
+pub fn setup_multiplexer(
+    bearer: &BearerKind,
+    address: &str,
+    protocols: &[u16],
+    retry: &Option<RetryPolicy>,
+) -> Result<Multiplexer, Error> {
+    match retry {
+        Some(policy) => retry::retry_operation(
+            || setup_multiplexer_attempt(bearer, address, protocols),
+            &retry::Policy {
+                max_retries: policy.connection_max_retries,
+                backoff_unit: Duration::from_secs(1),
+                backoff_factor: 2,
+                max_backoff: Duration::from_secs(policy.connection_max_backoff as u64),
+            },
+        ),
+        None => setup_multiplexer_attempt(bearer, address, protocols),
+    }
 }
 
 #[derive(Debug, Deserialize)]
