@@ -213,22 +213,22 @@ impl FilterProvider for Config {
 
         let seed = self.seed.unwrap_or(0);
 
-        let handle = thread::spawn(move || loop {
-            let mut msg = input.recv().expect("error receiving message");
+        let handle = thread::spawn(move || {
+            for mut msg in input.iter() {
+                let fingerprint = build_fingerprint(&msg, seed);
 
-            let fingerprint = build_fingerprint(&msg, seed);
+                match fingerprint {
+                    Ok(value) => {
+                        debug!("computed fingerprint {}", value);
+                        msg.fingerprint = Some(value);
+                    }
+                    Err(err) => {
+                        warn!("failed to compute fingerprint: {}, event: {:?}", err, msg);
+                    }
+                }
 
-            match fingerprint {
-                Ok(value) => {
-                    debug!("computed fingerprint {}", value);
-                    msg.fingerprint = Some(value);
-                }
-                Err(err) => {
-                    warn!("failed to compute fingerprint: {}, event: {:?}", err, msg);
-                }
+                output_tx.send(msg).expect("error sending filter message");
             }
-
-            output_tx.send(msg).expect("error sending filter message");
         });
 
         Ok((handle, output_rx))

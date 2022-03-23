@@ -10,12 +10,28 @@ To start _Oura_ in _daemon mode_, use the following command:
 oura dameon
 ```
 
-By default, _Oura_ will load the configuration values from `/etc/oura/daemon.toml`.
+Available options:
 
-If you need to specify a different configuration path, use the following command:
+- `--config`: path of a custom toml configuration file to use. If not specified, configuration will be loaded from `/etc/oura/daemon.toml`.
+- `--cursor`: a custom point in the chain to use as starting point. Expects format: `slot,hex-hash`. If not specified, it will look for the [cursor](../advanced/stateful_cursor.md) section available via toml configuration or fallback to the [intersect options](../advanced/intersect_options.md) of the source stage.
+
+Example of starting daemon mode with default config file:
+
+```sh
+# config will be loaded from /etc/oura/daemon.toml
+oura daemon
+```
+
+Example of starting daemon mode with a custom config file at `my_config.toml`:
 
 ```sh
 oura daemon --config my_config.toml
+```
+
+Example of starting daemon mode specifying a particular cursor:
+
+```sh
+oura daemon --cursor 56134714,2d2a5503c16671ac7d5296f8e6bfeee050b2c2900a7d8c97b36c434667eb99d9
 ```
 
 ## Configuration

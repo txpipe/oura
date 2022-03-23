@@ -96,6 +96,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             mapper,
             since: None,
             intersect,
+            retry_policy: None,
+            finalize: None,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
@@ -105,6 +107,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             mapper,
             since: None,
             intersect,
+            retry_policy: None,
         }),
     };
 
@@ -123,4 +126,35 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     source_handle.join().map_err(|_| "error in source thread")?;
 
     Ok(())
+}
+
+/// Creates the clap definition for this sub-command
+pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
+    clap::Command::new("watch")
+        .arg(clap::Arg::new("socket").required(true))
+        .arg(
+            clap::Arg::new("bearer")
+                .long("bearer")
+                .takes_value(true)
+                .possible_values(&["tcp", "unix"]),
+        )
+        .arg(clap::Arg::new("magic").long("magic").takes_value(true))
+        .arg(
+            clap::Arg::new("since")
+                .long("since")
+                .takes_value(true)
+                .help("point in the chain to start reading from, expects format `slot,hex-hash`"),
+        )
+        .arg(
+            clap::Arg::new("throttle")
+                .long("throttle")
+                .takes_value(true)
+                .help("milliseconds to wait between output lines (for easier reading)"),
+        )
+        .arg(
+            clap::Arg::new("mode")
+                .long("mode")
+                .takes_value(true)
+                .possible_values(&["node", "client"]),
+        )
 }

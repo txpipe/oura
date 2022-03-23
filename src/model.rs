@@ -251,6 +251,8 @@ pub enum EventData {
         block_slot: u64,
         block_hash: String,
     },
+    // // flow-control event to end the pipeline
+    // Finalize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

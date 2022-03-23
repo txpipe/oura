@@ -10,7 +10,7 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
-    sources::MagicArg,
+    sources::{MagicArg, PointArg},
     utils::{cursor, metrics, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
@@ -34,6 +34,12 @@ use oura::sinks::kafka::Config as KafkaConfig;
 
 #[cfg(feature = "elasticsink")]
 use oura::sinks::elastic::Config as ElasticConfig;
+
+#[cfg(feature = "aws")]
+use oura::sinks::aws_lambda::Config as AwsLambdaConfig;
+
+#[cfg(feature = "aws")]
+use oura::sinks::aws_sqs::Config as AwsSqsConfig;
 
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
@@ -99,6 +105,12 @@ enum Sink {
 
     #[cfg(feature = "elasticsink")]
     Elastic(ElasticConfig),
+
+    #[cfg(feature = "aws")]
+    AwsLambda(AwsLambdaConfig),
+
+    #[cfg(feature = "aws")]
+    AwsSqs(AwsSqsConfig),
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
@@ -118,6 +130,12 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "elasticsink")]
         Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
+        Sink::AwsLambda(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
+        Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
@@ -169,6 +187,16 @@ fn define_chain_info(
     }
 }
 
+fn define_cursor(
+    explicit: Option<PointArg>,
+    config: Option<cursor::Config>,
+) -> Option<cursor::Config> {
+    match (explicit, config) {
+        (Some(x), _) => Some(cursor::Config::Memory(x)),
+        (_, x) => x,
+    }
+}
+
 fn bootstrap_utils(
     chain: ChainWellKnownInfo,
     cursor: Option<cursor::Config>,
@@ -188,7 +216,10 @@ fn bootstrap_utils(
 }
 
 /// Sets up the whole pipeline from configuration
-fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
+fn bootstrap(
+    config: ConfigRoot,
+    explicit_cursor: Option<PointArg>,
+) -> Result<Vec<JoinHandle<()>>, Error> {
     let ConfigRoot {
         source,
         filters,
@@ -201,6 +232,8 @@ fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
     let magic = infer_magic_from_source(&source).unwrap_or_default();
 
     let chain = define_chain_info(chain, &magic)?;
+
+    let cursor = define_cursor(explicit_cursor, cursor);
 
     let utils = Arc::new(bootstrap_utils(chain, cursor, metrics));
 
@@ -231,11 +264,16 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => None,
     };
 
+    let explicit_cursor = match args.is_present("cursor") {
+        true => Some(args.value_of_t("cursor")?),
+        false => None,
+    };
+
     let root = ConfigRoot::new(explicit_config)?;
 
     debug!("daemon starting with this config: {:?}", root);
 
-    let threads = bootstrap(root)?;
+    let threads = bootstrap(root, explicit_cursor)?;
 
     // TODO: refactor into new loop that monitors thread health
     for handle in threads {
@@ -243,4 +281,23 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+/// Creates the clap definition for this sub-command
+pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
+    clap::Command::new("daemon")
+        .arg(
+            clap::Arg::new("config")
+                .long("config")
+                .takes_value(true)
+                .help("config file to load by the daemon"),
+        )
+        .arg(
+            clap::Arg::new("cursor")
+                .long("cursor")
+                .takes_value(true)
+                .help(
+                    "initial chain cursor, overrides configuration file, expects format `slot,hex-hash`",
+                ),
+        )
 }
