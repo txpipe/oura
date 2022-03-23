@@ -28,7 +28,7 @@ macro_rules! run_check {
                     dbg!($state);
 
                     if $config.break_on_failure {
-                        panic!();
+                        panic!("failed assertion in assert sink");
                     }
                 }
                 Outcome::Unknown => {

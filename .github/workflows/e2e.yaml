@@ -1,0 +1,56 @@
+on:
+  workflow_dispatch: {}
+
+name: e2e
+
+env:
+  REGISTRY: ghcr.io
+  TARGET_IMAGE: ghcr.io/txpipe/oura-e2e:${{ github.sha }}
+  CLUSTER: m1-prod-6x3kk4
+
+jobs:
+  test:
+    name: End to End tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.TARGET_IMAGE }}
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ClusterAdmin
+          role-session-name: Github-e2e-Rollout
+          role-duration-seconds: 1200
+
+      - name: Login to EKS
+        run: aws eks update-kubeconfig --name ${CLUSTER}
+
+      - name: Create Namespace
+        working-directory: .github/e2e
+        run: |+
+          kubectl create namespace e2e-${{ env.GITHUB_RUN_NUMBER }}
+
+      - name: Rollout Jobs
+        working-directory: .github/e2e
+        run: |+
+          envsubst < assert-n2n-mainnet-origin-blocks.yaml | kubectl apply -n e2e-${{ env.GITHUB_RUN_NUMBER }} -f -
