@@ -104,7 +104,7 @@ impl SourceProvider for WithUtils<Config> {
         let min_depth = self.inner.min_depth;
         let cs_writer = writer.clone();
         let finalize = self.inner.finalize.clone();
-        let cs_handle = std::thread::spawn(move || {
+        let _cs_handle = std::thread::spawn(move || {
             observe_headers_forever(
                 cs_channel,
                 cs_writer,
