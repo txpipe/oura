@@ -105,10 +105,11 @@ impl FilterProvider for Config {
 
         let check = self.check.clone();
 
-        let handle = thread::spawn(move || loop {
-            let event = input.recv().expect("error receiving message");
-            if check.event_matches(&event) {
-                output_tx.send(event).expect("error sending filter message");
+        let handle = thread::spawn(move || {
+            for event in input.iter() {
+                if check.event_matches(&event) {
+                    output_tx.send(event).expect("error sending filter message");
+                }
             }
         });
 

@@ -3,7 +3,7 @@ use std::ops::Deref;
 use log::info;
 
 use pallas::network::{
-    miniprotocols::{handshake::n2c, run_agent, MAINNET_MAGIC},
+    miniprotocols::{handshake, run_agent, MAINNET_MAGIC},
     multiplexer::Channel,
 };
 
@@ -54,12 +54,12 @@ pub struct Config {
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
-    let versions = n2c::VersionTable::v1_and_above(magic);
-    let agent = run_agent(n2c::Client::initial(versions), channel)?;
+    let versions = handshake::n2c::VersionTable::v1_and_above(magic);
+    let agent = run_agent(handshake::Initiator::initial(versions), channel)?;
     info!("handshake output: {:?}", agent.output);
 
     match agent.output {
-        n2c::Output::Accepted(_, _) => Ok(()),
+        handshake::Output::Accepted(_, _) => Ok(()),
         _ => Err("couldn't agree on handshake version for client connection".into()),
     }
 }

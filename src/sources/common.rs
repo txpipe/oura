@@ -202,6 +202,44 @@ pub enum IntersectArg {
     Fallbacks(Vec<PointArg>),
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct FinalizeConfig {
+    max_block_quantity: Option<u64>,
+    max_block_slot: Option<u64>,
+    until_hash: Option<String>,
+}
+
+pub fn should_finalize(
+    config: &Option<FinalizeConfig>,
+    last_point: &Point,
+    block_count: u64,
+) -> bool {
+    let config = match config {
+        Some(x) => x,
+        None => return false,
+    };
+
+    if let Some(max) = config.max_block_quantity {
+        if block_count >= max {
+            return true;
+        }
+    }
+
+    if let Some(max) = config.max_block_slot {
+        if last_point.slot_or_default() >= max {
+            return true;
+        }
+    }
+
+    if let Some(expected) = &config.until_hash {
+        if let Point::Specific(_, current) = last_point {
+            return expected == &hex::encode(current);
+        }
+    }
+
+    false
+}
+
 pub(crate) fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,

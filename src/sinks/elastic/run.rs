@@ -100,24 +100,25 @@ pub fn writer_loop(
         .enable_io()
         .build()?;
 
-    loop {
-        let event = input.recv().unwrap();
-
+    for event in input.iter() {
         // notify the pipeline where we are
         utils.track_sink_progress(&event);
 
         let index = index.to_owned();
         let client = client.clone();
 
-        rt.block_on(async move {
-            let result = match idempotency {
+        let result = rt.block_on(async move {
+            match idempotency {
                 true => index_event_with_id(client, &index, event).await,
                 false => index_event_without_id(client, &index, event).await,
-            };
-
-            if let Err(err) = result {
-                warn!("error indexing record in Elasticsearch: {}", err);
             }
         });
+
+        if let Err(err) = result {
+            log::error!("error indexing record in Elasticsearch: {}", err);
+            return Err(err);
+        }
     }
+
+    Ok(())
 }

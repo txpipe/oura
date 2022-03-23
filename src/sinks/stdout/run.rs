@@ -9,9 +9,7 @@ pub fn jsonl_writer_loop(
     output: &mut impl Write,
     utils: Arc<Utils>,
 ) -> Result<(), Error> {
-    loop {
-        let evt = input.recv()?;
-
+    for evt in input.iter() {
         // notify pipeline about the progress
         utils.track_sink_progress(&evt);
 
@@ -19,4 +17,6 @@ pub fn jsonl_writer_loop(
         output.write_all(buf.as_bytes())?;
         output.write_all(b"\n")?;
     }
+
+    Ok(())
 }

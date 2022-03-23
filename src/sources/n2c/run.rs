@@ -37,7 +37,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
         &mut self,
         content: chainsync::BlockContent,
         tip: &chainsync::Tip,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<chainsync::Continuation, Box<dyn std::error::Error>> {
         // parse the block and extract the point of the chain
         let cbor = Vec::from(content.deref());
         let block = MultiEraBlock::try_from(content)?;
@@ -76,10 +76,10 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
         // notify chain tip to the pipeline metrics
         self.event_writer.utils.track_chain_tip(tip.1);
 
-        Ok(())
+        Ok(chainsync::Continuation::Proceed)
     }
 
-    fn on_rollback(&mut self, point: &Point) -> Result<(), Error> {
+    fn on_rollback(&mut self, point: &Point) -> Result<chainsync::Continuation, Error> {
         log::info!("rolling block to point {:?}", point);
 
         match self.chain_buffer.roll_back(point) {
@@ -102,7 +102,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
 
         log_buffer_state(&self.chain_buffer);
 
-        Ok(())
+        Ok(chainsync::Continuation::Proceed)
     }
 }
 
