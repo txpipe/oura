@@ -48,9 +48,7 @@ pub fn writer_loop(
         .enable_io()
         .build()?;
 
-    loop {
-        let event = input.recv().unwrap();
-
+    for event in input.iter() {
         // notify the pipeline where we are
         utils.track_sink_progress(&event);
 
@@ -60,7 +58,9 @@ pub fn writer_loop(
 
         if let Err(err) = result {
             log::error!("unrecoverable error sending message to SQS: {:?}", err);
-            break Err(err);
+            return Err(err);
         }
     }
+
+    Ok(())
 }

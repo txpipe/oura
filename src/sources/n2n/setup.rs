@@ -3,7 +3,7 @@ use std::ops::Deref;
 use log::info;
 
 use pallas::network::{
-    miniprotocols::{handshake::n2n, run_agent, MAINNET_MAGIC},
+    miniprotocols::{handshake, run_agent, MAINNET_MAGIC},
     multiplexer::Channel,
 };
 
@@ -14,7 +14,7 @@ use crate::{
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::{
         common::{AddressArg, MagicArg, PointArg},
-        define_start_point, setup_multiplexer, IntersectArg, RetryPolicy,
+        define_start_point, setup_multiplexer, FinalizeConfig, IntersectArg, RetryPolicy,
     },
     utils::{ChainWellKnownInfo, WithUtils},
     Error,
@@ -51,15 +51,17 @@ pub struct Config {
     pub min_depth: usize,
 
     pub retry_policy: Option<RetryPolicy>,
+
+    pub finalize: Option<FinalizeConfig>,
 }
 
 fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
-    let versions = n2n::VersionTable::v6_and_above(magic);
-    let agent = run_agent(n2n::Client::initial(versions), channel)?;
+    let versions = handshake::n2n::VersionTable::v6_and_above(magic);
+    let agent = run_agent(handshake::Initiator::initial(versions), channel)?;
     info!("handshake output: {:?}", agent.output);
 
     match agent.output {
-        n2n::Output::Accepted(_, _) => Ok(()),
+        handshake::Output::Accepted(_, _) => Ok(()),
         _ => Err("couldn't agree on handshake version".into()),
     }
 }
@@ -101,18 +103,30 @@ impl SourceProvider for WithUtils<Config> {
 
         let min_depth = self.inner.min_depth;
         let cs_writer = writer.clone();
+        let finalize = self.inner.finalize.clone();
         let cs_handle = std::thread::spawn(move || {
-            observe_headers_forever(cs_channel, cs_writer, known_points, headers_tx, min_depth)
-                .expect("chainsync loop failed");
+            observe_headers_forever(
+                cs_channel,
+                cs_writer,
+                known_points,
+                headers_tx,
+                min_depth,
+                finalize,
+            )
+            .expect("chainsync loop failed");
+
+            log::info!("observe headers thread ended");
         });
 
         let bf_channel = muxer.use_channel(3);
         let bf_writer = writer;
-        let _bf_handle = std::thread::spawn(move || {
+        let bf_handle = std::thread::spawn(move || {
             fetch_blocks_forever(bf_channel, bf_writer, headers_rx)
                 .expect("blockfetch loop failed");
+
+            log::info!("block fetch thread ended");
         });
 
-        Ok((cs_handle, output_rx))
+        Ok((bf_handle, output_rx))
     }
 }

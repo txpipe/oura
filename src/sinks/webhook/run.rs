@@ -69,9 +69,7 @@ pub(crate) fn request_loop(
     backoff_delay: Duration,
     utils: Arc<Utils>,
 ) -> Result<(), Error> {
-    loop {
-        let event = input.recv().unwrap();
-
+    for event in input.iter() {
         // notify progress to the pipeline
         utils.track_sink_progress(&event);
 
@@ -79,4 +77,6 @@ pub(crate) fn request_loop(
 
         execute_fallible_request(client, url, &body, error_policy, max_retries, backoff_delay)?;
     }
+
+    Ok(())
 }

@@ -119,6 +119,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             since: None,
             intersect,
             retry_policy: None,
+            finalize: None,
         }),
         PeerMode::AsClient => DumpSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
