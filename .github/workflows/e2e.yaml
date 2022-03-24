@@ -50,9 +50,7 @@ jobs:
         run: aws eks update-kubeconfig --name ${CLUSTER}
 
       - name: Create Namespace
-        working-directory: .github/e2e
-        run: |+
-          kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
+        run: kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
 
   test:
     needs: ["prepare"]
