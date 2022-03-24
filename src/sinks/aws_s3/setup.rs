@@ -26,9 +26,9 @@ pub enum ContentType {
     CborHex,
 }
 
-impl Into<String> for &ContentType {
-    fn into(self) -> String {
-        match self {
+impl From<&ContentType> for String {
+    fn from(other: &ContentType) -> Self {
+        match other {
             ContentType::Cbor => "application/cbor".to_string(),
             ContentType::CborHex => "text/plain".to_string(),
         }
