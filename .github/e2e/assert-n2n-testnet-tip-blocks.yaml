@@ -54,4 +54,4 @@ spec:
       volumes:
         - name: oura-config
           configMap:
-            name: oura
+            name: ${TEST_NAME}

@@ -32,8 +32,30 @@ jobs:
           push: true
           tags: ${{ env.TARGET_IMAGE }}
 
-  test:
+  prepare:
     needs: ["build"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ClusterAdminRole
+          role-session-name: Github-e2e-Rollout
+          role-duration-seconds: 1200
+
+      - name: Login to EKS
+        run: aws eks update-kubeconfig --name ${CLUSTER}
+
+      - name: Create Namespace
+        working-directory: .github/e2e
+        run: |+
+          kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
+
+  test:
+    needs: ["prepare"]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -57,14 +79,16 @@ jobs:
       - name: Login to EKS
         run: aws eks update-kubeconfig --name ${CLUSTER}
 
-      - name: Create Namespace
-        working-directory: .github/e2e
-        run: |+
-          kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
-
-      - name: Rollout Jobs
+      - name: Rollout Job
         working-directory: .github/e2e
         env:
           TEST_NAME: ${{ matrix.name }}
         run: |+
           envsubst < ${TEST_NAME}.yaml | kubectl apply -n e2e-${GITHUB_RUN_NUMBER} -f -
+
+      - name: Wait for Completion
+        env:
+          TEST_NAME: ${{ matrix.name }}
+        run: |+
+          kubectl wait --for=condition=complete --timeout=3600s -n e2e-${GITHUB_RUN_NUMBER} ${TEST_NAME}
+          kubectl get job ${TEST_NAME} -o jsonpath={.status.succeeded} -n e2e-${GITHUB_RUN_NUMBER}
