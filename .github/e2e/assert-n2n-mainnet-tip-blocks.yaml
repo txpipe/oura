@@ -11,10 +11,10 @@ data:
     magic = "mainnet"
 
     [source.finalize]
-    max_block_quantity = 2000
+    max_block_quantity = 50
 
     [source.intersect]
-    type = "Origin"
+    type = "Tip"
 
     [sink]
     type = "Assert"
