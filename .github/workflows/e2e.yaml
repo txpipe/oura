@@ -58,11 +58,11 @@ jobs:
       - name: Create Namespace
         working-directory: .github/e2e
         run: |+
-          kubectl create namespace e2e-${{ env.GITHUB_RUN_NUMBER }}
+          kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
 
       - name: Rollout Jobs
         working-directory: .github/e2e
         env:
           TEST_NAME: ${{ matrix.name }}
         run: |+
-          envsubst < ${TEST_NAME}.yaml | kubectl apply -n e2e-${{ env.GITHUB_RUN_NUMBER }} -f -
+          envsubst < ${TEST_NAME}.yaml | kubectl apply -n e2e-${GITHUB_RUN_NUMBER} -f -
