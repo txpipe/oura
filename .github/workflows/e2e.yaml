@@ -57,7 +57,7 @@ jobs:
       - name: Create Service Account
         working-directory: .github/e2e
         env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: envsubst < serviceaccount.yaml | kubectl apply -n e2e-${GITHUB_RUN_NUMBER} -f -
 
   test:
