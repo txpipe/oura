@@ -9,8 +9,7 @@ env:
   CLUSTER: m1-prod-6x3kk4
 
 jobs:
-  test:
-    name: End to End tests
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -33,6 +32,17 @@ jobs:
           push: true
           tags: ${{ env.TARGET_IMAGE }}
 
+  test:
+    needs: ["build"]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: assert-n2n-mainnet-origin-blocks
+          - name: assert-n2n-mainnet-tip-blocks
+
+    steps:
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
@@ -52,5 +62,7 @@ jobs:
 
       - name: Rollout Jobs
         working-directory: .github/e2e
+        env:
+          TEST_NAME: ${{ matrix.name }}
         run: |+
-          envsubst < assert-n2n-mainnet-origin-blocks.yaml | kubectl apply -n e2e-${{ env.GITHUB_RUN_NUMBER }} -f -
+          envsubst < ${TEST_NAME}.yaml | kubectl apply -n e2e-${{ env.GITHUB_RUN_NUMBER }} -f -

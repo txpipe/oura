@@ -7,8 +7,8 @@ data:
   daemon.toml: |-
     [source]
     type = "N2N"
-    address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
-    magic = "mainnet"
+    address = ["Tcp", "relays-new.cardano-testnet.iohkdev.io:3001"]
+    magic = "testnet"
 
     [source.finalize]
     max_block_quantity: 5000
