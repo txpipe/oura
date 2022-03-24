@@ -37,6 +37,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
+
       - uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
@@ -51,6 +53,12 @@ jobs:
 
       - name: Create Namespace
         run: kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
+
+      - name: Create Service Account
+        working-directory: .github/e2e
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        run: envsubst < serviceaccount.yaml | kubectl apply -n e2e-${GITHUB_RUN_NUMBER} -f -
 
   test:
     needs: ["prepare"]

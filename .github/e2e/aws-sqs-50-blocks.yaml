@@ -36,6 +36,8 @@ spec:
         app: ${TEST_NAME}
     spec:
       restartPolicy: "Never"
+      serviceAccount: test
+      serviceAccountName: test
       containers:
         - name: main
           image: ${TARGET_IMAGE}

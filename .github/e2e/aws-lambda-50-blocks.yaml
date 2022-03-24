@@ -23,7 +23,7 @@ data:
     [sink]
     type = "AwsLambda"
     region = "us-west-2"
-    function_name = "arn:aws:lambda:us-east-1:295114534192:function:oura-e2e"
+    function_name = "arn:aws:lambda:us-west-2:295114534192:function:oura-e2e"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -39,6 +39,8 @@ spec:
         app: ${TEST_NAME}
     spec:
       restartPolicy: "Never"
+      serviceAccount: test
+      serviceAccountName: test
       containers:
         - name: main
           image: ${TARGET_IMAGE}
