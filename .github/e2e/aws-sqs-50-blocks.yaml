@@ -15,7 +15,7 @@ data:
 
     [source.intersect]
     type = "Point"
-    value = [47198121, "0e896e691265cdd51ccf7d363797bef9c53e6d3a6ec9883ef9e7b362bae97d79"]
+    value = [50030552, "5a091e9831bc0fcd6e6bdb2877036bb260abb4e19195517e4153fb041f956df5"]
 
     [sink]
     type = "AwsSqs"
