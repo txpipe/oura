@@ -11,7 +11,7 @@ data:
     magic = "mainnet"
 
     [source.finalize]
-    max_block_quantity: 50
+    max_block_quantity = 50
 
     [source.intersect]
     type = "Tip"

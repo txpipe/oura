@@ -88,5 +88,5 @@ jobs:
         env:
           TEST_NAME: ${{ matrix.name }}
         run: |+
-          kubectl wait --for=condition=complete --timeout=3600s -n e2e-${GITHUB_RUN_NUMBER} ${TEST_NAME}
+          kubectl wait --for=condition=complete --timeout=3600s job ${TEST_NAME} -n e2e-${GITHUB_RUN_NUMBER}
           kubectl get job ${TEST_NAME} -o jsonpath={.status.succeeded} -n e2e-${GITHUB_RUN_NUMBER}

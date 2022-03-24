@@ -11,7 +11,7 @@ data:
     magic = "mainnet"
 
     [source.finalize]
-    max_block_quantity: 5000
+    max_block_quantity = 5000
 
     [source.intersect]
     type = "Origin"
