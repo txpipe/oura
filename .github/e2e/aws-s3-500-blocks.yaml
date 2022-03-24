@@ -10,15 +10,23 @@ data:
     address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
     magic = "mainnet"
 
+    [source.mapper]
+    include_block_cbor = true
+
     [source.finalize]
-    max_block_quantity = 20
+    max_block_quantity = 500
 
     [source.intersect]
-    type = "Tip"
+    type = "Point"
+    value = [47198121, "0e896e691265cdd51ccf7d363797bef9c53e6d3a6ec9883ef9e7b362bae97d79"]
 
     [sink]
-    type = "Assert"
-    break_on_failure = true
+    type = "AwsS3"
+    region = "us-west-2"
+    bucket = "txpipe-e2e"
+    prefix = "${TEST_NAME}/"
+    naming = "SlotHash"
+    content = "Cbor"
 ---
 apiVersion: batch/v1
 kind: Job
