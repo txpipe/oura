@@ -63,6 +63,9 @@ jobs:
           - name: assert-n2n-mainnet-tip-blocks
           - name: assert-n2n-testnet-origin-blocks
           - name: assert-n2n-testnet-tip-blocks
+          - name: aws-lambda-50-blocks
+          - name: aws-s3-500-blocks
+          - name: aws-sqs-50-blocks
 
     steps:
       - uses: actions/checkout@v2
