@@ -12,7 +12,7 @@ use strum_macros::Display;
 // we prefer not to add dependencies to Pallas outside of the sources that
 // actually use it on an attempt to make the pipeline agnostic of particular
 // implementation details.
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Display)]
 pub enum Era {
     Undefined,
     Byron,

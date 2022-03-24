@@ -36,10 +36,13 @@ use oura::sinks::kafka::Config as KafkaConfig;
 use oura::sinks::elastic::Config as ElasticConfig;
 
 #[cfg(feature = "aws")]
+use oura::sinks::aws_sqs::Config as AwsSqsConfig;
+
+#[cfg(feature = "aws")]
 use oura::sinks::aws_lambda::Config as AwsLambdaConfig;
 
 #[cfg(feature = "aws")]
-use oura::sinks::aws_sqs::Config as AwsSqsConfig;
+use oura::sinks::aws_s3::Config as AwsS3Config;
 
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
@@ -107,10 +110,13 @@ enum Sink {
     Elastic(ElasticConfig),
 
     #[cfg(feature = "aws")]
+    AwsSqs(AwsSqsConfig),
+
+    #[cfg(feature = "aws")]
     AwsLambda(AwsLambdaConfig),
 
     #[cfg(feature = "aws")]
-    AwsSqs(AwsSqsConfig),
+    AwsS3(AwsS3Config),
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
@@ -132,10 +138,13 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
         Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "aws")]
+        Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
         Sink::AwsLambda(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "aws")]
-        Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
+        Sink::AwsS3(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
