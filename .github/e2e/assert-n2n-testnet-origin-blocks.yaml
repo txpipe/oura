@@ -27,6 +27,7 @@ metadata:
   labels:
     app: ${TEST_NAME}
 spec:
+  backoffLimit: 1
   template:
     metadata:
       labels:

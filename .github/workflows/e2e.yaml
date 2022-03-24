@@ -61,6 +61,8 @@ jobs:
         include:
           - name: assert-n2n-mainnet-origin-blocks
           - name: assert-n2n-mainnet-tip-blocks
+          - name: assert-n2n-testnet-origin-blocks
+          - name: assert-n2n-testnet-tip-blocks
 
     steps:
       - uses: actions/checkout@v2
@@ -72,7 +74,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ClusterAdminRole
           role-session-name: Github-e2e-Rollout
-          role-duration-seconds: 1200
+          role-duration-seconds: 3600
 
       - name: Login to EKS
         run: aws eks update-kubeconfig --name ${CLUSTER}
@@ -88,5 +90,5 @@ jobs:
         env:
           TEST_NAME: ${{ matrix.name }}
         run: |+
-          kubectl wait --for=condition=complete --timeout=3600s job ${TEST_NAME} -n e2e-${GITHUB_RUN_NUMBER}
+          kubectl wait --for=condition=complete --timeout=1800s job ${TEST_NAME} -n e2e-${GITHUB_RUN_NUMBER}
           kubectl get job ${TEST_NAME} -o jsonpath={.status.succeeded} -n e2e-${GITHUB_RUN_NUMBER}
