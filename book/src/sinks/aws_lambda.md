@@ -4,7 +4,7 @@ A sink that invokes an AWS Lambda function for each received event. Each event i
 
 The sink will process each incoming event in sequence, invoke the specified function and wait for the response.
 
-A retry mechanism is available for failures to dispatch the call, but not to failures within the execution of the function. Regardless of the success or not of the function, the sink will advance and continue with the following event. 
+A retry mechanism is available for failures to dispatch the call, but not for failures within the execution of the function. Regardless of the success or not of the function, the sink will advance and continue with the following event. 
 
 Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
 
@@ -27,7 +27,7 @@ max_retries = 5
 
 ## AWS Credentials
 
-The sink needs valid AWS credentials to interact with the cloud service. The mayority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
+The sink needs valid AWS credentials to interact with the cloud service. The majority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
 
 - Credentials stored as the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 - A Web Identity Token credentials from the environment or container (including EKS)

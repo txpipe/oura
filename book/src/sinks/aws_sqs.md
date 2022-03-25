@@ -1,6 +1,6 @@
 # AWS SQS
 
-A sink that sends each event as message to an AWS SQS queue. Each event is json-encoded and sent to a configurable SQS queue using AWS API endpoints.
+A sink that sends each event as a message to an AWS SQS queue. Each event is json-encoded and sent to a configurable SQS queue using AWS API endpoints.
 
 The sink will process each incoming event in sequence and submit the corresponding `SendMessage` request to the SQS API. Once the queue acknowledges reception of the message, the sink will advance and continue with the following event.
 
@@ -32,7 +32,7 @@ max_retries = 5
 
 ## AWS Credentials
 
-The sink needs valid AWS credentials to interact with the cloud service. The mayority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
+The sink needs valid AWS credentials to interact with the cloud service. The majority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
 
 - Credentials stored as the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 - A Web Identity Token credentials from the environment or container (including EKS)
@@ -54,4 +54,4 @@ If each event can be processed in isolation, if the process is idempotent or if 
 
 ## Payload Size Limitation
 
-AWS SQS service has a 256kb payload size limit. This is more than enough for individual events, but it might be too little for pipelines where the `include_cbor_hex` option is enabled. If your goal of your pipeline is to acccess the raw CBOR content, we recommend taking a look at the [AWS S3 Sink](./aws_s3.md) that provides a direct way for storing CBOR block in an S3 bucket.
+AWS SQS service has a 256kb payload size limit. This is more than enough for individual events, but it might be too little for pipelines where the `include_cbor_hex` option is enabled. If your goal of your pipeline is to access the raw CBOR content, we recommend taking a look at the [AWS S3 Sink](./aws_s3.md) that provides a direct way for storing CBOR block in an S3 bucket.

@@ -2,9 +2,9 @@
 
 A sink that saves the CBOR content of the blocks as S3 object.
 
-The sink will process each incoming event in sequence and select only the events of type `Block`. The CBOR content of the block will be extracted and saves as an S3 object in a configurage bucket in either hex or binary encoding. 
+The sink will process each incoming event in sequence and select only the events of type `Block`. The CBOR content of the block will be extracted and saves as an S3 object in a configurable bucket in either hex or binary encoding. 
 
-A configurable option allows the user to decide how to the name the object by using some of the block's identifier. The properties of the block will be saved as metadata of the S3 Object for later identification (eg: block number, hash, slot, etc).
+A configurable option allows the user to decide how to name the object using values from the block header (such as epoch, slot, hash, etc). The properties of the block will be saved as metadata of the S3 Object for later identification (eg: block number, hash, slot, etc).
 
 The sink uses AWS SDK's built-in retry logic which can be configured at the sink level. Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
 
@@ -34,7 +34,7 @@ max_retries = 5
 
 IMPORTANT: For this sink to work correctly, the `include_block_cbor` option should be enabled in the source sink configuration (see [mapper options](../advanced/mapper_options.md)).
 
-## Naming Convetion
+## Naming Convention
 
 S3 Buckets allow the user to query by object prefix. It's important to use a naming convention that is compatible with the types of filters that the consumer intends to use. This sink provides the following options:
 
@@ -56,21 +56,21 @@ The sink provides two options for encoding the content of the object:
 
 ## Metadata
 
+The sink uses the data from the block event to populate metadata fields of the S3 object for easier identification of the block once persisted:
 
+- `era`
+- `issuer_vkey`
+- `tx_count`
+- `slot`
+- `hash`
+- `number`
+- `previous_hash`
 
-impl From<&ContentType> for String {
-    fn from(other: &ContentType) -> Self {
-        match other {
-            ContentType::Cbor => "application/cbor".to_string(),
-            ContentType::CborHex => "text/plain".to_string(),
-        }
-    }
-}
-
+Please note that S3 doesn't allow filtering by metadata. For efficient filter, the only option available is to use the prefix of the key.
 
 ## AWS Credentials
 
-The sink needs valid AWS credentials to interact with the cloud service. The mayority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
+The sink needs valid AWS credentials to interact with the cloud service. The majority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
 
 - Credentials stored as the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 - A Web Identity Token credentials from the environment or container (including EKS)
