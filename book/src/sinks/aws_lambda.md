@@ -1,0 +1,38 @@
+# AWS Lambda
+
+A sink that invokes an AWS Lambda function for each received event. Each event is json-encoded and sent to a configurable function using AWS API endpoints.
+
+The sink will process each incoming event in sequence, invoke the specified function and wait for the response.
+
+A retry mechanism is available for failures to dispatch the call, but not to failures within the execution of the function. Regardless of the success or not of the function, the sink will advance and continue with the following event. 
+
+Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
+
+## Configuration
+
+```toml
+[sink]
+type = "AwsLambda"
+region = "us-west-2"
+function_name = "arn:aws:lambda:us-west-2:xxxxx:function:my-func"
+max_retries = 5
+```
+
+### Section: `sink`
+
+- `type`: the literal value `AwsLambda`.
+- `region`: The AWS region where the function is located.
+- `function_name`: The ARN of the function we wish to invoke.
+- `max_retries`: The max number of send retries before exiting the pipeline with an error.
+
+## AWS Credentials
+
+The sink needs valid AWS credentials to interact with the cloud service. The mayority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
+
+- Credentials stored as the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
+- A Web Identity Token credentials from the environment or container (including EKS)
+   ECS credentials (IAM roles for tasks)
+- As entries in the credentials file in the .aws directory in your home directory (~/.aws/
+- From the EC2 Instance Metadata Service (IAM Roles attached to an instance)
+
+Oura, by mean of the Rust AWS SDK lib, will honor the above chain of providers. Use any of the above that fits your particular scenario. Please refer to AWS' documentation for more detail.
