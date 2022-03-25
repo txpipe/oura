@@ -24,7 +24,7 @@ data:
     type = "AwsS3"
     region = "us-west-2"
     bucket = "oura-e2e"
-    prefix = "${TEST_NAME}/"
+    prefix = "${TEST_NAME}-${GITHUB_RUN_NUMBER}/"
     naming = "SlotHash"
     content = "Cbor"
 ---
