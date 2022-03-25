@@ -23,7 +23,6 @@ max_retries = 5
 ### Section: `sink`
 
 - `type`: the literal value `AwsSqs`.
-
 - `region`: The AWS region where the queue is located.
 - `queue_url`: The SQS queue URL provided by AWS (not to be confused with the ARN).
 - `fifo`: A flag to determine if the queue is of type FIFO.
