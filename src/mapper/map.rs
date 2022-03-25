@@ -16,6 +16,7 @@ use crate::model::{
     StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
+use crate::utils::time::TimeProvider;
 use crate::Error;
 
 use super::EventWriter;
@@ -359,6 +360,12 @@ impl EventWriter {
         cbor: &[u8],
         era: Era,
     ) -> Result<BlockRecord, Error> {
+        let relative_epoch = self
+            .utils
+            .time
+            .as_ref()
+            .map(|time| time.absolute_slot_to_relative(source.header.header_body.slot));
+
         Ok(BlockRecord {
             era,
             body_size: source.header.header_body.block_body_size as usize,
@@ -367,6 +374,8 @@ impl EventWriter {
             hash: hex::encode(hash),
             number: source.header.header_body.block_number,
             slot: source.header.header_body.slot,
+            epoch: relative_epoch.map(|(epoch, _)| epoch),
+            epoch_slot: relative_epoch.map(|(_, epoch_slot)| epoch_slot),
             previous_hash: hex::encode(source.header.header_body.prev_hash),
             cbor_hex: match self.config.include_block_cbor {
                 true => hex::encode(cbor).into(),

@@ -175,6 +175,8 @@ pub enum StakeCredential {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockRecord {
     pub era: Era,
+    pub epoch: Option<u64>,
+    pub epoch_slot: Option<u64>,
     pub body_size: usize,
     pub issuer_vkey: String,
     pub tx_count: usize,
