@@ -30,11 +30,11 @@ impl SinkProvider for WithUtils<Config> {
         let retry_config = RetryConfig::new()
             .with_max_attempts(self.inner.max_retries.unwrap_or(DEFAULT_MAX_RETRIES));
 
-        let sqs_config = aws_sdk_lambda::config::Builder::from(&aws_config)
+        let lambda_config = aws_sdk_lambda::config::Builder::from(&aws_config)
             .retry_config(retry_config)
             .build();
 
-        let client = Client::from_conf(sqs_config);
+        let client = Client::from_conf(lambda_config);
         let function_name = self.inner.function_name.clone();
 
         let utils = self.utils.clone();
