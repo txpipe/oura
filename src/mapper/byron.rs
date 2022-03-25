@@ -150,6 +150,8 @@ impl EventWriter {
             hash: hash.to_hex(),
             number: source.header.consensus_data.2[0],
             slot: source.header.consensus_data.0.to_abs_slot(),
+            epoch: Some(source.header.consensus_data.0.epoch),
+            epoch_slot: Some(source.header.consensus_data.0.slot),
             previous_hash: source.header.prev_block.to_hex(),
             cbor_hex: match self.config.include_block_cbor {
                 true => hex::encode(cbor).into(),
@@ -201,6 +203,8 @@ impl EventWriter {
             tx_count: 0,
             number: source.header.consensus_data.difficulty[0],
             slot: source.header.to_abs_slot(),
+            epoch: Some(source.header.consensus_data.epoch_id),
+            epoch_slot: Some(0),
             previous_hash: source.header.prev_block.to_hex(),
             cbor_hex: match self.config.include_block_cbor {
                 true => hex::encode(cbor).into(),
