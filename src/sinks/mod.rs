@@ -13,3 +13,12 @@ pub mod kafka;
 
 #[cfg(feature = "elasticsink")]
 pub mod elastic;
+
+#[cfg(feature = "aws")]
+pub mod aws_sqs;
+
+#[cfg(feature = "aws")]
+pub mod aws_lambda;
+
+#[cfg(feature = "aws")]
+pub mod aws_s3;

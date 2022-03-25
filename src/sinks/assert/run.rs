@@ -28,7 +28,7 @@ macro_rules! run_check {
                     dbg!($state);
 
                     if $config.break_on_failure {
-                        panic!();
+                        panic!("failed assertion in assert sink");
                     }
                 }
                 Outcome::Unknown => {
@@ -69,9 +69,7 @@ pub fn assertion_loop(
 ) -> Result<(), Error> {
     let mut state = State::default();
 
-    loop {
-        let event = input.recv()?;
-
+    for event in input.iter() {
         // notify pipeline about the progress
         utils.track_sink_progress(&event);
 
@@ -86,4 +84,6 @@ pub fn assertion_loop(
         run_check!(&config, &state, tx_records_matches_block_count);
         run_check!(&config, &state, tx_has_input_and_output);
     }
+
+    Ok(())
 }

@@ -15,9 +15,10 @@ impl FilterProvider for Config {
     fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
-        let handle = thread::spawn(move || loop {
-            let msg = input.recv().expect("error receiving message");
-            output_tx.send(msg).expect("error sending filter message");
+        let handle = thread::spawn(move || {
+            for msg in input.iter() {
+                output_tx.send(msg).expect("error sending filter message");
+            }
         });
 
         Ok((handle, output_rx))

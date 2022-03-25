@@ -12,7 +12,7 @@ use strum_macros::Display;
 // we prefer not to add dependencies to Pallas outside of the sources that
 // actually use it on an attempt to make the pipeline agnostic of particular
 // implementation details.
-#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Display)]
 pub enum Era {
     Undefined,
     Byron,
@@ -27,7 +27,7 @@ pub enum Era {
 pub enum MetadatumRendition {
     MapJson(JsonValue),
     ArrayJson(JsonValue),
-    IntScalar(i64),
+    IntScalar(i128),
     TextScalar(String),
     BytesHex(String),
 }
@@ -253,6 +253,8 @@ pub enum EventData {
         block_slot: u64,
         block_hash: String,
     },
+    // // flow-control event to end the pipeline
+    // Finalize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

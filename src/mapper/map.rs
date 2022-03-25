@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use minicbor::bytes::ByteVec;
+use pallas::codec::minicbor::bytes::ByteVec;
 use pallas::crypto::hash::Hash;
 use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
@@ -71,12 +71,15 @@ fn relay_to_string(relay: &Relay) -> String {
     }
 }
 
-fn metadatum_to_string_key(datum: &Metadatum) -> Result<String, Error> {
+fn metadatum_to_string_key(datum: &Metadatum) -> String {
     match datum {
-        Metadatum::Int(x) => Ok(x.to_string()),
-        Metadatum::Bytes(x) => Ok(hex::encode(x.as_slice())),
-        Metadatum::Text(x) => Ok(x.to_owned()),
-        _ => Err("unexpected metadatum type for label".into()),
+        Metadatum::Int(x) => x.to_string(),
+        Metadatum::Bytes(x) => hex::encode(x.as_slice()),
+        Metadatum::Text(x) => x.to_owned(),
+        x => {
+            log::warn!("unexpected metadatum type for label: {:?}", x);
+            Default::default()
+        }
     }
 }
 
@@ -92,14 +95,14 @@ impl EventWriter {
         &self,
         pair: (&Metadatum, &Metadatum),
     ) -> Result<(String, JsonValue), Error> {
-        let key = metadatum_to_string_key(pair.0)?;
+        let key = metadatum_to_string_key(pair.0);
         let value = self.to_metadatum_json(pair.1)?;
         Ok((key, value))
     }
 
     pub fn to_metadatum_json(&self, source: &Metadatum) -> Result<JsonValue, Error> {
         match source {
-            Metadatum::Int(x) => Ok(json!(x)),
+            Metadatum::Int(x) => Ok(json!(i128::from(*x))),
             Metadatum::Bytes(x) => Ok(json!(hex::encode(x.as_slice()))),
             Metadatum::Text(x) => Ok(json!(x)),
             Metadatum::Array(x) => {
@@ -125,9 +128,9 @@ impl EventWriter {
         value: &Metadatum,
     ) -> Result<MetadataRecord, Error> {
         let data = MetadataRecord {
-            label: metadatum_to_string_key(label)?,
+            label: metadatum_to_string_key(label),
             content: match value {
-                Metadatum::Int(x) => MetadatumRendition::IntScalar(*x),
+                Metadatum::Int(x) => MetadatumRendition::IntScalar(i128::from(*x)),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
                 Metadatum::Text(x) => MetadatumRendition::TextScalar(x.clone()),
                 Metadatum::Array(_) => {

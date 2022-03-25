@@ -21,9 +21,7 @@ pub fn producer_loop(
     partitioning: PartitionStrategy,
     utils: Arc<Utils>,
 ) -> Result<(), Error> {
-    loop {
-        let event = input.recv()?;
-
+    for event in input.iter() {
         // notify the pipeline where we are
         utils.track_sink_progress(&event);
 
@@ -43,4 +41,6 @@ pub fn producer_loop(
 
         debug!("pushed event to kafka: {:?}", &event);
     }
+
+    Ok(())
 }
