@@ -36,8 +36,8 @@ The sink needs valid AWS credentials to interact with the cloud service. The maj
 
 - Credentials stored as the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 - A Web Identity Token credentials from the environment or container (including EKS)
-   ECS credentials (IAM roles for tasks)
-- As entries in the credentials file in the .aws directory in your home directory (~/.aws/
+- ECS credentials (IAM roles for tasks)
+- As entries in the credentials file in the .aws directory in your home directory (~/.aws/)
 - From the EC2 Instance Metadata Service (IAM Roles attached to an instance)
 
 Oura, by mean of the Rust AWS SDK lib, will honor the above chain of providers. Use any of the above that fits your particular scenario. Please refer to AWS' documentation for more detail.
