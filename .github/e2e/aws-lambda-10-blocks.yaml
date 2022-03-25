@@ -10,15 +10,20 @@ data:
     address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
     magic = "mainnet"
 
+    [source.mapper]
+    include_block_cbor = true
+
     [source.finalize]
-    max_block_quantity = 20
+    max_block_quantity = 10
 
     [source.intersect]
-    type = "Tip"
+    type = "Point"
+    value = [50030552, "5a091e9831bc0fcd6e6bdb2877036bb260abb4e19195517e4153fb041f956df5"]
 
     [sink]
-    type = "Assert"
-    break_on_failure = true
+    type = "AwsLambda"
+    region = "us-west-2"
+    function_name = "arn:aws:lambda:us-west-2:295114534192:function:oura-e2e"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -34,6 +39,8 @@ spec:
         app: ${TEST_NAME}
     spec:
       restartPolicy: "Never"
+      serviceAccount: test
+      serviceAccountName: test
       containers:
         - name: main
           image: ${TARGET_IMAGE}

@@ -11,14 +11,16 @@ data:
     magic = "mainnet"
 
     [source.finalize]
-    max_block_quantity = 20
+    max_block_quantity = 10
 
     [source.intersect]
-    type = "Tip"
+    type = "Point"
+    value = [50030552, "5a091e9831bc0fcd6e6bdb2877036bb260abb4e19195517e4153fb041f956df5"]
 
     [sink]
-    type = "Assert"
-    break_on_failure = true
+    type = "AwsSqs"
+    region = "us-west-2"
+    queue_url = "https://sqs.us-west-2.amazonaws.com/295114534192/oura-e2e"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -34,6 +36,8 @@ spec:
         app: ${TEST_NAME}
     spec:
       restartPolicy: "Never"
+      serviceAccount: test
+      serviceAccountName: test
       containers:
         - name: main
           image: ${TARGET_IMAGE}

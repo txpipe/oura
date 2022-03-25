@@ -32,7 +32,7 @@ RUN cp /code/target/${RUST_TARGET}/release/oura /oura
 
 FROM debian:buster-slim
 
-#RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /oura /usr/local/bin/oura
 
