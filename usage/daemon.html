@@ -140,9 +140,20 @@
 <p>To start <em>Oura</em> in <em>daemon mode</em>, use the following command:</p>
 <pre><code>oura dameon
 </code></pre>
-<p>By default, <em>Oura</em> will load the configuration values from <code>/etc/oura/daemon.toml</code>.</p>
-<p>If you need to specify a different configuration path, use the following command:</p>
+<p>Available options:</p>
+<ul>
+<li><code>--config</code>: path of a custom toml configuration file to use. If not specified, configuration will be loaded from <code>/etc/oura/daemon.toml</code>.</li>
+<li><code>--cursor</code>: a custom point in the chain to use as starting point. Expects format: <code>slot,hex-hash</code>. If not specified, it will look for the <a href="../advanced/stateful_cursor.html">cursor</a> section available via toml configuration or fallback to the <a href="../advanced/intersect_options.html">intersect options</a> of the source stage.</li>
+</ul>
+<p>Example of starting daemon mode with default config file:</p>
+<pre><code class="language-sh"># config will be loaded from /etc/oura/daemon.toml
+oura daemon
+</code></pre>
+<p>Example of starting daemon mode with a custom config file at <code>my_config.toml</code>:</p>
 <pre><code class="language-sh">oura daemon --config my_config.toml
+</code></pre>
+<p>Example of starting daemon mode specifying a particular cursor:</p>
+<pre><code class="language-sh">oura daemon --cursor 56134714,2d2a5503c16671ac7d5296f8e6bfeee050b2c2900a7d8c97b36c434667eb99d9
 </code></pre>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p>The configuration file needs to specify the source, filters and sink to use in a particular pipeline. The following toml represent the typical skeleton of an <em>Oura</em> config file:</p>
