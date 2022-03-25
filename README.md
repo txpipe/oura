@@ -76,9 +76,11 @@ Oura is in its essence just a pipeline for proccessing events. Each stage of the
   - [x] Elasticsearch index / data stream
   - [x] Rotating log files with compression
   - [ ] Redis streams
-  - [ ] AWS SQS queue
-  - [ ] AWS Lambda call
-  - [ ] GCP PubSub
+  - [x] AWS SQS queue
+  - [x] AWS Lambda call
+  - [x] AWS S3 objects
+  - [ ] GCP Sinks
+  - [ ] Azure Sinks
   - [x] webhook (http post)
   - [x] terminal (append-only, tail-like)
 - Events / Parsers
