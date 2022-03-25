@@ -44,9 +44,28 @@ fn define_obj_key(prefix: &str, policy: &Naming, record: &BlockRecord) -> String
         Naming::Hash => format!("{}{}", prefix, record.hash),
         Naming::SlotHash => format!("{}{}.{}", prefix, record.slot, record.hash),
         Naming::BlockHash => format!("{}{}.{}", prefix, record.number, record.hash),
-        Naming::EpochHash => todo!(),
-        Naming::EpochSlotHash => todo!(),
-        Naming::EpochBlockHash => todo!(),
+        Naming::EpochHash => format!(
+            "{}{}.{}",
+            prefix,
+            record.epoch.unwrap_or_default(),
+            record.hash
+        ),
+        Naming::EpochSlotHash => format!(
+            "{}{}.{}.{}",
+            prefix,
+            record.epoch.unwrap_or_default(),
+            record.slot,
+            record.hash
+        ),
+        Naming::EpochBlockHash => {
+            format!(
+                "{}{}.{}.{}",
+                prefix,
+                record.epoch.unwrap_or_default(),
+                record.number,
+                record.hash
+            )
+        }
     }
 }
 
