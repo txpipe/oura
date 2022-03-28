@@ -4,9 +4,9 @@ Advanced options for instructing Oura from which point in the chain to start rea
 
 ## Feature
 
-When running in daemon mode, Oura provides 4 different strategies for finding the instersection point within the chain sync process.
+When running in daemon mode, Oura provides 4 different strategies for finding the intersection point within the chain sync process.
 
-- `Origin`: Oura will start reading from the begining of the chain.
+- `Origin`: Oura will start reading from the beginning of the chain.
 - `Tip`: Oura will start reading from the current tip of the chain.
 - `Point`: Oura will start reading from a particular point (slot, hash) in the chain. If the point is not found, the process will be terminated with a non-zero exit code.
 - `Fallbacks`: Oura will start reading the first valid point within a set of alternative positions. If point is not valid, the process will fallback into the next available point in the list of options. If none of the points are valid, the process will be terminated with a non-zero exit code.

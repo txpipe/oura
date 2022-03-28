@@ -38,8 +38,8 @@ impl TryFrom<BlockContent> for MultiEraBlock {
                 Ok(MultiEraBlock::Byron(Box::new(block)))
             }
             probing::Outcome::Inconclusive => {
-                log::error!("CBOR hex for debubbing: {}", hex::encode(bytes));
-                Err("can't infer primitive block from cbor, inconslusive probing".into())
+                log::error!("CBOR hex for debugging: {}", hex::encode(bytes));
+                Err("can't infer primitive block from cbor, inconclusive probing".into())
             }
         }
     }

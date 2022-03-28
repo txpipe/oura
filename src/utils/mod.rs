@@ -2,7 +2,7 @@
 //!
 //! This module includes general-purpose utilities that could potentially be
 //! used by more than a single stage. The entry point to this utilities is
-//! desgined as singelton [`Utils`] instance shared by all stages through an Arc
+//! designed as singleton [`Utils`] instance shared by all stages through an Arc
 //! pointer.
 
 use std::sync::Arc;
@@ -164,9 +164,9 @@ impl Utils {
 /// Wraps a struct with pipeline-wide utilities
 ///
 /// Most of the stage bootstrapping processes will require a custom config value
-/// and a reference to the shared utilities singelton. This is a quality-of-life
+/// and a reference to the shared utilities singleton. This is a quality-of-life
 /// artifact to wrap other structs (usually configs) and attach the utilities
-/// singelton entrypoint.
+/// singleton entrypoint.
 pub struct WithUtils<C> {
     pub utils: Arc<Utils>,
     pub inner: C,

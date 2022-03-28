@@ -282,7 +282,7 @@ pub(crate) fn define_start_point(
                 Ok(Some(points?))
             }
             Some(IntersectArg::Origin) => {
-                log::info!("found 'origin' instersect argument, will use as starting point");
+                log::info!("found 'origin' intersect argument, will use as starting point");
 
                 Ok(None)
             }

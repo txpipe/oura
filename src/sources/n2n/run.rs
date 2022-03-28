@@ -52,7 +52,7 @@ impl blockfetch::Observer for Block2EventMapper {
                     .ok_or_warn("error crawling block for events");
             }
             probing::Outcome::Inconclusive => {
-                log::error!("can't infer primitive block from cbor, inconslusive probing. CBOR hex for debubbing: {}", hex::encode(body));
+                log::error!("can't infer primitive block from cbor, inconclusive probing. CBOR hex for debugging: {}", hex::encode(body));
             }
         }
 
