@@ -45,7 +45,7 @@ pub fn writer_loop(
         let result = rt.block_on(invoke_lambda_function(client, function_name, &event));
 
         if let Err(err) = result {
-            log::error!("unrecoverable error invoking lambda funcion: {:?}", err);
+            log::error!("unrecoverable error invoking lambda function: {:?}", err);
             return Err(err);
         }
     }
