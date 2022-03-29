@@ -1,6 +1,6 @@
 # Daemon Mode
 
-_Oura's_ `daemon` mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuosuly bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.
+_Oura's_ `daemon` mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuously bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.
 
 ## Start Daemon Mode
 
@@ -73,7 +73,7 @@ This section specifies the origin of the data. The special `type` field must alw
 
 ### The `filters` section
 
-This section specifies a collection of filters that are applied in sequence to each event. The sepcial `type` field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the [filters](../filters/index.md) section for a list of available options and their corresponding config values.
+This section specifies a collection of filters that are applied in sequence to each event. The special `type` field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the [filters](../filters/index.md) section for a list of available options and their corresponding config values.
 
 ### The `sink` section
 

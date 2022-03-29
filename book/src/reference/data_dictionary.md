@@ -1,8 +1,8 @@
 # Data Dictionary
 
-_Oura_ follows a Cardano chain and outputs events. Each event contains data about itself and about the _context_ in which it occured.
+_Oura_ follows a Cardano chain and outputs events. Each event contains data about itself and about the _context_ in which it occurred.
 
-A consumer aggregating a sequence of multiple events will notices redundant / duplicated data. For example, the "block number" value will appeare repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor "consumption ergonomics" over "data normalization".
+A consumer aggregating a sequence of multiple events will notice redundant / duplicated data. For example, the "block number" value will appear repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor "consumption ergonomics" over "data normalization".
 
 ## Available Events
 

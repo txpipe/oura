@@ -1,6 +1,6 @@
 # Kubernetes
 
-_Oura_ running in `daemon` mode can be installed can be deployed in Kuberentes cluster, Depending on your needs, we recommend any of the following approaches.
+_Oura_ running in `daemon` mode can be installed can be deployed in Kubernetes cluster, Depending on your needs, we recommend any of the following approaches.
 
 ## Approach #1: Sidecar Container
 

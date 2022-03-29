@@ -4,7 +4,7 @@ The Node-to-Node (N2N) source uses Ouroboros mini-protocols to connect to a loca
 
 ## Configuration
 
-The following snippet shows an example of how to setup a typical N2N source:
+The following snippet shows an example of how to set up a typical N2N source:
 
 ```toml
 [source]
@@ -32,11 +32,11 @@ include_block_cbor = <bool>
 
 ### Section `source.intersect`
 
-This section provides advanced options for instructing Oura from which point in the chain to start reading from. Read the [intersect options](../advanced/intersect_options.md) documenation for detailed information.
+This section provides advanced options for instructing Oura from which point in the chain to start reading from. Read the [intersect options](../advanced/intersect_options.md) documentation for detailed information.
 
 ### Section `source.mapper`
 
-This section provides a way to opt-in into advances behaviour of how the raw chain data is mapped into _Oura_ events. Read the [mapper options](../advanced/mapper_options.md) documenation for detailed information.
+This section provides a way to opt-in into advances behaviour of how the raw chain data is mapped into _Oura_ events. Read the [mapper options](../advanced/mapper_options.md) documentation for detailed information.
 
 ## Examples
 
