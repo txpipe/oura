@@ -138,22 +138,22 @@
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
 <h2 id="motivation"><a class="header" href="#motivation">Motivation</a></h2>
 <p>We have tools to &quot;explore&quot; the Cardano blockchain, which are useful when you know what you're looking for. We argue that there's a different, complementary use-case which is to &quot;observe&quot; the blockchain and react to particular event patterns.</p>
-<p><em>Oura</em> is a rust-native implementation of a pipeline that connects to the tip of a Cardano node through a combination of <em>Ouroboros</em> mini-protocol (using either a unix socket or tcp bearer), filters the events that match a particular pattern and then submits a succint, self-contained payload to pluggable observers called &quot;sinks&quot;.</p>
+<p><em>Oura</em> is a rust-native implementation of a pipeline that connects to the tip of a Cardano node through a combination of <em>Ouroboros</em> mini-protocol (using either a unix socket or tcp bearer), filters the events that match a particular pattern and then submits a succinct, self-contained payload to pluggable observers called &quot;sinks&quot;.</p>
 <h2 id="etymology"><a class="header" href="#etymology">Etymology</a></h2>
-<p>The name of the tool is inspired by the <code>tail</code> command available in unix-like systems which is used to display the tail end of a text file or piped data. Cardano's consensus procotol name, <em>Ouroboros</em>, is a reference to the ancient symbol depicting a serpent or dragon eating its own tail, which means &quot;tail eating&quot;. &quot;Oura&quot; is the ancient greek word for &quot;tail&quot;.</p>
+<p>The name of the tool is inspired by the <code>tail</code> command available in unix-like systems which is used to display the tail end of a text file or piped data. Cardano's consensus protocol name, <em>Ouroboros</em>, is a reference to the ancient symbol depicting a serpent or dragon eating its own tail, which means &quot;tail eating&quot;. &quot;Oura&quot; is the ancient greek word for &quot;tail&quot;.</p>
 <h2 id="under-the-hood"><a class="header" href="#under-the-hood">Under the Hood</a></h2>
-<p>All the heavy lifting required to communicate with the Cardano node is done by the <a href="https://github.com/txpipe/pallas">Pallas</a> library, which provides an implementation of the Ouroboros multiplixer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).</p>
+<p>All the heavy lifting required to communicate with the Cardano node is done by the <a href="https://github.com/txpipe/pallas">Pallas</a> library, which provides an implementation of the Ouroboros multiplexer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).</p>
 <p>The data pipeline makes heavy use (maybe a bit too much) of multi-threading and mpsc channels provided by Rust's <code>std::sync</code> library.</p>
 <h2 id="use-cases"><a class="header" href="#use-cases">Use Cases</a></h2>
 <h3 id="cli-to-watch-live-transactions"><a class="header" href="#cli-to-watch-live-transactions">CLI to Watch Live Transactions</a></h3>
-<p>You can run <code>oura watch &lt;socket&gt;</code> to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see whats going on in the network (for example, to see airdrops as they happen or oracles posting new information).</p>
+<p>You can run <code>oura watch &lt;socket&gt;</code> to print TX data into the terminal from the tip of a local or remote node. It can be useful as a debugging tool for developers or if you're just curious to see what's going on in the network (for example, to see airdrops as they happen or oracles posting new information).</p>
 <h3 id="as-a-bridge-to-other-persistence-mechanisms"><a class="header" href="#as-a-bridge-to-other-persistence-mechanisms">As a Bridge to Other Persistence Mechanisms</a></h3>
-<p>Similar to the well-known db-sync tool provided by IOHK, <em>Oura</em> can be used as a daemon to follow a node and output the data into a different data storage techonology more suited for your final use-case. The main difference with db-sync is that <em>Oura</em> was designed for easy integration with data-streaming pipelines instead of relational databases.</p>
+<p>Similar to the well-known db-sync tool provided by IOHK, <em>Oura</em> can be used as a daemon to follow a node and output the data into a different data storage technology more suited for your final use-case. The main difference with db-sync is that <em>Oura</em> was designed for easy integration with data-streaming pipelines instead of relational databases.</p>
 <p>Given its small memory / cpu footprint, <em>Oura</em> can be deployed side-by-side with your Cardano node even in resource-constrained environments, such as Raspberry PIs.</p>
 <h3 id="as-a-trigger-of-custom-actions"><a class="header" href="#as-a-trigger-of-custom-actions">As a Trigger of Custom Actions</a></h3>
 <p><em>Oura</em> running in <code>daemon</code> mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;</p>
 <h3 id="as-a-library-for-custom-scenarios"><a class="header" href="#as-a-library-for-custom-scenarios">As a Library for Custom Scenarios</a></h3>
-<p>If the available out-of-the-box features don't satisfiy your particular use-case, <em>Oura</em> can be used a library in your Rust project to setup tailor-made pipelines. Each component (sources, filters, sinks, etc) in <em>Oura</em> aims at being self-contained and reusable. For example, custom filters and sinks can be built while reusing the existing sources.</p>
+<p>If the available out-of-the-box features don't satisfy your particular use-case, <em>Oura</em> can be used a library in your Rust project to set up tailor-made pipelines. Each component (sources, filters, sinks, etc) in <em>Oura</em> aims at being self-contained and reusable. For example, custom filters and sinks can be built while reusing the existing sources.</p>
 <h2 id="experimental-windows-support"><a class="header" href="#experimental-windows-support">(Experimental) Windows Support</a></h2>
 <p><em>Oura</em> Windows support is currently <strong>experimental</strong>, Windows build supports only <a href="./sources/n2n.html">Node-to-Node</a> source with tcp socket bearer.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
@@ -162,10 +162,10 @@
 <li><a href="installation/binary_release.html">Binary Release</a>: to use one of our pre-compiled binary releases for the supported platforms.</li>
 <li><a href="installation/from_source.html">From Source</a>: to compile a binary from source code using Rust's toolchain</li>
 <li><a href="installation/docker.html">Docker</a>: to run the tool from a pre-built docker image</li>
-<li><a href="installation/kubernetes.html">Kubernetes</a>: to deploy <em>Oura</em> as a resource within a Kuberentes cluster</li>
+<li><a href="installation/kubernetes.html">Kubernetes</a>: to deploy <em>Oura</em> as a resource within a Kubernetes cluster</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="binary-releases"><a class="header" href="#binary-releases">Binary Releases</a></h1>
-<p>Oura can be ran as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.</p>
+<p>Oura can be run as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.</p>
 <h2 id="macos"><a class="header" href="#macos">MacOS</a></h2>
 <p>Use the following command to download and install <em>Oura's</em> binary release for MacOS:</p>
 <pre><code class="language-sh">curl --silent --location https://git.io/JD2iH | \
@@ -211,7 +211,7 @@ cargo install --path .
 <pre><code>ghcr.io/txpipe/oura:v1.0.0
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="kubernetes"><a class="header" href="#kubernetes">Kubernetes</a></h1>
-<p><em>Oura</em> running in <code>daemon</code> mode can be installed can be deployed in Kuberentes cluster, Depending on your needs, we recommend any of the following approaches.</p>
+<p><em>Oura</em> running in <code>daemon</code> mode can be installed can be deployed in Kubernetes cluster, Depending on your needs, we recommend any of the following approaches.</p>
 <h2 id="approach-1-sidecar-container"><a class="header" href="#approach-1-sidecar-container">Approach #1: Sidecar Container</a></h2>
 <p><em>Oura</em> can be loaded as a sidecar container in the same pod as your Cardano node. Since containers in a pod share the same file-system layer, it's easy to point <em>Oura</em> to the unix-socket of the node.</p>
 <p>In the following example yaml, we show a redacted version of a Cardano node resource defined a s Kubernetes STS. Pay attention on the extra container and to the volume mounts to share the unix socket.</p>
@@ -330,20 +330,20 @@ spec:
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="watch-mode"><a class="header" href="#watch-mode">Watch Mode</a></h1>
 <p>The <code>watch</code> mode provides a quick way to tail the latest events from the blockchain. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is sent into the terminal in a human-readable fashion.</p>
-<p>The output is colorized by type of event and dynamically truncated to fit the width of the terminal. The speed of the output lines is throttled to facilitate visual inspection of each even, othwerwise, all events for a block would be output simultaneously.</p>
+<p>The output is colorized by type of event and dynamically truncated to fit the width of the terminal. The speed of the output lines is throttled to facilitate visual inspection of each even, otherwise, all events for a block would be output simultaneously.</p>
 <h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
 <p>To start <em>Oura</em> in watch mode, use the following command from your terminal:</p>
 <pre><code>oura watch [OPTIONS] &lt;socket&gt;
 </code></pre>
 <ul>
-<li><code>&lt;socket&gt;</code>: this a required argument thats specifies how to connect to the cardano node. It can either be a tcp address (<code>&lt;host&gt;:&lt;port&gt;</code> syntax) or a file path pointing to the location of the unix socket.</li>
+<li><code>&lt;socket&gt;</code>: this a required argument that specifies how to connect to the cardano node. It can either be a tcp address (<code>&lt;host&gt;:&lt;port&gt;</code> syntax) or a file path pointing to the location of the unix socket.</li>
 </ul>
 <h3 id="options"><a class="header" href="#options">Options</a></h3>
 <ul>
-<li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If ommited, the value <code>unix</code> is used as default.</li>
-<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If ommited, the value <code>mainnet</code> is used as default.</li>
-<li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If ommited, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
-<li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If ommited, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
+<li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If omitted, the value <code>unix</code> is used as default.</li>
+<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If omitted, the value <code>mainnet</code> is used as default.</li>
+<li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If omitted, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
+<li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If omitted, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
 </ul>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <h3 id="watch-live-data-from-a-remote-relay-node"><a class="header" href="#watch-live-data-from-a-remote-relay-node">Watch Live Data From A Remote Relay Node</a></h3>
@@ -361,7 +361,7 @@ spec:
     --since 49159253,d034a2d0e4c3076f57368ed59319010c265718f0923057f8ff914a3b6bfd1314
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="daemon-mode"><a class="header" href="#daemon-mode">Daemon Mode</a></h1>
-<p><em>Oura's</em> <code>daemon</code> mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuosuly bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.</p>
+<p><em>Oura's</em> <code>daemon</code> mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuously bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.</p>
 <h2 id="start-daemon-mode"><a class="header" href="#start-daemon-mode">Start Daemon Mode</a></h2>
 <p>To start <em>Oura</em> in <em>daemon mode</em>, use the following command:</p>
 <pre><code>oura dameon
@@ -413,7 +413,7 @@ path = &quot;/var/oura/cursor&quot;
 <h3 id="the-source-section"><a class="header" href="#the-source-section">The <code>source</code> section</a></h3>
 <p>This section specifies the origin of the data. The special <code>type</code> field must always be present and containing a value matching any of the available built-in sources. The rest of the fields in the section will depend on the selected <code>type</code>. See the <a href="usage/../sources/index.html">sources</a> section for a list of available options and their corresponding config values.</p>
 <h3 id="the-filters-section"><a class="header" href="#the-filters-section">The <code>filters</code> section</a></h3>
-<p>This section specifies a collection of filters that are applied in sequence to each event. The sepcial <code>type</code> field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the <a href="usage/../filters/index.html">filters</a> section for a list of available options and their corresponding config values.</p>
+<p>This section specifies a collection of filters that are applied in sequence to each event. The special <code>type</code> field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the <a href="usage/../filters/index.html">filters</a> section for a list of available options and their corresponding config values.</p>
 <h3 id="the-sink-section"><a class="header" href="#the-sink-section">The <code>sink</code> section</a></h3>
 <p>This section specifies the destination of the data. The special <code>type</code> field must always be present and containing a value matching any of the available built-in sinks. The rest of the fields in the section will depend on the selected <code>type</code>. See the <a href="usage/../sinks/index.html">sinks</a> section for a list of available options.</p>
 <h3 id="the-cursor-section"><a class="header" href="#the-cursor-section">The <code>cursor</code> section</a></h3>
@@ -439,7 +439,7 @@ brokers = [&quot;127.0.0.1:53147&quot;]
 topic = &quot;testnet&quot;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="dump-mode"><a class="header" href="#dump-mode">Dump Mode</a></h1>
-<p>The <code>dump</code> mode provides a quick way to tail the latest events from the blockchain and outputs raw data into stdout or the file system. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is formated using JSONL (json, one-line per event). This command is intended mainly as quick persistence mechansim of blockchain data, such as keeping a log of blocks / transactions. It can also be used for &quot;piping&quot; stdout into other shell commands.</p>
+<p>The <code>dump</code> mode provides a quick way to tail the latest events from the blockchain and outputs raw data into stdout or the file system. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is formatted using JSONL (json, one-line per event). This command is intended mainly as quick persistence mechanism of blockchain data, such as keeping a log of blocks / transactions. It can also be used for &quot;piping&quot; stdout into other shell commands.</p>
 <p>If an output path is specified, data will be saved as a set of rotation logs files. Each log file will contain a max of ~50mb. A total of 200 files will be stored before starting to delete the older ones. Gzip is used to compress old files as they are rotated.</p>
 <p>For real-time, human-inspection of the events, use the <a href="usage/watch.html">watch command</a>.</p>
 <h2 id="usage-2"><a class="header" href="#usage-2">Usage</a></h2>
@@ -447,15 +447,15 @@ topic = &quot;testnet&quot;
 <pre><code>oura dump [OPTIONS] &lt;socket&gt;
 </code></pre>
 <ul>
-<li><code>&lt;socket&gt;</code>: this a required argument thats specifies how to connect to the cardano node. It can either be a tcp address (<code>&lt;host&gt;:&lt;port&gt;</code> syntax) or a file path pointing to the location of the unix socket.</li>
+<li><code>&lt;socket&gt;</code>: this a required argument that specifies how to connect to the cardano node. It can either be a tcp address (<code>&lt;host&gt;:&lt;port&gt;</code> syntax) or a file path pointing to the location of the unix socket.</li>
 </ul>
 <h3 id="options-1"><a class="header" href="#options-1">Options</a></h3>
 <ul>
-<li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If ommited, the value <code>unix</code> is used as default.</li>
-<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If ommited, the value <code>mainnet</code> is used as default.</li>
-<li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If ommited, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
-<li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If ommited, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
-<li><code>--output &lt;path-like&gt;</code>: an option to specify an output file prefix for storing the log files. Logs are rotated, so a timestamp will be added as a suffix to the final filename. If ommitted, data will be sent to stdout.</li>
+<li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If omitted, the value <code>unix</code> is used as default.</li>
+<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If omitted, the value <code>mainnet</code> is used as default.</li>
+<li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If omitted, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
+<li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If omitted, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
+<li><code>--output &lt;path-like&gt;</code>: an option to specify an output file prefix for storing the log files. Logs are rotated, so a timestamp will be added as a suffix to the final filename. If omitted, data will be sent to stdout.</li>
 </ul>
 <h2 id="examples-1"><a class="header" href="#examples-1">Examples</a></h2>
 <h3 id="dump-data-from-a-remote-relay-node-into-stdout"><a class="header" href="#dump-data-from-a-remote-relay-node-into-stdout">Dump Data From A Remote Relay Node into Stdout</a></h3>
@@ -575,14 +575,14 @@ argument = &quot;a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559&quot;
 <h2 id="built-in-sources"><a class="header" href="#built-in-sources">Built-in Sources</a></h2>
 <p>These are the currently available sources included as part the main <em>Oura</em> codebase:</p>
 <ul>
-<li><a href="sources/n2n.html">N2N</a>: an Ourboros agent that connects to a Cardano node using node-2-node protocols</li>
-<li><a href="sources/n2c.html">N2C</a>: an Ourboros agent that connects to a Cardano node using node-2-client protocols</li>
+<li><a href="sources/n2n.html">N2N</a>: an Ouroboros agent that connects to a Cardano node using node-2-node protocols</li>
+<li><a href="sources/n2c.html">N2C</a>: an Ouroboros agent that connects to a Cardano node using node-2-client protocols</li>
 </ul>
 <p>New source are being developed, information will be added in this documentation to reflect the updated list. Contributions and feature request are welcome in our <a href="https://github.com/txpipe/oura">Github Repo</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="node-to-node"><a class="header" href="#node-to-node">Node-to-Node</a></h1>
 <p>The Node-to-Node (N2N) source uses Ouroboros mini-protocols to connect to a local or remote Cardano node through a tcp socket bearer and fetches block data using the ChainSync mini-protocol instantiated to &quot;headers only&quot; and the BlockFetch mini-protocol for retrieval of the actual block payload.</p>
 <h2 id="configuration-3"><a class="header" href="#configuration-3">Configuration</a></h2>
-<p>The following snippet shows an example of how to setup a typical N2N source:</p>
+<p>The following snippet shows an example of how to set up a typical N2N source:</p>
 <pre><code class="language-toml">[source]
 type = &quot;N2N&quot;
 address = [&quot;Tcp&quot;, &quot;&lt;hostname:port&gt;&quot;]
@@ -606,9 +606,9 @@ include_block_cbor = &lt;bool&gt;
 <li><del><code>since</code></del>: (deprecated, please use <code>intersect</code>) the point in the chain where reading of events should start from. It must be specified as a tuple of slot (integer) and block hash (hex string)</li>
 </ul>
 <h3 id="section-sourceintersect"><a class="header" href="#section-sourceintersect">Section <code>source.intersect</code></a></h3>
-<p>This section provides advanced options for instructing Oura from which point in the chain to start reading from. Read the <a href="sources/../advanced/intersect_options.html">intersect options</a> documenation for detailed information.</p>
+<p>This section provides advanced options for instructing Oura from which point in the chain to start reading from. Read the <a href="sources/../advanced/intersect_options.html">intersect options</a> documentation for detailed information.</p>
 <h3 id="section-sourcemapper"><a class="header" href="#section-sourcemapper">Section <code>source.mapper</code></a></h3>
-<p>This section provides a way to opt-in into advances behaviour of how the raw chain data is mapped into <em>Oura</em> events. Read the <a href="sources/../advanced/mapper_options.html">mapper options</a> documenation for detailed information.</p>
+<p>This section provides a way to opt-in into advances behaviour of how the raw chain data is mapped into <em>Oura</em> events. Read the <a href="sources/../advanced/mapper_options.html">mapper options</a> documentation for detailed information.</p>
 <h2 id="examples-3"><a class="header" href="#examples-3">Examples</a></h2>
 <p>Connecting to a remote Cardano node in mainnet through tcp sockets:</p>
 <pre><code class="language-toml">[source]
@@ -646,7 +646,7 @@ include_block_cbor = true
 <div style="break-before: page; page-break-before: always;"></div><h1 id="node-to-client"><a class="header" href="#node-to-client">Node-to-Client</a></h1>
 <p>The Node-to-Client (N2C) source uses Ouroboros mini-protocols to connect to a local Cardano node through a unix socket bearer and fetches block data using the ChainSync mini-protocol instantiated to &quot;full blocks&quot;.</p>
 <h2 id="configuration-4"><a class="header" href="#configuration-4">Configuration</a></h2>
-<p>The following snippet shows an example of how to setup a typical N2C source:</p>
+<p>The following snippet shows an example of how to set up a typical N2C source:</p>
 <pre><code class="language-toml">[source]
 type = &quot;N2C&quot;
 address = [&quot;Unix&quot;, &quot;&lt;socket location&gt;&quot;]
@@ -670,9 +670,9 @@ include_block_cbor = &lt;bool&gt;
 <li><del><code>since</code></del>: (deprecated, please use <code>intersect</code>) the point in the chain where reading of events should start from. It must be specified as a tuple of slot (integer) and block hash (hex string)</li>
 </ul>
 <h3 id="section-sourceintersect-1"><a class="header" href="#section-sourceintersect-1">Section <code>source.intersect</code></a></h3>
-<p>This section provides advanced options for instructing Oura from which point in the chain to start reading from. Read the <a href="sources/../advanced/intersect_options.html">intersect options</a> documenation for detailed information.</p>
+<p>This section provides advanced options for instructing Oura from which point in the chain to start reading from. Read the <a href="sources/../advanced/intersect_options.html">intersect options</a> documentation for detailed information.</p>
 <h3 id="section-sourcemapper-1"><a class="header" href="#section-sourcemapper-1">Section <code>source.mapper</code></a></h3>
-<p>This section provides a way to opt-in into advances behaviour of how the raw chain data is mapped into <em>Oura</em> events. Read the <a href="sources/../advanced/mapper_options.html">mapper options</a> documenation for detailed information.</p>
+<p>This section provides a way to opt-in into advances behaviour of how the raw chain data is mapped into <em>Oura</em> events. Read the <a href="sources/../advanced/mapper_options.html">mapper options</a> documentation for detailed information.</p>
 <h2 id="examples-4"><a class="header" href="#examples-4">Examples</a></h2>
 <p>Connecting to a local Cardano node in mainnet through unix sockets:</p>
 <pre><code class="language-toml">[source]
@@ -723,7 +723,7 @@ include_block_cbor = true
 </ul>
 <p>New sinks are being developed, information will be added in this documentation to reflect the updated list. Contributions and feature request are welcome in our <a href="https://github.com/txpipe/oura">Github Repo</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="terminal"><a class="header" href="#terminal">Terminal</a></h1>
-<p>A sink that outputs each event into the terminal throught stdout using fancy coloring 💅.</p>
+<p>A sink that outputs each event into the terminal through stdout using fancy coloring 💅.</p>
 <h2 id="configuration-5"><a class="header" href="#configuration-5">Configuration</a></h2>
 <pre><code class="language-toml">[sink]
 type = &quot;Terminal&quot;
@@ -769,7 +769,7 @@ password = &quot;my very secret stuff&quot;
 <p>This section configures the auth mechanism against Elasticsearch. You can remove the whole section from the configuration if you want to skip authentication altogether (maybe private cluster without auth?).</p>
 <p>We currently only implement <em>basic</em> auth, other mechanisms will be implemented at some point.</p>
 <ul>
-<li><code>type</code>: the mechanism to use for authentication, only <code>Basic</code> is currenty implemented</li>
+<li><code>type</code>: the mechanism to use for authentication, only <code>Basic</code> is currently implemented</li>
 <li><code>username</code>: username of the user with access to Elasticsearch</li>
 <li><code>password</code>: password of the user with access to Elasticsearch</li>
 </ul>
@@ -958,8 +958,8 @@ max_retries = 5
 <p>Oura, by mean of the Rust AWS SDK lib, will honor the above chain of providers. Use any of the above that fits your particular scenario. Please refer to AWS' documentation for more detail.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="data-dictionary"><a class="header" href="#data-dictionary">Data Dictionary</a></h1>
-<p><em>Oura</em> follows a Cardano chain and outputs events. Each event contains data about itself and about the <em>context</em> in which it occured.</p>
-<p>A consumer aggregating a sequence of multiple events will notices redundant / duplicated data. For example, the &quot;block number&quot; value will appeare repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor &quot;consumption ergonomics&quot; over &quot;data normalization&quot;.</p>
+<p><em>Oura</em> follows a Cardano chain and outputs events. Each event contains data about itself and about the <em>context</em> in which it occurred.</p>
+<p>A consumer aggregating a sequence of multiple events will notice redundant / duplicated data. For example, the &quot;block number&quot; value will appear repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor &quot;consumption ergonomics&quot; over &quot;data normalization&quot;.</p>
 <h2 id="available-events"><a class="header" href="#available-events">Available Events</a></h2>
 <p>The following list represent the already implemented events. These data structures are represented as an <code>enum</code> at the code level.</p>
 <h3 id="rollback-event"><a class="header" href="#rollback-event"><code>RollBack</code> Event</a></h3>
@@ -1328,9 +1328,9 @@ include_byron_ebb = &lt;bool&gt;
 <div style="break-before: page; page-break-before: always;"></div><h1 id="intersect-options"><a class="header" href="#intersect-options">Intersect Options</a></h1>
 <p>Advanced options for instructing Oura from which point in the chain to start reading from.</p>
 <h2 id="feature-4"><a class="header" href="#feature-4">Feature</a></h2>
-<p>When running in daemon mode, Oura provides 4 different strategies for finding the instersection point within the chain sync process.</p>
+<p>When running in daemon mode, Oura provides 4 different strategies for finding the intersection point within the chain sync process.</p>
 <ul>
-<li><code>Origin</code>: Oura will start reading from the begining of the chain.</li>
+<li><code>Origin</code>: Oura will start reading from the beginning of the chain.</li>
 <li><code>Tip</code>: Oura will start reading from the current tip of the chain.</li>
 <li><code>Point</code>: Oura will start reading from a particular point (slot, hash) in the chain. If the point is not found, the process will be terminated with a non-zero exit code.</li>
 <li><code>Fallbacks</code>: Oura will start reading the first valid point within a set of alternative positions. If point is not valid, the process will fallback into the next available point in the list of options. If none of the points are valid, the process will be terminated with a non-zero exit code.</li>

@@ -137,9 +137,9 @@
                         <h1 id="intersect-options"><a class="header" href="#intersect-options">Intersect Options</a></h1>
 <p>Advanced options for instructing Oura from which point in the chain to start reading from.</p>
 <h2 id="feature"><a class="header" href="#feature">Feature</a></h2>
-<p>When running in daemon mode, Oura provides 4 different strategies for finding the instersection point within the chain sync process.</p>
+<p>When running in daemon mode, Oura provides 4 different strategies for finding the intersection point within the chain sync process.</p>
 <ul>
-<li><code>Origin</code>: Oura will start reading from the begining of the chain.</li>
+<li><code>Origin</code>: Oura will start reading from the beginning of the chain.</li>
 <li><code>Tip</code>: Oura will start reading from the current tip of the chain.</li>
 <li><code>Point</code>: Oura will start reading from a particular point (slot, hash) in the chain. If the point is not found, the process will be terminated with a non-zero exit code.</li>
 <li><code>Fallbacks</code>: Oura will start reading the first valid point within a set of alternative positions. If point is not valid, the process will fallback into the next available point in the list of options. If none of the points are valid, the process will be terminated with a non-zero exit code.</li>

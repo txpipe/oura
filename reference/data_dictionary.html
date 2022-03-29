@@ -135,8 +135,8 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="data-dictionary"><a class="header" href="#data-dictionary">Data Dictionary</a></h1>
-<p><em>Oura</em> follows a Cardano chain and outputs events. Each event contains data about itself and about the <em>context</em> in which it occured.</p>
-<p>A consumer aggregating a sequence of multiple events will notices redundant / duplicated data. For example, the &quot;block number&quot; value will appeare repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor &quot;consumption ergonomics&quot; over &quot;data normalization&quot;.</p>
+<p><em>Oura</em> follows a Cardano chain and outputs events. Each event contains data about itself and about the <em>context</em> in which it occurred.</p>
+<p>A consumer aggregating a sequence of multiple events will notice redundant / duplicated data. For example, the &quot;block number&quot; value will appear repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor &quot;consumption ergonomics&quot; over &quot;data normalization&quot;.</p>
 <h2 id="available-events"><a class="header" href="#available-events">Available Events</a></h2>
 <p>The following list represent the already implemented events. These data structures are represented as an <code>enum</code> at the code level.</p>
 <h3 id="rollback-event"><a class="header" href="#rollback-event"><code>RollBack</code> Event</a></h3>

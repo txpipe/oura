@@ -135,7 +135,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="daemon-mode"><a class="header" href="#daemon-mode">Daemon Mode</a></h1>
-<p><em>Oura's</em> <code>daemon</code> mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuosuly bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.</p>
+<p><em>Oura's</em> <code>daemon</code> mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuously bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.</p>
 <h2 id="start-daemon-mode"><a class="header" href="#start-daemon-mode">Start Daemon Mode</a></h2>
 <p>To start <em>Oura</em> in <em>daemon mode</em>, use the following command:</p>
 <pre><code>oura dameon
@@ -187,7 +187,7 @@ path = &quot;/var/oura/cursor&quot;
 <h3 id="the-source-section"><a class="header" href="#the-source-section">The <code>source</code> section</a></h3>
 <p>This section specifies the origin of the data. The special <code>type</code> field must always be present and containing a value matching any of the available built-in sources. The rest of the fields in the section will depend on the selected <code>type</code>. See the <a href="../sources/index.html">sources</a> section for a list of available options and their corresponding config values.</p>
 <h3 id="the-filters-section"><a class="header" href="#the-filters-section">The <code>filters</code> section</a></h3>
-<p>This section specifies a collection of filters that are applied in sequence to each event. The sepcial <code>type</code> field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the <a href="../filters/index.html">filters</a> section for a list of available options and their corresponding config values.</p>
+<p>This section specifies a collection of filters that are applied in sequence to each event. The special <code>type</code> field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the <a href="../filters/index.html">filters</a> section for a list of available options and their corresponding config values.</p>
 <h3 id="the-sink-section"><a class="header" href="#the-sink-section">The <code>sink</code> section</a></h3>
 <p>This section specifies the destination of the data. The special <code>type</code> field must always be present and containing a value matching any of the available built-in sinks. The rest of the fields in the section will depend on the selected <code>type</code>. See the <a href="../sinks/index.html">sinks</a> section for a list of available options.</p>
 <h3 id="the-cursor-section"><a class="header" href="#the-cursor-section">The <code>cursor</code> section</a></h3>
