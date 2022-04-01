@@ -10,7 +10,7 @@ use crate::{
     Error,
 };
 
-use super::{map::ToHex, shelley, EventWriter};
+use super::{map::ToHex, EventWriter};
 
 impl EventWriter {
     pub fn collect_input_records(&self, source: &[TransactionInput]) -> Vec<TxInputRecord> {
@@ -93,7 +93,7 @@ impl EventWriter {
 
                 let tx_hash = crypto::hash_transaction(tx).to_hex();
 
-                self.to_transaction_record(&tx, &tx_hash, aux_data)
+                self.to_transaction_record(tx, &tx_hash, aux_data)
             })
             .collect()
     }

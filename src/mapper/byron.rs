@@ -109,7 +109,7 @@ impl EventWriter {
             .iter()
             .map(|tx| {
                 let tx_hash = tx.transaction.to_hash().to_string();
-                self.to_byron_transaction_record(&tx, &tx_hash)
+                self.to_byron_transaction_record(tx, &tx_hash)
             })
             .collect()
     }
@@ -177,7 +177,7 @@ impl EventWriter {
         };
 
         if self.config.include_block_details {
-            record.transactions = Some(self.collect_byron_tx_records(&source)?);
+            record.transactions = Some(self.collect_byron_tx_records(source)?);
         }
 
         Ok(record)
