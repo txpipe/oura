@@ -163,10 +163,10 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::NativeScript {} => LogLine {
+            EventData::NativeScript { data } => LogLine {
                 prefix: "NATIVE",
                 color: Color::White,
-                content: "{{ ... }}".to_string(),
+                content: format!("{{ {} }}", data),
                 source,
                 max_width,
             },

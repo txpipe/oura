@@ -12,8 +12,8 @@ use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
-    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-    StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord, NativeScript,
+    OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 use crate::utils::time::TimeProvider;
@@ -187,8 +187,39 @@ impl EventWriter {
         }
     }
 
-    pub fn to_native_script_event(&self) -> EventData {
-        EventData::NativeScript {}
+    pub fn to_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
+        EventData::NativeScript {
+            data: self.to_native_script(script),
+        }
+    }
+
+    pub fn to_native_script(&self, script: &alonzo::NativeScript) -> NativeScript {
+        match script {
+            alonzo::NativeScript::ScriptPubkey(keyhash) => NativeScript::Sig {
+                key_hash: keyhash.to_string(),
+            },
+            alonzo::NativeScript::ScriptAll(scripts) => NativeScript::All {
+                scripts: (*scripts)
+                    .iter()
+                    .map(|script| self.to_native_script(script))
+                    .collect(),
+            },
+            alonzo::NativeScript::ScriptAny(scripts) => NativeScript::Any {
+                scripts: (*scripts)
+                    .iter()
+                    .map(|script| self.to_native_script(script))
+                    .collect(),
+            },
+            alonzo::NativeScript::ScriptNOfK(n, scripts) => NativeScript::AtLeast {
+                required: *n,
+                scripts: (*scripts)
+                    .iter()
+                    .map(|script| self.to_native_script(script))
+                    .collect(),
+            },
+            alonzo::NativeScript::InvalidBefore(slot) => NativeScript::After { slot: *slot },
+            alonzo::NativeScript::InvalidHereafter(slot) => NativeScript::Before { slot: *slot },
+        }
     }
 
     pub fn to_plutus_script_event(&self, script: &ByteVec) -> EventData {

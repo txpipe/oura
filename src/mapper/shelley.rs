@@ -39,8 +39,10 @@ impl EventWriter {
                     self.crawl_metadata(metadata)?;
                 }
 
-                for _native in data.native_scripts.iter() {
-                    self.append(self.to_native_script_event())?;
+                if let Some(native) = &data.native_scripts {
+                    for script in native.iter() {
+                        self.append(self.to_native_script_event(script))?;
+                    }
                 }
 
                 if let Some(plutus) = &data.plutus_scripts {
@@ -58,8 +60,10 @@ impl EventWriter {
             } => {
                 self.crawl_metadata(transaction_metadata)?;
 
-                for _native in auxiliary_scripts.iter() {
-                    self.append(self.to_native_script_event())?;
+                if let Some(native) = &auxiliary_scripts {
+                    for script in native.iter() {
+                        self.append(self.to_native_script_event(script))?;
+                    }
                 }
             }
         }
