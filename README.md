@@ -30,7 +30,7 @@ In this terminal recording we get to see a few mins of live output from a testne
 
 ## Under the Hood
 
-All the heavy lifting required to communicate with the Cardano node is done by the [Pallas](https://github.com/txpipe/pallas) library, which provides an implementation of the Ouroboros multiplixer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).
+All the heavy lifting required to communicate with the Cardano node is done by the [Pallas](https://github.com/txpipe/pallas) library, which provides an implementation of the Ouroboros multiplexer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).
 
 The data pipeline makes heavy use (maybe a bit too much) of multi-threading and mpsc channels provided by Rust's `std::sync` library.
 
