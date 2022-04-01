@@ -1,13 +1,16 @@
 use pallas::ledger::primitives::alonzo::{
-    AuxiliaryData, Multiasset, TransactionInput, TransactionOutput, Value,
+    crypto, AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value,
 };
 
 use crate::{
-    model::{MetadataRecord, MintRecord, OutputAssetRecord, TxInputRecord, TxOutputRecord},
+    model::{
+        MetadataRecord, MintRecord, OutputAssetRecord, TransactionRecord, TxInputRecord,
+        TxOutputRecord,
+    },
     Error,
 };
 
-use super::EventWriter;
+use super::{map::ToHex, shelley, EventWriter};
 
 impl EventWriter {
     pub fn collect_input_records(&self, source: &[TransactionInput]) -> Vec<TxInputRecord> {
@@ -71,5 +74,27 @@ impl EventWriter {
                 .collect(),
             None => Ok(vec![]),
         }
+    }
+
+    pub fn collect_shelley_tx_records(
+        &self,
+        block: &Block,
+    ) -> Result<Vec<TransactionRecord>, Error> {
+        block
+            .transaction_bodies
+            .iter()
+            .enumerate()
+            .map(|(idx, tx)| {
+                let aux_data = block
+                    .auxiliary_data_set
+                    .iter()
+                    .find(|(k, _)| *k == (idx as u32))
+                    .map(|(_, v)| v);
+
+                let tx_hash = crypto::hash_transaction(tx).to_hex();
+
+                self.to_transaction_record(&tx, &tx_hash, aux_data)
+            })
+            .collect()
     }
 }

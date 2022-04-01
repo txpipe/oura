@@ -22,7 +22,7 @@ pub enum Era {
     Alonzo,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum MetadatumRendition {
     MapJson(JsonValue),
@@ -44,7 +44,7 @@ impl Display for MetadatumRendition {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct MetadataRecord {
     pub label: String,
 
@@ -76,7 +76,7 @@ impl From<CIP25AssetRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TxInputRecord {
     pub tx_id: String,
     pub index: u64,
@@ -88,7 +88,7 @@ impl From<TxInputRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct OutputAssetRecord {
     pub policy: String,
     pub asset: String,
@@ -101,7 +101,7 @@ impl From<OutputAssetRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxOutputRecord {
     pub address: String,
     pub amount: u64,
@@ -114,7 +114,7 @@ impl From<TxOutputRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MintRecord {
     pub policy: String,
     pub asset: String,
@@ -127,7 +127,7 @@ impl From<MintRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct TransactionRecord {
     pub hash: String,
     pub fee: u64,
@@ -172,7 +172,7 @@ pub enum StakeCredential {
     Scripthash(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct BlockRecord {
     pub era: Era,
     pub epoch: Option<u64>,
@@ -185,6 +185,7 @@ pub struct BlockRecord {
     pub number: u64,
     pub previous_hash: String,
     pub cbor_hex: Option<String>,
+    pub transactions: Option<Vec<TransactionRecord>>,
 }
 
 impl From<BlockRecord> for EventData {

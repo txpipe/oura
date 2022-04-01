@@ -366,7 +366,7 @@ impl EventWriter {
             .as_ref()
             .map(|time| time.absolute_slot_to_relative(source.header.header_body.slot));
 
-        Ok(BlockRecord {
+        let mut record = BlockRecord {
             era,
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
@@ -381,7 +381,14 @@ impl EventWriter {
                 true => hex::encode(cbor).into(),
                 false => None,
             },
-        })
+            transactions: None,
+        };
+
+        if self.config.include_block_details {
+            record.transactions = Some(self.collect_shelley_tx_records(source)?);
+        }
+
+        Ok(record)
     }
 
     pub(crate) fn append_rollback_event(&self, point: &Point) -> Result<(), Error> {
