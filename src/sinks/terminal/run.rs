@@ -33,7 +33,7 @@ pub fn reducer_loop(
         utils.track_sink_progress(&evt);
 
         throttle.wait_turn();
-        let line = LogLine::new(evt, width as usize);
+        let line = LogLine::new(evt, width as usize, &utils);
         stdout.execute(Print(line))?;
     }
 
