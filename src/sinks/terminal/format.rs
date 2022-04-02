@@ -2,9 +2,12 @@ use std::fmt::{Display, Write};
 
 use crossterm::style::{Attribute, Color, Stylize};
 
-use crate::model::{
-    BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord,
-    TransactionRecord, TxInputRecord, TxOutputRecord,
+use crate::{
+    model::{
+        BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord,
+        OutputAssetRecord, TransactionRecord, TxInputRecord, TxOutputRecord,
+    },
+    utils::Utils,
 };
 
 pub struct LogLine {
@@ -16,7 +19,7 @@ pub struct LogLine {
 }
 
 impl LogLine {
-    pub fn new(source: Event, max_width: usize) -> LogLine {
+    pub fn new(source: Event, max_width: usize, utils: &Utils) -> LogLine {
         match &source.data {
             EventData::Block(BlockRecord {
                 era,
@@ -110,6 +113,23 @@ impl LogLine {
             EventData::OutputAsset(OutputAssetRecord {
                 policy,
                 asset,
+                asset_ascii,
+                ..
+            }) if policy == &utils.well_known.adahandle_policy => LogLine {
+                prefix: "$HNDL",
+                color: Color::DarkGreen,
+                content: format!(
+                    "{{ {} => {} }}",
+                    asset_ascii.as_deref().unwrap_or(asset),
+                    source.context.output_address.as_deref().unwrap_or_default(),
+                ),
+                source,
+                max_width,
+            },
+            EventData::OutputAsset(OutputAssetRecord {
+                policy,
+                asset,
+                asset_ascii,
                 amount,
                 ..
             }) => LogLine {
@@ -117,7 +137,7 @@ impl LogLine {
                 color: Color::Green,
                 content: format!(
                     "{{ policy: {}, asset: {}, amount: {} }}",
-                    policy, asset, amount
+                    policy, asset_ascii.as_deref().unwrap_or(asset), amount
                 ),
                 source,
                 max_width,
@@ -288,7 +308,7 @@ impl Display for LogLine {
                 .unwrap_or_else(|| "--".to_string()),
         )
         .stylize()
-        .with(Color::DarkGrey)
+        .with(Color::Grey)
         .attribute(Attribute::Dim)
         .fmt(f)?;
 

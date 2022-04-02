@@ -92,6 +92,7 @@ impl From<TxInputRecord> for EventData {
 pub struct OutputAssetRecord {
     pub policy: String,
     pub asset: String,
+    pub asset_ascii: Option<String>,
     pub amount: u64,
 }
 
@@ -254,8 +255,6 @@ pub enum EventData {
         block_slot: u64,
         block_hash: String,
     },
-    // // flow-control event to end the pipeline
-    // Finalize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

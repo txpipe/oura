@@ -174,6 +174,7 @@ impl EventWriter {
         OutputAssetRecord {
             policy: policy.to_hex(),
             asset: asset.to_hex(),
+            asset_ascii: String::from_utf8(asset.to_vec()).ok(),
             amount,
         }
     }
