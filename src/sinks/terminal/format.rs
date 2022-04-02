@@ -117,7 +117,7 @@ impl LogLine {
                 ..
             }) if policy == &utils.well_known.adahandle_policy => LogLine {
                 prefix: "$HNDL",
-                color: Color::Green,
+                color: Color::DarkGreen,
                 content: format!(
                     "{{ {} => {} }}",
                     asset_ascii.as_deref().unwrap_or(asset),
@@ -308,7 +308,7 @@ impl Display for LogLine {
                 .unwrap_or_else(|| "--".to_string()),
         )
         .stylize()
-        .with(Color::DarkGrey)
+        .with(Color::Grey)
         .attribute(Attribute::Dim)
         .fmt(f)?;
 
