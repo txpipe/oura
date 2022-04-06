@@ -61,6 +61,9 @@ tokio = { version = "1.17.0", optional = true, features = ["rt"] }
 # required for CI to complete successfully
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 
+# features: gcp
+google-cloud-rust-raw = { version = "0.13.0", optional = true }
+
 [features]
 default = []
 logs = ["file-rotate"]
@@ -70,3 +73,4 @@ kafkasink = ["kafka", "openssl"]
 elasticsink = ["elasticsearch", "tokio"]
 fingerprint = ["murmur3"]
 aws = ["aws-config", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3", "tokio"]
+gcp = ["google-cloud-rust-raw"]
