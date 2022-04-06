@@ -35,7 +35,7 @@ in stdenv.mkDerivation {
   meta = with lib; {
     description = "Oura: The tail of Cardano";
     homepage = https://txpipe.github.io/oura/;
-    license = licenses.unfree;
+    license = licenses.free;
     maintainers = with lib.maintainers; [ ];
     platforms = [ "x86_64-linux" ];
   };
