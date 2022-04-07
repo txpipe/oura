@@ -22,3 +22,6 @@ pub mod aws_lambda;
 
 #[cfg(feature = "aws")]
 pub mod aws_s3;
+
+#[cfg(feature = "gcp")]
+pub mod gcp_pubsub;
