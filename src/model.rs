@@ -242,7 +242,8 @@ pub enum EventData {
         index: u64,
     },
     NativeScript {
-        data: NativeScript,
+        policy_id: String,
+        script: NativeScript,
     },
     PlutusScript {
         data: String,

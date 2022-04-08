@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use pallas::codec::minicbor::bytes::ByteVec;
-use pallas::crypto::hash::Hash;
+use pallas::codec::minicbor::{self, bytes::ByteVec};
+use pallas::crypto::hash::{Hash, Hasher};
 use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
     InstantaneousRewardTarget, Metadatum, Relay, TransactionInput, TransactionOutput, Value,
@@ -188,8 +188,14 @@ impl EventWriter {
     }
 
     pub fn to_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
+        let mut cbor = Vec::new();
+        minicbor::encode(script, &mut cbor).unwrap();
+        cbor.insert(0, 0);
+        let digest = Hasher::<224>::hash(&cbor);
+
         EventData::NativeScript {
-            data: self.to_native_script(script),
+            policy_id: hex::encode(digest),
+            script: self.to_native_script(script),
         }
     }
 
