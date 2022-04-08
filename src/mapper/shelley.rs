@@ -232,6 +232,19 @@ impl EventWriter {
             self.append(EventData::BlockEnd(record))?;
         }
 
+        for witness in block.transaction_witness_sets.iter() {
+            if let Some(native) = &witness.native_script {
+                for script in native.iter() {
+                    self.append(self.to_native_script_event(script))?;
+                }
+            }
+            if let Some(plutus) = &witness.plutus_script {
+                for script in plutus.iter() {
+                    self.append(self.to_plutus_script_event(script))?;
+                }
+            }
+        }
+
         Ok(())
     }
 

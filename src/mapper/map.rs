@@ -361,26 +361,6 @@ impl EventWriter {
             };
         }
 
-        // TODO: add witness set data to transaction
-        /*
-        if let Some(witness) = self.transaction_witness_sets.get(idx) {
-            let plutus_count = match &witness.plutus_script {
-                Some(scripts) => scripts.len(),
-                None => 0,
-            };
-
-            let native_count = match &witness.native_script {
-                Some(scripts) => scripts.len(),
-                None => 0,
-            };
-
-            let redeemer_count = match &witness.redeemer {
-                Some(redeemer) => redeemer.len(),
-                None => 0,
-            };
-        }
-        */
-
         if self.config.include_transaction_details {
             record.metadata = match aux_data {
                 Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
