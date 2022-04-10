@@ -24,7 +24,7 @@ pub(crate) trait CanStore {
 /// Configuration for the file-based storage implementation
 #[derive(Debug, Deserialize)]
 pub struct FileConfig {
-    path: String,
+    pub path: String,
 }
 
 /// A cursor provider that uses the file system as the source for persistence

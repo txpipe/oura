@@ -9,10 +9,10 @@ use crate::{
     Error,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    binding: Option<String>,
-    endpoint: Option<String>,
+    pub binding: Option<String>,
+    pub endpoint: Option<String>,
 }
 
 #[derive(Clone)]
