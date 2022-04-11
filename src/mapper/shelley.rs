@@ -213,7 +213,7 @@ impl EventWriter {
                 .find(|(k, _)| *k == (idx as u32))
                 .map(|(_, v)| v);
 
-            let tx_hash = crypto::hash_transaction(tx).to_hex();
+            let tx_hash = tx.to_hash().to_hex();
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
