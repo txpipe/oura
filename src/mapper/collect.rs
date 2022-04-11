@@ -1,5 +1,5 @@
 use pallas::ledger::primitives::alonzo::{
-    crypto, AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value,
+    AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value,
 };
 
 use crate::{
@@ -91,7 +91,7 @@ impl EventWriter {
                     .find(|(k, _)| *k == (idx as u32))
                     .map(|(_, v)| v);
 
-                let tx_hash = crypto::hash_transaction(tx).to_hex();
+                let tx_hash = tx.to_hash().to_hex();
 
                 self.to_transaction_record(tx, &tx_hash, aux_data)
             })
