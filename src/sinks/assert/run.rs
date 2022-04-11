@@ -77,12 +77,12 @@ pub fn assertion_loop(
 
         state = reduce_state(state, event);
 
-        run_check!(&config, &state, block_depth_doesnt_skip_numbers);
-        run_check!(&config, &state, block_slot_increases);
-        run_check!(&config, &state, block_previous_hash_matches);
-        run_check!(&config, &state, event_timestamp_increases);
-        run_check!(&config, &state, tx_records_matches_block_count);
-        run_check!(&config, &state, tx_has_input_and_output);
+        run_check!(config, &state, block_depth_doesnt_skip_numbers);
+        run_check!(config, &state, block_slot_increases);
+        run_check!(config, &state, block_previous_hash_matches);
+        run_check!(config, &state, event_timestamp_increases);
+        run_check!(config, &state, tx_records_matches_block_count);
+        run_check!(config, &state, tx_has_input_and_output);
     }
 
     Ok(())
