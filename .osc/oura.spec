@@ -1,7 +1,7 @@
 #
 # spec file for package oura
 #
-# Copyright (c) 2022 PERLUR Group
+# Copyright (c) 2022 TxPipe
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
