@@ -173,6 +173,32 @@ pub enum StakeCredential {
     Scripthash(String),
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Display)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "type")]
+pub enum NativeScript {
+    #[serde(rename_all = "camelCase")]
+    Sig {
+        key_hash: String,
+    },
+    All {
+        scripts: Vec<NativeScript>,
+    },
+    Any {
+        scripts: Vec<NativeScript>,
+    },
+    AtLeast {
+        required: u32,
+        scripts: Vec<NativeScript>,
+    },
+    Before {
+        slot: u64,
+    },
+    After {
+        slot: u64,
+    },
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct BlockRecord {
     pub era: Era,
@@ -215,7 +241,10 @@ pub enum EventData {
         tx_id: String,
         index: u64,
     },
-    NativeScript {},
+    NativeScript {
+        policy_id: String,
+        script: NativeScript,
+    },
     PlutusScript {
         data: String,
     },

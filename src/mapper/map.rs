@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use pallas::codec::minicbor::bytes::ByteVec;
-use pallas::crypto::hash::Hash;
+use pallas::codec::minicbor::{self, bytes::ByteVec};
+use pallas::crypto::hash::{Hash, Hasher};
 use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
     InstantaneousRewardTarget, Metadatum, Relay, TransactionInput, TransactionOutput, Value,
@@ -12,8 +12,8 @@ use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
-    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-    StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord, NativeScript,
+    OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 use crate::utils::time::TimeProvider;
@@ -187,8 +187,45 @@ impl EventWriter {
         }
     }
 
-    pub fn to_native_script_event(&self) -> EventData {
-        EventData::NativeScript {}
+    pub fn to_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
+        let mut cbor = Vec::new();
+        minicbor::encode(script, &mut cbor).unwrap();
+        cbor.insert(0, 0);
+        let digest = Hasher::<224>::hash(&cbor);
+
+        EventData::NativeScript {
+            policy_id: hex::encode(digest),
+            script: self.to_native_script(script),
+        }
+    }
+
+    pub fn to_native_script(&self, script: &alonzo::NativeScript) -> NativeScript {
+        match script {
+            alonzo::NativeScript::ScriptPubkey(keyhash) => NativeScript::Sig {
+                key_hash: keyhash.to_string(),
+            },
+            alonzo::NativeScript::ScriptAll(scripts) => NativeScript::All {
+                scripts: (*scripts)
+                    .iter()
+                    .map(|script| self.to_native_script(script))
+                    .collect(),
+            },
+            alonzo::NativeScript::ScriptAny(scripts) => NativeScript::Any {
+                scripts: (*scripts)
+                    .iter()
+                    .map(|script| self.to_native_script(script))
+                    .collect(),
+            },
+            alonzo::NativeScript::ScriptNOfK(n, scripts) => NativeScript::AtLeast {
+                required: *n,
+                scripts: (*scripts)
+                    .iter()
+                    .map(|script| self.to_native_script(script))
+                    .collect(),
+            },
+            alonzo::NativeScript::InvalidBefore(slot) => NativeScript::After { slot: *slot },
+            alonzo::NativeScript::InvalidHereafter(slot) => NativeScript::Before { slot: *slot },
+        }
     }
 
     pub fn to_plutus_script_event(&self, script: &ByteVec) -> EventData {
@@ -323,26 +360,6 @@ impl EventWriter {
                 _ => (),
             };
         }
-
-        // TODO: add witness set data to transaction
-        /*
-        if let Some(witness) = self.transaction_witness_sets.get(idx) {
-            let plutus_count = match &witness.plutus_script {
-                Some(scripts) => scripts.len(),
-                None => 0,
-            };
-
-            let native_count = match &witness.native_script {
-                Some(scripts) => scripts.len(),
-                None => 0,
-            };
-
-            let redeemer_count = match &witness.redeemer {
-                Some(redeemer) => redeemer.len(),
-                None => 0,
-            };
-        }
-        */
 
         if self.config.include_transaction_details {
             record.metadata = match aux_data {
