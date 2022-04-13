@@ -141,10 +141,11 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_prefix("coll")
             .append_slice(tx_id)?
             .append_to_string(index)?,
-        EventData::NativeScript {} => b
+        EventData::NativeScript { policy_id, .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("scpt")
-            .append_optional(&event.context.tx_hash)?,
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(policy_id)?,
         EventData::PlutusScript { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("plut")
