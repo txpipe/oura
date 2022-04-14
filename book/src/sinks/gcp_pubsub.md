@@ -14,5 +14,5 @@ topic = "test"
 ### Section: `sink`
 
 - `type`: the literal value `GcpPubSub`.
-- `credentials`: the service account json file downloaded from the cloud console.
+- `credentials`: the path to the service account json file downloaded from the cloud console.
 - `topic`: the short name of the topic to send message to.
