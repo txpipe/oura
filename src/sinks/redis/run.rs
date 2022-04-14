@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 //use redis::*;
-//use log::debug;
+use log::debug;
 
 use crate::{pipelining::StageReceiver, utils::Utils, Error, model::Event, model::EventData};
 use super::PartitionStrategy;
@@ -18,8 +18,10 @@ pub fn producer_loop(
         let value = serde_json::to_string(&event)?;
         let (stream, key) = data(&event)?;
         
-        info!("Key: {:?}, Event: {:?}",key, event);
+        log::info!("Key: {:?}, Event: {:?}",key, event);
         if let Some(k) = key {
+            //let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
+            // Use Slots as keys, they are always increasing also during rollbacks -> Needs redis minimum redis 6.p (release canidate 7.0) 
             let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
         }
     }
@@ -33,7 +35,7 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             Ok(("block".to_string(), event.context.block_number.map(|n| n.to_string())))
         }
         EventData::BlockEnd(BlockRecord) => { 
-            Ok(("".to_string(),None))
+            Ok(("blockend".to_string(),None))
         },
 
         EventData::Transaction(TransactionRecord) => {
@@ -41,23 +43,23 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
         },
 
         EventData::TransactionEnd(TransactionRecord) => {
-            Ok(("".to_string(),None))
+            Ok(("txend".to_string(),None))
         },
 
         EventData::TxInput(TxInputRecord) => {
-            Ok(("".to_string(),None))
+            Ok(("txin".to_string(),None))
         },
 
         EventData::TxOutput(TxOutputRecord) => {
-            Ok(("".to_string(),None))
+            Ok(("txout".to_string(),None))
         },
 
         EventData::OutputAsset(OutputAssetRecord) => {
-            Ok(("".to_string(),None))
+            Ok(("outputseets".to_string(),None))
         },
 
         EventData::Metadata(MetadataRecord) => {
-            Ok(("".to_string(),None))
+            Ok(("metadata".to_string(),None))
         },
 
         EventData::CIP25Asset(CIP25AssetRecord) => {
@@ -72,7 +74,7 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             tx_id, //: String, 
             index, //: u64,
         } => {
-            Ok(("".to_string(),None))
+            Ok(("collateral".to_string(),None))
         },
 
         EventData::NativeScript {} => {
@@ -88,20 +90,20 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
         EventData::StakeRegistration {
             credential, //: StakeCredential,
         } => {
-            Ok(("".to_string(),None))
+            Ok(("stakeregistration".to_string(),None))
         },
         
         EventData::StakeDeregistration {
             credential, //: StakeCredential, 
         } => {
-            Ok(("".to_string(),None))
+            Ok(("stakederegistration".to_string(),None))
         },
         
         EventData::StakeDelegation {
             credential, //: StakeCredential, 
             pool_hash, //: String, 
         } => {
-            Ok(("".to_string(),None))
+            Ok(("stakedelegation".to_string(),None))
         },
         
         EventData::PoolRegistration {
@@ -115,18 +117,18 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             relays, //: Vec::<String>,
             pool_metadata, //: Option<String>,
         }=> {
-            Ok(("".to_string(),None))
+            Ok(("poolregistration".to_string(),None))
         },
         
         EventData::PoolRetirement { 
             pool, //: String, 
             epoch, //: u64, 
         } => {
-            Ok(("".to_string(),None))
+            Ok(("poolretirement".to_string(),None))
         },
 
         EventData::GenesisKeyDelegation => {
-            Ok(("".to_string(),None))
+            Ok(("genesiskeydelegation".to_string(),None))
         },
 
         EventData::MoveInstantaneousRewardsCert {
@@ -135,7 +137,7 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             to_stake_credentials, //: Option::<Vec::<(StakeCredential, i64)>>,
             to_other_pot, //: Option<u64>,
         } => {
-            Ok(("".to_string(),None))
+            Ok(("moveinstrewardcert".to_string(),None))
         },
 
         EventData::RollBack {
@@ -145,8 +147,4 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             Ok(("rollback".to_string(),event.context.block_number.map(|n| n.to_string())))
         },
     }
-}
-
-struct Transaction {
-
 }

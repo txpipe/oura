@@ -50,6 +50,8 @@ impl FromStr for PartitionStrategy {
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
     pub redis_server      : String,
+    pub redis_stream      : Option<String>,
+    pub strategy          : Option<String>,
 }
 
 impl SinkProvider for WithUtils<Config> {
