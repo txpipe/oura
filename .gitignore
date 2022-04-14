@@ -12,3 +12,7 @@ Cargo.lock
 # Local testdrive environments, mainly for development
 testdrive/custom
 testdrive/assert
+
+oura.toml
+
+oura-*.json

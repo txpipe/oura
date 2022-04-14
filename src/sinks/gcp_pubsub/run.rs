@@ -1,51 +1,35 @@
-use std::{sync::Arc, time::SystemTime};
+use std::sync::Arc;
 
-use google_cloud_rust_raw::pubsub::v1::{
-    pubsub::{PublishRequest, PublishResponse, PubsubMessage, Topic},
-    pubsub_grpc::PublisherClient,
-};
-use protobuf::RepeatedField;
+use cloud_pubsub::{error::Error, topic::PublishMessageResponse, Client, Topic};
 use serde_json::json;
 
-use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
+use crate::{model::Event, pipelining::StageReceiver, utils::Utils};
 
-fn send_pubsub_msg(
-    client: &PublisherClient,
-    topic: &Topic,
-    event: &Event,
-) -> ::grpcio::Result<PublishResponse> {
+async fn send_pubsub_msg(client: &Topic, event: &Event) -> Result<PublishMessageResponse, Error> {
     let body = json!(event).to_string();
 
-    let timestamp_in_seconds = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-
-    let mut timestamp = protobuf::well_known_types::Timestamp::new();
-    timestamp.set_seconds(timestamp_in_seconds as i64);
-
-    let mut pubsub_msg = PubsubMessage::new();
-    pubsub_msg.set_data(body.into_bytes());
-    pubsub_msg.set_publish_time(timestamp);
-
-    let mut request = PublishRequest::new();
-    request.set_topic(topic.get_name().to_string());
-    request.set_messages(RepeatedField::from_vec(vec![pubsub_msg]));
-
-    client.publish(&request)
+    client.publish(body).await
 }
 
 pub fn writer_loop(
     input: StageReceiver,
-    publisher: PublisherClient,
-    topic: Topic,
+    credentials: String,
+    topic_name: String,
     utils: Arc<Utils>,
-) -> Result<(), Error> {
+) -> Result<(), crate::Error> {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_time()
+        .enable_io()
+        .build()?;
+
+    let publisher = rt.block_on(Client::new(credentials))?;
+    let topic = publisher.topic(topic_name);
+
     for event in input.iter() {
         // notify the pipeline where we are
         utils.track_sink_progress(&event);
 
-        let result = send_pubsub_msg(&publisher, &topic, &event);
+        let result = rt.block_on(send_pubsub_msg(&topic, &event));
 
         if let Err(err) = result {
             log::error!("unrecoverable error sending message to PubSub: {:?}", err);
