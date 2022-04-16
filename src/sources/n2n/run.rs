@@ -28,7 +28,7 @@ impl Debug for Block2EventMapper {
 }
 
 impl blockfetch::Observer for Block2EventMapper {
-    fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
+    fn on_block_received(&mut self, body: Vec<u8>) -> Result<(), Error> {
         let Self(writer) = self;
 
         match probing::probe_block_cbor_era(&body) {
