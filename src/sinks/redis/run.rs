@@ -17,7 +17,6 @@ pub fn producer_loop(
             let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
         }
     }
-
     Ok(())
 }
 
