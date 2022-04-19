@@ -1,10 +1,6 @@
+#![allow(unused_variables)]
 use std::sync::Arc;
-
-//use redis::*;
-use log::debug;
-
 use crate::{pipelining::StageReceiver, utils::Utils, Error, model::Event, model::EventData};
-use super::PartitionStrategy;
 
 pub fn producer_loop(
     input       : StageReceiver,
@@ -20,8 +16,7 @@ pub fn producer_loop(
         
         log::info!("Key: {:?}, Event: {:?}",key, event);
         if let Some(k) = key {
-            //let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
-            // Use Slots as keys, they are always increasing also during rollbacks -> Needs redis minimum redis 6.p (release canidate 7.0) 
+            //Needs minimum redis 6.9 (release canidate 7.0) 
             let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
         }
     }
@@ -31,50 +26,58 @@ pub fn producer_loop(
 
 fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
     match event.data.clone() {
-        EventData::Block(BlockRecord) => {
+        EventData::Block(_) => {
             Ok(("block".to_string(), event.context.block_number.map(|n| n.to_string())))
         }
-        EventData::BlockEnd(BlockRecord) => { 
+        EventData::BlockEnd(_) => { 
             Ok(("blockend".to_string(),None))
         },
 
-        EventData::Transaction(TransactionRecord) => {
+        EventData::Transaction(_) => {
             Ok(("transaction".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
-        EventData::TransactionEnd(TransactionRecord) => {
+        EventData::TransactionEnd(_) => {
             Ok(("txend".to_string(),None))
         },
 
-        EventData::TxInput(TxInputRecord) => {
-            Ok(("txin".to_string(),None))
+        EventData::TxInput(tx_input_record) => {
+            Ok(("txin".to_string(),Some(tx_input_record.tx_id +"#"+&tx_input_record.index.to_string()).map(|n| n.to_string())))
         },
 
-        EventData::TxOutput(TxOutputRecord) => {
-            Ok(("txout".to_string(),None))
+        EventData::TxOutput(_) => {
+            let mut key = match event.context.tx_hash.clone(){
+                Some(hash) => hash,
+                None => return Err("no txhash found".into()),
+            };
+            if let Some(outputindex) = event.context.output_idx {
+                key = key + "#" + &outputindex.to_string()
+            }
+
+            Ok(("txout".to_string(),Some(key)))
         },
 
-        EventData::OutputAsset(OutputAssetRecord) => {
-            Ok(("outputseets".to_string(),None))
+        EventData::OutputAsset(output_asset_record) => {
+            Ok(("outputseets".to_string(),Some(output_asset_record.policy.clone()+"."+&output_asset_record.asset).map(|n| n.to_string())))
         },
 
-        EventData::Metadata(MetadataRecord) => {
-            Ok(("metadata".to_string(),None))
+        EventData::Metadata(_) => {
+            Ok(("metadata".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
-        EventData::CIP25Asset(CIP25AssetRecord) => {
+        EventData::CIP25Asset(_) => {
             Ok(("cip25mint".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
-        EventData::Mint(MintRecord) => {
+        EventData::Mint(_) => {
             Ok(("mint".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
         EventData::Collateral { 
-            tx_id, //: String, 
-            index, //: u64,
+            tx_id, 
+            index,
         } => {
-            Ok(("collateral".to_string(),None))
+            Ok(("collateral".to_string(),Some(tx_id +"#"+&index.to_string()).map(|n| n.to_string())))
         },
 
         EventData::NativeScript {} => {
@@ -82,67 +85,55 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
         },
         
         EventData::PlutusScript {
-            data, //: String,
+            ..
         } => {
             Ok(("smart_contract_tx".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
         
         EventData::StakeRegistration {
-            credential, //: StakeCredential,
+            ..
         } => {
-            Ok(("stakeregistration".to_string(),None))
+            Ok(("stakeregistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
         
         EventData::StakeDeregistration {
-            credential, //: StakeCredential, 
+            ..
         } => {
-            Ok(("stakederegistration".to_string(),None))
+            Ok(("stakederegistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
         
         EventData::StakeDelegation {
-            credential, //: StakeCredential, 
-            pool_hash, //: String, 
+            credential, 
+            pool_hash, 
         } => {
-            Ok(("stakedelegation".to_string(),None))
+            Ok(("stakedelegation".to_string(),event.context.tx_hash.clone().map(|n| n.to_string() + "|" + &pool_hash)))
         },
         
         EventData::PoolRegistration {
-            operator, //: String,
-            vrf_keyhash, //: String,
-            pledge, //: u64,
-            cost, //: u64,
-            margin, //: f64,
-            reward_account, //: String,
-            pool_owners, //: Vec::<String>,
-            relays, //: Vec::<String>,
-            pool_metadata, //: Option<String>,
+            ..
         }=> {
-            Ok(("poolregistration".to_string(),None))
+            Ok(("poolregistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
         
         EventData::PoolRetirement { 
-            pool, //: String, 
-            epoch, //: u64, 
+            pool, 
+            epoch,
         } => {
-            Ok(("poolretirement".to_string(),None))
+            Ok(("poolretirement".to_string(),Some(pool)))
         },
 
         EventData::GenesisKeyDelegation => {
-            Ok(("genesiskeydelegation".to_string(),None))
+            Ok(("genesiskeydelegation".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
         EventData::MoveInstantaneousRewardsCert {
-            from_reserves, //: bool,
-            from_treasury, //: bool,
-            to_stake_credentials, //: Option::<Vec::<(StakeCredential, i64)>>,
-            to_other_pot, //: Option<u64>,
+            ..
         } => {
-            Ok(("moveinstrewardcert".to_string(),None))
+            Ok(("moveinstrewardcert".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
         EventData::RollBack {
-            block_slot, //: u64, 
-            block_hash, //: String,
+           .. 
         } => {
             Ok(("rollback".to_string(),event.context.block_number.map(|n| n.to_string())))
         },
