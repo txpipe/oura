@@ -7,16 +7,13 @@ pub fn producer_loop(
     utils       : Arc<Utils>,
     conn        : &mut redis::Connection,
 ) -> Result<(), Error> {
-    
     for event in input.iter() {
         utils.track_sink_progress(&event);
-
         let value = serde_json::to_string(&event)?;
         let (stream, key) = data(&event)?;
-        
-        log::info!("Key: {:?}, Event: {:?}",key, event);
-        if let Some(k) = key {
-            //Needs minimum redis 6.9 (release canidate 7.0) 
+        log::info!("Key: {:?}, Event: {:?}",key,event);
+        if let Some(k) = key{
+            //Needs minimum redis 6.9 (release canidate 7.0)
             let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
         }
     }
@@ -29,7 +26,8 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
         EventData::Block(_) => {
             Ok(("block".to_string(), event.context.block_number.map(|n| n.to_string())))
         }
-        EventData::BlockEnd(_) => { 
+
+        EventData::BlockEnd(_) => {
             Ok(("blockend".to_string(),None))
         },
 
@@ -73,8 +71,8 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             Ok(("mint".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
 
-        EventData::Collateral { 
-            tx_id, 
+        EventData::Collateral {
+            tx_id,
             index,
         } => {
             Ok(("collateral".to_string(),Some(tx_id +"#"+&index.to_string()).map(|n| n.to_string())))
@@ -85,40 +83,40 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
         } => {
             Ok(("nativ_script_tx".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
-        
+
         EventData::PlutusScript {
             ..
         } => {
             Ok(("smart_contract_tx".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
-        
+
         EventData::StakeRegistration {
             ..
         } => {
             Ok(("stakeregistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
-        
+
         EventData::StakeDeregistration {
             ..
         } => {
             Ok(("stakederegistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
-        
+
         EventData::StakeDelegation {
-            credential, 
-            pool_hash, 
+            credential,
+            pool_hash,
         } => {
             Ok(("stakedelegation".to_string(),event.context.tx_hash.clone().map(|n| n.to_string() + "|" + &pool_hash)))
         },
-        
+
         EventData::PoolRegistration {
             ..
         }=> {
             Ok(("poolregistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
-        
-        EventData::PoolRetirement { 
-            pool, 
+
+        EventData::PoolRetirement {
+            pool,
             epoch,
         } => {
             Ok(("poolretirement".to_string(),Some(pool)))
@@ -135,7 +133,7 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
         },
 
         EventData::RollBack {
-           .. 
+            ..
         } => {
             Ok(("rollback".to_string(),event.context.block_number.map(|n| n.to_string())))
         },
