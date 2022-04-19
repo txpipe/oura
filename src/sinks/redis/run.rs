@@ -80,7 +80,9 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
             Ok(("collateral".to_string(),Some(tx_id +"#"+&index.to_string()).map(|n| n.to_string())))
         },
 
-        EventData::NativeScript {} => {
+        EventData::NativeScript {
+            ..
+        } => {
             Ok(("nativ_script_tx".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
         },
         
