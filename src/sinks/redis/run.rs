@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use std::sync::Arc;
 use serde::Serialize;
-use serde_json::{json,Value};
+use serde_json::{json};
 use crate::{pipelining::StageReceiver, utils::Utils, Error, model::Event, model::EventData};
 
 #[derive(Serialize)]
@@ -34,7 +34,6 @@ pub fn producer_loop(
         let value = RedisRecord::from(event);
         log::info!("Variant: {:?}, Key: {:?}, Event: {:?}", value.variant, value.key, value.event);
         if let Some(k) = value.key{
-            //Needs minimum redis 6.9 (release canidate 7.0)
             let _ : () = redis::cmd("XADD").arg(value.variant).arg("*").arg(&[(k,json!(value.event).to_string())]).query(conn)?;
         }
     }
@@ -42,6 +41,9 @@ pub fn producer_loop(
 }
 
 fn make_key(event :  &Event) -> Option<String> {
+    if event.fingerprint.is_some() {
+        return event.fingerprint.clone()
+    }
     match event.data.clone() {
         EventData::Block(_) => {
             event.context.block_number.map(|n| n.to_string())
