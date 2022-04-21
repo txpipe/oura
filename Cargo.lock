@@ -546,17 +546,26 @@ checksum = "fff857943da45f546682664a79488be82e69e43c1a7a2307679ab9afb3a66d2e"
 
 [[package]]
 name = "clap"
-version = "3.1.8"
+version = "3.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c47df61d9e16dc010b55dba1952a57d8c215dbb533fd13cdd13369aac73b1c"
+checksum = "3124f3f75ce09e22d1410043e1e24f2ecc44fad3afe4f08408f1f7663d68da2b"
 dependencies = [
  "atty",
  "bitflags",
+ "clap_lex",
  "indexmap",
- "os_str_bytes",
  "strsim",
  "termcolor",
  "textwrap",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "189ddd3b5d32a70b35e7686054371742a937b0d99128e76dde6340210e966669"
+dependencies = [
+ "os_str_bytes",
 ]
 
 [[package]]
@@ -625,14 +634,14 @@ dependencies = [
 
 [[package]]
 name = "crossterm"
-version = "0.23.1"
+version = "0.23.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1fd7173631a4e9e2ca8b32ae2fad58aab9843ea5aaf56642661937d87e28a3e"
+checksum = "a2102ea4f781910f8a5b98dd061f4c2023f479ce7bb1236330099ceb5a93cf17"
 dependencies = [
  "bitflags",
  "crossterm_winapi",
  "libc",
- "mio 0.7.14",
+ "mio 0.8.0",
  "parking_lot 0.12.0",
  "signal-hook",
  "signal-hook-mio",
@@ -1463,9 +1472,6 @@ name = "os_str_bytes"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
-dependencies = [
- "memchr",
-]
 
 [[package]]
 name = "oura"
@@ -1478,7 +1484,7 @@ dependencies = [
  "bech32",
  "clap",
  "config",
- "crossterm 0.23.1",
+ "crossterm 0.23.2",
  "elasticsearch",
  "env_logger",
  "file-rotate",
@@ -2089,12 +2095,13 @@ dependencies = [
 
 [[package]]
 name = "signal-hook-mio"
-version = "0.2.1"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29fd5867f1c4f2c5be079aee7a2adf1152ebb04a4bc4d341f504b7dece607ed4"
+checksum = "29ad2e15f37ec9a6cc544097b78a1ec90001e9f71b81338ca39f430adaca99af"
 dependencies = [
  "libc",
  "mio 0.7.14",
+ "mio 0.8.0",
  "signal-hook",
 ]
 
