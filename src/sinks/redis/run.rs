@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 use std::sync::Arc;
+use serde_json::{json,Value};
 use crate::{pipelining::StageReceiver, utils::Utils, Error, model::Event, model::EventData};
 
 pub fn producer_loop(
@@ -9,37 +10,37 @@ pub fn producer_loop(
 ) -> Result<(), Error> {
     for event in input.iter() {
         utils.track_sink_progress(&event);
-        let value = serde_json::to_string(&event)?;
-        let (stream, key) = data(&event)?;
+        let value = json!(&event);
+        let key = make_key(&event)?;
         log::info!("Key: {:?}, Event: {:?}",key,event);
         if let Some(k) = key{
             //Needs minimum redis 6.9 (release canidate 7.0)
-            let _ : () = redis::cmd("XADD").arg(stream).arg("*").arg(&[(k,value)]).query(conn)?;
+            let _ : () = redis::cmd("XADD").arg(event.data.to_string().to_lowercase()).arg("*").arg(&[(k,Value::to_string(&value))]).query(conn)?;
         }
     }
     Ok(())
 }
 
-fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
+fn make_key(event :  &Event) -> Result<Option<String>,Error> {
     match event.data.clone() {
         EventData::Block(_) => {
-            Ok(("block".to_string(), event.context.block_number.map(|n| n.to_string())))
+            Ok(event.context.block_number.map(|n| n.to_string()))
         }
 
         EventData::BlockEnd(_) => {
-            Ok(("blockend".to_string(),None))
+            Ok(None)
         },
 
         EventData::Transaction(_) => {
-            Ok(("transaction".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::TransactionEnd(_) => {
-            Ok(("txend".to_string(),None))
+            Ok(None)
         },
 
         EventData::TxInput(tx_input_record) => {
-            Ok(("txin".to_string(),Some(tx_input_record.tx_id +"#"+&tx_input_record.index.to_string()).map(|n| n.to_string())))
+            Ok(Some(tx_input_record.tx_id +"#"+&tx_input_record.index.to_string()).map(|n| n.to_string()))
         },
 
         EventData::TxOutput(_) => {
@@ -51,90 +52,90 @@ fn data(event :  &Event) -> Result<(String,Option<String>),Error> {
                 key = key + "#" + &outputindex.to_string()
             }
 
-            Ok(("txout".to_string(),Some(key)))
+            Ok(Some(key))
         },
 
         EventData::OutputAsset(output_asset_record) => {
-            Ok(("outputseets".to_string(),Some(output_asset_record.policy.clone()+"."+&output_asset_record.asset).map(|n| n.to_string())))
+            Ok(Some(output_asset_record.policy.clone()+"."+&output_asset_record.asset).map(|n| n.to_string()))
         },
 
         EventData::Metadata(_) => {
-            Ok(("metadata".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::CIP25Asset(_) => {
-            Ok(("cip25mint".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::Mint(_) => {
-            Ok(("mint".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::Collateral {
             tx_id,
             index,
         } => {
-            Ok(("collateral".to_string(),Some(tx_id +"#"+&index.to_string()).map(|n| n.to_string())))
+            Ok(Some(tx_id +"#"+&index.to_string()).map(|n| n.to_string()))
         },
 
         EventData::NativeScript {
             ..
         } => {
-            Ok(("nativ_script_tx".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::PlutusScript {
             ..
         } => {
-            Ok(("smart_contract_tx".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::StakeRegistration {
             ..
         } => {
-            Ok(("stakeregistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::StakeDeregistration {
             ..
         } => {
-            Ok(("stakederegistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::StakeDelegation {
             credential,
             pool_hash,
         } => {
-            Ok(("stakedelegation".to_string(),event.context.tx_hash.clone().map(|n| n.to_string() + "|" + &pool_hash)))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string() + "|" + &pool_hash))
         },
 
         EventData::PoolRegistration {
             ..
         }=> {
-            Ok(("poolregistration".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::PoolRetirement {
             pool,
             epoch,
         } => {
-            Ok(("poolretirement".to_string(),Some(pool)))
+            Ok(Some(pool))
         },
 
         EventData::GenesisKeyDelegation => {
-            Ok(("genesiskeydelegation".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::MoveInstantaneousRewardsCert {
             ..
         } => {
-            Ok(("moveinstrewardcert".to_string(),event.context.tx_hash.clone().map(|n| n.to_string())))
+            Ok(event.context.tx_hash.clone().map(|n| n.to_string()))
         },
 
         EventData::RollBack {
             ..
         } => {
-            Ok(("rollback".to_string(),event.context.block_number.map(|n| n.to_string())))
+            Ok(event.context.block_number.map(|n| n.to_string()))
         },
     }
 }
