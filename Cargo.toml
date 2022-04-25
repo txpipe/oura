@@ -36,7 +36,7 @@ file-rotate = { version = "0.6.0", optional = true }
 reqwest = { version = "0.11", optional = true, features = ["blocking", "json"] }
 
 # feature: tuisink
-tui = { version = "0.17", optional = true, default-features = false, features = [
+tui = { version = "0.18", optional = true, default-features = false, features = [
     "crossterm",
 ] }
 
