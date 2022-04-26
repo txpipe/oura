@@ -9,7 +9,11 @@ use log::{debug, warn};
 use serde::Deserialize;
 
 use crate::{
-    model::{CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord},
+    model::{
+        CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, NativeWitnessRecord,
+        OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord, PlutusWitnessRecord,
+        VKeyWitnessRecord,
+    },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
     Error,
 };
@@ -150,6 +154,31 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&event.context.slot)
             .with_prefix("plut")
             .append_optional(&event.context.tx_hash)?,
+        EventData::PlutusWitness(PlutusWitnessRecord { script_hex }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("witp")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(script_hex)?,
+        EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("witn")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(policy_id)?,
+        EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("witv")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(vkey_hex)?,
+        EventData::PlutusRedeemer(PlutusRedeemerRecord { input_idx, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("rdmr")
+            .append_optional(&event.context.tx_hash)?
+            .append_to_string(input_idx)?,
+        EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("dtum")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(datum_hash)?,
         EventData::StakeRegistration { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("skre")

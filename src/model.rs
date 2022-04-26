@@ -173,30 +173,60 @@ pub enum StakeCredential {
     Scripthash(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Display)]
-#[serde(rename_all = "camelCase")]
-#[serde(tag = "type")]
-pub enum NativeScript {
-    #[serde(rename_all = "camelCase")]
-    Sig {
-        key_hash: String,
-    },
-    All {
-        scripts: Vec<NativeScript>,
-    },
-    Any {
-        scripts: Vec<NativeScript>,
-    },
-    AtLeast {
-        required: u32,
-        scripts: Vec<NativeScript>,
-    },
-    Before {
-        slot: u64,
-    },
-    After {
-        slot: u64,
-    },
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct VKeyWitnessRecord {
+    pub vkey_hex: String,
+    pub signature_hex: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NativeWitnessRecord {
+    pub policy_id: String,
+    pub script_json: JsonValue,
+}
+
+impl From<NativeWitnessRecord> for EventData {
+    fn from(x: NativeWitnessRecord) -> Self {
+        EventData::NativeWitness(x)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PlutusWitnessRecord {
+    pub script_hex: String,
+}
+
+impl From<PlutusWitnessRecord> for EventData {
+    fn from(x: PlutusWitnessRecord) -> Self {
+        EventData::PlutusWitness(x)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PlutusRedeemerRecord {
+    pub purpose: String,
+    pub ex_units_mem: u32,
+    pub ex_units_steps: u64,
+    pub input_idx: u32,
+    pub plutus_data: JsonValue,
+}
+
+impl From<PlutusRedeemerRecord> for EventData {
+    fn from(x: PlutusRedeemerRecord) -> Self {
+        EventData::PlutusRedeemer(x)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PlutusDatumRecord {
+    pub datum_hash: String,
+    pub plutus_data: JsonValue,
+}
+
+impl From<PlutusDatumRecord> for EventData {
+    fn from(x: PlutusDatumRecord) -> Self {
+        EventData::PlutusDatum(x)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -233,6 +263,12 @@ pub enum EventData {
     OutputAsset(OutputAssetRecord),
     Metadata(MetadataRecord),
 
+    VKeyWitness(VKeyWitnessRecord),
+    NativeWitness(NativeWitnessRecord),
+    PlutusWitness(PlutusWitnessRecord),
+    PlutusRedeemer(PlutusRedeemerRecord),
+    PlutusDatum(PlutusDatumRecord),
+
     #[serde(rename = "cip25_asset")]
     CIP25Asset(CIP25AssetRecord),
 
@@ -243,7 +279,7 @@ pub enum EventData {
     },
     NativeScript {
         policy_id: String,
-        script: NativeScript,
+        script: JsonValue,
     },
     PlutusScript {
         data: String,
