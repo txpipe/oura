@@ -86,8 +86,8 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
 
 fn get_tx_output_coin_value(amount: &Value) -> u64 {
     match amount {
-        Value::Coin(x) => *x,
-        Value::Multiasset(x, _) => *x,
+        Value::Coin(x) => x.into(),
+        Value::Multiasset(x, _) => x.into(),
     }
 }
 
@@ -221,8 +221,8 @@ impl EventWriter {
             } => EventData::PoolRegistration {
                 operator: operator.to_hex(),
                 vrf_keyhash: vrf_keyhash.to_hex(),
-                pledge: *pledge,
-                cost: *cost,
+                pledge: pledge.into(),
+                cost: cost.into(),
                 margin: (margin.numerator as f64 / margin.denominator as f64),
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
@@ -245,7 +245,7 @@ impl EventWriter {
                         _ => None,
                     },
                     to_other_pot: match move_.target {
-                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x),
+                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x.into()),
                         _ => None,
                     },
                 }
