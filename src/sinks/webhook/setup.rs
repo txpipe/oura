@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
+    sinks::ErrorPolicy,
     utils::WithUtils,
     Error,
 };
@@ -12,12 +13,6 @@ use crate::{
 use super::run::request_loop;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
-
-#[derive(Debug, Deserialize, Clone)]
-pub enum ErrorPolicy {
-    Continue,
-    Exit,
-}
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
