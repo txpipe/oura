@@ -37,7 +37,7 @@ impl EventWriter {
                 .iter()
                 .flat_map(|(policy, assets)| {
                     assets.iter().map(|(asset, amount)| {
-                        self.to_transaction_output_asset_record(policy, asset, *amount)
+                        self.to_transaction_output_asset_record(policy, asset, amount.into())
                     })
                 })
                 .collect(),

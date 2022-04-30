@@ -79,9 +79,11 @@ impl EventWriter {
         if let Value::Multiasset(_, policies) = amount {
             for (policy, assets) in policies.iter() {
                 for (asset, amount) in assets.iter() {
-                    self.append_from(
-                        self.to_transaction_output_asset_record(policy, asset, *amount),
-                    )?;
+                    self.append_from(self.to_transaction_output_asset_record(
+                        policy,
+                        asset,
+                        amount.into(),
+                    ))?;
                 }
             }
         }
