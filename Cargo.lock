@@ -1579,9 +1579,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.9.0-alpha.0"
+version = "0.9.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa06dad4e6dbfc3fb1f3a09cbe3eaa3c3aa2f9fd1f71fb702f50479b47c7b866"
+checksum = "3f85fcc906f11dc9b2273cce36790c925c36ed769d65acc7ac9191f43a619c3e"
 dependencies = [
  "pallas-codec",
  "pallas-crypto",
