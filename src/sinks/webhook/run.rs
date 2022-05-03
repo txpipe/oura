@@ -3,9 +3,7 @@ use std::{sync::Arc, time::Duration};
 use reqwest::blocking::Client;
 use serde::Serialize;
 
-use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
-
-use super::ErrorPolicy;
+use crate::{model::Event, pipelining::StageReceiver, sinks::ErrorPolicy, utils::Utils, Error};
 
 #[derive(Serialize)]
 struct RequestBody {
