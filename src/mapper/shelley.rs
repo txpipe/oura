@@ -1,9 +1,8 @@
 use pallas::ledger::primitives::Fragment;
 
 use pallas::ledger::primitives::alonzo::{
-    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset,
-    TransactionBody, TransactionBodyComponent, TransactionInput, TransactionOutput,
-    TransactionWitnessSet, Value,
+    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
+    TransactionBodyComponent, TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
 };
 
 use pallas::crypto::hash::Hash;
@@ -21,13 +20,9 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            match label {
-                Metadatum::Int(i) if i128::from(*i) == 721i128 => {
-                    self.crawl_metadata_label_721(content)?
-                }
-                Metadatum::Text(x) if x == "721" => self.crawl_metadata_label_721(content)?,
-                _ => (),
-            };
+            if u64::from(label) == 721u64 {
+                self.crawl_metadata_label_721(content)?
+            }
         }
 
         Ok(())

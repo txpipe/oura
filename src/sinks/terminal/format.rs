@@ -171,10 +171,10 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::PlutusScript { data } => LogLine {
+            EventData::PlutusScript { hash, .. } => LogLine {
                 prefix: "PLUTUS",
                 color: Color::White,
-                content: format!("{{ {} }}", data),
+                content: format!("{{ hash: {} }}", hash),
                 source,
                 max_width,
             },
@@ -192,10 +192,10 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::PlutusWitness(PlutusWitnessRecord { script_hex, .. }) => LogLine {
+            EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine {
                 prefix: "WITNESS",
                 color: Color::White,
-                content: format!("{{ plutus script: {} }}", script_hex ),
+                content: format!("{{ plutus script: {} }}", script_hash ),
                 source,
                 max_width,
             },

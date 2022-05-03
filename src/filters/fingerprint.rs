@@ -154,11 +154,11 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_slot(&event.context.slot)
             .with_prefix("plut")
             .append_optional(&event.context.tx_hash)?,
-        EventData::PlutusWitness(PlutusWitnessRecord { script_hex }) => b
+        EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("witp")
             .append_optional(&event.context.tx_hash)?
-            .append_slice(script_hex)?,
+            .append_slice(script_hash)?,
         EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("witn")

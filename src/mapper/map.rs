@@ -4,7 +4,8 @@ use pallas::codec::minicbor::bytes::ByteVec;
 use pallas::crypto::hash::Hash;
 use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
-    InstantaneousRewardTarget, Metadatum, Relay, TransactionInput, TransactionOutput, Value,
+    InstantaneousRewardTarget, Metadatum, MetadatumLabel, Relay, TransactionInput,
+    TransactionOutput, Value,
 };
 use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
 use pallas::ledger::primitives::ToCanonicalJson;
@@ -28,6 +29,12 @@ pub trait ToHex {
 }
 
 impl ToHex for Vec<u8> {
+    fn to_hex(&self) -> String {
+        hex::encode(self)
+    }
+}
+
+impl ToHex for &[u8] {
     fn to_hex(&self) -> String {
         hex::encode(self)
     }
@@ -127,11 +134,11 @@ impl EventWriter {
 
     pub fn to_metadata_record(
         &self,
-        label: &Metadatum,
+        label: &MetadatumLabel,
         value: &Metadatum,
     ) -> Result<MetadataRecord, Error> {
         let data = MetadataRecord {
-            label: metadatum_to_string_key(label),
+            label: u64::from(label).to_string(),
             content: match value {
                 Metadatum::Int(x) => MetadatumRendition::IntScalar(i128::from(*x)),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
@@ -196,9 +203,10 @@ impl EventWriter {
         }
     }
 
-    pub fn to_aux_plutus_script_event(&self, script: &ByteVec) -> EventData {
+    pub fn to_aux_plutus_script_event(&self, script: &alonzo::PlutusScript) -> EventData {
         EventData::PlutusScript {
-            data: script.to_hex(),
+            hash: script.to_hash().to_hex(),
+            data: script.0.to_hex(),
         }
     }
 
@@ -232,10 +240,11 @@ impl EventWriter {
 
     pub fn to_plutus_witness_record(
         &self,
-        script: &ByteVec,
+        script: &alonzo::PlutusScript,
     ) -> Result<PlutusWitnessRecord, crate::Error> {
         Ok(PlutusWitnessRecord {
-            script_hex: script.to_hex(),
+            script_hash: script.to_hash().to_hex(),
+            script_hex: script.as_ref().to_hex(),
         })
     }
 

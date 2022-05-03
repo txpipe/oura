@@ -193,6 +193,7 @@ impl From<NativeWitnessRecord> for EventData {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PlutusWitnessRecord {
+    pub script_hash: String,
     pub script_hex: String,
 }
 
@@ -282,6 +283,7 @@ pub enum EventData {
         script: JsonValue,
     },
     PlutusScript {
+        hash: String,
         data: String,
     },
     StakeRegistration {
