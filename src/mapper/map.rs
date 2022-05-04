@@ -1,19 +1,22 @@
 use std::collections::HashMap;
 
-use pallas::codec::minicbor::{self, bytes::ByteVec};
-use pallas::crypto::hash::{Hash, Hasher};
+use pallas::codec::minicbor::bytes::ByteVec;
+use pallas::crypto::hash::Hash;
 use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
-    InstantaneousRewardTarget, Metadatum, Relay, TransactionInput, TransactionOutput, Value,
+    InstantaneousRewardTarget, Metadatum, MetadatumLabel, Relay, TransactionInput,
+    TransactionOutput, Value,
 };
 use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
+use pallas::ledger::primitives::ToCanonicalJson;
 
 use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
-    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord, NativeScript,
-    OutputAssetRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord,
+    NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
+    PlutusWitnessRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
 use crate::utils::time::TimeProvider;
@@ -26,6 +29,12 @@ pub trait ToHex {
 }
 
 impl ToHex for Vec<u8> {
+    fn to_hex(&self) -> String {
+        hex::encode(self)
+    }
+}
+
+impl ToHex for &[u8] {
     fn to_hex(&self) -> String {
         hex::encode(self)
     }
@@ -125,11 +134,11 @@ impl EventWriter {
 
     pub fn to_metadata_record(
         &self,
-        label: &Metadatum,
+        label: &MetadatumLabel,
         value: &Metadatum,
     ) -> Result<MetadataRecord, Error> {
         let data = MetadataRecord {
-            label: metadatum_to_string_key(label),
+            label: u64::from(label).to_string(),
             content: match value {
                 Metadatum::Int(x) => MetadatumRendition::IntScalar(i128::from(*x)),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
@@ -187,51 +196,66 @@ impl EventWriter {
         }
     }
 
-    pub fn to_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
-        let mut cbor = Vec::new();
-        minicbor::encode(script, &mut cbor).unwrap();
-        cbor.insert(0, 0);
-        let digest = Hasher::<224>::hash(&cbor);
-
+    pub fn to_aux_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
         EventData::NativeScript {
-            policy_id: hex::encode(digest),
-            script: self.to_native_script(script),
+            policy_id: script.to_hash().to_hex(),
+            script: script.to_json(),
         }
     }
 
-    pub fn to_native_script(&self, script: &alonzo::NativeScript) -> NativeScript {
-        match script {
-            alonzo::NativeScript::ScriptPubkey(keyhash) => NativeScript::Sig {
-                key_hash: keyhash.to_string(),
-            },
-            alonzo::NativeScript::ScriptAll(scripts) => NativeScript::All {
-                scripts: (*scripts)
-                    .iter()
-                    .map(|script| self.to_native_script(script))
-                    .collect(),
-            },
-            alonzo::NativeScript::ScriptAny(scripts) => NativeScript::Any {
-                scripts: (*scripts)
-                    .iter()
-                    .map(|script| self.to_native_script(script))
-                    .collect(),
-            },
-            alonzo::NativeScript::ScriptNOfK(n, scripts) => NativeScript::AtLeast {
-                required: *n,
-                scripts: (*scripts)
-                    .iter()
-                    .map(|script| self.to_native_script(script))
-                    .collect(),
-            },
-            alonzo::NativeScript::InvalidBefore(slot) => NativeScript::After { slot: *slot },
-            alonzo::NativeScript::InvalidHereafter(slot) => NativeScript::Before { slot: *slot },
-        }
-    }
-
-    pub fn to_plutus_script_event(&self, script: &ByteVec) -> EventData {
+    pub fn to_aux_plutus_script_event(&self, script: &alonzo::PlutusScript) -> EventData {
         EventData::PlutusScript {
-            data: script.to_hex(),
+            hash: script.to_hash().to_hex(),
+            data: script.0.to_hex(),
         }
+    }
+
+    pub fn to_plutus_redeemer_record(
+        &self,
+        redeemer: &alonzo::Redeemer,
+    ) -> Result<PlutusRedeemerRecord, crate::Error> {
+        Ok(PlutusRedeemerRecord {
+            purpose: match redeemer.tag {
+                alonzo::RedeemerTag::Spend => "spend".to_string(),
+                alonzo::RedeemerTag::Mint => "mint".to_string(),
+                alonzo::RedeemerTag::Cert => "cert".to_string(),
+                alonzo::RedeemerTag::Reward => "reward".to_string(),
+            },
+            ex_units_mem: redeemer.ex_units.mem,
+            ex_units_steps: redeemer.ex_units.steps,
+            input_idx: redeemer.index,
+            plutus_data: redeemer.data.to_json(),
+        })
+    }
+
+    pub fn to_plutus_datum_record(
+        &self,
+        datum: &alonzo::PlutusData,
+    ) -> Result<PlutusDatumRecord, crate::Error> {
+        Ok(PlutusDatumRecord {
+            datum_hash: datum.to_hash().to_hex(),
+            plutus_data: datum.to_json(),
+        })
+    }
+
+    pub fn to_plutus_witness_record(
+        &self,
+        script: &alonzo::PlutusScript,
+    ) -> Result<PlutusWitnessRecord, crate::Error> {
+        Ok(PlutusWitnessRecord {
+            script_hash: script.to_hash().to_hex(),
+            script_hex: script.as_ref().to_hex(),
+        })
+    }
+
+    pub fn to_native_witness_record(
+        &self,
+        script: &alonzo::NativeScript,
+    ) -> Result<NativeWitnessRecord, crate::Error> {
+        Ok(NativeWitnessRecord {
+            policy_id: script.to_hash().to_hex(),
+            script_json: script.to_json(),
+        })
     }
 
     pub fn to_certificate_event(&self, certificate: &Certificate) -> EventData {

@@ -1581,9 +1581,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.9.0-alpha.1"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f85fcc906f11dc9b2273cce36790c925c36ed769d65acc7ac9191f43a619c3e"
+checksum = "930fb75d557eff3e9dbf7ca215816c834b2a0769e542764a99f01ae8daae7fde"
 dependencies = [
  "pallas-codec",
  "pallas-crypto",
@@ -1594,18 +1594,18 @@ dependencies = [
 
 [[package]]
 name = "pallas-codec"
-version = "0.9.0-alpha.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc74177f033e7e944b8639f04a04f8fbc260627186ae1a555b73bd2814b1a3e3"
+checksum = "5a6b72d36979c540e639cc0b04cbeb922367df2315910b6cafb4bf61a44f3baf"
 dependencies = [
  "minicbor",
 ]
 
 [[package]]
 name = "pallas-crypto"
-version = "0.9.0-alpha.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f0f6ea74fb7ec3d719d7380e6e879780e363dbdfdd2a9ecc109b55deace0460"
+checksum = "aa690b0e5cbc874ee5f9024f33e2743ddd5034b158f9f1947b4e5675a2ebb99f"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -1616,9 +1616,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.9.0-alpha.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d8b65ab8fda4a1f8e88eb87b035e4c856214c389fce35dfdfccc5db8cceb051"
+checksum = "0f7f73bdfaaef9c42034a4cb3bce48c07b4d8862371b7d6eee8f9162416a30f9"
 dependencies = [
  "hex",
  "itertools",
@@ -1630,9 +1630,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.9.0-alpha.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "623fe5f75a19da1ba0206b7016c7a03f409b5c2d237b1e684d0a89b5dbc32a08"
+checksum = "0862ffc0600471b6bbf3b7b237842f94a1141f578f5d5426c202ce58e391e158"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -1641,9 +1641,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.9.0-alpha.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a20858f67aab550868ccc91fa9b59f7839925cdf44637f0471bcb36a178b7d1"
+checksum = "000b7c2fe9e8cbcf00853d3dcb690f08a2038cf7ddba9d7c419c749530d6916e"
 dependencies = [
  "base58",
  "bech32",

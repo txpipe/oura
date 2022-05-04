@@ -5,7 +5,8 @@ use crossterm::style::{Attribute, Color, Stylize};
 use crate::{
     model::{
         BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord,
-        OutputAssetRecord, TransactionRecord, TxInputRecord, TxOutputRecord,
+        NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
+        PlutusWitnessRecord, TransactionRecord, TxInputRecord, TxOutputRecord, VKeyWitnessRecord,
     },
     utils::Utils,
 };
@@ -166,14 +167,49 @@ impl LogLine {
             EventData::NativeScript { policy_id, script } => LogLine {
                 prefix: "NATIVE",
                 color: Color::White,
-                content: format!("{{ policy_id: {}, script: {} }}", policy_id, script),
+                content: format!("{{ policy: {}, script: {} }}", policy_id, script),
                 source,
                 max_width,
             },
-            EventData::PlutusScript { data } => LogLine {
+            EventData::PlutusScript { hash, .. } => LogLine {
                 prefix: "PLUTUS",
                 color: Color::White,
-                content: format!("{{ {} }}", data),
+                content: format!("{{ hash: {} }}", hash),
+                source,
+                max_width,
+            },
+            EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => LogLine {
+                prefix: "DATUM",
+                color: Color::White,
+                content: format!("{{ hash: {} }}", datum_hash),
+                source,
+                max_width,
+            },
+            EventData::PlutusRedeemer(PlutusRedeemerRecord { purpose, input_idx, .. }) => LogLine {
+                prefix: "REDEEM",
+                color: Color::White,
+                content: format!("{{ purpose: {}, input: {} }}", purpose, input_idx),
+                source,
+                max_width,
+            },
+            EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine {
+                prefix: "WITNESS",
+                color: Color::White,
+                content: format!("{{ plutus script: {} }}", script_hash ),
+                source,
+                max_width,
+            },
+            EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => LogLine {
+                prefix: "WITNESS",
+                color: Color::White,
+                content: format!("{{ native policy: {} }}", policy_id),
+                source,
+                max_width,
+            },
+            EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => LogLine {
+                prefix: "WITNESS",
+                color: Color::White,
+                content: format!("{{ vkey: {} }}", vkey_hex),
                 source,
                 max_width,
             },
