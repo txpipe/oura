@@ -20,8 +20,10 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            if u64::from(label) == 721u64 {
-                self.crawl_metadata_label_721(content)?
+            match u64::from(label) {
+                721u64 => self.crawl_metadata_label_721(content)?,
+                61284u64 => self.crawl_metadata_label_61284(content)?,
+                _ => (),
             }
         }
 

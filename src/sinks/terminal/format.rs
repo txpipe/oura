@@ -4,9 +4,10 @@ use crossterm::style::{Attribute, Color, Stylize};
 
 use crate::{
     model::{
-        BlockRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord,
-        NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
-        PlutusWitnessRecord, TransactionRecord, TxInputRecord, TxOutputRecord, VKeyWitnessRecord,
+        BlockRecord, CIP15AssetRecord, CIP25AssetRecord, Event, EventData, MetadataRecord,
+        MintRecord, NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord,
+        PlutusRedeemerRecord, PlutusWitnessRecord, TransactionRecord, TxInputRecord,
+        TxOutputRecord, VKeyWitnessRecord,
     },
     utils::Utils,
 };
@@ -318,6 +319,21 @@ impl LogLine {
                     asset,
                     name.as_deref().unwrap_or("?"),
                     image.as_deref().unwrap_or("?")
+                ),
+                source,
+                max_width,
+            },
+            EventData::CIP15Asset(CIP15AssetRecord {
+                voting_key,
+                stake_pub,
+                ..
+            }) => LogLine {
+                prefix: "CIP15",
+                color: Color::DarkYellow,
+                content: format!(
+                    "{{ voting key: {}, stake pub: {} }}",
+                    voting_key,
+                    stake_pub,
                 ),
                 source,
                 max_width,

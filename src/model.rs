@@ -77,6 +77,21 @@ impl From<CIP25AssetRecord> for EventData {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct CIP15AssetRecord {
+    pub voting_key: String,
+    pub stake_pub: String,
+    pub reward_address: String,
+    pub nonce: i64,
+    pub raw_json: JsonValue,
+}
+
+impl From<CIP15AssetRecord> for EventData {
+    fn from(x: CIP15AssetRecord) -> Self {
+        EventData::CIP15Asset(x)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TxInputRecord {
     pub tx_id: String,
     pub index: u64,
@@ -272,6 +287,9 @@ pub enum EventData {
 
     #[serde(rename = "cip25_asset")]
     CIP25Asset(CIP25AssetRecord),
+
+    #[serde(rename = "cip15_asset")]
+    CIP15Asset(CIP15AssetRecord),
 
     Mint(MintRecord),
     Collateral {
