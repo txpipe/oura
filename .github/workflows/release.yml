@@ -24,10 +24,6 @@ jobs:
             os: ubuntu-latest
             name: oura-x86_64-unknown-linux-musl.tar.gz
 
-          - target: i686-unknown-linux-musl
-            os: ubuntu-latest
-            name: oura-i686-unknown-linux-musl.tar.gz
-
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
             name: oura-aarch64-unknown-linux-musl.tar.gz
@@ -47,10 +43,6 @@ jobs:
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             name: oura-x86_64-pc-windows-msvc.zip
-
-          - target: i686-pc-windows-msvc
-            os: windows-latest
-            name: oura-i686-pc-windows-msvc.zip
 
           - target: aarch64-pc-windows-msvc
             os: windows-latest
@@ -151,7 +143,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          platforms: linux/arm64,linux/amd64
+          # temporarly removing arm platform until we resolve the ca-certificates issue
+          #platforms: linux/arm64,linux/amd64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

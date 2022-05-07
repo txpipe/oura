@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use crate::{
-    model::{Event, EventContext, EventData},
+    model::{Era, Event, EventContext, EventData},
     pipelining::StageSender,
     utils::{time::TimeProvider, Utils},
 };
+
 use merge::Merge;
 use serde::Deserialize;
 
@@ -23,6 +24,15 @@ pub struct Config {
 
     #[serde(default)]
     pub include_transaction_end_events: bool,
+
+    #[serde(default)]
+    pub include_block_details: bool,
+
+    #[serde(default)]
+    pub include_block_cbor: bool,
+
+    #[serde(default)]
+    pub include_byron_ebb: bool,
 }
 
 #[derive(Clone)]
@@ -49,7 +59,7 @@ impl EventWriter {
         well_known: Option<ChainWellKnownInfo>,
         config: Config,
     ) -> Self {
-        let utils = Arc::new(Utils::new(well_known.unwrap_or_default(), None));
+        let utils = Arc::new(Utils::new(well_known.unwrap_or_default()));
 
         Self::new(output, utils, config)
     }
@@ -60,6 +70,8 @@ impl EventWriter {
             data,
             fingerprint: None,
         };
+
+        self.utils.track_source_progress(&evt);
 
         self.output
             .send(evt)
@@ -88,8 +100,20 @@ impl EventWriter {
 
     pub fn compute_timestamp(&self, slot: u64) -> Option<u64> {
         match &self.utils.time {
-            Some(provider) => provider.slot_to_wallclock(slot).ok(),
+            Some(provider) => provider.slot_to_wallclock(slot).into(),
             _ => None,
+        }
+    }
+}
+
+impl From<pallas::ledger::primitives::Era> for Era {
+    fn from(other: pallas::ledger::primitives::Era) -> Self {
+        match other {
+            pallas::ledger::primitives::Era::Byron => Era::Byron,
+            pallas::ledger::primitives::Era::Shelley => Era::Shelley,
+            pallas::ledger::primitives::Era::Allegra => Era::Allegra,
+            pallas::ledger::primitives::Era::Mary => Era::Mary,
+            pallas::ledger::primitives::Era::Alonzo => Era::Alonzo,
         }
     }
 }

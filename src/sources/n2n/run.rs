@@ -1,56 +1,23 @@
-use minicbor::data::Tag;
 use std::fmt::Debug;
 
-use log::{info, warn};
-
 use pallas::{
-    ledger::alonzo::{self, crypto, Fragment, Header},
-    ouroboros::network::{
-        blockfetch::{Observer as BlockObserver, OnDemandClient as BlockClient},
-        chainsync::{BlockLike, Consumer, Observer},
-        machines::{
-            primitives::Point, run_agent, DecodePayload, EncodePayload, PayloadDecoder,
-            PayloadEncoder,
-        },
+    ledger::primitives::{probing, Era},
+    network::{
+        miniprotocols::{blockfetch, chainsync, run_agent, Point},
         multiplexer::Channel,
     },
 };
 
 use std::sync::mpsc::{Receiver, SyncSender};
 
-use crate::{mapper::EventWriter, model::EventData, utils::SwallowResult, Error};
+use crate::{
+    mapper::EventWriter,
+    sources::{should_finalize, FinalizeConfig},
+    utils::SwallowResult,
+    Error,
+};
 
-#[derive(Debug)]
-pub struct Content(u32, Header);
-
-impl EncodePayload for Content {
-    fn encode_payload(&self, e: &mut PayloadEncoder) -> Result<(), Box<dyn std::error::Error>> {
-        e.array(2)?;
-        e.u32(self.0)?;
-        e.tag(Tag::Cbor)?;
-        e.bytes(&self.1.encode_fragment()?)?;
-
-        Ok(())
-    }
-}
-
-impl DecodePayload for Content {
-    fn decode_payload(d: &mut PayloadDecoder) -> Result<Self, Box<dyn std::error::Error>> {
-        d.array()?;
-        let unknown = d.u32()?; // WTF is this value?
-        d.tag()?;
-        let bytes = d.bytes()?;
-        let header = Header::decode_fragment(bytes)?;
-        Ok(Content(unknown, header))
-    }
-}
-
-impl BlockLike for Content {
-    fn block_point(&self) -> Result<Point, Box<dyn std::error::Error>> {
-        let hash = crypto::hash_block_header(&self.1);
-        Ok(Point(self.1.header_body.slot, hash.to_vec()))
-    }
-}
+use super::headers::MultiEraHeader;
 
 struct Block2EventMapper(EventWriter);
 
@@ -60,31 +27,46 @@ impl Debug for Block2EventMapper {
     }
 }
 
-impl BlockObserver for Block2EventMapper {
-    fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
-        let maybe_block = alonzo::BlockWrapper::decode_fragment(&body[..]);
+impl blockfetch::Observer for Block2EventMapper {
+    fn on_block_received(&mut self, body: Vec<u8>) -> Result<(), Error> {
+        let Self(writer) = self;
 
-        match maybe_block {
-            Ok(alonzo::BlockWrapper(_, block)) => {
-                let Self(writer) = self;
-
+        match probing::probe_block_cbor_era(&body) {
+            probing::Outcome::Matched(era) => match era {
+                Era::Byron => {
+                    writer
+                        .crawl_from_byron_cbor(&body)
+                        .ok_or_warn("error crawling block for events");
+                }
+                _ => {
+                    writer
+                        .crawl_from_shelley_cbor(&body, era.into())
+                        .ok_or_warn("error crawling block for events");
+                }
+            },
+            // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
+            // assumption?
+            probing::Outcome::GenesisBlock => {
                 writer
-                    .crawl(&block)
+                    .crawl_from_byron_cbor(&body)
                     .ok_or_warn("error crawling block for events");
             }
-            Err(err) => {
-                log::error!("{:?}", err);
-                log::info!("{}", hex::encode(body));
+            probing::Outcome::Inconclusive => {
+                log::error!("can't infer primitive block from cbor, inconclusive probing. CBOR hex for debugging: {}", hex::encode(body));
             }
-        };
+        }
 
         Ok(())
     }
 }
 
 struct ChainObserver {
+    min_depth: usize,
+    chain_buffer: chainsync::RollbackBuffer,
     block_requests: SyncSender<Point>,
     event_writer: EventWriter,
+    finalize_config: Option<FinalizeConfig>,
+    block_count: u64,
 }
 
 // workaround to put a stop on excessive debug requirement coming from Pallas
@@ -94,24 +76,69 @@ impl Debug for ChainObserver {
     }
 }
 
-impl Observer<Content> for ChainObserver {
-    fn on_block(&self, cursor: &Option<Point>, _content: &Content) -> Result<(), Error> {
-        info!("requesting block fetch for point {:?}", cursor);
+fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
+    log::info!(
+        "rollback buffer state, size: {}, oldest: {:?}, latest: {:?}",
+        buffer.size(),
+        buffer.oldest(),
+        buffer.latest(),
+    );
+}
 
-        if let Some(cursor) = cursor {
-            self.block_requests.send(cursor.clone())?;
+impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
+    fn on_roll_forward(
+        &mut self,
+        content: chainsync::HeaderContent,
+        tip: &chainsync::Tip,
+    ) -> Result<chainsync::Continuation, Error> {
+        // parse the header and extract the point of the chain
+        let header = MultiEraHeader::try_from(content)?;
+        let point = header.read_cursor()?;
+
+        // track the new point in our memory buffer
+        log::info!("rolling forward to point {:?}", point);
+        self.chain_buffer.roll_forward(point);
+
+        // see if we have points that already reached certain depth
+        let ready = self.chain_buffer.pop_with_depth(self.min_depth);
+        log::debug!("found {} points with required min depth", ready.len());
+
+        // request download of blocks for confirmed points
+        for point in ready {
+            log::debug!("requesting block fetch for point {:?}", point);
+            self.block_requests.send(point.clone())?;
+            self.block_count += 1;
+
+            // evaluate if we should finalize the thread according to config
+            if should_finalize(&self.finalize_config, &point, self.block_count) {
+                return Ok(chainsync::Continuation::DropOut);
+            }
         }
 
-        Ok(())
+        log_buffer_state(&self.chain_buffer);
+
+        // notify chain tip to the pipeline metrics
+        self.event_writer.utils.track_chain_tip(tip.1);
+
+        Ok(chainsync::Continuation::Proceed)
     }
 
-    fn on_rollback(&self, point: &Point) -> Result<(), Error> {
-        info!("rolling block to point {:?}", point);
+    fn on_rollback(&mut self, point: &Point) -> Result<chainsync::Continuation, Error> {
+        log::info!("rolling block to point {:?}", point);
 
-        self.event_writer.append(EventData::RollBack {
-            block_slot: point.0,
-            block_hash: hex::encode(&point.1),
-        })
+        match self.chain_buffer.roll_back(point) {
+            chainsync::RollbackEffect::Handled => {
+                log::debug!("handled rollback within buffer {:?}", point);
+            }
+            chainsync::RollbackEffect::OutOfScope => {
+                log::debug!("rollback out of buffer scope, sending event down the pipeline");
+                self.event_writer.append_rollback_event(point)?;
+            }
+        }
+
+        log_buffer_state(&self.chain_buffer);
+
+        Ok(chainsync::Continuation::Proceed)
     }
 }
 
@@ -121,9 +148,9 @@ pub(crate) fn fetch_blocks_forever(
     input: Receiver<Point>,
 ) -> Result<(), Error> {
     let observer = Block2EventMapper(event_writer);
-    let agent = BlockClient::initial(input, observer);
+    let agent = blockfetch::OnDemandClient::initial(input.iter(), observer);
     let agent = run_agent(agent, &mut channel)?;
-    warn!("chainsync agent final state: {:?}", agent.state);
+    log::debug!("blockfetch agent final state: {:?}", agent.state);
 
     Ok(())
 }
@@ -131,17 +158,23 @@ pub(crate) fn fetch_blocks_forever(
 pub(crate) fn observe_headers_forever(
     mut channel: Channel,
     event_writer: EventWriter,
-    from: Point,
+    known_points: Option<Vec<Point>>,
     block_requests: SyncSender<Point>,
+    min_depth: usize,
+    finalize_config: Option<FinalizeConfig>,
 ) -> Result<(), Error> {
-    let observer = ChainObserver {
+    let observer = &mut ChainObserver {
+        chain_buffer: Default::default(),
+        min_depth,
         event_writer,
         block_requests,
+        block_count: 0,
+        finalize_config,
     };
 
-    let agent = Consumer::<Content, _>::initial(vec![from], observer);
+    let agent = chainsync::HeaderConsumer::initial(known_points, observer);
     let agent = run_agent(agent, &mut channel)?;
-    warn!("chainsync agent final state: {:?}", agent.state);
+    log::debug!("chainsync agent final state: {:?}", agent.state);
 
     Ok(())
 }

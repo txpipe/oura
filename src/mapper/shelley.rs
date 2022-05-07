@@ -1,12 +1,14 @@
-use pallas::ledger::alonzo::{
-    crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset, TransactionBody,
-    TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
+use pallas::ledger::primitives::Fragment;
+
+use pallas::ledger::primitives::alonzo::{
+    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
+    TransactionBodyComponent, TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
 };
 
 use pallas::crypto::hash::Hash;
 
 use crate::{
-    model::{EventContext, EventData, MetadataRecord, MetadatumRendition},
+    model::{Era, EventContext, EventData},
     Error,
 };
 
@@ -20,30 +22,18 @@ impl EventWriter {
 
             // CIP25 block 6768751
 
-            println!("---");
-            println!("{:?}", metadata);
-
-            let label: Result<_, Error> = match label {
-                &Metadatum::Int(x) => Ok(x),
-                // Text is sometimes seen instead of Int
-                Metadatum::Text(x) => x.parse().map_err(|_| "Bad metadata label.".into()),
-                _ => Err("Bad metadata label type.".into()),
-            };
-
             // See:
             //
             //   * https://github.com/cardano-foundation/CIPs/blob/master/CIP-0010/registry.json
             //   * https://github.com/cardano-foundation/CIPs
             //
-            match label? {
+
+            match u64::from(label) {
+                721u64 => self.crawl_metadata_label_721(content)?,
                 // 674 => self.crawl_metadata_cip20(content),
-                721 => self.crawl_metadata_label_721(content),
-                61284 => self.crawl_metadata_cip15(content),
-                _ => self.append(EventData::Metadata(MetadataRecord {
-                    label: "TEST".to_string(),
-                    content: MetadatumRendition::TextScalar("PARSE ERROR".to_string()),
-                })),
-            }?;
+                61284u64 => self.crawl_metadata_cip15(content),
+                _ => (),
+            }
         }
 
         Ok(())
@@ -56,13 +46,15 @@ impl EventWriter {
                     self.crawl_metadata(metadata)?;
                 }
 
-                for _native in data.native_scripts.iter() {
-                    self.append(self.to_native_script_event())?;
+                if let Some(native) = &data.native_scripts {
+                    for script in native.iter() {
+                        self.append(self.to_aux_native_script_event(script))?;
+                    }
                 }
 
                 if let Some(plutus) = &data.plutus_scripts {
                     for script in plutus.iter() {
-                        self.append(self.to_plutus_script_event(script))?;
+                        self.append(self.to_aux_plutus_script_event(script))?;
                     }
                 }
             }
@@ -75,8 +67,10 @@ impl EventWriter {
             } => {
                 self.crawl_metadata(transaction_metadata)?;
 
-                for _native in auxiliary_scripts.iter() {
-                    self.append(self.to_native_script_event())?;
+                if let Some(native) = &auxiliary_scripts {
+                    for script in native.iter() {
+                        self.append(self.to_aux_native_script_event(script))?;
+                    }
                 }
             }
         }
@@ -92,9 +86,11 @@ impl EventWriter {
         if let Value::Multiasset(_, policies) = amount {
             for (policy, assets) in policies.iter() {
                 for (asset, amount) in assets.iter() {
-                    self.append_from(
-                        self.to_transaction_output_asset_record(policy, asset, *amount),
-                    )?;
+                    self.append_from(self.to_transaction_output_asset_record(
+                        policy,
+                        asset,
+                        amount.into(),
+                    ))?;
                 }
             }
         }
@@ -145,11 +141,40 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_transaction(
+    fn crawl_witness_set(&self, witness_set: &TransactionWitnessSet) -> Result<(), Error> {
+        if let Some(native) = &witness_set.native_script {
+            for script in native.iter() {
+                self.append_from(self.to_native_witness_record(script)?)?;
+            }
+        }
+
+        if let Some(plutus) = &witness_set.plutus_script {
+            for script in plutus.iter() {
+                self.append_from(self.to_plutus_witness_record(script)?)?;
+            }
+        }
+
+        if let Some(redeemers) = &witness_set.redeemer {
+            for redeemer in redeemers.iter() {
+                self.append_from(self.to_plutus_redeemer_record(redeemer)?)?;
+            }
+        }
+
+        if let Some(datums) = &witness_set.plutus_data {
+            for datum in datums.iter() {
+                self.append_from(self.to_plutus_datum_record(datum)?)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn crawl_shelley_transaction(
         &self,
         tx: &TransactionBody,
         tx_hash: &str,
         aux_data: Option<&AuxiliaryData>,
+        witness_set: Option<&TransactionWitnessSet>,
     ) -> Result<(), Error> {
         let record = self.to_transaction_record(tx, tx_hash, aux_data)?;
 
@@ -205,6 +230,10 @@ impl EventWriter {
             self.crawl_auxdata(aux_data)?;
         }
 
+        if let Some(witness_set) = witness_set {
+            self.crawl_witness_set(witness_set)?;
+        }
+
         if self.config.include_transaction_end_events {
             self.append(EventData::TransactionEnd(record))?;
         }
@@ -212,8 +241,14 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_block(&self, block: &Block, hash: &Hash<32>) -> Result<(), Error> {
-        let record = self.to_block_record(block, hash)?;
+    fn crawl_shelley_block(
+        &self,
+        block: &Block,
+        hash: &Hash<32>,
+        cbor: &[u8],
+        era: Era,
+    ) -> Result<(), Error> {
+        let record = self.to_block_record(block, hash, cbor, era)?;
 
         self.append(EventData::Block(record.clone()))?;
 
@@ -224,7 +259,9 @@ impl EventWriter {
                 .find(|(k, _)| *k == (idx as u32))
                 .map(|(_, v)| v);
 
-            let tx_hash = crypto::hash_transaction(tx).to_hex();
+            let witness_set = block.transaction_witness_sets.get(idx);
+
+            let tx_hash = tx.to_hash().to_hex();
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
@@ -232,7 +269,7 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_transaction(tx, &tx_hash, aux_data)?;
+            child.crawl_shelley_transaction(tx, &tx_hash, aux_data, witness_set)?;
         }
 
         if self.config.include_block_end_events {
@@ -242,6 +279,22 @@ impl EventWriter {
         Ok(())
     }
 
+    #[deprecated(note = "use crawl_from_shelley_cbor instead")]
+    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
+        let hash = crypto::hash_block_header(&block.header);
+
+        let child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(&hash)),
+            block_number: Some(block.header.header_body.block_number),
+            slot: Some(block.header.header_body.slot),
+            timestamp: self.compute_timestamp(block.header.header_body.slot),
+            ..EventContext::default()
+        });
+
+        child.crawl_shelley_block(block, &hash, cbor, Era::Undefined)
+    }
+
+    #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl(&self, block: &Block) -> Result<(), Error> {
         let hash = crypto::hash_block_header(&block.header);
 
@@ -253,6 +306,43 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_block(block, &hash)
+        child.crawl_shelley_block(block, &hash, &[], Era::Undefined)
+    }
+
+    /// Mapper entry-point for decoded Shelley blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we already have a decoded block (for example, N2C). The raw CBOR is also
+    /// passed through in case we need to attach it to outbound events.
+    pub fn crawl_shelley_with_cbor(
+        &self,
+        block: &Block,
+        cbor: &[u8],
+        era: Era,
+    ) -> Result<(), Error> {
+        let hash = crypto::hash_block_header(&block.header);
+
+        let child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(&hash)),
+            block_number: Some(block.header.header_body.block_number),
+            slot: Some(block.header.header_body.slot),
+            timestamp: self.compute_timestamp(block.header.header_body.slot),
+            ..EventContext::default()
+        });
+
+        child.crawl_shelley_block(block, &hash, cbor, era)
+    }
+
+    /// Mapper entry-point for raw Shelley cbor blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we haven't decoded the CBOR yet (for example, N2N).
+    ///
+    /// We use Alonzo primitives since they are backward compatible with
+    /// Shelley. In this way, we can avoid having to fork the crawling procedure
+    /// for each different hard-fork.
+    pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Era) -> Result<(), Error> {
+        let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
+        self.crawl_shelley_with_cbor(&block, cbor, era)
     }
 }

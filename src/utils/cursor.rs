@@ -24,28 +24,32 @@ pub(crate) trait CanStore {
 /// Configuration for the file-based storage implementation
 #[derive(Debug, Deserialize)]
 pub struct FileConfig {
-    path: String,
+    pub path: String,
 }
 
 /// A cursor provider that uses the file system as the source for persistence
 pub(crate) struct FileStorage(FileConfig);
 
-// TODO: over-engineering a little bit here, leaving room for other
-// types of cursor persistence (probably Redis)
+/// An ephemeral cursor that lives only in memory
+pub(crate) struct MemoryStorage(PointArg);
+
 enum Storage {
     File(FileStorage),
+    Memory(MemoryStorage),
 }
 
 impl CanStore for Storage {
     fn read_cursor(&self) -> Result<PointArg, Error> {
         match self {
             Storage::File(x) => x.read_cursor(),
+            Storage::Memory(x) => x.read_cursor(),
         }
     }
 
     fn write_cursor(&self, point: PointArg) -> Result<(), Error> {
         match self {
             Storage::File(x) => x.write_cursor(point),
+            Storage::Memory(x) => x.write_cursor(point),
         }
     }
 }
@@ -54,6 +58,7 @@ impl CanStore for Storage {
 #[serde(tag = "type")]
 pub enum Config {
     File(FileConfig),
+    Memory(PointArg),
 }
 
 #[derive(Clone)]
@@ -74,6 +79,7 @@ impl Provider {
             state: RwLock::new(State::Unknown),
             storage: match config {
                 Config::File(x) => Storage::File(FileStorage(x)),
+                Config::Memory(x) => Storage::Memory(MemoryStorage(x)),
             },
         }
     }
@@ -144,6 +150,17 @@ impl CanStore for FileStorage {
     fn write_cursor(&self, point: PointArg) -> Result<(), Error> {
         std::fs::write(&self.0.path, point.to_string().as_bytes())?;
 
+        Ok(())
+    }
+}
+
+impl CanStore for MemoryStorage {
+    fn read_cursor(&self) -> Result<PointArg, Error> {
+        Ok(self.0.clone())
+    }
+
+    fn write_cursor(&self, _point: PointArg) -> Result<(), Error> {
+        // No operation, memory storage doesn't persist anything
         Ok(())
     }
 }

@@ -26,15 +26,16 @@ pub fn reducer_loop(
         "Oura terminal output started, waiting for chain data\n".with(Color::DarkGrey),
     ))?;
 
-    loop {
+    for evt in input.iter() {
         let (width, _) = crossterm::terminal::size()?;
-        let evt = input.recv()?;
 
         // notify progress to the pipeline
         utils.track_sink_progress(&evt);
 
         throttle.wait_turn();
-        let line = LogLine::new(evt, width as usize);
+        let line = LogLine::new(evt, width as usize, &utils);
         stdout.execute(Print(line))?;
     }
+
+    Ok(())
 }

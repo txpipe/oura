@@ -10,12 +10,14 @@ use oura::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
         StageReceiver,
     },
-    utils::{cursor, ChainWellKnownInfo, Utils, WithUtils},
+    sources::{MagicArg, PointArg},
+    utils::{cursor, metrics, ChainWellKnownInfo, Utils, WithUtils},
     Error,
 };
 
 use oura::filters::noop::Config as NoopFilterConfig;
 use oura::filters::selection::Config as SelectionConfig;
+use oura::sinks::assert::Config as AssertConfig;
 use oura::sinks::stdout::Config as StdoutConfig;
 use oura::sinks::terminal::Config as TerminalConfig;
 use oura::sources::n2c::Config as N2CConfig;
@@ -33,6 +35,18 @@ use oura::sinks::kafka::Config as KafkaConfig;
 #[cfg(feature = "elasticsink")]
 use oura::sinks::elastic::Config as ElasticConfig;
 
+#[cfg(feature = "aws")]
+use oura::sinks::aws_sqs::Config as AwsSqsConfig;
+
+#[cfg(feature = "aws")]
+use oura::sinks::aws_lambda::Config as AwsLambdaConfig;
+
+#[cfg(feature = "aws")]
+use oura::sinks::aws_s3::Config as AwsS3Config;
+
+#[cfg(feature = "gcp")]
+use oura::sinks::gcp_pubsub::Config as GcpPubSubConfig;
+
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
 
@@ -47,6 +61,13 @@ fn bootstrap_source(config: Source, utils: Arc<Utils>) -> PartialBootstrapResult
     match config {
         Source::N2C(config) => WithUtils::new(config, utils).bootstrap(),
         Source::N2N(config) => WithUtils::new(config, utils).bootstrap(),
+    }
+}
+
+fn infer_magic_from_source(config: &Source) -> Option<MagicArg> {
+    match config {
+        Source::N2C(config) => config.magic.clone(),
+        Source::N2N(config) => config.magic.clone(),
     }
 }
 
@@ -77,6 +98,7 @@ impl FilterProvider for Filter {
 enum Sink {
     Terminal(TerminalConfig),
     Stdout(StdoutConfig),
+    Assert(AssertConfig),
 
     #[cfg(feature = "logs")]
     Logs(WriterConfig),
@@ -89,12 +111,25 @@ enum Sink {
 
     #[cfg(feature = "elasticsink")]
     Elastic(ElasticConfig),
+
+    #[cfg(feature = "aws")]
+    AwsSqs(AwsSqsConfig),
+
+    #[cfg(feature = "aws")]
+    AwsLambda(AwsLambdaConfig),
+
+    #[cfg(feature = "aws")]
+    AwsS3(AwsS3Config),
+
+    #[cfg(feature = "gcp")]
+    GcpPubSub(GcpPubSubConfig),
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
     match config {
         Sink::Terminal(c) => WithUtils::new(c, utils).bootstrap(input),
         Sink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
+        Sink::Assert(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "logs")]
         Sink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
@@ -107,6 +142,18 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "elasticsink")]
         Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
+        Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
+        Sink::AwsLambda(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "aws")]
+        Sink::AwsS3(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "gcp")]
+        Sink::GcpPubSub(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
@@ -122,49 +169,91 @@ struct ConfigRoot {
     chain: Option<ChainWellKnownInfo>,
 
     cursor: Option<cursor::Config>,
+
+    metrics: Option<metrics::Config>,
 }
 
 impl ConfigRoot {
     pub fn new(explicit_file: Option<String>) -> Result<Self, ConfigError> {
-        let mut s = Config::default();
+        let mut s = Config::builder();
 
         // our base config will always be in /etc/oura
-        s.merge(File::with_name("/etc/oura/daemon.toml").required(false))?;
+        s = s.add_source(File::with_name("/etc/oura/daemon.toml").required(false));
 
         // but we can override it by having a file in the working dir
-        s.merge(File::with_name("oura.toml").required(false))?;
+        s = s.add_source(File::with_name("oura.toml").required(false));
 
         // if an explicit file was passed, then we load it as mandatory
         if let Some(explicit) = explicit_file {
-            s.merge(File::with_name(&explicit).required(true))?;
+            s = s.add_source(File::with_name(&explicit).required(true));
         }
 
         // finally, we use env vars to make some last-step overrides
-        s.merge(Environment::with_prefix("OURA").separator("_"))?;
+        s = s.add_source(Environment::with_prefix("OURA").separator("_"));
 
-        s.try_into()
+        s.build()?.try_deserialize()
     }
 }
 
-fn bootstrap_utils(chain: Option<ChainWellKnownInfo>, cursor: Option<cursor::Config>) -> Utils {
-    let well_known = chain.unwrap_or_default();
+fn define_chain_info(
+    explicit: Option<ChainWellKnownInfo>,
+    magic: &MagicArg,
+) -> Result<ChainWellKnownInfo, Error> {
+    match explicit {
+        Some(x) => Ok(x),
+        None => ChainWellKnownInfo::try_from_magic(**magic),
+    }
+}
 
-    let cursor = cursor.map(cursor::Provider::initialize);
+fn define_cursor(
+    explicit: Option<PointArg>,
+    config: Option<cursor::Config>,
+) -> Option<cursor::Config> {
+    match (explicit, config) {
+        (Some(x), _) => Some(cursor::Config::Memory(x)),
+        (_, x) => x,
+    }
+}
 
-    Utils::new(well_known, cursor)
+fn bootstrap_utils(
+    chain: ChainWellKnownInfo,
+    cursor: Option<cursor::Config>,
+    metrics: Option<metrics::Config>,
+) -> Utils {
+    let mut utils = Utils::new(chain);
+
+    if let Some(cursor) = cursor {
+        utils = utils.with_cursor(cursor);
+    }
+
+    if let Some(metrics) = metrics {
+        utils = utils.with_metrics(metrics);
+    }
+
+    utils
 }
 
 /// Sets up the whole pipeline from configuration
-fn bootstrap(config: ConfigRoot) -> Result<Vec<JoinHandle<()>>, Error> {
+fn bootstrap(
+    config: ConfigRoot,
+    explicit_cursor: Option<PointArg>,
+) -> Result<Vec<JoinHandle<()>>, Error> {
     let ConfigRoot {
         source,
         filters,
         sink,
         chain,
         cursor,
+        metrics,
     } = config;
 
-    let utils = Arc::new(bootstrap_utils(chain, cursor));
+    let magic = infer_magic_from_source(&source).unwrap_or_default();
+
+    let chain = define_chain_info(chain, &magic)?;
+
+    let cursor = define_cursor(explicit_cursor, cursor);
+
+    let utils = Arc::new(bootstrap_utils(chain, cursor, metrics));
 
     let mut threads = Vec::with_capacity(10);
 
@@ -193,11 +282,16 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => None,
     };
 
+    let explicit_cursor = match args.is_present("cursor") {
+        true => Some(args.value_of_t("cursor")?),
+        false => None,
+    };
+
     let root = ConfigRoot::new(explicit_config)?;
 
     debug!("daemon starting with this config: {:?}", root);
 
-    let threads = bootstrap(root)?;
+    let threads = bootstrap(root, explicit_cursor)?;
 
     // TODO: refactor into new loop that monitors thread health
     for handle in threads {
@@ -205,4 +299,23 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+/// Creates the clap definition for this sub-command
+pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
+    clap::Command::new("daemon")
+        .arg(
+            clap::Arg::new("config")
+                .long("config")
+                .takes_value(true)
+                .help("config file to load by the daemon"),
+        )
+        .arg(
+            clap::Arg::new("cursor")
+                .long("cursor")
+                .takes_value(true)
+                .help(
+                    "initial chain cursor, overrides configuration file, expects format `slot,hex-hash`",
+                ),
+        )
 }

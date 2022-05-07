@@ -1,5 +1,5 @@
 use file_rotate::{
-    suffix::{FileLimit, TimestampSuffixScheme},
+    suffix::{AppendTimestamp, FileLimit},
     ContentLimit, FileRotate,
 };
 use std::{io::Write, path::PathBuf, str::FromStr};
@@ -37,7 +37,7 @@ fn build_witer(config: &Config) -> Result<impl Write, Error> {
         None => std::env::current_dir()?,
     };
 
-    let suffix_scheme = TimestampSuffixScheme::default(FileLimit::MaxFiles(
+    let suffix_scheme = AppendTimestamp::default(FileLimit::MaxFiles(
         config.max_total_files.unwrap_or(DEFAULT_MAX_TOTAL_FILES),
     ));
 

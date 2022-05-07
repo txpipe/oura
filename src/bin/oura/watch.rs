@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use oura::{
     mapper::Config as MapperConfig,
     pipelining::{SinkProvider, SourceProvider},
-    sources::{AddressArg, BearerKind, MagicArg},
+    sources::{AddressArg, BearerKind, IntersectArg, MagicArg},
     utils::{ChainWellKnownInfo, Utils, WithUtils},
 };
 
@@ -58,8 +58,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => MagicArg::default(),
     };
 
-    let since = match args.is_present("since") {
-        true => Some(args.value_of_t("since")?),
+    let intersect = match args.is_present("since") {
+        true => Some(IntersectArg::Point(args.value_of_t("since")?)),
         false => None,
     };
 
@@ -84,7 +84,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let well_known = ChainWellKnownInfo::try_from_magic(*magic)?;
 
-    let utils = Arc::new(Utils::new(well_known, None));
+    let utils = Arc::new(Utils::new(well_known));
 
     #[allow(deprecated)]
     let source_setup = match mode {
@@ -92,15 +92,22 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             address: AddressArg(bearer, socket),
             magic: Some(magic),
             well_known: None,
+            min_depth: 0,
             mapper,
-            since,
+            since: None,
+            intersect,
+            retry_policy: None,
+            finalize: None,
         }),
         PeerMode::AsClient => WatchSource::N2C(N2CConfig {
             address: AddressArg(bearer, socket),
             magic: Some(magic),
             well_known: None,
+            min_depth: 0,
             mapper,
-            since,
+            since: None,
+            intersect,
+            retry_policy: None,
         }),
     };
 
@@ -119,4 +126,35 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
     source_handle.join().map_err(|_| "error in source thread")?;
 
     Ok(())
+}
+
+/// Creates the clap definition for this sub-command
+pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
+    clap::Command::new("watch")
+        .arg(clap::Arg::new("socket").required(true))
+        .arg(
+            clap::Arg::new("bearer")
+                .long("bearer")
+                .takes_value(true)
+                .possible_values(&["tcp", "unix"]),
+        )
+        .arg(clap::Arg::new("magic").long("magic").takes_value(true))
+        .arg(
+            clap::Arg::new("since")
+                .long("since")
+                .takes_value(true)
+                .help("point in the chain to start reading from, expects format `slot,hex-hash`"),
+        )
+        .arg(
+            clap::Arg::new("throttle")
+                .long("throttle")
+                .takes_value(true)
+                .help("milliseconds to wait between output lines (for easier reading)"),
+        )
+        .arg(
+            clap::Arg::new("mode")
+                .long("mode")
+                .takes_value(true)
+                .possible_values(&["node", "client"]),
+        )
 }

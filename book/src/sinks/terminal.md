@@ -1,6 +1,6 @@
 # Terminal
 
-A sink that outputs each event into the terminal throught stdout using fancy coloring 💅.
+A sink that outputs each event into the terminal through stdout using fancy coloring 💅.
 
 ## Configuration
 

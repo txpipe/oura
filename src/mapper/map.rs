@@ -1,20 +1,25 @@
 use std::collections::HashMap;
 
-use minicbor::bytes::ByteVec;
+use pallas::codec::minicbor::bytes::ByteVec;
 use pallas::crypto::hash::Hash;
-use pallas::ledger::alonzo::{
+use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
-    InstantaneousRewardTarget, Metadatum, Relay, TransactionInput, TransactionOutput, Value,
+    InstantaneousRewardTarget, Metadatum, MetadatumLabel, Relay, TransactionInput,
+    TransactionOutput, Value,
 };
-use pallas::ledger::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
+use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
+use pallas::ledger::primitives::ToCanonicalJson;
 
+use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
-    BlockRecord, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-    StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord,
+    NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
+    PlutusWitnessRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
 };
 
+use crate::utils::time::TimeProvider;
 use crate::Error;
 
 use super::EventWriter;
@@ -24,6 +29,12 @@ pub trait ToHex {
 }
 
 impl ToHex for Vec<u8> {
+    fn to_hex(&self) -> String {
+        hex::encode(self)
+    }
+}
+
+impl ToHex for &[u8] {
     fn to_hex(&self) -> String {
         hex::encode(self)
     }
@@ -70,19 +81,22 @@ fn relay_to_string(relay: &Relay) -> String {
     }
 }
 
-fn metadatum_to_string_key(datum: &Metadatum) -> Result<String, Error> {
+fn metadatum_to_string_key(datum: &Metadatum) -> String {
     match datum {
-        Metadatum::Int(x) => Ok(x.to_string()),
-        Metadatum::Bytes(x) => Ok(hex::encode(x.as_slice())),
-        Metadatum::Text(x) => Ok(x.to_owned()),
-        _ => Err("unexpected metadatum type for label".into()),
+        Metadatum::Int(x) => x.to_string(),
+        Metadatum::Bytes(x) => hex::encode(x.as_slice()),
+        Metadatum::Text(x) => x.to_owned(),
+        x => {
+            log::warn!("unexpected metadatum type for label: {:?}", x);
+            Default::default()
+        }
     }
 }
 
 fn get_tx_output_coin_value(amount: &Value) -> u64 {
     match amount {
-        Value::Coin(x) => *x,
-        Value::Multiasset(x, _) => *x,
+        Value::Coin(x) => x.into(),
+        Value::Multiasset(x, _) => x.into(),
     }
 }
 
@@ -91,14 +105,14 @@ impl EventWriter {
         &self,
         pair: (&Metadatum, &Metadatum),
     ) -> Result<(String, JsonValue), Error> {
-        let key = metadatum_to_string_key(pair.0)?;
+        let key = metadatum_to_string_key(pair.0);
         let value = self.to_metadatum_json(pair.1)?;
         Ok((key, value))
     }
 
     pub fn to_metadatum_json(&self, source: &Metadatum) -> Result<JsonValue, Error> {
         match source {
-            Metadatum::Int(x) => Ok(json!(x)),
+            Metadatum::Int(x) => Ok(json!(i128::from(*x))),
             Metadatum::Bytes(x) => Ok(json!(hex::encode(x.as_slice()))),
             Metadatum::Text(x) => Ok(json!(x)),
             Metadatum::Array(x) => {
@@ -120,13 +134,13 @@ impl EventWriter {
 
     pub fn to_metadata_record(
         &self,
-        label: &Metadatum,
+        label: &MetadatumLabel,
         value: &Metadatum,
     ) -> Result<MetadataRecord, Error> {
         let data = MetadataRecord {
-            label: metadatum_to_string_key(label)?,
+            label: u64::from(label).to_string(),
             content: match value {
-                Metadatum::Int(x) => MetadatumRendition::IntScalar(*x),
+                Metadatum::Int(x) => MetadatumRendition::IntScalar(i128::from(*x)),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
                 Metadatum::Text(x) => MetadatumRendition::TextScalar(x.clone()),
                 Metadatum::Array(_) => {
@@ -169,6 +183,7 @@ impl EventWriter {
         OutputAssetRecord {
             policy: policy.to_hex(),
             asset: asset.to_hex(),
+            asset_ascii: String::from_utf8(asset.to_vec()).ok(),
             amount,
         }
     }
@@ -181,14 +196,66 @@ impl EventWriter {
         }
     }
 
-    pub fn to_native_script_event(&self) -> EventData {
-        EventData::NativeScript {}
+    pub fn to_aux_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
+        EventData::NativeScript {
+            policy_id: script.to_hash().to_hex(),
+            script: script.to_json(),
+        }
     }
 
-    pub fn to_plutus_script_event(&self, script: &ByteVec) -> EventData {
+    pub fn to_aux_plutus_script_event(&self, script: &alonzo::PlutusScript) -> EventData {
         EventData::PlutusScript {
-            data: script.to_hex(),
+            hash: script.to_hash().to_hex(),
+            data: script.0.to_hex(),
         }
+    }
+
+    pub fn to_plutus_redeemer_record(
+        &self,
+        redeemer: &alonzo::Redeemer,
+    ) -> Result<PlutusRedeemerRecord, crate::Error> {
+        Ok(PlutusRedeemerRecord {
+            purpose: match redeemer.tag {
+                alonzo::RedeemerTag::Spend => "spend".to_string(),
+                alonzo::RedeemerTag::Mint => "mint".to_string(),
+                alonzo::RedeemerTag::Cert => "cert".to_string(),
+                alonzo::RedeemerTag::Reward => "reward".to_string(),
+            },
+            ex_units_mem: redeemer.ex_units.mem,
+            ex_units_steps: redeemer.ex_units.steps,
+            input_idx: redeemer.index,
+            plutus_data: redeemer.data.to_json(),
+        })
+    }
+
+    pub fn to_plutus_datum_record(
+        &self,
+        datum: &alonzo::PlutusData,
+    ) -> Result<PlutusDatumRecord, crate::Error> {
+        Ok(PlutusDatumRecord {
+            datum_hash: datum.to_hash().to_hex(),
+            plutus_data: datum.to_json(),
+        })
+    }
+
+    pub fn to_plutus_witness_record(
+        &self,
+        script: &alonzo::PlutusScript,
+    ) -> Result<PlutusWitnessRecord, crate::Error> {
+        Ok(PlutusWitnessRecord {
+            script_hash: script.to_hash().to_hex(),
+            script_hex: script.as_ref().to_hex(),
+        })
+    }
+
+    pub fn to_native_witness_record(
+        &self,
+        script: &alonzo::NativeScript,
+    ) -> Result<NativeWitnessRecord, crate::Error> {
+        Ok(NativeWitnessRecord {
+            policy_id: script.to_hash().to_hex(),
+            script_json: script.to_json(),
+        })
     }
 
     pub fn to_certificate_event(&self, certificate: &Certificate) -> EventData {
@@ -216,8 +283,8 @@ impl EventWriter {
             } => EventData::PoolRegistration {
                 operator: operator.to_hex(),
                 vrf_keyhash: vrf_keyhash.to_hex(),
-                pledge: *pledge,
-                cost: *cost,
+                pledge: pledge.into(),
+                cost: cost.into(),
                 margin: (margin.numerator as f64 / margin.denominator as f64),
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
@@ -240,7 +307,7 @@ impl EventWriter {
                         _ => None,
                     },
                     to_other_pot: match move_.target {
-                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x),
+                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x.into()),
                         _ => None,
                     },
                 }
@@ -318,26 +385,6 @@ impl EventWriter {
             };
         }
 
-        // TODO: add witness set data to transaction
-        /*
-        if let Some(witness) = self.transaction_witness_sets.get(idx) {
-            let plutus_count = match &witness.plutus_script {
-                Some(scripts) => scripts.len(),
-                None => 0,
-            };
-
-            let native_count = match &witness.native_script {
-                Some(scripts) => scripts.len(),
-                None => 0,
-            };
-
-            let redeemer_count = match &witness.redeemer {
-                Some(redeemer) => redeemer.len(),
-                None => 0,
-            };
-        }
-        */
-
         if self.config.include_transaction_details {
             record.metadata = match aux_data {
                 Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
@@ -348,15 +395,56 @@ impl EventWriter {
         Ok(record)
     }
 
-    pub fn to_block_record(&self, source: &Block, hash: &Hash<32>) -> Result<BlockRecord, Error> {
-        Ok(BlockRecord {
+    pub fn to_block_record(
+        &self,
+        source: &Block,
+        hash: &Hash<32>,
+        cbor: &[u8],
+        era: Era,
+    ) -> Result<BlockRecord, Error> {
+        let relative_epoch = self
+            .utils
+            .time
+            .as_ref()
+            .map(|time| time.absolute_slot_to_relative(source.header.header_body.slot));
+
+        let mut record = BlockRecord {
+            era,
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),
             hash: hex::encode(hash),
             number: source.header.header_body.block_number,
             slot: source.header.header_body.slot,
+            epoch: relative_epoch.map(|(epoch, _)| epoch),
+            epoch_slot: relative_epoch.map(|(_, epoch_slot)| epoch_slot),
             previous_hash: hex::encode(source.header.header_body.prev_hash),
-        })
+            cbor_hex: match self.config.include_block_cbor {
+                true => hex::encode(cbor).into(),
+                false => None,
+            },
+            transactions: None,
+        };
+
+        if self.config.include_block_details {
+            record.transactions = Some(self.collect_shelley_tx_records(source)?);
+        }
+
+        Ok(record)
+    }
+
+    pub(crate) fn append_rollback_event(&self, point: &Point) -> Result<(), Error> {
+        let data = match point {
+            Point::Origin => EventData::RollBack {
+                block_slot: 0,
+                block_hash: "".to_string(),
+            },
+            Point::Specific(slot, hash) => EventData::RollBack {
+                block_slot: *slot,
+                block_hash: hex::encode(&hash),
+            },
+        };
+
+        self.append(data)
     }
 }

@@ -1,18 +1,20 @@
 use core::fmt;
-use std::{ops::Deref, str::FromStr};
+use std::{net::TcpStream, ops::Deref, str::FromStr, time::Duration};
+
+#[cfg(target_family = "unix")]
+use std::os::unix::net::UnixStream;
 
 use log::info;
-use pallas::ouroboros::network::{
-    chainsync::TipFinder,
-    handshake::{MAINNET_MAGIC, TESTNET_MAGIC},
-    machines::{primitives::Point, run_agent},
-    multiplexer::Channel,
+use net2::TcpStreamExt;
+use pallas::network::{
+    miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
+    multiplexer::{Channel, Multiplexer},
 };
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    utils::{ChainWellKnownInfo, Utils},
+    utils::{retry, ChainWellKnownInfo, Utils},
     Error,
 };
 
@@ -48,13 +50,7 @@ impl TryInto<Point> for PointArg {
 
     fn try_into(self) -> Result<Point, Self::Error> {
         let hash = hex::decode(&self.1)?;
-        Ok(Point(self.0, hash))
-    }
-}
-
-impl From<Point> for PointArg {
-    fn from(other: Point) -> Self {
-        PointArg(other.0, hex::encode(&other.1))
+        Ok(Point::Specific(self.0, hash))
     }
 }
 
@@ -79,7 +75,7 @@ impl ToString for PointArg {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct MagicArg(pub u64);
 
 impl Deref for MagicArg {
@@ -149,14 +145,110 @@ where
     deserializer.deserialize_any(MagicArgVisitor)
 }
 
+#[derive(Deserialize, Debug)]
+pub struct RetryPolicy {
+    connection_max_retries: u32,
+    connection_max_backoff: u32,
+}
+
+pub fn setup_multiplexer_attempt(
+    bearer: &BearerKind,
+    address: &str,
+    protocols: &[u16],
+) -> Result<Multiplexer, Error> {
+    match bearer {
+        BearerKind::Tcp => {
+            let tcp = TcpStream::connect(address)?;
+            tcp.set_nodelay(true)?;
+            tcp.set_keepalive_ms(Some(30_000u32))?;
+
+            Multiplexer::setup(tcp, protocols)
+        }
+        #[cfg(target_family = "unix")]
+        BearerKind::Unix => {
+            let unix = UnixStream::connect(address)?;
+
+            Multiplexer::setup(unix, protocols)
+        }
+    }
+}
+
+pub fn setup_multiplexer(
+    bearer: &BearerKind,
+    address: &str,
+    protocols: &[u16],
+    retry: &Option<RetryPolicy>,
+) -> Result<Multiplexer, Error> {
+    match retry {
+        Some(policy) => retry::retry_operation(
+            || setup_multiplexer_attempt(bearer, address, protocols),
+            &retry::Policy {
+                max_retries: policy.connection_max_retries,
+                backoff_unit: Duration::from_secs(1),
+                backoff_factor: 2,
+                max_backoff: Duration::from_secs(policy.connection_max_backoff as u64),
+            },
+        ),
+        None => setup_multiplexer_attempt(bearer, address, protocols),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", content = "value")]
+pub enum IntersectArg {
+    Tip,
+    Origin,
+    Point(PointArg),
+    Fallbacks(Vec<PointArg>),
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct FinalizeConfig {
+    max_block_quantity: Option<u64>,
+    max_block_slot: Option<u64>,
+    until_hash: Option<String>,
+}
+
+pub fn should_finalize(
+    config: &Option<FinalizeConfig>,
+    last_point: &Point,
+    block_count: u64,
+) -> bool {
+    let config = match config {
+        Some(x) => x,
+        None => return false,
+    };
+
+    if let Some(max) = config.max_block_quantity {
+        if block_count >= max {
+            return true;
+        }
+    }
+
+    if let Some(max) = config.max_block_slot {
+        if last_point.slot_or_default() >= max {
+            return true;
+        }
+    }
+
+    if let Some(expected) = &config.until_hash {
+        if let Point::Specific(_, current) = last_point {
+            return expected == &hex::encode(current);
+        }
+    }
+
+    false
+}
+
 pub(crate) fn find_end_of_chain(
     channel: &mut Channel,
     well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::Error> {
-    let point = Point(
+    let point = Point::Specific(
         well_known.shelley_known_slot,
         hex::decode(&well_known.shelley_known_hash)?,
     );
+
     let agent = TipFinder::initial(point);
     let agent = run_agent(agent, channel)?;
     info!("chain point query output: {:?}", agent.output);
@@ -168,24 +260,61 @@ pub(crate) fn find_end_of_chain(
 }
 
 pub(crate) fn define_start_point(
-    explicit_arg: &Option<PointArg>,
+    intersect: &Option<IntersectArg>,
+    since: &Option<PointArg>,
     utils: &Utils,
     cs_channel: &mut Channel,
-) -> Result<Point, Error> {
+) -> Result<Option<Vec<Point>>, Error> {
     let cursor = utils.get_cursor_if_any();
 
-    match (cursor, explicit_arg) {
-        (Some(cursor), _) => {
+    match cursor {
+        Some(cursor) => {
             log::info!("found persisted cursor, will use as starting point");
-            cursor.try_into()
+            let points = vec![cursor.try_into()?];
+
+            Ok(Some(points))
         }
-        (None, Some(arg)) => {
-            log::info!("explicit 'since' argument, will use as starting point");
-            arg.clone().try_into()
-        }
-        _ => {
-            log::info!("no starting point specified, will use tip of chain");
-            find_end_of_chain(cs_channel, &utils.well_known)
-        }
+        None => match intersect {
+            Some(IntersectArg::Fallbacks(x)) => {
+                log::info!("found 'fallbacks' intersect argument, will use as starting point");
+                let points: Result<Vec<_>, _> = x.iter().map(|x| x.clone().try_into()).collect();
+
+                Ok(Some(points?))
+            }
+            Some(IntersectArg::Origin) => {
+                log::info!("found 'origin' intersect argument, will use as starting point");
+
+                Ok(None)
+            }
+            Some(IntersectArg::Point(x)) => {
+                log::info!("found 'point' intersect argument, will use as starting point");
+                let points = vec![x.clone().try_into()?];
+
+                Ok(Some(points))
+            }
+            Some(IntersectArg::Tip) => {
+                log::info!("found 'tip' intersect argument, will use as starting point");
+                let tip = find_end_of_chain(cs_channel, &utils.well_known)?;
+                let points = vec![tip];
+
+                Ok(Some(points))
+            }
+            None => match since {
+                Some(x) => {
+                    log::info!("explicit 'since' argument, will use as starting point");
+                    log::warn!("`since` value is deprecated, please use `intersect`");
+                    let points = vec![x.clone().try_into()?];
+
+                    Ok(Some(points))
+                }
+                None => {
+                    log::info!("no starting point specified, will use tip of chain");
+                    let tip = find_end_of_chain(cs_channel, &utils.well_known)?;
+                    let points = vec![tip];
+
+                    Ok(Some(points))
+                }
+            },
+        },
     }
 }
