@@ -20,18 +20,9 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            // CIP25 block 6768751
-
-            // See:
-            //
-            //   * https://github.com/cardano-foundation/CIPs/blob/master/CIP-0010/registry.json
-            //   * https://github.com/cardano-foundation/CIPs
-            //
-
             match u64::from(label) {
                 721u64 => self.crawl_metadata_label_721(content)?,
-                // 674 => self.crawl_metadata_cip20(content),
-                61284u64 => self.crawl_metadata_cip15(content),
+                61284u64 => self.crawl_metadata_label_61284(content)?,
                 _ => (),
             }
         }

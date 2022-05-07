@@ -10,9 +10,9 @@ use serde::Deserialize;
 
 use crate::{
     model::{
-        CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, NativeWitnessRecord,
-        OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord, PlutusWitnessRecord,
-        VKeyWitnessRecord,
+        CIP15AssetRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord,
+        NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
+        PlutusWitnessRecord, VKeyWitnessRecord,
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
     Error,
@@ -227,6 +227,14 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .append_optional(&event.context.tx_hash)?
             .append_slice(policy)?
             .append_slice(asset)?,
+        EventData::CIP15Asset(CIP15AssetRecord {
+            voting_key, nonce, ..
+        }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("cip15")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(voting_key)?
+            .append_to_string(nonce)?,
     };
 
     b.build()

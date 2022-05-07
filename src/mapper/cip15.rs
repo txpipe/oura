@@ -1,50 +1,56 @@
 use super::EventWriter;
-use crate::model::{EventData, MetadataRecord, MetadatumRendition};
+use crate::model::CIP15AssetRecord;
 use crate::Error;
-use pallas::ledger::alonzo::Metadatum;
-use serde::Serialize;
-use serde_json::value::to_value;
+use serde_json::Value as JsonValue;
 
-#[derive(Debug, Serialize)]
-struct Cip15 {
-    voting_key: Vec<u8>,
-    stake_pub: Vec<u8>,
-    reward_address: Vec<u8>,
-    nonce: i64,
+use pallas::ledger::primitives::alonzo::Metadatum;
+
+fn extract_json_property<'a>(json: &'a JsonValue, key: &str) -> Result<&'a JsonValue, Error> {
+    let result = json
+        .as_object()
+        .ok_or_else(|| Error::from("invalid metadatum object for CIP15"))?
+        .get(key)
+        .ok_or_else(|| Error::from("required key not found for CIP15"))?;
+
+    Ok(result)
+}
+
+fn extract_json_string_property(json: &JsonValue, key: &str) -> Result<String, Error> {
+    let result = extract_json_property(json, key)?
+        .as_str()
+        .ok_or_else(|| Error::from("invalid value type for CIP15"))?
+        .to_string();
+
+    Ok(result)
+}
+
+fn extract_json_int_property(json: &JsonValue, key: &str) -> Result<i64, Error> {
+    let result = extract_json_property(json, key)?
+        .as_i64()
+        .ok_or_else(|| Error::from("invalid value type for CIP15"))?;
+
+    Ok(result)
 }
 
 impl EventWriter {
-    pub(crate) fn crawl_metadata_cip15(&self, content: &Metadatum) -> Result<(), Error> {
-        let mut entries = match content {
-            Metadatum::Map(map) => map,
-            _ => return Err("Map expected.".into()),
+    fn to_cip15_asset_record(&self, content: &Metadatum) -> Result<CIP15AssetRecord, Error> {
+        let raw_json = self.to_metadatum_json(content)?;
+
+        Ok(CIP15AssetRecord {
+            voting_key: extract_json_string_property(&raw_json, "1")?,
+            stake_pub: extract_json_string_property(&raw_json, "2")?,
+            reward_address: extract_json_string_property(&raw_json, "3")?,
+            nonce: extract_json_int_property(&raw_json, "4")?,
+            raw_json,
+        })
+    }
+
+    pub(crate) fn crawl_metadata_label_61284(&self, content: &Metadatum) -> Result<(), Error> {
+        match self.to_cip15_asset_record(content) {
+            Ok(record) => self.append_from(record)?,
+            Err(err) => log::warn!("error parsing CIP15: {:?}", err),
         }
-        .iter();
-        let voting_key = match entries.next() {
-            Some((Metadatum::Int(1), Metadatum::Bytes(x))) => x.to_vec(),
-            _ => return Err("Voting key required".into()),
-        };
-        let stake_pub = match entries.next() {
-            Some((Metadatum::Int(2), Metadatum::Bytes(x))) => x.to_vec(),
-            _ => return Err("Stake pub required".into()),
-        };
-        let reward_address = match entries.next() {
-            Some((Metadatum::Int(3), Metadatum::Bytes(x))) => x.to_vec(),
-            _ => return Err("Reward address required".into()),
-        };
-        let nonce = match entries.next() {
-            Some(&(Metadatum::Int(4), Metadatum::Int(x))) => x,
-            _ => return Err("Integer nonce required".into()),
-        };
-        self.append(EventData::Metadata(MetadataRecord {
-            label: "TEST".to_string(),
-            content: MetadatumRendition::MapJson(to_value(Cip15 {
-                voting_key,
-                stake_pub,
-                reward_address,
-                nonce,
-            })?),
-        }))?;
+
         Ok(())
     }
 }
