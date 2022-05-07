@@ -599,7 +599,7 @@ dependencies = [
  "hyper",
  "hyper-tls",
  "lazy_static",
- "log 0.4.16",
+ "log 0.4.17",
  "rand",
  "serde",
  "serde_derive",
@@ -792,7 +792,7 @@ checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
 dependencies = [
  "atty",
  "humantime",
- "log 0.4.16",
+ "log 0.4.17",
  "regex",
  "termcolor",
 ]
@@ -992,7 +992,7 @@ checksum = "d94101e84ede813c04773b0a43396c01b5a3a9376537dbce1125858ae090ae60"
 dependencies = [
  "arc-swap",
  "futures",
- "log 0.4.16",
+ "log 0.4.17",
  "reqwest",
  "serde",
  "serde_derive",
@@ -1128,7 +1128,7 @@ dependencies = [
  "ct-logs",
  "futures-util",
  "hyper",
- "log 0.4.16",
+ "log 0.4.17",
  "rustls",
  "rustls-native-certs",
  "tokio",
@@ -1260,14 +1260,14 @@ version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e19e8d5c34a3e0e2223db8e060f9e8264aeeb5c5fc64a4ee9965c062211c024b"
 dependencies = [
- "log 0.4.16",
+ "log 0.4.17",
 ]
 
 [[package]]
 name = "log"
-version = "0.4.16"
+version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6389c490849ff5bc16be905ae24bc913a9c8892e19b2341dbc175e14c341c2b8"
+checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if 1.0.0",
 ]
@@ -1372,7 +1372,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52da4364ffb0e4fe33a9841a98a3f3014fb964045ce4f7a45a398243c8d6b0c9"
 dependencies = [
  "libc",
- "log 0.4.16",
+ "log 0.4.17",
  "miow",
  "ntapi",
  "wasi 0.11.0+wasi-snapshot-preview1",
@@ -1402,7 +1402,7 @@ checksum = "48ba9f7719b5a0f42f338907614285fb5fd70e53858141f69898a1fb7203b24d"
 dependencies = [
  "lazy_static",
  "libc",
- "log 0.4.16",
+ "log 0.4.17",
  "openssl",
  "openssl-probe",
  "openssl-sys",
@@ -1576,7 +1576,7 @@ dependencies = [
  "file-rotate",
  "hex",
  "kafka",
- "log 0.4.16",
+ "log 0.4.17",
  "merge",
  "murmur3",
  "net2",
@@ -1634,7 +1634,7 @@ checksum = "0f7f73bdfaaef9c42034a4cb3bce48c07b4d8862371b7d6eee8f9162416a30f9"
 dependencies = [
  "hex",
  "itertools",
- "log 0.4.16",
+ "log 0.4.17",
  "net2",
  "pallas-codec",
  "pallas-multiplexer",
@@ -1648,7 +1648,7 @@ checksum = "0862ffc0600471b6bbf3b7b237842f94a1141f578f5d5426c202ce58e391e158"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
- "log 0.4.16",
+ "log 0.4.17",
 ]
 
 [[package]]
@@ -1660,7 +1660,7 @@ dependencies = [
  "base58",
  "bech32",
  "hex",
- "log 0.4.16",
+ "log 0.4.17",
  "pallas-codec",
  "pallas-crypto",
  "serde",
@@ -1946,7 +1946,7 @@ dependencies = [
  "ipnet",
  "js-sys",
  "lazy_static",
- "log 0.4.16",
+ "log 0.4.17",
  "mime",
  "native-tls",
  "percent-encoding",
@@ -2010,7 +2010,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35edb675feee39aec9c99fa5ff985081995a06d594114ae14cbe797ad7b7a6d7"
 dependencies = [
  "base64 0.13.0",
- "log 0.4.16",
+ "log 0.4.17",
  "ring",
  "sct",
  "webpki",
@@ -2246,7 +2246,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4370044f8b20f944e05c35d77edd3518e6f21fc4de77e593919f287c6a3f428a"
 dependencies = [
  "base64 0.13.0",
- "log 0.4.16",
+ "log 0.4.17",
  "openssl",
  "serde",
  "serde_derive",
@@ -2505,7 +2505,7 @@ checksum = "c5f8734c6d6943ad6df6b588d228a87b4af184998bcffa268ceddf05c2055a8c"
 dependencies = [
  "ascii",
  "chunked_transfer",
- "log 0.4.16",
+ "log 0.4.17",
  "time 0.3.7",
  "url",
 ]
@@ -2583,7 +2583,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
- "log 0.4.16",
+ "log 0.4.17",
  "pin-project-lite",
  "tokio",
 ]
@@ -2632,7 +2632,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d8d93354fe2a8e50d5953f5ae2e47a3fc2ef03292e7ea46e3cc38f549525fb9"
 dependencies = [
  "cfg-if 1.0.0",
- "log 0.4.16",
+ "log 0.4.17",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
@@ -2744,7 +2744,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ce8a968cb1cd110d136ff8b819a556d6fb6d919363c61534f6860c7eb172ba0"
 dependencies = [
- "log 0.4.16",
+ "log 0.4.17",
  "try-lock",
 ]
 
@@ -2778,7 +2778,7 @@ checksum = "8b21c0df030f5a177f3cba22e9bc4322695ec43e7257d865302900290bcdedca"
 dependencies = [
  "bumpalo",
  "lazy_static",
- "log 0.4.16",
+ "log 0.4.17",
  "proc-macro2",
  "quote",
  "syn",
