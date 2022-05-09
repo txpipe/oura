@@ -1,12 +1,16 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v1.4.0"></a>
+## [v1.4.0] - 2022-05-09
 ### Features
 - Emit witness events ([#262](https://github.com/txpipe/oura/issues/262))
 - Introduce GCP PubSub sink ([#237](https://github.com/txpipe/oura/issues/237))
 - Add native scripts ([#241](https://github.com/txpipe/oura/issues/241))
 - Add custom terminal format for ADA Handle assets ([#232](https://github.com/txpipe/oura/issues/232))
 - Add option to include tx details in block events ([#231](https://github.com/txpipe/oura/issues/231))
+- **CIP15:** Add CIP-0015 parser ([#124](https://github.com/txpipe/oura/issues/124))
 
 ### Doc
 - Add [source.finalize] doc and example ([#258](https://github.com/txpipe/oura/issues/258))
@@ -16,9 +20,13 @@
 - Ensure aws feature builds ok in isolation ([#230](https://github.com/txpipe/oura/issues/230))
 
 ### Docs
+- Add automated changelog ([#286](https://github.com/txpipe/oura/issues/286))
 - Fix typo in CONTRIBUTING.md ([#259](https://github.com/txpipe/oura/issues/259))
 - Fix typo in README ([#239](https://github.com/txpipe/oura/issues/239))
 - Fixed typos ([#226](https://github.com/txpipe/oura/issues/226))
+
+### Continuous Integration
+- Fix github / kubectl / eks issue
 
 ### Chore
 - Add min-depth to e2e tests ([#272](https://github.com/txpipe/oura/issues/272))
@@ -524,7 +532,8 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 - fix lint issues
 
 
-[Unreleased]: https://github.com/txpipe/oura/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/txpipe/oura/compare/v1.4.0...HEAD
+[v1.4.0]: https://github.com/txpipe/oura/compare/v1.3.2...v1.4.0
 [v1.3.2]: https://github.com/txpipe/oura/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/txpipe/oura/compare/v1.3.0...v1.3.1
 [v1.3.0]: https://github.com/txpipe/oura/compare/v1.2.2...v1.3.0
