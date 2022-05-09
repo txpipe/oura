@@ -145,6 +145,7 @@
 <li><code>Fallbacks</code>: Oura will start reading the first valid point within a set of alternative positions. If point is not valid, the process will fallback into the next available point in the list of options. If none of the points are valid, the process will be terminated with a non-zero exit code.</li>
 </ul>
 <p>The default strategy use by Oura is <code>Tip</code>, unless an alternative option is specified via configuration.</p>
+<p>You can also define a finalizing point by providing a block hash at which oura will stop reading from the the chain and exit gracefully.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p>To modify the default behaviour used by the daemon mode, a section named <code>[source.intersect]</code> needs to be added in the <code>daemon.toml</code> file.</p>
 <pre><code class="language-toml">[source.intersect]
@@ -155,6 +156,11 @@ value = &lt;Value&gt;
 <li><code>type</code>: Defines which strategy to use. Valid values are <code>Origin</code>, <code>Tip</code>, <code>Point</code>, <code>Fallbacks</code>. Default value is <code>Tip</code>.</li>
 <li><code>value</code>: Either a point or an array of points to be used as argument for the selected strategy.</li>
 </ul>
+<p>If you'd like it to only sync an specific section of the chain, you can also instruct oura to stop syncing when it reaches an specific block hash by defining a <code>[source.finalize]</code> config:</p>
+<pre><code class="language-toml">[source.finalize]
+until_hash = &lt;BlockHash&gt;
+</code></pre>
+<p>Note that unlike the intersect point, no slot is provided for the finalizer.</p>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <p>The following example show how to configure Oura to use a set of fallback intersection point. The chain sync process will attempt to first intersect at slot <code>4449598</code>. If not found, it will continue with slot <code>43159</code> and finally with slot <code>0</code>.</p>
 <pre><code class="language-toml">[source.intersect]
@@ -164,6 +170,13 @@ value = [
     [43159, &quot;f5d398d6f71a9578521b05c43a668b06b6103f94fcf8d844d4c0aa906704b7a6&quot;],
     [0, &quot;f0f7892b5c333cffc4b3c4344de48af4cc63f55e44936196f365a9ef2244134f&quot;],
 ]
+</code></pre>
+<p>This configuration will sync the whole Byron era only:</p>
+<pre><code class="language-toml">[source.intersect]
+type = &quot;Origin&quot;
+
+[source.finalize]
+until_hash = &quot;aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de&quot;
 </code></pre>
 
                     </main>
