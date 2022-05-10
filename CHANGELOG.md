@@ -2,6 +2,12 @@
 ## [Unreleased]
 
 
+<a name="v1.4.1"></a>
+## [v1.4.1] - 2022-05-09
+### Bug Fixes
+- Relax CIP15 requirements and log level ([#290](https://github.com/txpipe/oura/issues/290))
+
+
 <a name="v1.4.0"></a>
 ## [v1.4.0] - 2022-05-09
 ### Features
@@ -27,6 +33,7 @@
 
 ### Continuous Integration
 - Fix github / kubectl / eks issue
+- Workaround github / kubectl / eks issue
 
 ### Chore
 - Add min-depth to e2e tests ([#272](https://github.com/txpipe/oura/issues/272))
@@ -532,7 +539,8 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 - fix lint issues
 
 
-[Unreleased]: https://github.com/txpipe/oura/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/txpipe/oura/compare/v1.4.1...HEAD
+[v1.4.1]: https://github.com/txpipe/oura/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/txpipe/oura/compare/v1.3.2...v1.4.0
 [v1.3.2]: https://github.com/txpipe/oura/compare/v1.3.1...v1.3.2
 [v1.3.1]: https://github.com/txpipe/oura/compare/v1.3.0...v1.3.1
