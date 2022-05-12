@@ -7,7 +7,7 @@ _Oura's_ `daemon` mode processes data in the background, without any live output
 To start _Oura_ in _daemon mode_, use the following command:
 
 ```
-oura dameon
+oura daemon
 ```
 
 Available options:
