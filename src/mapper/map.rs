@@ -171,6 +171,7 @@ impl EventWriter {
                 .encode_address(output.address.as_slice())?,
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
+            datum_hash: output.datum_hash.map(|hash| hash.to_string()),
         })
     }
 
