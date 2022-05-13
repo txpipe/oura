@@ -45,6 +45,7 @@ impl EventWriter {
             address: source.address.to_addr_string()?,
             amount: source.amount,
             assets: None,
+            datum_hash: None,
         })
     }
 
