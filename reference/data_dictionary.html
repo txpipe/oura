@@ -140,228 +140,272 @@
 <h2 id="available-events"><a class="header" href="#available-events">Available Events</a></h2>
 <p>The following list represent the already implemented events. These data structures are represented as an <code>enum</code> at the code level.</p>
 <h3 id="rollback-event"><a class="header" href="#rollback-event"><code>RollBack</code> Event</a></h3>
-<ul>
-<li>block_slot: u64,</li>
-<li>block_hash: String,</li>
-</ul>
+<p>Data on chain rollback(The result of the local node switching to the consensus chains).</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_slot</td><td style="text-align: left">u64</td><td style="text-align: left">Slot of the rolled back block.</td></tr>
+<tr><td style="text-align: left">block_hash</td><td style="text-align: left">String</td><td style="text-align: left">Hash of the rolled back block.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="block-event"><a class="header" href="#block-event"><code>Block</code> Event</a></h3>
-<ul>
-<li>body_size: usize,</li>
-<li>issuer_vkey: String,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on an issued block.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">body_size</td><td style="text-align: left">usize</td><td style="text-align: left">Size of the block.</td></tr>
+<tr><td style="text-align: left">issuer_vkey</td><td style="text-align: left">String</td><td style="text-align: left">Block issuer Public verification key.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="transaction-event"><a class="header" href="#transaction-event"><code>Transaction</code> Event</a></h3>
-<ul>
-<li>fee: u64,</li>
-<li>ttl: Option<u64>,</li>
-<li>validity_interval_start: Option<u64>,</li>
-<li>network_id: Option<u32>,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on a transaction.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">fee</td><td style="text-align: left">u64</td><td style="text-align: left">Transaction fees in lovelace.</td></tr>
+<tr><td style="text-align: left">ttl</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Transaction time to live.</td></tr>
+<tr><td style="text-align: left">validity_interval_start</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Start of transaction validity interval</td></tr>
+<tr><td style="text-align: left">network_id</td><td style="text-align: left">Option&lt;u32&gt;</td><td style="text-align: left">Network ID.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="txinput-event"><a class="header" href="#txinput-event"><code>TxInput</code> Event</a></h3>
-<ul>
-<li>tx_id: String,</li>
-<li>index: u64,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-<li>input_idx: Option<usize>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on a transaction input.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">tx_id</td><td style="text-align: left">String</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">index</td><td style="text-align: left">u64</td><td style="text-align: left">Index of input in transaction inputs.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+<tr><td style="text-align: left">input_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Input ID.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="txoutput-event"><a class="header" href="#txoutput-event"><code>TxOutput</code> Event</a></h3>
-<ul>
-<li>address: String,</li>
-<li>amount: u64,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-<li>output_idx: Option<usize>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on a transaction output (UTXO).</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">address</td><td style="text-align: left">String</td><td style="text-align: left">Address of UTXO.</td></tr>
+<tr><td style="text-align: left">amount</td><td style="text-align: left">u64</td><td style="text-align: left">Amount of lovelace in UTXO.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+<tr><td style="text-align: left">output_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Output ID.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="outputasset-event"><a class="header" href="#outputasset-event"><code>OutputAsset</code> Event</a></h3>
-<ul>
-<li>policy: String,</li>
-<li>asset: String,</li>
-<li>amount: u64,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-<li>output_idx: Option<usize>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on a non-ADA asset in a UTXO.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">policy</td><td style="text-align: left">String</td><td style="text-align: left">Minting policy of asset.</td></tr>
+<tr><td style="text-align: left">asset</td><td style="text-align: left">String</td><td style="text-align: left">Asset ID.</td></tr>
+<tr><td style="text-align: left">amount</td><td style="text-align: left">u64</td><td style="text-align: left">Amount of asset.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+<tr><td style="text-align: left">output_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Output ID.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="metadata-event"><a class="header" href="#metadata-event"><code>Metadata</code> Event</a></h3>
-<ul>
-<li>key: String,</li>
-<li>subkey: Option<String>,</li>
-<li>value: Option<String>,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">key</td><td style="text-align: left">String</td><td style="text-align: left">....</td></tr>
+<tr><td style="text-align: left">subkey</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">....</td></tr>
+<tr><td style="text-align: left">value</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">....</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="mint-event"><a class="header" href="#mint-event"><code>Mint</code> Event</a></h3>
-<ul>
-<li>policy: String,</li>
-<li>asset: String,</li>
-<li>quantity: i64,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on the minting of a non-ADA asset.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">policy</td><td style="text-align: left">String</td><td style="text-align: left">Minting policy of asset.</td></tr>
+<tr><td style="text-align: left">asset</td><td style="text-align: left">String</td><td style="text-align: left">Asset ID.</td></tr>
+<tr><td style="text-align: left">quantity</td><td style="text-align: left">i64</td><td style="text-align: left">Quantity of asset minted.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="collateral-event"><a class="header" href="#collateral-event"><code>Collateral</code> Event</a></h3>
-<ul>
-<li>tx_id: String,</li>
-<li>index: u64,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on <a href="https://docs.cardano.org/plutus/collateral-mechanism">collateral inputs</a>.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">tx_id</td><td style="text-align: left">String</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">index</td><td style="text-align: left">u64</td><td style="text-align: left">Index of transaction input in inputs.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="plutusscriptref-event"><a class="header" href="#plutusscriptref-event"><code>PlutusScriptRef</code> Event</a></h3>
-<ul>
-<li>data: String</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">data</td><td style="text-align: left">String</td><td style="text-align: left">....</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="stakeregistration-event"><a class="header" href="#stakeregistration-event"><code>StakeRegistration</code> Event</a></h3>
-<ul>
-<li>credential: StakeCredential</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on stake registration event.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">credential</td><td style="text-align: left"><a href="https://docs.rs/oura/1.4.1/oura/model/enum.StakeCredential.html">StakeCredential</a></td><td style="text-align: left">Staking credentials.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="stakederegistration-event"><a class="header" href="#stakederegistration-event"><code>StakeDeregistration</code> Event</a></h3>
-<ul>
-<li>credential: StakeCredential</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on stake deregistration event.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">credential</td><td style="text-align: left"><a href="https://docs.rs/oura/1.4.1/oura/model/enum.StakeCredential.html">StakeCredential</a></td><td style="text-align: left">Staking credentials.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="stakedelegation-event"><a class="header" href="#stakedelegation-event"><code>StakeDelegation</code> Event</a></h3>
-<ul>
-<li>credential: StakeCredential,</li>
-<li>pool_hash: String,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on <a href="https://docs.cardano.org/core-concepts/delegation">stake delegation</a> event.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">credential</td><td style="text-align: left"><a href="https://docs.rs/oura/1.4.1/oura/model/enum.StakeCredential.html">StakeCredential</a></td><td style="text-align: left">Stake credentials.</td></tr>
+<tr><td style="text-align: left">pool_hash</td><td style="text-align: left">String</td><td style="text-align: left">Hash of stake pool ID.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="poolregistration-event"><a class="header" href="#poolregistration-event"><code>PoolRegistration</code> Event</a></h3>
-<ul>
-<li>operator: String,</li>
-<li>vrf_keyhash: String,</li>
-<li>pledge: u64,</li>
-<li>cost: u64,</li>
-<li>margin: f64,</li>
-<li>reward_account: String,</li>
-<li>pool_owners: Vec<String>,</li>
-<li>relays: Vec<String>,</li>
-<li>pool_metadata: Option<String>,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on the stake <a href="https://developers.cardano.org/docs/stake-pool-course/handbook/register-stake-pool-metadata/">registration event</a>.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">operator</td><td style="text-align: left">String</td><td style="text-align: left">Stake pool operator ID.</td></tr>
+<tr><td style="text-align: left">vrf_keyhash</td><td style="text-align: left">String</td><td style="text-align: left">Kehash of node VRF operational key.</td></tr>
+<tr><td style="text-align: left">pledge</td><td style="text-align: left">u64</td><td style="text-align: left">Stake pool pledge (lovelace).</td></tr>
+<tr><td style="text-align: left">cost</td><td style="text-align: left">u64</td><td style="text-align: left">Operational costs per epoch (lovelace).</td></tr>
+<tr><td style="text-align: left">margin</td><td style="text-align: left">f64</td><td style="text-align: left">Operator margin.</td></tr>
+<tr><td style="text-align: left">reward_account</td><td style="text-align: left">String</td><td style="text-align: left">Account to receive stake pool rewards.</td></tr>
+<tr><td style="text-align: left">pool_owners</td><td style="text-align: left">Vec&lt;String&gt;</td><td style="text-align: left">Stake pool owners.</td></tr>
+<tr><td style="text-align: left">relays</td><td style="text-align: left">Vec&lt;String&gt;</td><td style="text-align: left">....</td></tr>
+<tr><td style="text-align: left">pool_metadata</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">....</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="poolretirement-event"><a class="header" href="#poolretirement-event"><code>PoolRetirement</code> Event</a></h3>
-<ul>
-<li>pool: String,</li>
-<li>epoch: u64,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on <a href="https://cardano-foundation.gitbook.io/stake-pool-course/stake-pool-guide/stake-pool/retire_stakepool">stake pool retirement</a> event.</p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">pool</td><td style="text-align: left">String</td><td style="text-align: left">Pool ID.</td></tr>
+<tr><td style="text-align: left">epoch</td><td style="text-align: left">u64</td><td style="text-align: left">Current epoch.</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="genesiskeydelegation-event"><a class="header" href="#genesiskeydelegation-event"><code>GenesisKeyDelegation</code> Event</a></h3>
-<ul>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<p>Data on genesis key delegation.</p>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Current slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
+<br />
+<br />
+<hr />
 <h3 id="moveinstantaneousrewardscert-event"><a class="header" href="#moveinstantaneousrewardscert-event"><code>MoveInstantaneousRewardsCert</code> Event</a></h3>
-<ul>
-<li>from_reserves: bool,</li>
-<li>from_treasury: bool,</li>
-<li>to_stake_credentials: Option&lt;BTreeMap&lt;StakeCredential, i64&gt;&gt;,</li>
-<li>to_other_pot: Option<u64>,</li>
-<li>context:
-<ul>
-<li>block_number: Option<u64>,</li>
-<li>slot: Option<u64>,</li>
-<li>tx_idx: Option<usize>,</li>
-<li>tx_hash: Option<String>,</li>
-</ul>
-</li>
-</ul>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">from_reserves</td><td style="text-align: left">bool</td><td style="text-align: left">....</td></tr>
+<tr><td style="text-align: left">from_treasury</td><td style="text-align: left">bool</td><td style="text-align: left">....</td></tr>
+<tr><td style="text-align: left">to_stake_credentials</td><td style="text-align: left">Option&lt;BTreeMap&lt;StakeCredential, i64&gt;&gt;</td><td style="text-align: left">....</td></tr>
+<tr><td style="text-align: left">to_other_pot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">....</td></tr>
+</tbody></table>
+<p><strong>Context</strong></p>
+<table><thead><tr><th style="text-align: left">Name</th><th style="text-align: left">DataType</th><th style="text-align: left">Description</th></tr></thead><tbody>
+<tr><td style="text-align: left">block_number</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Height of block from genesis.</td></tr>
+<tr><td style="text-align: left">slot</td><td style="text-align: left">Option&lt;u64&gt;</td><td style="text-align: left">Blockchain slot.</td></tr>
+<tr><td style="text-align: left">tx_idx</td><td style="text-align: left">Option&lt;usize&gt;</td><td style="text-align: left">Transaction ID.</td></tr>
+<tr><td style="text-align: left">tx_hash</td><td style="text-align: left">Option&lt;String&gt;</td><td style="text-align: left">Transaction hash.</td></tr>
+</tbody></table>
 
                     </main>
 
