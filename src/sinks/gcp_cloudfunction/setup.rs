@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::time::Duration;
 
 use serde::Deserialize;
 
@@ -8,12 +8,13 @@ use crate::{
     utils::{retry, WithUtils},
 };
 
-#[derive(Default, Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct Config {
-    pub url: String,
-    pub authorization: Option<String>,
-    pub headers: Option<HashMap<String, String>>,
+    pub name: String,
+    pub project_id: String,
+    pub region: String,
     pub timeout: Option<u64>,
+    pub authorization: Option<String>,
     pub error_policy: Option<ErrorPolicy>,
     pub retry_policy: Option<retry::Policy>,
 }
@@ -22,14 +23,14 @@ impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let client = reqwest::blocking::ClientBuilder::new()
             .user_agent(APP_USER_AGENT)
-            .default_headers(build_headers_map(
-                self.inner.authorization.as_ref(),
-                self.inner.headers.as_ref(),
-            )?)
+            .default_headers(build_headers_map(self.inner.authorization.as_ref(), None)?)
             .timeout(Duration::from_millis(self.inner.timeout.unwrap_or(30000)))
             .build()?;
 
-        let url = self.inner.url.clone();
+        let url = format!(
+            "https://{}-{}.cloudfunctions.net/{}",
+            self.inner.region, self.inner.project_id, self.inner.name,
+        );
 
         let error_policy = self
             .inner

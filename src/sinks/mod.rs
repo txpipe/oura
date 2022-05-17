@@ -29,3 +29,6 @@ pub mod aws_s3;
 
 #[cfg(feature = "gcp")]
 pub mod gcp_pubsub;
+
+#[cfg(feature = "gcp")]
+pub mod gcp_cloudfunction;

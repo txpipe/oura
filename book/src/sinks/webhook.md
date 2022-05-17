@@ -12,9 +12,13 @@ type = "Webhook"
 url = "https://endpoint:5000/events"
 authorization = "user:pass"
 timeout = 30000
-error_policy = "Retry"
+error_policy = "Continue"
+
+[sink.retry_policy]
 max_retries = 30
-backoff_delay = 5000
+backoff_unit =  5000
+backoff_factor = 2
+max_backoff = 100000
 
 [sink.headers]
 extra_header_1 = "abc"
@@ -28,6 +32,5 @@ extra_header_2 = "123"
 - `authorization` (optional): value to add as the 'Authorization' HTTP header
 - `headers` (optional): key-value map of extra headers to pass in each HTTP call
 - `timeout` (optional): the timeout value for the HTTP response in milliseconds. Default value is `30000`.
-- `error_policy` (optional): either `Continue` or `Retry`. Default value is `Retry`.
-- `max_retries` (optional): the max number of retries before failing the whole pipeline. Default value is `30`
-- `backoff_delay` (optional): the delay expressed in milliseconds between each retry. Default value is `5000`.
+- `error_policy` (optional): either `Continue` or `Exit`. Default value is `Exit`.
+- [retry_policy](../advanced/retry_policy.md)

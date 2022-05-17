@@ -14,6 +14,7 @@ These are the existing sinks that are included as part the main _Oura_ codebase:
 - [AWS SQS](aws_sqs.md): a sink that sends each event as message to an AWS SQS queue.
 - [AWS Lamda](aws_lambda.md): a sink that invokes an AWS Lambda function for each event.
 - [AWS S3](aws_s3.md): a sink that saves the CBOR content of the blocks as an AWS S3 object.
-- [GCP PubSub](gcp_pubsub.md): a sink that sends each event as a message to a goolge cloud PubSub topic.
+- [GCP PubSub](gcp_pubsub.md): a sink that sends each event as a message to a google cloud PubSub topic.
+- [GCP CloudFunction](gcp_cloudfunction.md): a sink that sends each event as JSON to a Cloud Function via HTTP.
 
 New sinks are being developed, information will be added in this documentation to reflect the updated list. Contributions and feature request are welcome in our [Github Repo](https://github.com/txpipe/oura).

@@ -1,11 +1,9 @@
-use std::time::Duration;
-
 use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
     sinks::ErrorPolicy,
-    utils::WithUtils,
+    utils::{retry, WithUtils},
 };
 
 use super::run::writer_loop;
@@ -15,12 +13,8 @@ pub struct Config {
     pub topic: String,
     pub credentials: String,
     pub error_policy: Option<ErrorPolicy>,
-    pub max_retries: Option<usize>,
-    pub backoff_delay: Option<u64>,
+    pub retry_policy: Option<retry::Policy>,
 }
-
-const DEFAULT_MAX_RETRIES: usize = 20;
-const DEFAULT_BACKOFF_DELAY: u64 = 5_000;
 
 impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
@@ -34,10 +28,7 @@ impl SinkProvider for WithUtils<Config> {
             .cloned()
             .unwrap_or(ErrorPolicy::Exit);
 
-        let max_retries = self.inner.max_retries.unwrap_or(DEFAULT_MAX_RETRIES);
-
-        let backoff_delay =
-            Duration::from_millis(self.inner.backoff_delay.unwrap_or(DEFAULT_BACKOFF_DELAY));
+        let retry_policy = self.inner.retry_policy.unwrap_or_default();
 
         let utils = self.utils.clone();
 
@@ -47,8 +38,7 @@ impl SinkProvider for WithUtils<Config> {
                 credentials,
                 topic_name,
                 &error_policy,
-                max_retries,
-                backoff_delay,
+                &retry_policy,
                 utils,
             )
             .expect("writer loop failed");

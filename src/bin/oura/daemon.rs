@@ -47,6 +47,9 @@ use oura::sinks::aws_s3::Config as AwsS3Config;
 #[cfg(feature = "gcp")]
 use oura::sinks::gcp_pubsub::Config as GcpPubSubConfig;
 
+#[cfg(feature = "gcp")]
+use oura::sinks::gcp_cloudfunction::Config as GcpCloudFunctionConfig;
+
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
 
@@ -123,6 +126,9 @@ enum Sink {
 
     #[cfg(feature = "gcp")]
     GcpPubSub(GcpPubSubConfig),
+
+    #[cfg(feature = "gcp")]
+    GcpCloudFunction(GcpCloudFunctionConfig),
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
@@ -154,6 +160,9 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "gcp")]
         Sink::GcpPubSub(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "gcp")]
+        Sink::GcpCloudFunction(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
