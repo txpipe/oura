@@ -36,4 +36,4 @@
     - [Intersect Options](./advanced/intersect_options.md)
 - [Guides](./guides/README.md)
     - [Cardano => Kafka](./guides/cardano_2_kafka.md)
-    - [Connecting to custom networks](./guides/connecting_to_custom_networks.md)
+    - [Custom networks](./guides/connecting_to_custom_networks.md)
