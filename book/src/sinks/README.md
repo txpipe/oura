@@ -8,6 +8,7 @@ These are the existing sinks that are included as part the main _Oura_ codebase:
 
 - [Terminal](terminal.md): a sink that outputs events into stdout with fancy coloring
 - [Kakfa](kafka.md): a sink that sends each event into a Kafka topic
+- [Redis](redis.md): a sink that sends each event into a Redis stream.
 - [Elasticsearch](elastic.md): a sink that writes events into an Elasticsearch index or data stream.
 - [Webhook](webhook.md): a sink that outputs each event as an HTTP call to a remote endpoint.
 - [Logs](logs.md): a sink that saves events to the file system using JSONL text files.

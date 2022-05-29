@@ -1,4 +1,3 @@
-
 use redis::{Connection};
 use serde::Deserialize;
 
@@ -21,21 +20,20 @@ pub struct Config {
     pub stream: String,
     pub paritioning: Option<PartitionStrategy>,
 }
+
 pub fn redis_connection(u: String) -> Connection {
-    
     redis::Client::open(u)
       .expect("failed to open redis client")
       .get_connection()
       .expect("failed to get redis connection")
 }
+
 impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         
-
         let mut redis = redis_connection(self.inner.url.clone());
         
         let stream = self.inner.stream.clone();
-
         let utils = self.utils.clone();
 
         let partitioning = self
