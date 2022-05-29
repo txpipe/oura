@@ -35,6 +35,9 @@ use oura::sinks::kafka::Config as KafkaConfig;
 #[cfg(feature = "elasticsink")]
 use oura::sinks::elastic::Config as ElasticConfig;
 
+#[cfg(feature = "redissink")]
+use oura::sinks::redis::Config as RedisConfig;
+
 #[cfg(feature = "aws")]
 use oura::sinks::aws_sqs::Config as AwsSqsConfig;
 
@@ -112,6 +115,9 @@ enum Sink {
     #[cfg(feature = "elasticsink")]
     Elastic(ElasticConfig),
 
+    #[cfg(feature = "redissink")]
+    Redis(RedisConfig),
+
     #[cfg(feature = "aws")]
     AwsSqs(AwsSqsConfig),
 
@@ -142,6 +148,9 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "elasticsink")]
         Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "redissink")]
+        Sink::Redis(c) => WithUtils::new(c, utils).bootstrap(input),
 
         #[cfg(feature = "aws")]
         Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
