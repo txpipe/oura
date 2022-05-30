@@ -49,11 +49,13 @@ impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let explicit_region = self.inner.region.to_owned();
 
-        let aws_config = tokio::runtime::Runtime::new()?.block_on(
-            aws_config::from_env()
-                .region(Region::new(explicit_region))
-                .load(),
-        );
+        let aws_config = tokio::runtime::Builder::new_current_thread()
+            .build()?
+            .block_on(
+                aws_config::from_env()
+                    .region(Region::new(explicit_region))
+                    .load(),
+            );
 
         let retry_config = RetryConfig::new()
             .with_max_attempts(self.inner.max_retries.unwrap_or(DEFAULT_MAX_RETRIES));

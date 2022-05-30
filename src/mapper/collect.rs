@@ -1,13 +1,16 @@
 use pallas::ledger::primitives::alonzo::{
-    AuxiliaryData, Multiasset, TransactionInput, TransactionOutput, Value,
+    AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value,
 };
 
 use crate::{
-    model::{MetadataRecord, MintRecord, OutputAssetRecord, TxInputRecord, TxOutputRecord},
+    model::{
+        MetadataRecord, MintRecord, OutputAssetRecord, TransactionRecord, TxInputRecord,
+        TxOutputRecord,
+    },
     Error,
 };
 
-use super::EventWriter;
+use super::{map::ToHex, EventWriter};
 
 impl EventWriter {
     pub fn collect_input_records(&self, source: &[TransactionInput]) -> Vec<TxInputRecord> {
@@ -34,7 +37,7 @@ impl EventWriter {
                 .iter()
                 .flat_map(|(policy, assets)| {
                     assets.iter().map(|(asset, amount)| {
-                        self.to_transaction_output_asset_record(policy, asset, *amount)
+                        self.to_transaction_output_asset_record(policy, asset, amount.into())
                     })
                 })
                 .collect(),
@@ -71,5 +74,27 @@ impl EventWriter {
                 .collect(),
             None => Ok(vec![]),
         }
+    }
+
+    pub fn collect_shelley_tx_records(
+        &self,
+        block: &Block,
+    ) -> Result<Vec<TransactionRecord>, Error> {
+        block
+            .transaction_bodies
+            .iter()
+            .enumerate()
+            .map(|(idx, tx)| {
+                let aux_data = block
+                    .auxiliary_data_set
+                    .iter()
+                    .find(|(k, _)| *k == (idx as u32))
+                    .map(|(_, v)| v);
+
+                let tx_hash = tx.to_hash().to_hex();
+
+                self.to_transaction_record(tx, &tx_hash, aux_data)
+            })
+            .collect()
     }
 }

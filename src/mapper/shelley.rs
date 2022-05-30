@@ -1,8 +1,8 @@
 use pallas::ledger::primitives::Fragment;
 
 use pallas::ledger::primitives::alonzo::{
-    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Metadatum, Multiasset,
-    TransactionBody, TransactionBodyComponent, TransactionInput, TransactionOutput, Value,
+    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
+    TransactionBodyComponent, TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
 };
 
 use pallas::crypto::hash::Hash;
@@ -20,13 +20,11 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            match label {
-                Metadatum::Int(i) if i128::from(*i) == 721i128 => {
-                    self.crawl_metadata_label_721(content)?
-                }
-                Metadatum::Text(x) if x == "721" => self.crawl_metadata_label_721(content)?,
+            match u64::from(label) {
+                721u64 => self.crawl_metadata_label_721(content)?,
+                61284u64 => self.crawl_metadata_label_61284(content)?,
                 _ => (),
-            };
+            }
         }
 
         Ok(())
@@ -39,13 +37,15 @@ impl EventWriter {
                     self.crawl_metadata(metadata)?;
                 }
 
-                for _native in data.native_scripts.iter() {
-                    self.append(self.to_native_script_event())?;
+                if let Some(native) = &data.native_scripts {
+                    for script in native.iter() {
+                        self.append(self.to_aux_native_script_event(script))?;
+                    }
                 }
 
                 if let Some(plutus) = &data.plutus_scripts {
                     for script in plutus.iter() {
-                        self.append(self.to_plutus_script_event(script))?;
+                        self.append(self.to_aux_plutus_script_event(script))?;
                     }
                 }
             }
@@ -58,8 +58,10 @@ impl EventWriter {
             } => {
                 self.crawl_metadata(transaction_metadata)?;
 
-                for _native in auxiliary_scripts.iter() {
-                    self.append(self.to_native_script_event())?;
+                if let Some(native) = &auxiliary_scripts {
+                    for script in native.iter() {
+                        self.append(self.to_aux_native_script_event(script))?;
+                    }
                 }
             }
         }
@@ -75,9 +77,11 @@ impl EventWriter {
         if let Value::Multiasset(_, policies) = amount {
             for (policy, assets) in policies.iter() {
                 for (asset, amount) in assets.iter() {
-                    self.append_from(
-                        self.to_transaction_output_asset_record(policy, asset, *amount),
-                    )?;
+                    self.append_from(self.to_transaction_output_asset_record(
+                        policy,
+                        asset,
+                        amount.into(),
+                    ))?;
                 }
             }
         }
@@ -128,11 +132,40 @@ impl EventWriter {
         Ok(())
     }
 
+    fn crawl_witness_set(&self, witness_set: &TransactionWitnessSet) -> Result<(), Error> {
+        if let Some(native) = &witness_set.native_script {
+            for script in native.iter() {
+                self.append_from(self.to_native_witness_record(script)?)?;
+            }
+        }
+
+        if let Some(plutus) = &witness_set.plutus_script {
+            for script in plutus.iter() {
+                self.append_from(self.to_plutus_witness_record(script)?)?;
+            }
+        }
+
+        if let Some(redeemers) = &witness_set.redeemer {
+            for redeemer in redeemers.iter() {
+                self.append_from(self.to_plutus_redeemer_record(redeemer)?)?;
+            }
+        }
+
+        if let Some(datums) = &witness_set.plutus_data {
+            for datum in datums.iter() {
+                self.append_from(self.to_plutus_datum_record(datum)?)?;
+            }
+        }
+
+        Ok(())
+    }
+
     fn crawl_shelley_transaction(
         &self,
         tx: &TransactionBody,
         tx_hash: &str,
         aux_data: Option<&AuxiliaryData>,
+        witness_set: Option<&TransactionWitnessSet>,
     ) -> Result<(), Error> {
         let record = self.to_transaction_record(tx, tx_hash, aux_data)?;
 
@@ -188,6 +221,10 @@ impl EventWriter {
             self.crawl_auxdata(aux_data)?;
         }
 
+        if let Some(witness_set) = witness_set {
+            self.crawl_witness_set(witness_set)?;
+        }
+
         if self.config.include_transaction_end_events {
             self.append(EventData::TransactionEnd(record))?;
         }
@@ -213,7 +250,9 @@ impl EventWriter {
                 .find(|(k, _)| *k == (idx as u32))
                 .map(|(_, v)| v);
 
-            let tx_hash = crypto::hash_transaction(tx).to_hex();
+            let witness_set = block.transaction_witness_sets.get(idx);
+
+            let tx_hash = tx.to_hash().to_hex();
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
@@ -221,7 +260,7 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_shelley_transaction(tx, &tx_hash, aux_data)?;
+            child.crawl_shelley_transaction(tx, &tx_hash, aux_data, witness_set)?;
         }
 
         if self.config.include_block_end_events {

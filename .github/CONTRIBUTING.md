@@ -18,7 +18,7 @@ Please see the [LICENSE](LICENSE.md) file for more details.
 
 ## Scope of the Project
 
-The architecture of _Oura_ is extensible by design. There's no strict bound to the set of sources, filters and sinks that can be included. One might be tempted to add new "plugins" for each particular use-case, but this would eventually turn the codebase unmaintanble.
+The architecture of _Oura_ is extensible by design. There's no strict bound to the set of sources, filters and sinks that can be included. One might be tempted to add new "plugins" for each particular use-case, but this would eventually turn the codebase unmaintainable.
 
 To avoid an unbounded growth, we try to keep the set of built-in plugins limited only to general-purpose use-cases. If you have a very particular need, our recommendation is to create a new crate, add _Oura_ as a dependency and fill the gaps required for your use-case.
 

@@ -1,6 +1,10 @@
+mod common;
+
 pub mod assert;
 pub mod stdout;
 pub mod terminal;
+
+pub use common::*;
 
 #[cfg(feature = "logs")]
 pub mod logs;
@@ -25,3 +29,6 @@ pub mod aws_s3;
 
 #[cfg(feature = "redissink")]
 pub mod redis;
+
+#[cfg(feature = "gcp")]
+pub mod gcp_pubsub;

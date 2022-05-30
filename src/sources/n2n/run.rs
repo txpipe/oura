@@ -28,7 +28,7 @@ impl Debug for Block2EventMapper {
 }
 
 impl blockfetch::Observer for Block2EventMapper {
-    fn on_block_received(&self, body: Vec<u8>) -> Result<(), Error> {
+    fn on_block_received(&mut self, body: Vec<u8>) -> Result<(), Error> {
         let Self(writer) = self;
 
         match probing::probe_block_cbor_era(&body) {
@@ -52,7 +52,7 @@ impl blockfetch::Observer for Block2EventMapper {
                     .ok_or_warn("error crawling block for events");
             }
             probing::Outcome::Inconclusive => {
-                log::error!("can't infer primitive block from cbor, inconslusive probing. CBOR hex for debubbing: {}", hex::encode(body));
+                log::error!("can't infer primitive block from cbor, inconclusive probing. CBOR hex for debugging: {}", hex::encode(body));
             }
         }
 

@@ -1,6 +1,6 @@
 # Binary Releases
 
-Oura can be ran as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.
+Oura can be run as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.
 
 ## MacOS
 

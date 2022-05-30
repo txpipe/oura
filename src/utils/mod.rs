@@ -2,7 +2,7 @@
 //!
 //! This module includes general-purpose utilities that could potentially be
 //! used by more than a single stage. The entry point to this utilities is
-//! desgined as singelton [`Utils`] instance shared by all stages through an Arc
+//! designed as singleton [`Utils`] instance shared by all stages through an Arc
 //! pointer.
 
 use std::sync::Arc;
@@ -63,6 +63,7 @@ pub struct ChainWellKnownInfo {
     pub shelley_known_hash: String,
     pub shelley_known_time: u64,
     pub address_hrp: String,
+    pub adahandle_policy: String,
 }
 
 impl ChainWellKnownInfo {
@@ -82,6 +83,8 @@ impl ChainWellKnownInfo {
                 .to_string(),
             shelley_known_time: 1596059091,
             address_hrp: "addr".to_string(),
+            adahandle_policy: "f0ff48bbb7bbe9d59a40f1ce90e9e9d0ff5002ec48f232b49ca0fb9a"
+                .to_string(),
         }
     }
 
@@ -101,6 +104,8 @@ impl ChainWellKnownInfo {
                 .to_string(),
             shelley_known_time: 1595967616,
             address_hrp: "addr_test".to_string(),
+            adahandle_policy: "8d18d786e92776c824607fd8e193ec535c79dc61ea2405ddf3b09fe3"
+                .to_string(),
         }
     }
 
@@ -164,9 +169,9 @@ impl Utils {
 /// Wraps a struct with pipeline-wide utilities
 ///
 /// Most of the stage bootstrapping processes will require a custom config value
-/// and a reference to the shared utilities singelton. This is a quality-of-life
+/// and a reference to the shared utilities singleton. This is a quality-of-life
 /// artifact to wrap other structs (usually configs) and attach the utilities
-/// singelton entrypoint.
+/// singleton entrypoint.
 pub struct WithUtils<C> {
     pub utils: Arc<Utils>,
     pub inner: C,

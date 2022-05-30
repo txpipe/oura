@@ -6,6 +6,7 @@ use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
+use pallas::ledger::primitives::byron::MainBlock;
 use pallas::ledger::primitives::{byron, Fragment};
 
 impl EventWriter {
@@ -44,6 +45,7 @@ impl EventWriter {
             address: source.address.to_addr_string()?,
             amount: source.amount,
             assets: None,
+            datum_hash: None,
         })
     }
 
@@ -98,6 +100,21 @@ impl EventWriter {
         Ok(record)
     }
 
+    pub fn collect_byron_tx_records(
+        &self,
+        block: &MainBlock,
+    ) -> Result<Vec<TransactionRecord>, Error> {
+        block
+            .body
+            .tx_payload
+            .iter()
+            .map(|tx| {
+                let tx_hash = tx.transaction.to_hash().to_string();
+                self.to_byron_transaction_record(tx, &tx_hash)
+            })
+            .collect()
+    }
+
     fn crawl_byron_transaction(
         &self,
         source: &byron::TxPayload,
@@ -142,7 +159,7 @@ impl EventWriter {
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
-        Ok(BlockRecord {
+        let mut record = BlockRecord {
             era: Era::Byron,
             body_size: cbor.len() as usize,
             issuer_vkey: source.header.consensus_data.1.to_hex(),
@@ -157,7 +174,14 @@ impl EventWriter {
                 true => hex::encode(cbor).into(),
                 false => None,
             },
-        })
+            transactions: None,
+        };
+
+        if self.config.include_block_details {
+            record.transactions = Some(self.collect_byron_tx_records(source)?);
+        }
+
+        Ok(record)
     }
 
     fn crawl_byron_main_block(
@@ -210,6 +234,7 @@ impl EventWriter {
                 true => hex::encode(cbor).into(),
                 false => None,
             },
+            transactions: None,
         })
     }
 

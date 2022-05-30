@@ -9,6 +9,7 @@ data:
     type = "N2N"
     address = ["Tcp", "relays-new.cardano-testnet.iohkdev.io:3001"]
     magic = "testnet"
+    min_depth = 6
 
     [source.finalize]
     max_block_quantity = 20

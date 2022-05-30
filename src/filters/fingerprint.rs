@@ -9,7 +9,11 @@ use log::{debug, warn};
 use serde::Deserialize;
 
 use crate::{
-    model::{CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord, OutputAssetRecord},
+    model::{
+        CIP15AssetRecord, CIP25AssetRecord, Event, EventData, MetadataRecord, MintRecord,
+        NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
+        PlutusWitnessRecord, VKeyWitnessRecord,
+    },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
     Error,
 };
@@ -141,14 +145,40 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_prefix("coll")
             .append_slice(tx_id)?
             .append_to_string(index)?,
-        EventData::NativeScript {} => b
+        EventData::NativeScript { policy_id, .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("scpt")
-            .append_optional(&event.context.tx_hash)?,
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(policy_id)?,
         EventData::PlutusScript { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("plut")
             .append_optional(&event.context.tx_hash)?,
+        EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("witp")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(script_hash)?,
+        EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("witn")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(policy_id)?,
+        EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("witv")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(vkey_hex)?,
+        EventData::PlutusRedeemer(PlutusRedeemerRecord { input_idx, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("rdmr")
+            .append_optional(&event.context.tx_hash)?
+            .append_to_string(input_idx)?,
+        EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("dtum")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(datum_hash)?,
         EventData::StakeRegistration { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("skre")
@@ -197,6 +227,14 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .append_optional(&event.context.tx_hash)?
             .append_slice(policy)?
             .append_slice(asset)?,
+        EventData::CIP15Asset(CIP15AssetRecord {
+            voting_key, nonce, ..
+        }) => b
+            .with_slot(&event.context.slot)
+            .with_prefix("cip15")
+            .append_optional(&event.context.tx_hash)?
+            .append_slice(voting_key)?
+            .append_to_string(nonce)?,
     };
 
     b.build()
