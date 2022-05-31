@@ -359,7 +359,7 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "tokio",
- "tokio-util",
+ "tokio-util 0.6.9",
  "tracing",
 ]
 
@@ -585,19 +585,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "combine"
-version = "4.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50b727aacc797f9fc28e355d21f34709ac4fc9adecfe470ad07b8f4464f53062"
-dependencies = [
- "bytes",
- "futures-core",
- "memchr",
- "pin-project-lite",
- "tokio",
- "tokio-util",
-
-[[package]]
 name = "clap_lex"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -625,6 +612,20 @@ dependencies = [
  "serde_json",
  "smpl_jwt",
  "tokio",
+]
+
+[[package]]
+name = "combine"
+version = "4.6.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a604e93b79d1808327a6fca85a6f2d69de66461e7620f5a4cbf5fb4d1d7c948"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "memchr",
+ "pin-project-lite",
+ "tokio",
+ "tokio-util 0.7.2",
 ]
 
 [[package]]
@@ -757,17 +758,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "dtoa"
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
-
-[[package]]
 name = "discard"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
 
+[[package]]
+name = "dtoa"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
 name = "dyn-clone"
@@ -1044,7 +1044,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio",
- "tokio-util",
+ "tokio-util 0.6.9",
  "tracing",
 ]
 
@@ -1934,7 +1934,7 @@ dependencies = [
  "pin-project-lite",
  "sha1",
  "tokio",
- "tokio-util",
+ "tokio-util 0.6.9",
  "url",
 ]
 
@@ -2009,7 +2009,7 @@ dependencies = [
  "serde_urlencoded",
  "tokio",
  "tokio-native-tls",
- "tokio-util",
+ "tokio-util 0.6.9",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -2639,6 +2639,20 @@ dependencies = [
  "log 0.4.17",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "tokio-util"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f988a1a1adc2fb21f9c12aa96441da33a1728193ae0b95d2be22dbd17fcb4e5c"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "futures-sink",
+ "pin-project-lite",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
