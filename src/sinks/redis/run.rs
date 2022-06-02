@@ -36,15 +36,11 @@ pub fn producer_loop(
     for event in input.iter() {
         utils.track_sink_progress(&event);
         let payload = RedisRecord::from(event);
-        let stream: String;
-        match stream_strategy {
-            StreamStrategy::ByEventType => {
-                stream = payload.event.data.clone().to_string().to_lowercase();
-            }
-            _ => {
-                stream = redis_stream.clone();
-            }
-        }
+
+        let stream = match stream_strategy {
+            StreamStrategy::ByEventType => payload.event.data.clone().to_string().to_lowercase(),
+            _ => redis_stream.clone(),
+        };
 
         log::debug!(
             "Stream: {:?}, Key: {:?}, Event: {:?}",

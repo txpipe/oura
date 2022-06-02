@@ -32,7 +32,12 @@ impl SinkProvider for WithUtils<Config> {
             _ => StreamStrategy::None,
         };
 
-        let redis_stream = self.inner.stream_name.clone().unwrap_or("oura".to_string());
+        let redis_stream = self
+            .inner
+            .stream_name
+            .clone()
+            .unwrap_or_else(|| "oura".to_string());
+
         let utils = self.utils.clone();
         let handle = std::thread::spawn(move || {
             producer_loop(input, utils, &mut connection, stream_strategy, redis_stream)
