@@ -26,16 +26,19 @@ impl SinkProvider for WithUtils<Config> {
         let client = Client::open(self.inner.redis_server.clone())?;
         let mut connection = client.get_connection()?;
         log::debug!("Connected to Redis Database!");
+
         let stream_strategy = match self.inner.stream_strategy.clone() {
             Some(strategy) => strategy,
             _ => StreamStrategy::None,
         };
+
         let redis_stream = self.inner.stream_name.clone().unwrap_or("oura".to_string());
         let utils = self.utils.clone();
         let handle = std::thread::spawn(move || {
             producer_loop(input, utils, &mut connection, stream_strategy, redis_stream)
                 .expect("redis sink loop failed");
         });
+
         Ok(handle)
     }
 }
