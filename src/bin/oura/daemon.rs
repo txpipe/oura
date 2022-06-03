@@ -124,13 +124,11 @@ enum Sink {
     #[cfg(feature = "aws")]
     AwsS3(AwsS3Config),
 
-
     #[cfg(feature = "redissink")]
     Redis(RedisConfig),
-  
+
     #[cfg(feature = "gcp")]
     GcpPubSub(GcpPubSubConfig),
-
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
@@ -165,7 +163,6 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "gcp")]
         Sink::GcpPubSub(c) => WithUtils::new(c, utils).bootstrap(input),
-
     }
 }
 
