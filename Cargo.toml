@@ -12,7 +12,7 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.9.1"
+pallas = "0.10.0"
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"

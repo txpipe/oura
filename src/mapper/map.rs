@@ -8,7 +8,7 @@ use pallas::ledger::primitives::alonzo::{
     TransactionOutput, Value,
 };
 use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
-use pallas::ledger::primitives::ToCanonicalJson;
+use pallas::ledger::primitives::{ToCanonicalJson, ToHash};
 
 use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};

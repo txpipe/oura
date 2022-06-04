@@ -1,14 +1,9 @@
 use core::fmt;
-use std::{net::TcpStream, ops::Deref, str::FromStr, time::Duration};
+use std::{ops::Deref, str::FromStr, time::Duration};
 
-#[cfg(target_family = "unix")]
-use std::os::unix::net::UnixStream;
-
-use log::info;
-use net2::TcpStreamExt;
 use pallas::network::{
     miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
-    multiplexer::{Channel, Multiplexer},
+    multiplexer::{bearers::Bearer, StdChannel, StdPlexer},
 };
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
@@ -151,24 +146,16 @@ pub struct RetryPolicy {
     connection_max_backoff: u32,
 }
 
-pub fn setup_multiplexer_attempt(
-    bearer: &BearerKind,
-    address: &str,
-    protocols: &[u16],
-) -> Result<Multiplexer, Error> {
+pub fn setup_multiplexer_attempt(bearer: &BearerKind, address: &str) -> Result<StdPlexer, Error> {
     match bearer {
         BearerKind::Tcp => {
-            let tcp = TcpStream::connect(address)?;
-            tcp.set_nodelay(true)?;
-            tcp.set_keepalive_ms(Some(30_000u32))?;
-
-            Multiplexer::setup(tcp, protocols)
+            let bearer = Bearer::connect_tcp(address)?;
+            Ok(StdPlexer::new(bearer))
         }
         #[cfg(target_family = "unix")]
         BearerKind::Unix => {
-            let unix = UnixStream::connect(address)?;
-
-            Multiplexer::setup(unix, protocols)
+            let unix = Bearer::connect_unix(address)?;
+            Ok(StdPlexer::new(unix))
         }
     }
 }
@@ -176,12 +163,11 @@ pub fn setup_multiplexer_attempt(
 pub fn setup_multiplexer(
     bearer: &BearerKind,
     address: &str,
-    protocols: &[u16],
     retry: &Option<RetryPolicy>,
-) -> Result<Multiplexer, Error> {
+) -> Result<StdPlexer, Error> {
     match retry {
         Some(policy) => retry::retry_operation(
-            || setup_multiplexer_attempt(bearer, address, protocols),
+            || setup_multiplexer_attempt(bearer, address),
             &retry::Policy {
                 max_retries: policy.connection_max_retries,
                 backoff_unit: Duration::from_secs(1),
@@ -189,7 +175,7 @@ pub fn setup_multiplexer(
                 max_backoff: Duration::from_secs(policy.connection_max_backoff as u64),
             },
         ),
-        None => setup_multiplexer_attempt(bearer, address, protocols),
+        None => setup_multiplexer_attempt(bearer, address),
     }
 }
 
@@ -241,7 +227,7 @@ pub fn should_finalize(
 }
 
 pub(crate) fn find_end_of_chain(
-    channel: &mut Channel,
+    channel: &mut StdChannel,
     well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::Error> {
     let point = Point::Specific(
@@ -251,7 +237,7 @@ pub(crate) fn find_end_of_chain(
 
     let agent = TipFinder::initial(point);
     let agent = run_agent(agent, channel)?;
-    info!("chain point query output: {:?}", agent.output);
+    log::info!("chain point query output: {:?}", agent.output);
 
     match agent.output {
         Some(tip) => Ok(tip.0),
@@ -263,7 +249,7 @@ pub(crate) fn define_start_point(
     intersect: &Option<IntersectArg>,
     since: &Option<PointArg>,
     utils: &Utils,
-    cs_channel: &mut Channel,
+    cs_channel: &mut StdChannel,
 ) -> Result<Option<Vec<Point>>, Error> {
     let cursor = utils.get_cursor_if_any();
 
