@@ -1,7 +1,7 @@
-use pallas::ledger::primitives::Fragment;
+use pallas::ledger::primitives::{Fragment, ToHash};
 
 use pallas::ledger::primitives::alonzo::{
-    self, crypto, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
+    self, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
     TransactionBodyComponent, TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
 };
 
@@ -272,7 +272,7 @@ impl EventWriter {
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
-        let hash = crypto::hash_block_header(&block.header);
+        let hash = block.header.to_hash();
 
         let child = self.child_writer(EventContext {
             block_hash: Some(hex::encode(&hash)),
@@ -287,7 +287,7 @@ impl EventWriter {
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl(&self, block: &Block) -> Result<(), Error> {
-        let hash = crypto::hash_block_header(&block.header);
+        let hash = block.header.to_hash();
 
         let child = self.child_writer(EventContext {
             block_hash: Some(hex::encode(&hash)),
@@ -305,13 +305,13 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we already have a decoded block (for example, N2C). The raw CBOR is also
     /// passed through in case we need to attach it to outbound events.
-    pub fn crawl_shelley_with_cbor(
+    pub fn crawl_shelley_with_cbor<'b>(
         &self,
-        block: &Block,
-        cbor: &[u8],
+        block: &'b Block,
+        cbor: &'b [u8],
         era: Era,
     ) -> Result<(), Error> {
-        let hash = crypto::hash_block_header(&block.header);
+        let hash = block.header.to_hash();
 
         let child = self.child_writer(EventContext {
             block_hash: Some(hex::encode(&hash)),

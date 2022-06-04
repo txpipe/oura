@@ -1,6 +1,6 @@
 use pallas::{
     codec::minicbor::decode,
-    ledger::primitives::{alonzo, byron},
+    ledger::primitives::{alonzo, byron, ToHash},
     network::miniprotocols::{chainsync::HeaderContent, Point},
 };
 
@@ -50,7 +50,7 @@ impl MultiEraHeader {
                 Ok(Point::Specific(slot, hash.to_vec()))
             }
             MultiEraHeader::AlonzoCompatible(x) => {
-                let hash = alonzo::crypto::hash_block_header(x);
+                let hash = x.to_hash();
                 Ok(Point::Specific(x.header_body.slot, hash.to_vec()))
             }
         }

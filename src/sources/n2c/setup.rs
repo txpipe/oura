@@ -1,10 +1,8 @@
 use std::ops::Deref;
 
-use log::info;
-
 use pallas::network::{
     miniprotocols::{handshake, run_agent, MAINNET_MAGIC},
-    multiplexer::Channel,
+    multiplexer::StdChannel,
 };
 
 use serde::Deserialize;
@@ -53,10 +51,10 @@ pub struct Config {
     pub retry_policy: Option<RetryPolicy>,
 }
 
-fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
+fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), Error> {
     let versions = handshake::n2c::VersionTable::v1_and_above(magic);
     let agent = run_agent(handshake::Initiator::initial(versions), channel)?;
-    info!("handshake output: {:?}", agent.output);
+    log::info!("handshake output: {:?}", agent.output);
 
     match agent.output {
         handshake::Output::Accepted(_, _) => Ok(()),
@@ -68,12 +66,17 @@ impl SourceProvider for WithUtils<Config> {
     fn bootstrap(&self) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
-        let mut muxer = setup_multiplexer(
+        let mut plexer = setup_multiplexer(
             &self.inner.address.0,
             &self.inner.address.1,
-            &[0, 5],
             &self.inner.retry_policy,
         )?;
+
+        let mut hs_channel = plexer.use_channel(0);
+        let mut cs_channel = plexer.use_channel(5);
+
+        plexer.muxer.spawn();
+        plexer.demuxer.spawn();
 
         let magic = match &self.inner.magic {
             Some(m) => *m.deref(),
@@ -82,10 +85,7 @@ impl SourceProvider for WithUtils<Config> {
 
         let writer = EventWriter::new(output_tx, self.utils.clone(), self.inner.mapper.clone());
 
-        let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
-
-        let mut cs_channel = muxer.use_channel(5);
 
         let known_points = define_start_point(
             &self.inner.intersect,
@@ -95,7 +95,7 @@ impl SourceProvider for WithUtils<Config> {
             &mut cs_channel,
         )?;
 
-        info!("starting chain sync from: {:?}", &known_points);
+        log::info!("starting chain sync from: {:?}", &known_points);
 
         let min_depth = self.inner.min_depth;
         let handle = std::thread::spawn(move || {

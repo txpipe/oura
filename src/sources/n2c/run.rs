@@ -1,18 +1,18 @@
-use std::{collections::HashMap, fmt::Debug, ops::Deref};
+use std::{collections::HashMap, fmt::Debug};
 
 use pallas::network::{
     miniprotocols::{chainsync, run_agent, Point},
-    multiplexer::Channel,
+    multiplexer::StdChannel,
 };
 
-use crate::{mapper::EventWriter, Error};
+use crate::{mapper::EventWriter, sources::n2c::blocks::CborHolder, Error};
 
 use super::blocks::MultiEraBlock;
 
 struct ChainObserver {
     chain_buffer: chainsync::RollbackBuffer,
     min_depth: usize,
-    blocks: HashMap<Point, MultiEraBlock>,
+    blocks: HashMap<Point, CborHolder>,
     event_writer: EventWriter,
 }
 
@@ -32,16 +32,16 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     );
 }
 
-impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
+impl<'b> chainsync::Observer<chainsync::BlockContent> for ChainObserver {
     fn on_roll_forward(
         &mut self,
         content: chainsync::BlockContent,
         tip: &chainsync::Tip,
     ) -> Result<chainsync::Continuation, Box<dyn std::error::Error>> {
         // parse the block and extract the point of the chain
-        let cbor = Vec::from(content.deref());
-        let block = MultiEraBlock::try_from(content)?;
-        let point = block.read_cursor()?;
+        let cbor = content.into();
+        let block = CborHolder::new(cbor);
+        let point = block.parse()?.read_cursor()?;
 
         // store the block for later retrieval
         self.blocks.insert(point.clone(), block);
@@ -61,13 +61,13 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 .remove(&point)
                 .expect("required block not found in memory");
 
-            match block {
-                MultiEraBlock::Byron(model) => {
-                    self.event_writer.crawl_byron_with_cbor(&model, &cbor)?
-                }
+            match block.parse()? {
+                MultiEraBlock::Byron(model) => self
+                    .event_writer
+                    .crawl_byron_with_cbor(&model, block.cbor())?,
                 MultiEraBlock::AlonzoCompatible(model, era) => self
                     .event_writer
-                    .crawl_shelley_with_cbor(&model, &cbor, era.into())?,
+                    .crawl_shelley_with_cbor(&model, block.cbor(), era.into())?,
             };
         }
 
@@ -107,7 +107,7 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
 }
 
 pub(crate) fn observe_forever(
-    mut channel: Channel,
+    mut channel: StdChannel,
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     min_depth: usize,
