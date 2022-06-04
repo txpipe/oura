@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use pallas::network::{
     miniprotocols::{handshake, run_agent, MAINNET_MAGIC},
-    multiplexer::{self, StdChannel},
+    multiplexer::StdChannel,
 };
 
 use serde::Deserialize;
