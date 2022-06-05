@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${TEST_NAME}
+data:
+  daemon.toml: |-
+    [source]
+    type = "N2C"
+    address = ["Unix", "/opt/cardano/cnode/sockets/node0.socket"]
+    magic = "testnet"
+    min_depth = 6
+
+    [source.retry_policy]
+    connection_max_retries = 5
+    connection_max_backoff = 60
+
+    [source.finalize]
+    max_block_quantity = 20
+
+    [source.intersect]
+    type = "Tip"
+
+    [sink]
+    type = "Assert"
+    break_on_failure = true
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${TEST_NAME}
+  labels:
+    app: ${TEST_NAME}
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: ${TEST_NAME}
+    spec:
+      restartPolicy: "Never"
+      containers:
+        - name: main
+          image: ${TARGET_IMAGE}
+          env:
+            - name: "RUST_LOG"
+              value: "warn"
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 50m
+            limits:
+              memory: 500Mi
+              cpu: 200m
+          args:
+            - "daemon"
+          volumeMounts:
+            - name: oura-config
+              mountPath: /etc/oura
+            - name: unix-socket
+              mountPath: /opt/cardano/cnode/sockets
+        - name: socat
+          image: alpine/socat
+          args:
+            [
+              "UNIX-LISTEN:/opt/cardano/cnode/sockets/node0.socket,reuseaddr,fork",
+              "TCP-CONNECT:node-0.nodes.testnet.svc.cluster.local:3307",
+            ]
+          volumeMounts:
+            - name: unix-socket
+              mountPath: /opt/cardano/cnode/sockets
+      volumes:
+        - name: oura-config
+          configMap:
+            name: ${TEST_NAME}
+        - name: unix-socket
+          emptyDir: {}

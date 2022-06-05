@@ -71,6 +71,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: assert-n2c-testnet-origin-blocks
+          - name: assert-n2c-testnet-tip-blocks
           - name: assert-n2n-mainnet-origin-blocks
           - name: assert-n2n-mainnet-tip-blocks
           - name: assert-n2n-testnet-origin-blocks
