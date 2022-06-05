@@ -16,10 +16,10 @@ data:
     connection_max_backoff = 60
 
     [source.finalize]
-    max_block_quantity = 20
+    max_block_quantity = 2000
 
     [source.intersect]
-    type = "Tip"
+    type = "Origin"
 
     [sink]
     type = "Assert"
