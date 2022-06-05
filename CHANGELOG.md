@@ -2,6 +2,17 @@
 ## [Unreleased]
 
 
+<a name="v1.4.2"></a>
+## [v1.4.2] - 2022-06-05
+### Bug Fixes
+- Include EBB blocks in E2E tests ([#315](https://github.com/txpipe/oura/issues/315))
+- Add missing finalize option to N2C ([#314](https://github.com/txpipe/oura/issues/314))
+- Upgrade Pallas to fix tx hash mismatch ([#312](https://github.com/txpipe/oura/issues/312))
+
+### Continuous Integration
+- Add N2C E2E tests ([#313](https://github.com/txpipe/oura/issues/313))
+
+
 <a name="v1.4.1"></a>
 ## [v1.4.1] - 2022-05-09
 ### Bug Fixes
@@ -539,7 +550,8 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 - fix lint issues
 
 
-[Unreleased]: https://github.com/txpipe/oura/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/txpipe/oura/compare/v1.4.2...HEAD
+[v1.4.2]: https://github.com/txpipe/oura/compare/v1.4.1...v1.4.2
 [v1.4.1]: https://github.com/txpipe/oura/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/txpipe/oura/compare/v1.3.2...v1.4.0
 [v1.3.2]: https://github.com/txpipe/oura/compare/v1.3.1...v1.3.2
