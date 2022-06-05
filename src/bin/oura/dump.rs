@@ -130,6 +130,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
             since: None,
             intersect,
             retry_policy: None,
+            finalize: None,
         }),
     };
 

@@ -5,7 +5,11 @@ use pallas::network::{
     multiplexer::StdChannel,
 };
 
-use crate::{mapper::EventWriter, sources::n2c::blocks::CborHolder, Error};
+use crate::{
+    mapper::EventWriter,
+    sources::{n2c::blocks::CborHolder, should_finalize, FinalizeConfig},
+    Error,
+};
 
 use super::blocks::MultiEraBlock;
 
@@ -14,6 +18,8 @@ struct ChainObserver {
     min_depth: usize,
     blocks: HashMap<Point, CborHolder>,
     event_writer: EventWriter,
+    finalize_config: Option<FinalizeConfig>,
+    block_count: u64,
 }
 
 // workaround to put a stop on excessive debug requirement coming from Pallas
@@ -69,6 +75,13 @@ impl<'b> chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                     .event_writer
                     .crawl_shelley_with_cbor(&model, block.cbor(), era.into())?,
             };
+
+            self.block_count += 1;
+
+            // evaluate if we should finalize the thread according to config
+            if should_finalize(&self.finalize_config, &point, self.block_count) {
+                return Ok(chainsync::Continuation::DropOut);
+            }
         }
 
         log_buffer_state(&self.chain_buffer);
@@ -111,12 +124,15 @@ pub(crate) fn observe_forever(
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     min_depth: usize,
+    finalize_config: Option<FinalizeConfig>,
 ) -> Result<(), Error> {
     let observer = ChainObserver {
         chain_buffer: Default::default(),
         blocks: HashMap::new(),
         min_depth,
         event_writer,
+        block_count: 0,
+        finalize_config,
     };
 
     let agent = chainsync::BlockConsumer::initial(known_points, observer);
