@@ -12,7 +12,7 @@ use crate::{
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::{
         common::{AddressArg, MagicArg, PointArg},
-        define_start_point, setup_multiplexer, IntersectArg, RetryPolicy,
+        define_start_point, setup_multiplexer, FinalizeConfig, IntersectArg, RetryPolicy,
     },
     utils::{ChainWellKnownInfo, WithUtils},
     Error,
@@ -49,6 +49,8 @@ pub struct Config {
     pub min_depth: usize,
 
     pub retry_policy: Option<RetryPolicy>,
+
+    pub finalize: Option<FinalizeConfig>,
 }
 
 fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), Error> {
@@ -98,8 +100,9 @@ impl SourceProvider for WithUtils<Config> {
         log::info!("starting chain sync from: {:?}", &known_points);
 
         let min_depth = self.inner.min_depth;
+        let finalize = self.inner.finalize.clone();
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, writer, known_points, min_depth)
+            observe_forever(cs_channel, writer, known_points, min_depth, finalize)
                 .expect("chainsync loop failed");
         });
 
