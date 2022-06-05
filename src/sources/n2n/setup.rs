@@ -4,7 +4,7 @@ use log::info;
 
 use pallas::network::{
     miniprotocols::{handshake, run_agent, MAINNET_MAGIC},
-    multiplexer::Channel,
+    multiplexer::StdChannel,
 };
 
 use serde::Deserialize;
@@ -55,7 +55,7 @@ pub struct Config {
     pub finalize: Option<FinalizeConfig>,
 }
 
-fn do_handshake(channel: &mut Channel, magic: u64) -> Result<(), Error> {
+fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), Error> {
     let versions = handshake::n2n::VersionTable::v6_and_above(magic);
     let agent = run_agent(handshake::Initiator::initial(versions), channel)?;
     info!("handshake output: {:?}", agent.output);
@@ -70,12 +70,18 @@ impl SourceProvider for WithUtils<Config> {
     fn bootstrap(&self) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
-        let mut muxer = setup_multiplexer(
+        let mut plexer = setup_multiplexer(
             &self.inner.address.0,
             &self.inner.address.1,
-            &[0, 2, 3],
             &self.inner.retry_policy,
         )?;
+
+        let mut hs_channel = plexer.use_channel(0);
+        let mut cs_channel = plexer.use_channel(2);
+        let bf_channel = plexer.use_channel(3);
+
+        plexer.muxer.spawn();
+        plexer.demuxer.spawn();
 
         let magic = match &self.inner.magic {
             Some(m) => *m.deref(),
@@ -84,10 +90,7 @@ impl SourceProvider for WithUtils<Config> {
 
         let writer = EventWriter::new(output_tx, self.utils.clone(), self.inner.mapper.clone());
 
-        let mut hs_channel = muxer.use_channel(0);
         do_handshake(&mut hs_channel, magic)?;
-
-        let mut cs_channel = muxer.use_channel(2);
 
         let known_points = define_start_point(
             &self.inner.intersect,
@@ -118,7 +121,6 @@ impl SourceProvider for WithUtils<Config> {
             log::info!("observe headers thread ended");
         });
 
-        let bf_channel = muxer.use_channel(3);
         let bf_writer = writer;
         let bf_handle = std::thread::spawn(move || {
             fetch_blocks_forever(bf_channel, bf_writer, headers_rx)

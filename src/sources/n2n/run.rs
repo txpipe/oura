@@ -4,7 +4,7 @@ use pallas::{
     ledger::primitives::{probing, Era},
     network::{
         miniprotocols::{blockfetch, chainsync, run_agent, Point},
-        multiplexer::Channel,
+        multiplexer::StdChannel,
     },
 };
 
@@ -143,7 +143,7 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
 }
 
 pub(crate) fn fetch_blocks_forever(
-    mut channel: Channel,
+    mut channel: StdChannel,
     event_writer: EventWriter,
     input: Receiver<Point>,
 ) -> Result<(), Error> {
@@ -156,7 +156,7 @@ pub(crate) fn fetch_blocks_forever(
 }
 
 pub(crate) fn observe_headers_forever(
-    mut channel: Channel,
+    mut channel: StdChannel,
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     block_requests: SyncSender<Point>,

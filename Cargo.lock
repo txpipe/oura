@@ -1350,9 +1350,9 @@ checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
 
 [[package]]
 name = "minicbor"
-version = "0.15.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b419e66bd98ccf5824dd4b8f4141f7431d1d07733c3e13c946278204a437d2b"
+checksum = "a5e575910763b21a0db7df5e142907fe944bff84d1dfc78e2ba92e7f3bdfd36b"
 dependencies = [
  "half",
  "minicbor-derive",
@@ -1360,9 +1360,9 @@ dependencies = [
 
 [[package]]
 name = "minicbor-derive"
-version = "0.9.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03c32aff53852dc6dd3817559d603734e4f7a65411702953238aafdcb3a7fd47"
+checksum = "d0a86c5f04def8fb7735ae918bb589af82f985526f4c62e0249544b668b2f456"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1589,7 +1589,7 @@ checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
 
 [[package]]
 name = "oura"
-version = "1.4.0"
+version = "1.4.2"
 dependencies = [
  "async-recursion",
  "aws-config",
@@ -1624,9 +1624,9 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "930fb75d557eff3e9dbf7ca215816c834b2a0769e542764a99f01ae8daae7fde"
+checksum = "e754376e24ea897ccaf8cde8c404c8a5baca798b03a4fdba4a48ca99077a6d3d"
 dependencies = [
  "pallas-codec",
  "pallas-crypto",
@@ -1637,56 +1637,59 @@ dependencies = [
 
 [[package]]
 name = "pallas-codec"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a6b72d36979c540e639cc0b04cbeb922367df2315910b6cafb4bf61a44f3baf"
+checksum = "6503e55e726847aa40cae46e190ddfc48f169c29c94ec19aa9cabe47d33a9660"
 dependencies = [
  "minicbor",
 ]
 
 [[package]]
 name = "pallas-crypto"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa690b0e5cbc874ee5f9024f33e2743ddd5034b158f9f1947b4e5675a2ebb99f"
+checksum = "72884124f88227e26802667f8a18b303e47c7fa7afd3852234d07c3379a8e2b9"
 dependencies = [
  "cryptoxide",
  "hex",
- "minicbor",
+ "pallas-codec",
  "rand_core",
  "thiserror",
 ]
 
 [[package]]
 name = "pallas-miniprotocols"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f7f73bdfaaef9c42034a4cb3bce48c07b4d8862371b7d6eee8f9162416a30f9"
+checksum = "4b48feaccb2c86871c0c8f9fdd78c7a9246979da979bb8764d4deef4b75475dd"
 dependencies = [
  "hex",
  "itertools",
  "log 0.4.17",
- "net2",
  "pallas-codec",
  "pallas-multiplexer",
+ "thiserror",
 ]
 
 [[package]]
 name = "pallas-multiplexer"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0862ffc0600471b6bbf3b7b237842f94a1141f578f5d5426c202ce58e391e158"
+checksum = "7c5c69d4c2e6dc2a337573296b13d071bee6c2add517425a94a197587533ccff"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
  "log 0.4.17",
+ "pallas-codec",
+ "rand",
+ "thiserror",
 ]
 
 [[package]]
 name = "pallas-primitives"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "000b7c2fe9e8cbcf00853d3dcb690f08a2038cf7ddba9d7c419c749530d6916e"
+checksum = "6369069cf3a96ec12053e3902e1a15f77de494eb4dabf90d921bd6b0b8003c3a"
 dependencies = [
  "base58",
  "bech32 0.8.1",
@@ -2463,18 +2466,18 @@ checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
 
 [[package]]
 name = "thiserror"
-version = "1.0.30"
+version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "854babe52e4df1653706b98fcfc05843010039b406875930a70e4d9644e5c417"
+checksum = "bd829fe32373d27f76265620b5309d0340cb8550f523c1dda251d6298069069a"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.30"
+version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa32fd3f627f367fe16f893e2597ae3c05020f8bba2666a4e6ea73d377e5714b"
+checksum = "0396bc89e626244658bef819e22d0cc459e795a5ebe878e6ec336d1674a8d79a"
 dependencies = [
  "proc-macro2",
  "quote",

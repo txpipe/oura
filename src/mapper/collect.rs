@@ -1,5 +1,6 @@
-use pallas::ledger::primitives::alonzo::{
-    AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value,
+use pallas::ledger::primitives::{
+    alonzo::{AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value},
+    ToHash,
 };
 
 use crate::{
