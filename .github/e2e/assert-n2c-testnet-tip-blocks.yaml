@@ -63,7 +63,6 @@ spec:
           image: alpine/socat
           args:
             [
-              "-v",
               "UNIX-LISTEN:/opt/cardano/cnode/sockets/node0.socket,reuseaddr,fork",
               "TCP-CONNECT:node-0.nodes.testnet.svc.cluster.local:3307",
             ]
