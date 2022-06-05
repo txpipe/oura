@@ -10,6 +10,9 @@ data:
     address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
     magic = "mainnet"
 
+    [source.mapper]
+    include_byron_ebb = true
+
     [source.finalize]
     max_block_quantity = 2000
 

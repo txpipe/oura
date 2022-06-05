@@ -11,6 +11,9 @@ data:
     magic = "testnet"
     min_depth = 6
 
+    [source.mapper]
+    include_byron_ebb = true
+
     [source.retry_policy]
     connection_max_retries = 5
     connection_max_backoff = 60
