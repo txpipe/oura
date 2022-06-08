@@ -111,7 +111,7 @@ where
         type Value = Option<MagicArg>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("string or map")
+            formatter.write_str("string or number")
         }
 
         fn visit_str<E>(self, value: &str) -> Result<Option<MagicArg>, E>
@@ -127,6 +127,13 @@ where
             E: serde::de::Error,
         {
             Ok(Some(MagicArg(value)))
+        }
+
+        fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            Ok(Some(MagicArg(v as u64)))
         }
 
         fn visit_none<E>(self) -> Result<Self::Value, E>
