@@ -1,12 +1,16 @@
 use pallas::ledger::primitives::{
-    alonzo::{AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput, Value},
+    alonzo::{
+        AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput,
+        TransactionWitnessSet, Value,
+    },
     ToHash,
 };
 
 use crate::{
     model::{
-        MetadataRecord, MintRecord, OutputAssetRecord, TransactionRecord, TxInputRecord,
-        TxOutputRecord,
+        MetadataRecord, MintRecord, NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord,
+        PlutusRedeemerRecord, PlutusWitnessRecord, TransactionRecord, TxInputRecord,
+        TxOutputRecord, VKeyWitnessRecord,
     },
     Error,
 };
@@ -77,6 +81,65 @@ impl EventWriter {
         }
     }
 
+    pub fn collect_vkey_witness_records(
+        &self,
+        witness_set: &TransactionWitnessSet,
+    ) -> Result<Vec<VKeyWitnessRecord>, Error> {
+        match &witness_set.vkeywitness {
+            Some(all) => all.iter().map(|i| self.to_vkey_witness_record(i)).collect(),
+            None => Ok(vec![]),
+        }
+    }
+
+    pub fn collect_native_witness_records(
+        &self,
+        witness_set: &TransactionWitnessSet,
+    ) -> Result<Vec<NativeWitnessRecord>, Error> {
+        match &witness_set.native_script {
+            Some(all) => all
+                .iter()
+                .map(|i| self.to_native_witness_record(i))
+                .collect(),
+            None => Ok(vec![]),
+        }
+    }
+
+    pub fn collect_plutus_witness_records(
+        &self,
+        witness_set: &TransactionWitnessSet,
+    ) -> Result<Vec<PlutusWitnessRecord>, Error> {
+        match &witness_set.plutus_script {
+            Some(all) => all
+                .iter()
+                .map(|i| self.to_plutus_witness_record(i))
+                .collect(),
+            None => Ok(vec![]),
+        }
+    }
+
+    pub fn collect_plutus_redeemer_records(
+        &self,
+        witness_set: &TransactionWitnessSet,
+    ) -> Result<Vec<PlutusRedeemerRecord>, Error> {
+        match &witness_set.redeemer {
+            Some(all) => all
+                .iter()
+                .map(|i| self.to_plutus_redeemer_record(i))
+                .collect(),
+            None => Ok(vec![]),
+        }
+    }
+
+    pub fn collect_plutus_datum_records(
+        &self,
+        witness_set: &TransactionWitnessSet,
+    ) -> Result<Vec<PlutusDatumRecord>, Error> {
+        match &witness_set.plutus_data {
+            Some(all) => all.iter().map(|i| self.to_plutus_datum_record(i)).collect(),
+            None => Ok(vec![]),
+        }
+    }
+
     pub fn collect_shelley_tx_records(
         &self,
         block: &Block,
@@ -92,9 +155,11 @@ impl EventWriter {
                     .find(|(k, _)| *k == (idx as u32))
                     .map(|(_, v)| v);
 
+                let witness_set = block.transaction_witness_sets.get(idx);
+
                 let tx_hash = tx.to_hash().to_hex();
 
-                self.to_transaction_record(tx, &tx_hash, aux_data)
+                self.to_transaction_record(tx, &tx_hash, aux_data, witness_set)
             })
             .collect()
     }

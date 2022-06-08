@@ -5,7 +5,7 @@ use pallas::crypto::hash::Hash;
 use pallas::ledger::primitives::alonzo::{
     self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
     InstantaneousRewardTarget, Metadatum, MetadatumLabel, Relay, TransactionInput,
-    TransactionOutput, Value,
+    TransactionOutput, TransactionWitnessSet, Value,
 };
 use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
 use pallas::ledger::primitives::{ToCanonicalJson, ToHash};
@@ -17,6 +17,7 @@ use crate::model::{
     BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord,
     NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
     PlutusWitnessRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
+    VKeyWitnessRecord,
 };
 
 use crate::utils::time::TimeProvider;
@@ -259,6 +260,16 @@ impl EventWriter {
         })
     }
 
+    pub fn to_vkey_witness_record(
+        &self,
+        witness: &alonzo::VKeyWitness,
+    ) -> Result<VKeyWitnessRecord, crate::Error> {
+        Ok(VKeyWitnessRecord {
+            vkey_hex: witness.vkey.to_hex(),
+            signature_hex: witness.signature.to_hex(),
+        })
+    }
+
     pub fn to_certificate_event(&self, certificate: &Certificate) -> EventData {
         match certificate {
             Certificate::StakeRegistration(credential) => EventData::StakeRegistration {
@@ -331,6 +342,7 @@ impl EventWriter {
         body: &TransactionBody,
         tx_hash: &str,
         aux_data: Option<&AuxiliaryData>,
+        witness_set: Option<&TransactionWitnessSet>,
     ) -> Result<TransactionRecord, Error> {
         let mut record = TransactionRecord::default();
 
@@ -391,6 +403,14 @@ impl EventWriter {
                 Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
                 None => None,
             };
+
+            if let Some(witnesses) = witness_set {
+                record.vkey_witnesses = self.collect_vkey_witness_records(witnesses)?.into();
+                record.native_witnesses = self.collect_native_witness_records(witnesses)?.into();
+                record.plutus_witnesses = self.collect_plutus_witness_records(witnesses)?.into();
+                record.plutus_redeemers = self.collect_plutus_redeemer_records(witnesses)?.into();
+                record.plutus_data = self.collect_plutus_datum_records(witnesses)?.into();
+            }
         }
 
         Ok(record)

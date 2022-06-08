@@ -167,7 +167,7 @@ impl EventWriter {
         aux_data: Option<&AuxiliaryData>,
         witness_set: Option<&TransactionWitnessSet>,
     ) -> Result<(), Error> {
-        let record = self.to_transaction_record(tx, tx_hash, aux_data)?;
+        let record = self.to_transaction_record(tx, tx_hash, aux_data, witness_set)?;
 
         self.append_from(record.clone())?;
 
