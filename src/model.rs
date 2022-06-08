@@ -160,6 +160,11 @@ pub struct TransactionRecord {
     pub inputs: Option<Vec<TxInputRecord>>,
     pub outputs: Option<Vec<TxOutputRecord>>,
     pub mint: Option<Vec<MintRecord>>,
+    pub vkey_witnesses: Option<Vec<VKeyWitnessRecord>>,
+    pub native_witnesses: Option<Vec<NativeWitnessRecord>>,
+    pub plutus_witnesses: Option<Vec<PlutusWitnessRecord>>,
+    pub plutus_redeemers: Option<Vec<PlutusRedeemerRecord>>,
+    pub plutus_data: Option<Vec<PlutusDatumRecord>>,
 }
 
 impl From<TransactionRecord> for EventData {
@@ -188,13 +193,13 @@ pub enum StakeCredential {
     Scripthash(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct VKeyWitnessRecord {
     pub vkey_hex: String,
     pub signature_hex: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct NativeWitnessRecord {
     pub policy_id: String,
     pub script_json: JsonValue,
@@ -206,7 +211,7 @@ impl From<NativeWitnessRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PlutusWitnessRecord {
     pub script_hash: String,
     pub script_hex: String,
@@ -218,7 +223,7 @@ impl From<PlutusWitnessRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PlutusRedeemerRecord {
     pub purpose: String,
     pub ex_units_mem: u32,
@@ -233,7 +238,7 @@ impl From<PlutusRedeemerRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PlutusDatumRecord {
     pub datum_hash: String,
     pub plutus_data: JsonValue,
