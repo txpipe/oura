@@ -75,7 +75,7 @@ Oura is in its essence just a pipeline for proccessing events. Each stage of the
   - [x] Kafka topic
   - [x] Elasticsearch index / data stream
   - [x] Rotating log files with compression
-  - [ ] Redis streams
+  - [x] Redis streams
   - [x] AWS SQS queue
   - [x] AWS Lambda call
   - [x] AWS S3 objects
