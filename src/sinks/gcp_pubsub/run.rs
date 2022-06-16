@@ -1,39 +1,21 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
-use async_recursion::async_recursion;
 use cloud_pubsub::{error::Error, Client, Topic};
 use serde_json::json;
 
-use crate::{model::Event, pipelining::StageReceiver, sinks::ErrorPolicy, utils::Utils};
+use crate::{
+    model::Event,
+    pipelining::StageReceiver,
+    sinks::ErrorPolicy,
+    utils::{retry, Utils},
+};
 
-#[async_recursion]
-async fn send_pubsub_msg(
-    client: &Topic,
-    event: &Event,
-    policy: &ErrorPolicy,
-    retry_quota: usize,
-    backoff_delay: Duration,
-) -> Result<(), Error> {
+async fn send_pubsub_msg(client: &Topic, event: &Event) -> Result<(), Error> {
     let body = json!(event).to_string();
 
-    let result = client.publish(body).await;
+    client.publish(body).await?;
 
-    match (result, policy, retry_quota) {
-        (Ok(_), _, _) => {
-            log::info!("successful pubsub publish");
-            Ok(())
-        }
-        (Err(x), ErrorPolicy::Exit, 0) => Err(x),
-        (Err(x), ErrorPolicy::Continue, 0) => {
-            log::warn!("failed to publish to pubsub: {:?}", x);
-            Ok(())
-        }
-        (Err(x), _, quota) => {
-            log::warn!("failed attempt to execute pubsub publish: {:?}", x);
-            std::thread::sleep(backoff_delay);
-            send_pubsub_msg(client, event, policy, quota - 1, backoff_delay).await
-        }
-    }
+    Ok(())
 }
 
 pub fn writer_loop(
@@ -41,8 +23,7 @@ pub fn writer_loop(
     credentials: String,
     topic_name: String,
     error_policy: &ErrorPolicy,
-    max_retries: usize,
-    backoff_delay: Duration,
+    retry_policy: &retry::Policy,
     utils: Arc<Utils>,
 ) -> Result<(), crate::Error> {
     let rt = tokio::runtime::Builder::new_current_thread()
@@ -57,13 +38,20 @@ pub fn writer_loop(
         // notify the pipeline where we are
         utils.track_sink_progress(&event);
 
-        rt.block_on(send_pubsub_msg(
-            &topic,
-            &event,
-            error_policy,
-            max_retries,
-            backoff_delay,
-        ))?;
+        let result = retry::retry_operation(
+            || rt.block_on(send_pubsub_msg(&topic, &event)),
+            retry_policy,
+        );
+
+        match result {
+            Ok(()) => (),
+            Err(err) => match error_policy {
+                ErrorPolicy::Exit => return Err(Box::new(err)),
+                ErrorPolicy::Continue => {
+                    log::warn!("failed to publish to pubsub: {:?}", err);
+                }
+            },
+        }
     }
 
     Ok(())
