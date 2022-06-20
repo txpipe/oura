@@ -13,14 +13,14 @@ use crate::{
     Error,
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub enum BearerKind {
     Tcp,
     #[cfg(target_family = "unix")]
     Unix,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct AddressArg(pub BearerKind, pub String);
 
 impl FromStr for BearerKind {
@@ -147,10 +147,12 @@ where
     deserializer.deserialize_any(MagicArgVisitor)
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct RetryPolicy {
-    connection_max_retries: u32,
-    connection_max_backoff: u32,
+    pub chainsync_max_retries: u32,
+    pub chainsync_max_backoff: u32,
+    pub connection_max_retries: u32,
+    pub connection_max_backoff: u32,
 }
 
 pub fn setup_multiplexer_attempt(bearer: &BearerKind, address: &str) -> Result<StdPlexer, Error> {
@@ -186,7 +188,7 @@ pub fn setup_multiplexer(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type", content = "value")]
 pub enum IntersectArg {
     Tip,

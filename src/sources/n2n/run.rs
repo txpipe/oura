@@ -1,9 +1,9 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
 use pallas::{
     ledger::primitives::{probing, Era},
     network::{
-        miniprotocols::{blockfetch, chainsync, run_agent, Point},
+        miniprotocols::{blockfetch, chainsync, handshake, run_agent, Point, MAINNET_MAGIC},
         multiplexer::StdChannel,
     },
 };
@@ -12,8 +12,9 @@ use std::sync::mpsc::{Receiver, SyncSender};
 
 use crate::{
     mapper::EventWriter,
-    sources::{should_finalize, FinalizeConfig},
-    utils::SwallowResult,
+    pipelining::StageSender,
+    sources::{define_start_point, setup_multiplexer, should_finalize, FinalizeConfig},
+    utils::{retry, SwallowResult, Utils},
     Error,
 };
 
@@ -155,14 +156,14 @@ pub(crate) fn fetch_blocks_forever(
     Ok(())
 }
 
-pub(crate) fn observe_headers_forever(
+fn observe_headers_forever(
     mut channel: StdChannel,
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     block_requests: SyncSender<Point>,
     min_depth: usize,
     finalize_config: Option<FinalizeConfig>,
-) -> Result<(), Error> {
+) -> Result<(), AttemptError> {
     let observer = &mut ChainObserver {
         chain_buffer: Default::default(),
         min_depth,
@@ -173,8 +174,122 @@ pub(crate) fn observe_headers_forever(
     };
 
     let agent = chainsync::HeaderConsumer::initial(known_points, observer);
-    let agent = run_agent(agent, &mut channel)?;
-    log::debug!("chainsync agent final state: {:?}", agent.state);
+
+    match run_agent(agent, &mut channel) {
+        Ok(agent) => {
+            log::debug!("chainsync agent final state: {:?}", agent.state);
+            Ok(())
+        }
+        Err(err) => Err(AttemptError::Recoverable(err.into())),
+    }
+}
+
+#[derive(Debug)]
+enum AttemptError {
+    Recoverable(Error),
+    Other(Error),
+}
+
+fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), AttemptError> {
+    let versions = handshake::n2n::VersionTable::v6_and_above(magic);
+
+    match run_agent(handshake::Initiator::initial(versions), channel) {
+        Ok(agent) => match agent.output {
+            handshake::Output::Accepted(_, _) => Ok(()),
+            _ => Err(AttemptError::Other(
+                "couldn't agree on handshake version".into(),
+            )),
+        },
+        Err(err) => Err(AttemptError::Recoverable(err.into())),
+    }
+}
+
+fn do_chainsync_attempt(
+    config: &super::Config,
+    utils: Arc<Utils>,
+    output_tx: &StageSender,
+) -> Result<(), AttemptError> {
+    let magic = match config.magic.as_ref() {
+        Some(m) => *m.deref(),
+        None => MAINNET_MAGIC,
+    };
+
+    let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
+        .map_err(|x| AttemptError::Recoverable(x))?;
+
+    let mut hs_channel = plexer.use_channel(0);
+    let mut cs_channel = plexer.use_channel(2);
+    let bf_channel = plexer.use_channel(3);
+
+    plexer.muxer.spawn();
+    plexer.demuxer.spawn();
+
+    do_handshake(&mut hs_channel, magic)?;
+
+    let known_points = define_start_point(
+        &config.intersect,
+        #[allow(deprecated)]
+        &config.since,
+        &utils,
+        &mut cs_channel,
+    )
+    .map_err(|err| AttemptError::Recoverable(err))?;
+
+    log::info!("starting chain sync from: {:?}", &known_points);
+
+    let writer = EventWriter::new(output_tx.clone(), utils, config.mapper.clone());
+
+    let (headers_tx, headers_rx) = std::sync::mpsc::sync_channel(100);
+
+    let bf_writer = writer.clone();
+    std::thread::spawn(move || {
+        fetch_blocks_forever(bf_channel, bf_writer, headers_rx).expect("blockfetch loop failed");
+
+        log::info!("block fetch thread ended");
+    });
+
+    // this will block
+    observe_headers_forever(
+        cs_channel,
+        writer,
+        known_points,
+        headers_tx,
+        config.min_depth,
+        config.finalize.clone(),
+    )?;
 
     Ok(())
+}
+
+pub fn do_chainsync(
+    config: &super::Config,
+    utils: Arc<Utils>,
+    output_tx: StageSender,
+) -> Result<(), Error> {
+    retry::retry_operation(
+        || match do_chainsync_attempt(config, utils.clone(), &output_tx) {
+            Ok(()) => Ok(()),
+            Err(AttemptError::Other(msg)) => {
+                log::error!("N2N error: {}", msg);
+                log::warn!("unrecoverable error performing chainsync, will exit");
+                Ok(())
+            }
+            Err(AttemptError::Recoverable(err)) => Err(err),
+        },
+        &retry::Policy {
+            max_retries: config
+                .retry_policy
+                .as_ref()
+                .map(|x| x.chainsync_max_retries)
+                .unwrap_or(50),
+            backoff_unit: Duration::from_secs(1),
+            backoff_factor: 2,
+            max_backoff: config
+                .retry_policy
+                .as_ref()
+                .map(|x| x.chainsync_max_backoff as u64)
+                .map(Duration::from_secs)
+                .unwrap_or(Duration::from_secs(60)),
+        },
+    )
 }
