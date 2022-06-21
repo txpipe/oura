@@ -6,7 +6,7 @@ use serde_json::json;
 use crate::{
     model::Event,
     pipelining::StageReceiver,
-    sinks::ErrorPolicy,
+    sinks::common::web::ErrorPolicy,
     utils::{retry, Utils},
 };
 
