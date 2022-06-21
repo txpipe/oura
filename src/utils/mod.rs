@@ -172,6 +172,7 @@ impl Utils {
 /// and a reference to the shared utilities singleton. This is a quality-of-life
 /// artifact to wrap other structs (usually configs) and attach the utilities
 /// singleton entrypoint.
+#[derive(Clone)]
 pub struct WithUtils<C> {
     pub utils: Arc<Utils>,
     pub inner: C,

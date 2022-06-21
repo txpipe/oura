@@ -1,13 +1,18 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
 use pallas::network::{
-    miniprotocols::{chainsync, run_agent, Point},
+    miniprotocols::{chainsync, handshake, run_agent, Point, MAINNET_MAGIC},
     multiplexer::StdChannel,
 };
 
 use crate::{
     mapper::EventWriter,
-    sources::{n2c::blocks::CborHolder, should_finalize, FinalizeConfig},
+    pipelining::StageSender,
+    sources::{
+        define_start_point, n2c::blocks::CborHolder, setup_multiplexer, should_finalize,
+        FinalizeConfig,
+    },
+    utils::{retry, Utils},
     Error,
 };
 
@@ -119,13 +124,13 @@ impl<'b> chainsync::Observer<chainsync::BlockContent> for ChainObserver {
     }
 }
 
-pub(crate) fn observe_forever(
+fn observe_forever(
     mut channel: StdChannel,
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     min_depth: usize,
     finalize_config: Option<FinalizeConfig>,
-) -> Result<(), Error> {
+) -> Result<(), AttemptError> {
     let observer = ChainObserver {
         chain_buffer: Default::default(),
         blocks: HashMap::new(),
@@ -136,8 +141,110 @@ pub(crate) fn observe_forever(
     };
 
     let agent = chainsync::BlockConsumer::initial(known_points, observer);
-    let agent = run_agent(agent, &mut channel)?;
-    log::warn!("chainsync agent final state: {:?}", agent.state);
+
+    match run_agent(agent, &mut channel) {
+        Ok(agent) => {
+            log::debug!("chainsync agent final state: {:?}", agent.state);
+            Ok(())
+        }
+        Err(err) => Err(AttemptError::Recoverable(err.into())),
+    }
+}
+
+#[derive(Debug)]
+enum AttemptError {
+    Recoverable(Error),
+    Other(Error),
+}
+
+fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), AttemptError> {
+    let versions = handshake::n2c::VersionTable::v1_and_above(magic);
+
+    match run_agent(handshake::Initiator::initial(versions), channel) {
+        Ok(agent) => match agent.output {
+            handshake::Output::Accepted(_, _) => Ok(()),
+            _ => Err(AttemptError::Other(
+                "couldn't agree on handshake version".into(),
+            )),
+        },
+        Err(err) => Err(AttemptError::Recoverable(err.into())),
+    }
+}
+
+fn do_chainsync_attempt(
+    config: &super::Config,
+    utils: Arc<Utils>,
+    output_tx: &StageSender,
+) -> Result<(), AttemptError> {
+    let magic = match config.magic.as_ref() {
+        Some(m) => *m.deref(),
+        None => MAINNET_MAGIC,
+    };
+
+    let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
+        .map_err(|x| AttemptError::Recoverable(x))?;
+
+    let mut hs_channel = plexer.use_channel(0);
+    let mut cs_channel = plexer.use_channel(5);
+
+    plexer.muxer.spawn();
+    plexer.demuxer.spawn();
+
+    do_handshake(&mut hs_channel, magic)?;
+
+    let known_points = define_start_point(
+        &config.intersect,
+        #[allow(deprecated)]
+        &config.since,
+        &utils,
+        &mut cs_channel,
+    )
+    .map_err(|err| AttemptError::Recoverable(err))?;
+
+    log::info!("starting chain sync from: {:?}", &known_points);
+
+    let writer = EventWriter::new(output_tx.clone(), utils, config.mapper.clone());
+
+    observe_forever(
+        cs_channel,
+        writer,
+        known_points,
+        config.min_depth,
+        config.finalize.clone(),
+    )?;
 
     Ok(())
+}
+
+pub fn do_chainsync(
+    config: &super::Config,
+    utils: Arc<Utils>,
+    output_tx: StageSender,
+) -> Result<(), Error> {
+    retry::retry_operation(
+        || match do_chainsync_attempt(config, utils.clone(), &output_tx) {
+            Ok(()) => Ok(()),
+            Err(AttemptError::Other(msg)) => {
+                log::error!("N2N error: {}", msg);
+                log::warn!("unrecoverable error performing chainsync, will exit");
+                Ok(())
+            }
+            Err(AttemptError::Recoverable(err)) => Err(err),
+        },
+        &retry::Policy {
+            max_retries: config
+                .retry_policy
+                .as_ref()
+                .map(|x| x.chainsync_max_retries)
+                .unwrap_or(50),
+            backoff_unit: Duration::from_secs(1),
+            backoff_factor: 2,
+            max_backoff: config
+                .retry_policy
+                .as_ref()
+                .map(|x| x.chainsync_max_backoff as u64)
+                .map(Duration::from_secs)
+                .unwrap_or(Duration::from_secs(60)),
+        },
+    )
 }

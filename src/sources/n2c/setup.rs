@@ -1,26 +1,18 @@
-use std::ops::Deref;
-
-use pallas::network::{
-    miniprotocols::{handshake, run_agent, MAINNET_MAGIC},
-    multiplexer::StdChannel,
-};
-
 use serde::Deserialize;
 
 use crate::{
-    mapper::{Config as MapperConfig, EventWriter},
+    mapper::Config as MapperConfig,
     pipelining::{new_inter_stage_channel, PartialBootstrapResult, SourceProvider},
     sources::{
         common::{AddressArg, MagicArg, PointArg},
-        define_start_point, setup_multiplexer, FinalizeConfig, IntersectArg, RetryPolicy,
+        FinalizeConfig, IntersectArg, RetryPolicy,
     },
     utils::{ChainWellKnownInfo, WithUtils},
-    Error,
 };
 
-use super::run::observe_forever;
+use super::run::do_chainsync;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub address: AddressArg,
 
@@ -53,57 +45,15 @@ pub struct Config {
     pub finalize: Option<FinalizeConfig>,
 }
 
-fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), Error> {
-    let versions = handshake::n2c::VersionTable::v1_and_above(magic);
-    let agent = run_agent(handshake::Initiator::initial(versions), channel)?;
-    log::info!("handshake output: {:?}", agent.output);
-
-    match agent.output {
-        handshake::Output::Accepted(_, _) => Ok(()),
-        _ => Err("couldn't agree on handshake version for client connection".into()),
-    }
-}
-
 impl SourceProvider for WithUtils<Config> {
     fn bootstrap(&self) -> PartialBootstrapResult {
         let (output_tx, output_rx) = new_inter_stage_channel(None);
 
-        let mut plexer = setup_multiplexer(
-            &self.inner.address.0,
-            &self.inner.address.1,
-            &self.inner.retry_policy,
-        )?;
-
-        let mut hs_channel = plexer.use_channel(0);
-        let mut cs_channel = plexer.use_channel(5);
-
-        plexer.muxer.spawn();
-        plexer.demuxer.spawn();
-
-        let magic = match &self.inner.magic {
-            Some(m) => *m.deref(),
-            None => MAINNET_MAGIC,
-        };
-
-        let writer = EventWriter::new(output_tx, self.utils.clone(), self.inner.mapper.clone());
-
-        do_handshake(&mut hs_channel, magic)?;
-
-        let known_points = define_start_point(
-            &self.inner.intersect,
-            #[allow(deprecated)]
-            &self.inner.since,
-            &self.utils,
-            &mut cs_channel,
-        )?;
-
-        log::info!("starting chain sync from: {:?}", &known_points);
-
-        let min_depth = self.inner.min_depth;
-        let finalize = self.inner.finalize.clone();
+        let config = self.inner.clone();
+        let utils = self.utils.clone();
         let handle = std::thread::spawn(move || {
-            observe_forever(cs_channel, writer, known_points, min_depth, finalize)
-                .expect("chainsync loop failed");
+            do_chainsync(&config, utils, output_tx)
+                .expect("chainsync process fails after max retries")
         });
 
         Ok((handle, output_rx))
