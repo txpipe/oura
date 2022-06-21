@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
-    sinks::{build_headers_map, request_loop, ErrorPolicy, APP_USER_AGENT},
+    sinks::common::web::{build_headers_map, request_loop, ErrorPolicy, APP_USER_AGENT},
     utils::{retry, WithUtils},
 };
 

@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
-    sinks::ErrorPolicy,
+    sinks::common::web::ErrorPolicy,
     utils::{retry, WithUtils},
 };
 
