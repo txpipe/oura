@@ -302,6 +302,7 @@ impl EventWriter {
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
                 pool_metadata: pool_metadata.as_ref().map(|m| m.url.clone()),
+                pool_metadata_hash: pool_metadata.as_ref().map(|m| m.hash.clone().to_hex())
             },
             Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
                 pool: pool.to_hex(),
