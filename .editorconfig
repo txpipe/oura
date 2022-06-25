@@ -23,6 +23,10 @@ insert_final_newline = false
 charset = utf-8
 trim_trailing_whitespace = true
 
+[*.nix]
+charset = utf-8
+indent_size = 2
+
 [.gitignore]
 end_of_line = lf
 insert_final_newline = false

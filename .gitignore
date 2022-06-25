@@ -12,3 +12,6 @@ Cargo.lock
 # Local testdrive environments, mainly for development
 testdrive/custom
 testdrive/assert
+
+# Nix build results
+result
