@@ -330,6 +330,7 @@ pub enum EventData {
         pool_owners: Vec<String>,
         relays: Vec<String>,
         pool_metadata: Option<String>,
+        pool_metadata_hash: Option<String>,
     },
     PoolRetirement {
         pool: String,

@@ -248,6 +248,7 @@ impl LogLine {
                 pool_owners: _,
                 relays: _,
                 pool_metadata,
+                pool_metadata_hash: _,
             } => LogLine {
                 prefix: "POOL+",
                 color: Color::Magenta,
