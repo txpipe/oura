@@ -1,9 +1,9 @@
 use pallas::{
-    codec::utils::MaybeIndefArray,
+    codec::utils::{KeyValuePairs, MaybeIndefArray},
     ledger::primitives::{
         alonzo::{
-            AuxiliaryData, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
-            Redeemer, TransactionInput, VKeyWitness, Value,
+            AuxiliaryData, Coin, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
+            Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
         },
         babbage::{
             LegacyTransacionOutput, PlutusV2Script, PostAlonzoTransactionOutput, TransactionOutput,

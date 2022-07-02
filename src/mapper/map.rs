@@ -444,7 +444,7 @@ impl EventWriter {
             }
 
             if let Some(withdrawals) = &body.withdrawals {
-                record.withdrawals = self.collect_withdrawal_records(withdrawals)?.into();
+                record.withdrawals = self.collect_withdrawal_records(withdrawals).into();
             }
         }
 
