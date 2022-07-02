@@ -1,15 +1,19 @@
 use std::collections::HashMap;
 
-use pallas::codec::minicbor::bytes::ByteVec;
-use pallas::codec::utils::KeepRaw;
-use pallas::crypto::hash::Hash;
-use pallas::ledger::primitives::alonzo::{
-    self as alonzo, AuxiliaryData, Certificate, InstantaneousRewardSource,
-    InstantaneousRewardTarget, Metadatum, MetadatumLabel, MintedBlock, Relay, TransactionInput,
-    TransactionOutput, TransactionWitnessSet, Value,
+use pallas::{
+    codec::{minicbor::bytes::ByteVec, utils::KeepRaw},
+    crypto::hash::Hash,
+    ledger::primitives::babbage::DatumOption,
 };
-use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody};
-use pallas::ledger::primitives::{ToCanonicalJson, ToHash};
+
+use pallas::ledger::primitives::{
+    alonzo::{
+        self as alonzo, AuxiliaryData, Certificate, InstantaneousRewardSource,
+        InstantaneousRewardTarget, Metadatum, MetadatumLabel, MintedBlock, NetworkId, Relay,
+        TransactionBody, TransactionInput, TransactionWitnessSet, Value,
+    },
+    babbage, ToCanonicalJson, ToHash,
+};
 
 use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
@@ -162,9 +166,9 @@ impl EventWriter {
         }
     }
 
-    pub fn to_transaction_output_record(
+    pub fn to_legacy_output_record(
         &self,
-        output: &TransactionOutput,
+        output: &alonzo::TransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
         Ok(TxOutputRecord {
             address: self
@@ -174,6 +178,24 @@ impl EventWriter {
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
+        })
+    }
+
+    pub fn to_post_alonzo_output_record(
+        &self,
+        output: &babbage::PostAlonzoTransactionOutput,
+    ) -> Result<TxOutputRecord, Error> {
+        Ok(TxOutputRecord {
+            address: self
+                .utils
+                .bech32
+                .encode_address(output.address.as_slice())?,
+            amount: get_tx_output_coin_value(&output.value),
+            assets: self.collect_asset_records(&output.value).into(),
+            datum_hash: match output.datum_option {
+                Some(DatumOption::Hash(x)) => Some(x.to_string()),
+                _ => None,
+            },
         })
     }
 
@@ -241,9 +263,19 @@ impl EventWriter {
         })
     }
 
-    pub fn to_plutus_witness_record(
+    pub fn to_plutus_v1_witness_record(
         &self,
         script: &alonzo::PlutusScript,
+    ) -> Result<PlutusWitnessRecord, crate::Error> {
+        Ok(PlutusWitnessRecord {
+            script_hash: script.to_hash().to_hex(),
+            script_hex: script.as_ref().to_hex(),
+        })
+    }
+
+    pub fn to_plutus_v2_witness_record(
+        &self,
+        script: &babbage::PlutusV2Script,
     ) -> Result<PlutusWitnessRecord, crate::Error> {
         Ok(PlutusWitnessRecord {
             script_hash: script.to_hash().to_hex(),
@@ -359,7 +391,7 @@ impl EventWriter {
             NetworkId::Two => 2,
         });
 
-        let outputs = self.collect_output_records(&body.outputs)?;
+        let outputs = self.collect_legacy_output_records(&body.outputs)?;
         record.output_count = outputs.len();
         record.total_output = outputs.iter().map(|o| o.amount).sum();
 
@@ -390,11 +422,25 @@ impl EventWriter {
             };
 
             if let Some(witnesses) = witness_set {
-                record.vkey_witnesses = self.collect_vkey_witness_records(witnesses)?.into();
-                record.native_witnesses = self.collect_native_witness_records(witnesses)?.into();
-                record.plutus_witnesses = self.collect_plutus_witness_records(witnesses)?.into();
-                record.plutus_redeemers = self.collect_plutus_redeemer_records(witnesses)?.into();
-                record.plutus_data = self.collect_plutus_datum_records(witnesses)?.into();
+                record.vkey_witnesses = self
+                    .collect_vkey_witness_records(&witnesses.vkeywitness)?
+                    .into();
+
+                record.native_witnesses = self
+                    .collect_native_witness_records(&witnesses.native_script)?
+                    .into();
+
+                record.plutus_witnesses = self
+                    .collect_plutus_v1_witness_records(&witnesses.plutus_script)?
+                    .into();
+
+                record.plutus_redeemers = self
+                    .collect_plutus_redeemer_records(&witnesses.redeemer)?
+                    .into();
+
+                record.plutus_data = self
+                    .collect_plutus_datum_records(&witnesses.plutus_data)?
+                    .into();
             }
         }
 

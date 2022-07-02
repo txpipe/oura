@@ -1,6 +1,6 @@
 use pallas::{
     codec::minicbor::decode,
-    ledger::primitives::{alonzo, byron, ToHash},
+    ledger::primitives::{alonzo, babbage, byron, ToHash},
     ledger::traverse::{probe, Era},
     network::miniprotocols::Point,
 };
@@ -25,7 +25,10 @@ impl<'b> CborHolder {
                     let (_, block): (u16, alonzo::MintedBlock) = decode(&self.0)?;
                     MultiEraBlock::AlonzoCompatible(Box::new(block), era)
                 }
-                // TODO: handle babbage
+                Era::Babbage => {
+                    let (_, block): (u16, babbage::MintedBlock) = decode(&self.0)?;
+                    MultiEraBlock::Babbage(Box::new(block))
+                }
                 x => {
                     return Err(format!("This version of Oura can't handle era: {}", x).into());
                 }
@@ -53,6 +56,7 @@ pub(crate) enum MultiEraBlock<'b> {
     EpochBoundary(Box<byron::EbBlock>),
     Byron(Box<byron::MintedBlock<'b>>),
     AlonzoCompatible(Box<alonzo::MintedBlock<'b>>, Era),
+    Babbage(Box<babbage::MintedBlock<'b>>),
 }
 
 impl MultiEraBlock<'_> {
@@ -69,6 +73,10 @@ impl MultiEraBlock<'_> {
                 Ok(Point::Specific(slot, hash.to_vec()))
             }
             MultiEraBlock::AlonzoCompatible(x, _) => {
+                let hash = x.header.to_hash();
+                Ok(Point::Specific(x.header.header_body.slot, hash.to_vec()))
+            }
+            MultiEraBlock::Babbage(x) => {
                 let hash = x.header.to_hash();
                 Ok(Point::Specific(x.header.header_body.slot, hash.to_vec()))
             }

@@ -16,7 +16,7 @@ use crate::{
 use super::{map::ToHex, EventWriter};
 
 impl EventWriter {
-    fn crawl_metadata(&self, metadata: &Metadata) -> Result<(), Error> {
+    pub(crate) fn crawl_metadata(&self, metadata: &Metadata) -> Result<(), Error> {
         for (label, content) in metadata.iter() {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
@@ -31,7 +31,7 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_auxdata(&self, aux_data: &AuxiliaryData) -> Result<(), Error> {
+    pub(crate) fn crawl_auxdata(&self, aux_data: &AuxiliaryData) -> Result<(), Error> {
         match aux_data {
             AuxiliaryData::PostAlonzo(data) => {
                 if let Some(metadata) = &data.metadata {
@@ -67,11 +67,11 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_transaction_input(&self, input: &TransactionInput) -> Result<(), Error> {
+    pub(crate) fn crawl_transaction_input(&self, input: &TransactionInput) -> Result<(), Error> {
         self.append_from(self.to_transaction_input_record(input))
     }
 
-    fn crawl_transaction_output_amount(&self, amount: &Value) -> Result<(), Error> {
+    pub(crate) fn crawl_transaction_output_amount(&self, amount: &Value) -> Result<(), Error> {
         if let Value::Multiasset(_, policies) = amount {
             for (policy, assets) in policies.iter() {
                 for (asset, amount) in assets.iter() {
@@ -87,8 +87,8 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_transaction_output(&self, output: &TransactionOutput) -> Result<(), Error> {
-        let record = self.to_transaction_output_record(output)?;
+    pub(crate) fn crawl_legacy_output(&self, output: &TransactionOutput) -> Result<(), Error> {
+        let record = self.to_legacy_output_record(output)?;
         self.append(record.into())?;
 
         let child = &self.child_writer(EventContext {
@@ -105,20 +105,20 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_certificate(&self, certificate: &Certificate) -> Result<(), Error> {
+    pub(crate) fn crawl_certificate(&self, certificate: &Certificate) -> Result<(), Error> {
         self.append(self.to_certificate_event(certificate))
 
         // more complex event goes here (eg: pool metadata?)
     }
 
-    fn crawl_collateral(&self, collateral: &TransactionInput) -> Result<(), Error> {
+    pub(crate) fn crawl_collateral(&self, collateral: &TransactionInput) -> Result<(), Error> {
         self.append(self.to_collateral_event(collateral))
 
         // TODO: should we have a collateral idx in context?
         // more complex event goes here (eg: ???)
     }
 
-    fn crawl_mints(&self, mints: &Multiasset<i64>) -> Result<(), Error> {
+    pub(crate) fn crawl_mints(&self, mints: &Multiasset<i64>) -> Result<(), Error> {
         // should we have a policy context?
 
         for (policy, assets) in mints.iter() {
@@ -130,7 +130,10 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_witness_set(&self, witness_set: &TransactionWitnessSet) -> Result<(), Error> {
+    pub(crate) fn crawl_witness_set(
+        &self,
+        witness_set: &TransactionWitnessSet,
+    ) -> Result<(), Error> {
         if let Some(native) = &witness_set.native_script {
             for script in native.iter() {
                 self.append_from(self.to_native_witness_record(script)?)?;
@@ -139,7 +142,7 @@ impl EventWriter {
 
         if let Some(plutus) = &witness_set.plutus_script {
             for script in plutus.iter() {
-                self.append_from(self.to_plutus_witness_record(script)?)?;
+                self.append_from(self.to_plutus_v1_witness_record(script)?)?;
             }
         }
 
@@ -184,7 +187,7 @@ impl EventWriter {
                 ..EventContext::default()
             });
 
-            child.crawl_transaction_output(output)?;
+            child.crawl_legacy_output(output)?;
         }
 
         if let Some(certs) = &tx.certificates {
