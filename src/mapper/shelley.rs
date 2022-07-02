@@ -1,8 +1,9 @@
-use pallas::ledger::primitives::{Fragment, ToHash};
+use pallas::codec::utils::KeepRaw;
+use pallas::ledger::primitives::ToHash;
 
 use pallas::ledger::primitives::alonzo::{
-    self, AuxiliaryData, Block, Certificate, Metadata, Multiasset, TransactionBody,
-    TransactionBodyComponent, TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
+    AuxiliaryData, Certificate, Metadata, MintedBlock, Multiasset, TransactionBody,
+    TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
 };
 
 use pallas::crypto::hash::Hash;
@@ -32,7 +33,7 @@ impl EventWriter {
 
     fn crawl_auxdata(&self, aux_data: &AuxiliaryData) -> Result<(), Error> {
         match aux_data {
-            AuxiliaryData::Alonzo(data) => {
+            AuxiliaryData::PostAlonzo(data) => {
                 if let Some(metadata) = &data.metadata {
                     self.crawl_metadata(metadata)?;
                 }
@@ -52,13 +53,10 @@ impl EventWriter {
             AuxiliaryData::Shelley(data) => {
                 self.crawl_metadata(data)?;
             }
-            AuxiliaryData::ShelleyMa {
-                transaction_metadata,
-                auxiliary_scripts,
-            } => {
-                self.crawl_metadata(transaction_metadata)?;
+            AuxiliaryData::ShelleyMa(data) => {
+                self.crawl_metadata(&data.transaction_metadata)?;
 
-                if let Some(native) = &auxiliary_scripts {
+                if let Some(native) = &data.auxiliary_scripts {
                     for script in native.iter() {
                         self.append(self.to_aux_native_script_event(script))?;
                     }
@@ -164,57 +162,52 @@ impl EventWriter {
         &self,
         tx: &TransactionBody,
         tx_hash: &str,
-        aux_data: Option<&AuxiliaryData>,
-        witness_set: Option<&TransactionWitnessSet>,
+        aux_data: Option<&KeepRaw<AuxiliaryData>>,
+        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
     ) -> Result<(), Error> {
         let record = self.to_transaction_record(tx, tx_hash, aux_data, witness_set)?;
 
         self.append_from(record.clone())?;
 
-        for component in tx.iter() {
-            match component {
-                TransactionBodyComponent::Inputs(x) => {
-                    for (idx, input) in x.iter().enumerate() {
-                        let child = self.child_writer(EventContext {
-                            input_idx: Some(idx),
-                            ..EventContext::default()
-                        });
+        for (idx, input) in tx.inputs.iter().enumerate() {
+            let child = self.child_writer(EventContext {
+                input_idx: Some(idx),
+                ..EventContext::default()
+            });
 
-                        child.crawl_transaction_input(input)?;
-                    }
-                }
-                TransactionBodyComponent::Outputs(x) => {
-                    for (idx, output) in x.iter().enumerate() {
-                        let child = self.child_writer(EventContext {
-                            output_idx: Some(idx),
-                            ..EventContext::default()
-                        });
+            child.crawl_transaction_input(input)?;
+        }
 
-                        child.crawl_transaction_output(output)?;
-                    }
-                }
-                TransactionBodyComponent::Certificates(certs) => {
-                    for (idx, cert) in certs.iter().enumerate() {
-                        let child = self.child_writer(EventContext {
-                            certificate_idx: Some(idx),
-                            ..EventContext::default()
-                        });
+        for (idx, output) in tx.outputs.iter().enumerate() {
+            let child = self.child_writer(EventContext {
+                output_idx: Some(idx),
+                ..EventContext::default()
+            });
 
-                        child.crawl_certificate(cert)?;
-                    }
-                }
-                TransactionBodyComponent::Collateral(collaterals) => {
-                    for (_idx, collateral) in collaterals.iter().enumerate() {
-                        // TODO: collateral context?
+            child.crawl_transaction_output(output)?;
+        }
 
-                        self.crawl_collateral(collateral)?;
-                    }
-                }
-                TransactionBodyComponent::Mint(x) => {
-                    self.crawl_mints(x)?;
-                }
-                _ => (),
-            };
+        if let Some(certs) = &tx.certificates {
+            for (idx, cert) in certs.iter().enumerate() {
+                let child = self.child_writer(EventContext {
+                    certificate_idx: Some(idx),
+                    ..EventContext::default()
+                });
+
+                child.crawl_certificate(cert)?;
+            }
+        }
+
+        if let Some(collateral) = &tx.collateral {
+            for (_idx, collateral) in collateral.iter().enumerate() {
+                // TODO: collateral context?
+
+                self.crawl_collateral(collateral)?;
+            }
+        }
+
+        if let Some(mint) = &tx.mint {
+            self.crawl_mints(mint)?;
         }
 
         if let Some(aux_data) = aux_data {
@@ -234,7 +227,7 @@ impl EventWriter {
 
     fn crawl_shelley_block(
         &self,
-        block: &Block,
+        block: &MintedBlock,
         hash: &Hash<32>,
         cbor: &[u8],
         era: Era,
@@ -271,7 +264,7 @@ impl EventWriter {
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
-    pub fn crawl_with_cbor(&self, block: &Block, cbor: &[u8]) -> Result<(), Error> {
+    pub fn crawl_with_cbor(&self, block: &MintedBlock, cbor: &[u8]) -> Result<(), Error> {
         let hash = block.header.to_hash();
 
         let child = self.child_writer(EventContext {
@@ -286,7 +279,7 @@ impl EventWriter {
     }
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
-    pub fn crawl(&self, block: &Block) -> Result<(), Error> {
+    pub fn crawl(&self, block: &MintedBlock) -> Result<(), Error> {
         let hash = block.header.to_hash();
 
         let child = self.child_writer(EventContext {
@@ -307,7 +300,7 @@ impl EventWriter {
     /// passed through in case we need to attach it to outbound events.
     pub fn crawl_shelley_with_cbor<'b>(
         &self,
-        block: &'b Block,
+        block: &'b MintedBlock<'b>,
         cbor: &'b [u8],
         era: Era,
     ) -> Result<(), Error> {
@@ -333,7 +326,7 @@ impl EventWriter {
     /// Shelley. In this way, we can avoid having to fork the crawling procedure
     /// for each different hard-fork.
     pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Era) -> Result<(), Error> {
-        let alonzo::BlockWrapper(_, block) = alonzo::BlockWrapper::decode_fragment(cbor)?;
+        let (_, block): (u16, MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
         self.crawl_shelley_with_cbor(&block, cbor, era)
     }
 }

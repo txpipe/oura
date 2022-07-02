@@ -3,7 +3,7 @@ use std::{ops::Deref, str::FromStr, time::Duration};
 
 use pallas::network::{
     miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
-    multiplexer::{bearers::Bearer, StdChannel, StdPlexer},
+    multiplexer::{bearers::Bearer, StdChannelBuffer, StdPlexer},
 };
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
@@ -236,7 +236,7 @@ pub fn should_finalize(
 }
 
 pub(crate) fn find_end_of_chain(
-    channel: &mut StdChannel,
+    channel: &mut StdChannelBuffer,
     well_known: &ChainWellKnownInfo,
 ) -> Result<Point, crate::Error> {
     let point = Point::Specific(
@@ -258,7 +258,7 @@ pub(crate) fn define_start_point(
     intersect: &Option<IntersectArg>,
     since: &Option<PointArg>,
     utils: &Utils,
-    cs_channel: &mut StdChannel,
+    cs_channel: &mut StdChannelBuffer,
 ) -> Result<Option<Vec<Point>>, Error> {
     let cursor = utils.get_cursor_if_any();
 

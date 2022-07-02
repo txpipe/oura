@@ -1,6 +1,6 @@
 use pallas::ledger::primitives::{
     alonzo::{
-        AuxiliaryData, Block, Multiasset, TransactionInput, TransactionOutput,
+        AuxiliaryData, MintedBlock, Multiasset, TransactionInput, TransactionOutput,
         TransactionWitnessSet, Value,
     },
     ToHash,
@@ -64,12 +64,9 @@ impl EventWriter {
         aux_data: &AuxiliaryData,
     ) -> Result<Vec<MetadataRecord>, Error> {
         let metadata = match aux_data {
-            AuxiliaryData::Alonzo(data) => data.metadata.as_deref(),
+            AuxiliaryData::PostAlonzo(data) => data.metadata.as_deref(),
             AuxiliaryData::Shelley(data) => Some(data.as_ref()),
-            AuxiliaryData::ShelleyMa {
-                transaction_metadata,
-                ..
-            } => Some(transaction_metadata.as_ref()),
+            AuxiliaryData::ShelleyMa(data) => Some(data.transaction_metadata.as_ref()),
         };
 
         match metadata {
@@ -142,7 +139,7 @@ impl EventWriter {
 
     pub fn collect_shelley_tx_records(
         &self,
-        block: &Block,
+        block: &MintedBlock,
     ) -> Result<Vec<TransactionRecord>, Error> {
         block
             .transaction_bodies

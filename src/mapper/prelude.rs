@@ -106,14 +106,16 @@ impl EventWriter {
     }
 }
 
-impl From<pallas::ledger::primitives::Era> for Era {
-    fn from(other: pallas::ledger::primitives::Era) -> Self {
+impl From<pallas::ledger::traverse::Era> for Era {
+    fn from(other: pallas::ledger::traverse::Era) -> Self {
         match other {
-            pallas::ledger::primitives::Era::Byron => Era::Byron,
-            pallas::ledger::primitives::Era::Shelley => Era::Shelley,
-            pallas::ledger::primitives::Era::Allegra => Era::Allegra,
-            pallas::ledger::primitives::Era::Mary => Era::Mary,
-            pallas::ledger::primitives::Era::Alonzo => Era::Alonzo,
+            pallas::ledger::traverse::Era::Byron => Era::Byron,
+            pallas::ledger::traverse::Era::Shelley => Era::Shelley,
+            pallas::ledger::traverse::Era::Allegra => Era::Allegra,
+            pallas::ledger::traverse::Era::Mary => Era::Mary,
+            pallas::ledger::traverse::Era::Alonzo => Era::Alonzo,
+            pallas::ledger::traverse::Era::Babbage => Era::Babbage,
+            _ => Era::Unknown,
         }
     }
 }

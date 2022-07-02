@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
 use pallas::codec::minicbor::bytes::ByteVec;
+use pallas::codec::utils::KeepRaw;
 use pallas::crypto::hash::Hash;
 use pallas::ledger::primitives::alonzo::{
-    self as alonzo, AuxiliaryData, Block, Certificate, InstantaneousRewardSource,
-    InstantaneousRewardTarget, Metadatum, MetadatumLabel, Relay, TransactionInput,
+    self as alonzo, AuxiliaryData, Certificate, InstantaneousRewardSource,
+    InstantaneousRewardTarget, Metadatum, MetadatumLabel, MintedBlock, Relay, TransactionInput,
     TransactionOutput, TransactionWitnessSet, Value,
 };
-use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody, TransactionBodyComponent};
+use pallas::ledger::primitives::alonzo::{NetworkId, TransactionBody};
 use pallas::ledger::primitives::{ToCanonicalJson, ToHash};
 
 use pallas::network::miniprotocols::Point;
@@ -302,7 +303,7 @@ impl EventWriter {
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
                 pool_metadata: pool_metadata.as_ref().map(|m| m.url.clone()),
-                pool_metadata_hash: pool_metadata.as_ref().map(|m| m.hash.clone().to_hex())
+                pool_metadata_hash: pool_metadata.as_ref().map(|m| m.hash.clone().to_hex()),
             },
             Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
                 pool: pool.to_hex(),
@@ -342,64 +343,47 @@ impl EventWriter {
         &self,
         body: &TransactionBody,
         tx_hash: &str,
-        aux_data: Option<&AuxiliaryData>,
-        witness_set: Option<&TransactionWitnessSet>,
+        aux_data: Option<&KeepRaw<AuxiliaryData>>,
+        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
     ) -> Result<TransactionRecord, Error> {
         let mut record = TransactionRecord::default();
 
         record.hash.push_str(tx_hash);
 
-        for component in body.iter() {
-            match component {
-                TransactionBodyComponent::Fee(x) => {
-                    record.fee = *x;
-                }
-                TransactionBodyComponent::Ttl(x) => {
-                    record.ttl = Some(*x);
-                }
-                TransactionBodyComponent::ValidityIntervalStart(x) => {
-                    record.validity_interval_start = Some(*x);
-                }
-                TransactionBodyComponent::NetworkId(x) => {
-                    record.network_id = match x {
-                        NetworkId::One => Some(1),
-                        NetworkId::Two => Some(2),
-                    };
-                }
-                TransactionBodyComponent::Outputs(x) => {
-                    let sub_records = self.collect_output_records(x)?;
-                    record.output_count = sub_records.len();
-                    record.total_output = sub_records.iter().map(|o| o.amount).sum();
+        record.fee = body.fee;
+        record.ttl = body.ttl;
+        record.validity_interval_start = body.validity_interval_start;
 
-                    if self.config.include_transaction_details {
-                        record.outputs = sub_records.into();
-                    }
-                }
-                TransactionBodyComponent::Inputs(x) => {
-                    let sub_records = self.collect_input_records(x);
-                    record.input_count = sub_records.len();
+        record.network_id = body.network_id.as_ref().map(|x| match x {
+            NetworkId::One => 1,
+            NetworkId::Two => 2,
+        });
 
-                    if self.config.include_transaction_details {
-                        record.inputs = sub_records.into();
-                    }
-                }
-                TransactionBodyComponent::Mint(x) => {
-                    let sub_records = self.collect_mint_records(x);
-                    record.mint_count = sub_records.len();
+        let outputs = self.collect_output_records(&body.outputs)?;
+        record.output_count = outputs.len();
+        record.total_output = outputs.iter().map(|o| o.amount).sum();
 
-                    if self.config.include_transaction_details {
-                        record.mint = sub_records.into();
-                    }
-                }
-                // TODO
-                // TransactionBodyComponent::ScriptDataHash(_) => todo!(),
-                // TransactionBodyComponent::RequiredSigners(_) => todo!(),
-                // TransactionBodyComponent::AuxiliaryDataHash(_) => todo!(),
-                _ => (),
-            };
+        let inputs = self.collect_input_records(&body.inputs);
+        record.input_count = inputs.len();
+
+        if let Some(mint) = &body.mint {
+            let mints = self.collect_mint_records(mint);
+            record.mint_count = mints.len();
+
+            if self.config.include_transaction_details {
+                record.mint = mints.into();
+            }
         }
 
+        // TODO
+        // TransactionBodyComponent::ScriptDataHash(_)
+        // TransactionBodyComponent::RequiredSigners(_)
+        // TransactionBodyComponent::AuxiliaryDataHash(_)
+
         if self.config.include_transaction_details {
+            record.outputs = outputs.into();
+            record.inputs = inputs.into();
+
             record.metadata = match aux_data {
                 Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
                 None => None,
@@ -419,7 +403,7 @@ impl EventWriter {
 
     pub fn to_block_record(
         &self,
-        source: &Block,
+        source: &MintedBlock,
         hash: &Hash<32>,
         cbor: &[u8],
         era: Era,

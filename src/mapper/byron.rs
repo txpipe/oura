@@ -6,8 +6,7 @@ use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
-use pallas::ledger::primitives::byron::MainBlock;
-use pallas::ledger::primitives::{byron, Fragment};
+use pallas::ledger::primitives::{byron, Fragment, ToHash};
 
 impl EventWriter {
     fn to_byron_input_record(&self, source: &byron::TxIn) -> Option<TxInputRecord> {
@@ -62,7 +61,7 @@ impl EventWriter {
 
     fn to_byron_transaction_record(
         &self,
-        source: &byron::TxPayload,
+        source: &byron::MintedTxPayload,
         tx_hash: &str,
     ) -> Result<TransactionRecord, Error> {
         let input_records = self.collect_byron_input_records(&source.transaction);
@@ -102,7 +101,7 @@ impl EventWriter {
 
     pub fn collect_byron_tx_records(
         &self,
-        block: &MainBlock,
+        block: &byron::MintedBlock,
     ) -> Result<Vec<TransactionRecord>, Error> {
         block
             .body
@@ -117,7 +116,7 @@ impl EventWriter {
 
     fn crawl_byron_transaction(
         &self,
-        source: &byron::TxPayload,
+        source: &byron::MintedTxPayload,
         tx_hash: &str,
     ) -> Result<(), Error> {
         let record = self.to_byron_transaction_record(source, tx_hash)?;
@@ -155,7 +154,7 @@ impl EventWriter {
 
     pub fn to_byron_block_record(
         &self,
-        source: &byron::MainBlock,
+        source: &byron::MintedBlock,
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
@@ -186,7 +185,7 @@ impl EventWriter {
 
     fn crawl_byron_main_block(
         &self,
-        block: &byron::MainBlock,
+        block: &byron::MintedBlock,
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<(), Error> {
@@ -260,39 +259,23 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we already have a decoded block (for example, N2C). The raw CBOR is also
     /// passed through in case we need to attach it to outbound events.
-    pub fn crawl_byron_with_cbor(&self, block: &byron::Block, cbor: &[u8]) -> Result<(), Error> {
-        match block {
-            byron::Block::MainBlock(block) => {
-                let hash = block.header.to_hash();
-                let abs_slot = block.header.consensus_data.0.to_abs_slot();
+    pub fn crawl_byron_with_cbor(
+        &self,
+        block: &byron::MintedBlock,
+        cbor: &[u8],
+    ) -> Result<(), Error> {
+        let hash = block.header.to_hash();
+        let abs_slot = block.header.consensus_data.0.to_abs_slot();
 
-                let child = self.child_writer(EventContext {
-                    block_hash: Some(hex::encode(&hash)),
-                    block_number: Some(block.header.consensus_data.2[0]),
-                    slot: Some(abs_slot),
-                    timestamp: self.compute_timestamp(abs_slot),
-                    ..EventContext::default()
-                });
+        let child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(&hash)),
+            block_number: Some(block.header.consensus_data.2[0]),
+            slot: Some(abs_slot),
+            timestamp: self.compute_timestamp(abs_slot),
+            ..EventContext::default()
+        });
 
-                child.crawl_byron_main_block(block, &hash, cbor)?;
-            }
-            byron::Block::EbBlock(block) => {
-                if self.config.include_byron_ebb {
-                    let hash = block.header.to_hash();
-                    let abs_slot = block.header.to_abs_slot();
-
-                    let child = self.child_writer(EventContext {
-                        block_hash: Some(hex::encode(&hash)),
-                        block_number: Some(block.header.consensus_data.difficulty[0]),
-                        slot: Some(abs_slot),
-                        timestamp: self.compute_timestamp(abs_slot),
-                        ..EventContext::default()
-                    });
-
-                    child.crawl_byron_ebb_block(block, &hash, cbor)?;
-                }
-            }
-        }
+        child.crawl_byron_main_block(block, &hash, cbor)?;
 
         Ok(())
     }
@@ -302,7 +285,31 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
     pub fn crawl_from_byron_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let block = byron::Block::decode_fragment(cbor)?;
+        let block = byron::MintedBlock::decode_fragment(cbor)?;
         self.crawl_byron_with_cbor(&block, cbor)
+    }
+
+    /// Mapper entry-point for decoded Byron Epoch-Boundary blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we already have a decoded block (for example, N2C). The raw CBOR is also
+    /// passed through in case we need to attach it to outbound events.
+    pub fn crawl_ebb_with_cbor(&self, block: &byron::EbBlock, cbor: &[u8]) -> Result<(), Error> {
+        if self.config.include_byron_ebb {
+            let hash = block.header.to_hash();
+            let abs_slot = block.header.to_abs_slot();
+
+            let child = self.child_writer(EventContext {
+                block_hash: Some(hex::encode(&hash)),
+                block_number: Some(block.header.consensus_data.difficulty[0]),
+                slot: Some(abs_slot),
+                timestamp: self.compute_timestamp(abs_slot),
+                ..EventContext::default()
+            });
+
+            child.crawl_byron_ebb_block(block, &hash, cbor)?;
+        }
+
+        Ok(())
     }
 }

@@ -49,7 +49,7 @@ pub fn producer_loop(
             payload.event
         );
 
-        let _: () = redis::cmd("XADD")
+        redis::cmd("XADD")
             .arg(stream)
             .arg("*")
             .arg(&[(payload.key, json!(payload.event).to_string())])

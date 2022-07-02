@@ -1,10 +1,10 @@
 use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
 use pallas::{
-    ledger::primitives::{probing, Era},
+    ledger::traverse::{probe, Era},
     network::{
         miniprotocols::{blockfetch, chainsync, handshake, run_agent, Point, MAINNET_MAGIC},
-        multiplexer::StdChannel,
+        multiplexer::StdChannelBuffer,
     },
 };
 
@@ -32,27 +32,29 @@ impl blockfetch::Observer for Block2EventMapper {
     fn on_block_received(&mut self, body: Vec<u8>) -> Result<(), Error> {
         let Self(writer) = self;
 
-        match probing::probe_block_cbor_era(&body) {
-            probing::Outcome::Matched(era) => match era {
+        match probe::block_era(&body) {
+            probe::Outcome::Matched(era) => match era {
                 Era::Byron => {
                     writer
                         .crawl_from_byron_cbor(&body)
                         .ok_or_warn("error crawling block for events");
                 }
-                _ => {
+                Era::Allegra | Era::Alonzo | Era::Mary | Era::Shelley => {
                     writer
                         .crawl_from_shelley_cbor(&body, era.into())
                         .ok_or_warn("error crawling block for events");
                 }
+                // TODO: handle babbage
+                x => {
+                    return Err(format!("This version of Oura can't handle era: {}", x).into());
+                }
             },
-            // TODO: we're assuming that the genesis block is Byron-compatible. Is this a safe
-            // assumption?
-            probing::Outcome::GenesisBlock => {
+            probe::Outcome::EpochBoundary => {
                 writer
                     .crawl_from_byron_cbor(&body)
                     .ok_or_warn("error crawling block for events");
             }
-            probing::Outcome::Inconclusive => {
+            probe::Outcome::Inconclusive => {
                 log::error!("can't infer primitive block from cbor, inconclusive probing. CBOR hex for debugging: {}", hex::encode(body));
             }
         }
@@ -144,7 +146,7 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
 }
 
 pub(crate) fn fetch_blocks_forever(
-    mut channel: StdChannel,
+    mut channel: StdChannelBuffer,
     event_writer: EventWriter,
     input: Receiver<Point>,
 ) -> Result<(), Error> {
@@ -157,7 +159,7 @@ pub(crate) fn fetch_blocks_forever(
 }
 
 fn observe_headers_forever(
-    mut channel: StdChannel,
+    mut channel: StdChannelBuffer,
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     block_requests: SyncSender<Point>,
@@ -190,7 +192,7 @@ enum AttemptError {
     Other(Error),
 }
 
-fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), AttemptError> {
+fn do_handshake(channel: &mut StdChannelBuffer, magic: u64) -> Result<(), AttemptError> {
     let versions = handshake::n2n::VersionTable::v6_and_above(magic);
 
     match run_agent(handshake::Initiator::initial(versions), channel) {
@@ -217,9 +219,9 @@ fn do_chainsync_attempt(
     let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
         .map_err(|x| AttemptError::Recoverable(x))?;
 
-    let mut hs_channel = plexer.use_channel(0);
-    let mut cs_channel = plexer.use_channel(2);
-    let bf_channel = plexer.use_channel(3);
+    let mut hs_channel = plexer.use_channel(0).into();
+    let mut cs_channel = plexer.use_channel(2).into();
+    let bf_channel = plexer.use_channel(3).into();
 
     plexer.muxer.spawn();
     plexer.demuxer.spawn();
@@ -289,7 +291,7 @@ pub fn do_chainsync(
                 .as_ref()
                 .map(|x| x.chainsync_max_backoff as u64)
                 .map(Duration::from_secs)
-                .unwrap_or(Duration::from_secs(60)),
+                .unwrap_or_else(|| Duration::from_secs(60)),
         },
     )
 }

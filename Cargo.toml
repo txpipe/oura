@@ -12,7 +12,8 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.10.0"
+pallas = "0.11.0"
+# pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
 net2 = "0.2.37"

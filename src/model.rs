@@ -7,19 +7,21 @@ use serde_json::Value as JsonValue;
 
 use strum_macros::Display;
 
-// We're duplicate the Era struct from Pallas for two reasons: a) we need it to
-// be serializable and we don't want to impose serde dependency on Pallas and b)
-// we prefer not to add dependencies to Pallas outside of the sources that
+// We're duplicating the Era struct from Pallas for two reasons: a) we need it
+// to be serializable and we don't want to impose serde dependency on Pallas and
+// b) we prefer not to add dependencies to Pallas outside of the sources that
 // actually use it on an attempt to make the pipeline agnostic of particular
 // implementation details.
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Display)]
 pub enum Era {
     Undefined,
+    Unknown,
     Byron,
     Shelley,
     Allegra,
     Mary,
     Alonzo,
+    Babbage,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
