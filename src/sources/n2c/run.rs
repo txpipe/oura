@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Debug, ops::Deref, sync::Arc, time::Duratio
 
 use pallas::network::{
     miniprotocols::{chainsync, handshake, run_agent, Point, MAINNET_MAGIC},
-    multiplexer::StdChannel,
+    multiplexer::StdChannelBuffer,
 };
 
 use crate::{
@@ -73,6 +73,9 @@ impl<'b> chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 .expect("required block not found in memory");
 
             match block.parse()? {
+                MultiEraBlock::EpochBoundary(model) => self
+                    .event_writer
+                    .crawl_ebb_with_cbor(&model, block.cbor())?,
                 MultiEraBlock::Byron(model) => self
                     .event_writer
                     .crawl_byron_with_cbor(&model, block.cbor())?,
@@ -125,7 +128,7 @@ impl<'b> chainsync::Observer<chainsync::BlockContent> for ChainObserver {
 }
 
 fn observe_forever(
-    mut channel: StdChannel,
+    mut channel: StdChannelBuffer,
     event_writer: EventWriter,
     known_points: Option<Vec<Point>>,
     min_depth: usize,
@@ -157,7 +160,7 @@ enum AttemptError {
     Other(Error),
 }
 
-fn do_handshake(channel: &mut StdChannel, magic: u64) -> Result<(), AttemptError> {
+fn do_handshake(channel: &mut StdChannelBuffer, magic: u64) -> Result<(), AttemptError> {
     let versions = handshake::n2c::VersionTable::v1_and_above(magic);
 
     match run_agent(handshake::Initiator::initial(versions), channel) {
@@ -184,8 +187,8 @@ fn do_chainsync_attempt(
     let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
         .map_err(|x| AttemptError::Recoverable(x))?;
 
-    let mut hs_channel = plexer.use_channel(0);
-    let mut cs_channel = plexer.use_channel(5);
+    let mut hs_channel = plexer.use_channel(0).into();
+    let mut cs_channel = plexer.use_channel(5).into();
 
     plexer.muxer.spawn();
     plexer.demuxer.spawn();

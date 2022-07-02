@@ -1,8 +1,7 @@
-use std::ops::Deref;
-
 use pallas::{
     codec::minicbor::decode,
-    ledger::primitives::{alonzo, byron, probing, Era, ToHash},
+    ledger::primitives::{alonzo, byron, ToHash},
+    ledger::traverse::{probe, Era},
     network::miniprotocols::Point,
 };
 
@@ -16,24 +15,24 @@ impl<'b> CborHolder {
     }
 
     pub fn parse(&'b self) -> Result<MultiEraBlock<'b>, Error> {
-        let block = match probing::probe_block_cbor_era(&self.0) {
-            probing::Outcome::Matched(era) => match era {
-                pallas::ledger::primitives::Era::Byron => {
+        let block = match probe::block_era(&self.0) {
+            probe::Outcome::Matched(era) => match era {
+                Era::Byron => {
                     let block = decode(&self.0)?;
                     MultiEraBlock::Byron(Box::new(block))
                 }
-                _ => {
-                    let alonzo::BlockWrapper(_, block) = decode(&self.0)?;
+                Era::Shelley | Era::Allegra | Era::Mary | Era::Alonzo => {
+                    let (_, block): (u16, alonzo::MintedBlock) = decode(&self.0)?;
                     MultiEraBlock::AlonzoCompatible(Box::new(block), era)
                 }
+                Era::Babbage => todo!(),
+                _ => todo!(),
             },
-            // TODO: we're assuming that the geenesis block is Byron-compatible. Is this a safe
-            // assumption?
-            probing::Outcome::GenesisBlock => {
+            probe::Outcome::EpochBoundary => {
                 let block = decode(&self.0)?;
-                MultiEraBlock::Byron(Box::new(block))
+                MultiEraBlock::EpochBoundary(Box::new(block))
             }
-            probing::Outcome::Inconclusive => {
+            probe::Outcome::Inconclusive => {
                 log::error!("CBOR hex for debugging: {}", hex::encode(&self.0));
                 return Err("can't infer primitive block from cbor, inconclusive probing".into());
             }
@@ -49,25 +48,24 @@ impl<'b> CborHolder {
 
 #[derive(Debug)]
 pub(crate) enum MultiEraBlock<'b> {
-    Byron(Box<byron::Block>),
-    AlonzoCompatible(Box<alonzo::Block<'b>>, Era),
+    EpochBoundary(Box<byron::EbBlock>),
+    Byron(Box<byron::MintedBlock<'b>>),
+    AlonzoCompatible(Box<alonzo::MintedBlock<'b>>, Era),
 }
 
 impl MultiEraBlock<'_> {
     pub(crate) fn read_cursor(&self) -> Result<Point, Error> {
         match self {
-            MultiEraBlock::Byron(x) => match x.deref() {
-                byron::Block::EbBlock(x) => {
-                    let hash = x.header.to_hash();
-                    let slot = x.header.to_abs_slot();
-                    Ok(Point::Specific(slot, hash.to_vec()))
-                }
-                byron::Block::MainBlock(x) => {
-                    let hash = x.header.to_hash();
-                    let slot = x.header.consensus_data.0.to_abs_slot();
-                    Ok(Point::Specific(slot, hash.to_vec()))
-                }
-            },
+            MultiEraBlock::EpochBoundary(x) => {
+                let hash = x.header.to_hash();
+                let slot = x.header.to_abs_slot();
+                Ok(Point::Specific(slot, hash.to_vec()))
+            }
+            MultiEraBlock::Byron(x) => {
+                let hash = x.header.to_hash();
+                let slot = x.header.consensus_data.0.to_abs_slot();
+                Ok(Point::Specific(slot, hash.to_vec()))
+            }
             MultiEraBlock::AlonzoCompatible(x, _) => {
                 let hash = x.header.to_hash();
                 Ok(Point::Specific(x.header.header_body.slot, hash.to_vec()))
