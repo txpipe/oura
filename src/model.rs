@@ -146,6 +146,12 @@ impl From<MintRecord> for EventData {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct WithdrawalRecord {
+    pub reward_account: String,
+    pub coin: u64,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct TransactionRecord {
     pub hash: String,
@@ -168,6 +174,7 @@ pub struct TransactionRecord {
     pub plutus_witnesses: Option<Vec<PlutusWitnessRecord>>,
     pub plutus_redeemers: Option<Vec<PlutusRedeemerRecord>>,
     pub plutus_data: Option<Vec<PlutusDatumRecord>>,
+    pub withdrawals: Option<Vec<WithdrawalRecord>>,
 }
 
 impl From<TransactionRecord> for EventData {

@@ -442,6 +442,10 @@ impl EventWriter {
                     .collect_plutus_datum_records(&witnesses.plutus_data)?
                     .into();
             }
+
+            if let Some(withdrawals) = &body.withdrawals {
+                record.withdrawals = self.collect_withdrawal_records(withdrawals)?.into();
+            }
         }
 
         Ok(record)
