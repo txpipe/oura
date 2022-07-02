@@ -37,14 +37,18 @@ impl blockfetch::Observer for Block2EventMapper {
                 Era::Byron => {
                     writer
                         .crawl_from_byron_cbor(&body)
-                        .ok_or_warn("error crawling block for events");
+                        .ok_or_warn("error crawling byron block for events");
                 }
                 Era::Allegra | Era::Alonzo | Era::Mary | Era::Shelley => {
                     writer
                         .crawl_from_shelley_cbor(&body, era.into())
-                        .ok_or_warn("error crawling block for events");
+                        .ok_or_warn("error crawling alonzo-compatible block for events");
                 }
-                // TODO: handle babbage
+                Era::Babbage => {
+                    writer
+                        .crawl_from_babbage_cbor(&body)
+                        .ok_or_warn("error crawling babbage block for events");
+                }
                 x => {
                     return Err(format!("This version of Oura can't handle era: {}", x).into());
                 }

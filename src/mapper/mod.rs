@@ -1,3 +1,4 @@
+mod babbage;
 mod byron;
 mod cip15;
 mod cip25;
