@@ -25,8 +25,10 @@ impl<'b> CborHolder {
                     let (_, block): (u16, alonzo::MintedBlock) = decode(&self.0)?;
                     MultiEraBlock::AlonzoCompatible(Box::new(block), era)
                 }
-                Era::Babbage => todo!(),
-                _ => todo!(),
+                // TODO: handle babbage
+                x => {
+                    return Err(format!("This version of Oura can't handle era: {}", x).into());
+                }
             },
             probe::Outcome::EpochBoundary => {
                 let block = decode(&self.0)?;

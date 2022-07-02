@@ -44,10 +44,10 @@ impl blockfetch::Observer for Block2EventMapper {
                         .crawl_from_shelley_cbor(&body, era.into())
                         .ok_or_warn("error crawling block for events");
                 }
-                Era::Babbage => {
-                    todo!();
+                // TODO: handle babbage
+                x => {
+                    return Err(format!("This version of Oura can't handle era: {}", x).into());
                 }
-                _ => todo!(),
             },
             probe::Outcome::EpochBoundary => {
                 writer
