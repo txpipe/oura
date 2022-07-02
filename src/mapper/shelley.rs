@@ -207,7 +207,7 @@ impl EventWriter {
         }
 
         if let Some(mint) = &tx.mint {
-            self.crawl_mints(&mint)?;
+            self.crawl_mints(mint)?;
         }
 
         if let Some(aux_data) = aux_data {

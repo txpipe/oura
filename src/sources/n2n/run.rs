@@ -291,7 +291,7 @@ pub fn do_chainsync(
                 .as_ref()
                 .map(|x| x.chainsync_max_backoff as u64)
                 .map(Duration::from_secs)
-                .unwrap_or(Duration::from_secs(60)),
+                .unwrap_or_else(|| Duration::from_secs(60)),
         },
     )
 }

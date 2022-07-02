@@ -43,7 +43,7 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     );
 }
 
-impl<'b> chainsync::Observer<chainsync::BlockContent> for ChainObserver {
+impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
     fn on_roll_forward(
         &mut self,
         content: chainsync::BlockContent,
@@ -247,7 +247,7 @@ pub fn do_chainsync(
                 .as_ref()
                 .map(|x| x.chainsync_max_backoff as u64)
                 .map(Duration::from_secs)
-                .unwrap_or(Duration::from_secs(60)),
+                .unwrap_or_else(|| Duration::from_secs(60)),
         },
     )
 }
