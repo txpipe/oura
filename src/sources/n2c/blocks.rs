@@ -18,7 +18,7 @@ impl<'b> CborHolder {
         let block = match probe::block_era(&self.0) {
             probe::Outcome::Matched(era) => match era {
                 Era::Byron => {
-                    let block = decode(&self.0)?;
+                    let (_, block): (u16, byron::MintedBlock) = decode(&self.0)?;
                     MultiEraBlock::Byron(Box::new(block))
                 }
                 Era::Shelley | Era::Allegra | Era::Mary | Era::Alonzo => {
@@ -34,7 +34,7 @@ impl<'b> CborHolder {
                 }
             },
             probe::Outcome::EpochBoundary => {
-                let block = decode(&self.0)?;
+                let (_, block): (u16, byron::EbBlock) = decode(&self.0)?;
                 MultiEraBlock::EpochBoundary(Box::new(block))
             }
             probe::Outcome::Inconclusive => {

@@ -6,7 +6,7 @@ use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
-use pallas::ledger::primitives::{byron, Fragment, ToHash};
+use pallas::ledger::primitives::{byron, ToHash};
 
 impl EventWriter {
     fn to_byron_input_record(&self, source: &byron::TxIn) -> Option<TxInputRecord> {
@@ -285,7 +285,7 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
     pub fn crawl_from_byron_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let block = byron::MintedBlock::decode_fragment(cbor)?;
+        let (_, block): (u16, byron::MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
         self.crawl_byron_with_cbor(&block, cbor)
     }
 
@@ -311,5 +311,14 @@ impl EventWriter {
         }
 
         Ok(())
+    }
+
+    /// Mapper entry-point for raw EBB cbor blocks
+    ///
+    /// Entry-point to start crawling a blocks for events. Meant to be used when
+    /// we haven't decoded the CBOR yet (for example, N2N).
+    pub fn crawl_from_ebb_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
+        let (_, block): (u16, byron::EbBlock) = pallas::codec::minicbor::decode(cbor)?;
+        self.crawl_ebb_with_cbor(&block, cbor)
     }
 }
