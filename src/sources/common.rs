@@ -149,10 +149,27 @@ where
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct RetryPolicy {
+    #[serde(default = "RetryPolicy::default_max_retries")]
     pub chainsync_max_retries: u32,
+
+    #[serde(default = "RetryPolicy::default_max_backoff")]
     pub chainsync_max_backoff: u32,
+
+    #[serde(default = "RetryPolicy::default_max_retries")]
     pub connection_max_retries: u32,
+
+    #[serde(default = "RetryPolicy::default_max_backoff")]
     pub connection_max_backoff: u32,
+}
+
+impl RetryPolicy {
+    fn default_max_retries() -> u32 {
+        50
+    }
+
+    fn default_max_backoff() -> u32 {
+        60
+    }
 }
 
 pub fn setup_multiplexer_attempt(bearer: &BearerKind, address: &str) -> Result<StdPlexer, Error> {
