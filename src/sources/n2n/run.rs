@@ -55,7 +55,7 @@ impl blockfetch::Observer for Block2EventMapper {
             },
             probe::Outcome::EpochBoundary => {
                 writer
-                    .crawl_from_byron_cbor(&body)
+                    .crawl_from_ebb_cbor(&body)
                     .ok_or_warn("error crawling block for events");
             }
             probe::Outcome::Inconclusive => {
