@@ -1707,9 +1707,9 @@ dependencies = [
 
 [[package]]
 name = "pallas-traverse"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2e8818ff5279ef4dbce4d3e83187cbbb85c810eeceb9308081757a3cc4fe1a0"
+checksum = "0f84c669596744b97384bfbaed7e222ff76f4ba2fe8939abc3a9335a8080b00b"
 dependencies = [
  "hex",
  "pallas-codec",
