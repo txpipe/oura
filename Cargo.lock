@@ -1578,7 +1578,7 @@ checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
 
 [[package]]
 name = "oura"
-version = "1.5.0"
+version = "1.5.1"
 dependencies = [
  "aws-config",
  "aws-sdk-lambda",
