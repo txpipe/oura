@@ -34,6 +34,7 @@
     - [Pipeline Metrics](./advanced/pipeline_metrics.md)
     - [Mapper Options](./advanced/mapper_options.md)
     - [Intersect Options](./advanced/intersect_options.md)
+    - [Custom Network](./advanced/custom_network.md)
 - [Guides](./guides/README.md)
     - [Cardano => Kafka](./guides/cardano_2_kafka.md)
-    - [Custom networks](./guides/connecting_to_custom_networks.md)
+
