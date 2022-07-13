@@ -108,7 +108,7 @@ pub fn writer_loop(
     for event in input.iter() {
         if let EventData::Block(record) = &event.data {
             let key = define_obj_key(prefix, &naming, record);
-            let content = define_content(&content_type, &record);
+            let content = define_content(&content_type, record);
 
             let client = client.clone();
 
@@ -118,7 +118,7 @@ pub fn writer_loop(
                 &key,
                 content,
                 &content_type,
-                &record,
+                record,
             ));
 
             match result {

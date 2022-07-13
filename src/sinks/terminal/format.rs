@@ -34,8 +34,8 @@ impl LogLine {
             color,
             content,
             max_width,
-            tx_idx: source.context.tx_idx.clone(),
-            block_num: source.context.block_number.clone(),
+            tx_idx: source.context.tx_idx,
+            block_num: source.context.block_number,
         }
     }
 }
