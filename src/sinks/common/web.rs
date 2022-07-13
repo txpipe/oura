@@ -88,10 +88,7 @@ pub(crate) fn request_loop(
     utils: Arc<Utils>,
 ) -> Result<(), Error> {
     for event in input.iter() {
-        // notify progress to the pipeline
-        utils.track_sink_progress(&event);
-
-        let body = RequestBody::from(event);
+        let body = RequestBody::from(event.clone());
 
         let result = retry::retry_operation(
             || execute_fallible_request(client, url, &body),
@@ -99,7 +96,10 @@ pub(crate) fn request_loop(
         );
 
         match result {
-            Ok(()) => (),
+            Ok(_) => {
+                // notify progress to the pipeline
+                utils.track_sink_progress(&event);
+            }
             Err(err) => match error_policy {
                 ErrorPolicy::Exit => return Err(err),
                 ErrorPolicy::Continue => {

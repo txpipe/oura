@@ -15,13 +15,33 @@ use crate::{
 pub struct LogLine {
     prefix: &'static str,
     color: Color,
-    source: Event,
+    tx_idx: Option<usize>,
+    block_num: Option<u64>,
     content: String,
     max_width: usize,
 }
 
 impl LogLine {
-    pub fn new(source: Event, max_width: usize, utils: &Utils) -> LogLine {
+    fn new_raw(
+        source: &Event,
+        prefix: &'static str,
+        color: Color,
+        max_width: usize,
+        content: String,
+    ) -> Self {
+        LogLine {
+            prefix,
+            color,
+            content,
+            max_width,
+            tx_idx: source.context.tx_idx.clone(),
+            block_num: source.context.block_number.clone(),
+        }
+    }
+}
+
+impl LogLine {
+    pub fn new(source: &Event, max_width: usize, utils: &Utils) -> LogLine {
         match &source.data {
             EventData::Block(BlockRecord {
                 era,
@@ -32,212 +52,208 @@ impl LogLine {
                 hash,
                 number,
                 ..
-            }) => {
-                LogLine {
-                    prefix: "BLOCK",
-                    color: Color::Magenta,
-                    content: format!(
-                    "{{ era: {:?}, slot: {}, hash: {}, number: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
-                    era,
-                    slot,
-                    hash,
-                    number,
-                    body_size,
-                    tx_count,
-                    issuer_vkey,
-                    source.context.timestamp.unwrap_or_default(),
-                ),
+            }) => LogLine::new_raw(
                     source,
+                    "BLOCK",
+                    Color::Magenta,
                     max_width,
-                }
-            }
+                    format!(
+                        "{{ era: {:?}, slot: {}, hash: {}, number: {}, body size: {}, tx_count: {}, issuer vkey: {}, timestamp: {} }}",
+                        era,
+                        slot,
+                        hash,
+                        number,
+                        body_size,
+                        tx_count,
+                        issuer_vkey,
+                        source.context.timestamp.unwrap_or_default(),
+                    ),
+                ),
             EventData::BlockEnd(BlockRecord {
                 slot,
                 hash,
                 number,
                 ..
-            }) => {
-                LogLine {
-                    prefix: "ENDBLK",
-                    color: Color::DarkMagenta,
-                    content: format!(
+            }) => LogLine::new_raw(
+                source,
+                "ENDBLK",
+                Color::DarkMagenta,
+                max_width,
+                format!(
                     "{{ slot: {}, hash: {}, number: {} }}",
                     slot,
                     hash,
                     number,
-                ),
-                    source,
-                    max_width,
-                }
-            }
+                )),
+
             EventData::Transaction(TransactionRecord {
                 total_output,
                 fee,
                 ttl,
                 hash,
                 ..
-            }) => LogLine {
-                prefix: "TX",
-                color: Color::DarkBlue,
-                content: format!(
+            }) => LogLine::new_raw(
+                source,
+                "TX",
+                Color::DarkBlue,
+                max_width,
+                format!(
                     "{{ total_output: {}, fee: {}, hash: {}, ttl: {:?} }}",
                     total_output, fee, hash, ttl
                 ),
+            ),
+            EventData::TransactionEnd(TransactionRecord { hash, .. }) => LogLine::new_raw(
                 source,
+                "ENDTX",
+                Color::DarkBlue,
                 max_width,
-            },
-            EventData::TransactionEnd(TransactionRecord { hash, .. }) => LogLine {
-                prefix: "ENDTX",
-                color: Color::DarkBlue,
-                content: format!(
+                format!(
                     "{{ hash: {} }}",
                     hash
                 ),
+            ),
+            EventData::TxInput(TxInputRecord { tx_id, index }) => LogLine::new_raw(
                 source,
+                "STXI",
+                Color::Blue,
                 max_width,
-            },
-            EventData::TxInput(TxInputRecord { tx_id, index }) => LogLine {
-                prefix: "STXI",
-                color: Color::Blue,
-                content: format!("{{ tx_id: {}, index: {} }}", tx_id, index),
-                source,
-                max_width,
-            },
+                format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+            ),
             EventData::TxOutput(TxOutputRecord {
                 address, amount, ..
-            }) => LogLine {
-                prefix: "UTXO",
-                color: Color::Blue,
-                content: format!("{{ to: {}, amount: {} }}", address, amount),
+            }) => LogLine::new_raw(
                 source,
+                "UTXO",
+                Color::Blue,
                 max_width,
-            },
+                format!("{{ to: {}, amount: {} }}", address, amount),
+            ),
             EventData::OutputAsset(OutputAssetRecord {
                 policy,
                 asset,
                 asset_ascii,
                 ..
-            }) if policy == &utils.well_known.adahandle_policy => LogLine {
-                prefix: "$HNDL",
-                color: Color::DarkGreen,
-                content: format!(
+            }) if policy == &utils.well_known.adahandle_policy => LogLine::new_raw(
+                source,
+                "$HNDL",
+                Color::DarkGreen,
+                max_width,
+                format!(
                     "{{ {} => {} }}",
                     asset_ascii.as_deref().unwrap_or(asset),
                     source.context.output_address.as_deref().unwrap_or_default(),
                 ),
-                source,
-                max_width,
-            },
+            ),
             EventData::OutputAsset(OutputAssetRecord {
                 policy,
                 asset,
                 asset_ascii,
                 amount,
                 ..
-            }) => LogLine {
-                prefix: "ASSET",
-                color: Color::Green,
-                content: format!(
+            }) => LogLine::new_raw(
+                source,
+                "ASSET",
+                Color::Green,
+                max_width,
+                format!(
                     "{{ policy: {}, asset: {}, amount: {} }}",
                     policy, asset_ascii.as_deref().unwrap_or(asset), amount
                 ),
+            ),
+            EventData::Metadata(MetadataRecord { label, content }) => LogLine::new_raw(
                 source,
+                "META",
+                Color::Yellow,
                 max_width,
-            },
-            EventData::Metadata(MetadataRecord { label, content }) => LogLine {
-                prefix: "META",
-                color: Color::Yellow,
-                content: format!("{{ label: {}, content: {} }}", label, content),
-                source,
-                max_width,
-            },
+                format!("{{ label: {}, content: {} }}", label, content),
+            ),
             EventData::Mint(MintRecord {
                 policy,
                 asset,
                 quantity,
-            }) => LogLine {
-                prefix: "MINT",
-                color: Color::DarkGreen,
-                content: format!(
+            }) => LogLine::new_raw(
+                source,
+                "MINT",
+                Color::DarkGreen,
+                max_width,
+                format!(
                     "{{ policy: {}, asset: {}, quantity: {} }}",
                     policy, asset, quantity
                 ),
+            ),
+            EventData::NativeScript { policy_id, script } => LogLine::new_raw(
                 source,
+                "NATIVE",
+                Color::White,
                 max_width,
-            },
-            EventData::NativeScript { policy_id, script } => LogLine {
-                prefix: "NATIVE",
-                color: Color::White,
-                content: format!("{{ policy: {}, script: {} }}", policy_id, script),
+                format!("{{ policy: {}, script: {} }}", policy_id, script),
+            ),
+            EventData::PlutusScript { hash, .. } => LogLine::new_raw(
                 source,
+                "PLUTUS",
+                Color::White,
                 max_width,
-            },
-            EventData::PlutusScript { hash, .. } => LogLine {
-                prefix: "PLUTUS",
-                color: Color::White,
-                content: format!("{{ hash: {} }}", hash),
+                format!("{{ hash: {} }}", hash),
+            ),
+            EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => LogLine::new_raw(
                 source,
+                "DATUM",
+                Color::White,
                 max_width,
-            },
-            EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => LogLine {
-                prefix: "DATUM",
-                color: Color::White,
-                content: format!("{{ hash: {} }}", datum_hash),
+                format!("{{ hash: {} }}", datum_hash),
+            ),
+            EventData::PlutusRedeemer(PlutusRedeemerRecord { purpose, input_idx, .. }) => LogLine::new_raw(
                 source,
+                "REDEEM",
+                Color::White,
                 max_width,
-            },
-            EventData::PlutusRedeemer(PlutusRedeemerRecord { purpose, input_idx, .. }) => LogLine {
-                prefix: "REDEEM",
-                color: Color::White,
-                content: format!("{{ purpose: {}, input: {} }}", purpose, input_idx),
+                format!("{{ purpose: {}, input: {} }}", purpose, input_idx),
+            ),
+            EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine::new_raw(
                 source,
+                "WITNESS",
+                Color::White,
                 max_width,
-            },
-            EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine {
-                prefix: "WITNESS",
-                color: Color::White,
-                content: format!("{{ plutus script: {} }}", script_hash ),
+                format!("{{ plutus script: {} }}", script_hash ),
+            ),
+            EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => LogLine::new_raw(
                 source,
+                "WITNESS",
+                Color::White,
                 max_width,
-            },
-            EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => LogLine {
-                prefix: "WITNESS",
-                color: Color::White,
-                content: format!("{{ native policy: {} }}", policy_id),
+                format!("{{ native policy: {} }}", policy_id),
+            ),
+            EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => LogLine::new_raw(
                 source,
+                "WITNESS",
+                Color::White,
                 max_width,
-            },
-            EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => LogLine {
-                prefix: "WITNESS",
-                color: Color::White,
-                content: format!("{{ vkey: {} }}", vkey_hex),
+                format!("{{ vkey: {} }}", vkey_hex),
+            ),
+            EventData::StakeRegistration { credential } => LogLine::new_raw(
                 source,
+                "STAKE+",
+                Color::Magenta,
                 max_width,
-            },
-            EventData::StakeRegistration { credential } => LogLine {
-                prefix: "STAKE+",
-                color: Color::Magenta,
-                content: format!("{{ credential: {:?} }}", credential),
+                format!("{{ credential: {:?} }}", credential),
+            ),
+            EventData::StakeDeregistration { credential } => LogLine::new_raw(
                 source,
+                "STAKE-",
+                Color::DarkMagenta,
                 max_width,
-            },
-            EventData::StakeDeregistration { credential } => LogLine {
-                prefix: "STAKE-",
-                color: Color::DarkMagenta,
-                content: format!("{{ credential: {:?} }}", credential),
-                source,
-                max_width,
-            },
+                format!("{{ credential: {:?} }}", credential),
+            ),
             EventData::StakeDelegation {
                 credential,
                 pool_hash,
-            } => LogLine {
-                prefix: "DELE",
-                color: Color::Magenta,
-                content: format!("{{ credential: {:?}, pool: {} }}", credential, pool_hash),
+            } => LogLine::new_raw(
                 source,
+                "DELE",
+                Color::Magenta,
                 max_width,
-            },
+                format!("{{ credential: {:?}, pool: {} }}", credential, pool_hash),
+            ),
             EventData::PoolRegistration {
                 operator,
                 vrf_keyhash: _,
@@ -249,96 +265,96 @@ impl LogLine {
                 relays: _,
                 pool_metadata,
                 pool_metadata_hash: _,
-            } => LogLine {
-                prefix: "POOL+",
-                color: Color::Magenta,
-                content: format!(
+            } => LogLine::new_raw(
+                source,
+                "POOL+",
+                Color::Magenta,
+                max_width,
+                format!(
                     "{{ operator: {}, pledge: {}, cost: {}, margin: {}, metadata: {:?} }}",
                     operator, pledge, cost, margin, pool_metadata
                 ),
+            ),
+            EventData::PoolRetirement { pool, epoch } => LogLine::new_raw(
                 source,
+                "POOL-",
+                Color::DarkMagenta,
                 max_width,
-            },
-            EventData::PoolRetirement { pool, epoch } => LogLine {
-                prefix: "POOL-",
-                color: Color::DarkMagenta,
-                content: format!("{{ pool: {}, epoch: {} }}", pool, epoch),
+                format!("{{ pool: {}, epoch: {} }}", pool, epoch),
+            ),
+            EventData::GenesisKeyDelegation => LogLine::new_raw(
                 source,
+                "GENESIS",
+                Color::Magenta,
                 max_width,
-            },
-            EventData::GenesisKeyDelegation => LogLine {
-                prefix: "GENESIS",
-                color: Color::Magenta,
-                content: "{{ ... }}".to_string(),
-                source,
-                max_width,
-            },
+                "{{ ... }}".to_string(),
+            ),
             EventData::MoveInstantaneousRewardsCert {
                 from_reserves,
                 from_treasury,
                 to_stake_credentials,
                 to_other_pot,
-            } => LogLine {
-                prefix: "MOVE",
-                color: Color::Magenta,
-                content: format!(
+            } => LogLine::new_raw(
+                source,
+                "MOVE",
+                Color::Magenta,
+                max_width,
+                format!(
                     "{{ reserves: {}, treasury: {}, to_credentials: {:?}, to_other_pot: {:?} }}",
                     from_reserves, from_treasury, to_stake_credentials, to_other_pot
                 ),
-                source,
-                max_width,
-            },
+            ),
             EventData::RollBack {
                 block_slot,
                 block_hash,
-            } => LogLine {
-                prefix: "RLLBCK",
-                color: Color::Red,
-                content: format!("{{ slot: {}, hash: {} }}", block_slot, block_hash),
+            } => LogLine::new_raw(
                 source,
+                "RLLBCK",
+                Color::Red,
                 max_width,
-            },
-            EventData::Collateral { tx_id, index } => LogLine {
-                prefix: "COLLAT",
-                color: Color::Blue,
-                content: format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+                format!("{{ slot: {}, hash: {} }}", block_slot, block_hash),
+            ),
+            EventData::Collateral { tx_id, index } => LogLine::new_raw(
                 source,
+                "COLLAT",
+                Color::Blue,
                 max_width,
-            },
+                format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+            ),
             EventData::CIP25Asset(CIP25AssetRecord {
                 policy,
                 asset,
                 name,
                 image,
                 ..
-            }) => LogLine {
-                prefix: "CIP25",
-                color: Color::DarkYellow,
-                content: format!(
+            }) => LogLine::new_raw(
+                source,
+                "CIP25",
+                Color::DarkYellow,
+                max_width,
+                format!(
                     "{{ policy: {}, asset: {}, name: {}, image: {} }}",
                     policy,
                     asset,
                     name.as_deref().unwrap_or("?"),
                     image.as_deref().unwrap_or("?")
                 ),
-                source,
-                max_width,
-            },
+            ),
             EventData::CIP15Asset(CIP15AssetRecord {
                 voting_key,
                 stake_pub,
                 ..
-            }) => LogLine {
-                prefix: "CIP15",
-                color: Color::DarkYellow,
-                content: format!(
+            }) => LogLine::new_raw(
+                source,
+                "CIP15",
+                Color::DarkYellow,
+                max_width,
+                format!(
                     "{{ voting key: {}, stake pub: {} }}",
                     voting_key,
                     stake_pub,
                 ),
-                source,
-                max_width,
-            },
+            ),
         }
     }
 }
@@ -349,14 +365,10 @@ impl Display for LogLine {
 
         format!(
             "BLOCK:{:0>7} █ TX:{:0>2}",
-            self.source
-                .context
-                .block_number
+            self.block_num
                 .map(|x| x.to_string())
                 .unwrap_or_else(|| "-------".to_string()),
-            self.source
-                .context
-                .tx_idx
+            self.tx_idx
                 .map(|x| x.to_string())
                 .unwrap_or_else(|| "--".to_string()),
         )

@@ -49,16 +49,19 @@ pub fn writer_loop(
         .build()?;
 
     for event in input.iter() {
-        // notify the pipeline where we are
-        utils.track_sink_progress(&event);
-
         let client = client.clone();
 
         let result = rt.block_on(send_sqs_msg(client, queue_url, group_id, fifo, &event));
 
-        if let Err(err) = result {
-            log::error!("unrecoverable error sending message to SQS: {:?}", err);
-            return Err(err);
+        match result {
+            Ok(_) => {
+                // notify the pipeline where we are
+                utils.track_sink_progress(&event);
+            }
+            Err(err) => {
+                log::error!("unrecoverable error sending message to SQS: {:?}", err);
+                return Err(err);
+            }
         }
     }
 

@@ -10,12 +10,19 @@ pub fn jsonl_writer_loop(
     utils: Arc<Utils>,
 ) -> Result<(), Error> {
     for evt in input.iter() {
-        // notify pipeline about the progress
-        utils.track_sink_progress(&evt);
-
         let buf = json!(evt).to_string();
-        output.write_all(buf.as_bytes())?;
-        output.write_all(b"\n")?;
+
+        let result = output
+            .write_all(buf.as_bytes())
+            .and_then(|_| output.write_all(b"\n"));
+
+        match result {
+            Ok(_) => {
+                // notify pipeline about the progress
+                utils.track_sink_progress(&evt);
+            }
+            Err(err) => return Err(Box::new(err)),
+        }
     }
 
     Ok(())

@@ -35,16 +35,16 @@ pub fn writer_loop(
     let topic = publisher.topic(topic_name);
 
     for event in input.iter() {
-        // notify the pipeline where we are
-        utils.track_sink_progress(&event);
-
         let result = retry::retry_operation(
             || rt.block_on(send_pubsub_msg(&topic, &event)),
             retry_policy,
         );
 
         match result {
-            Ok(()) => (),
+            Ok(_) => {
+                // notify the pipeline where we are
+                utils.track_sink_progress(&event);
+            }
             Err(err) => match error_policy {
                 ErrorPolicy::Exit => return Err(Box::new(err)),
                 ErrorPolicy::Continue => {

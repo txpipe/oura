@@ -1,22 +1,7 @@
-#![allow(unused_variables)]
 use super::StreamStrategy;
 use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
-use serde::Serialize;
 use serde_json::json;
 use std::sync::Arc;
-
-#[derive(Serialize)]
-pub struct RedisRecord {
-    pub event: Event,
-    pub key: String,
-}
-
-impl From<Event> for RedisRecord {
-    fn from(event: Event) -> Self {
-        let key = key(&event);
-        RedisRecord { event, key }
-    }
-}
 
 fn key(event: &Event) -> String {
     if let Some(fingerprint) = &event.fingerprint {
@@ -34,26 +19,35 @@ pub fn producer_loop(
     redis_stream: String,
 ) -> Result<(), Error> {
     for event in input.iter() {
-        utils.track_sink_progress(&event);
-        let payload = RedisRecord::from(event);
+        let key = key(&event);
 
         let stream = match stream_strategy {
-            StreamStrategy::ByEventType => payload.event.data.clone().to_string().to_lowercase(),
+            StreamStrategy::ByEventType => event.data.clone().to_string().to_lowercase(),
             _ => redis_stream.clone(),
         };
 
         log::debug!(
             "Stream: {:?}, Key: {:?}, Event: {:?}",
-            stream,
-            payload.key,
-            payload.event
+            &stream,
+            &key,
+            &event
         );
 
-        redis::cmd("XADD")
+        let result: Result<(), _> = redis::cmd("XADD")
             .arg(stream)
             .arg("*")
-            .arg(&[(payload.key, json!(payload.event).to_string())])
-            .query(conn)?;
+            .arg(&[(key, json!(event).to_string())])
+            .query(conn);
+
+        match result {
+            Ok(_) => {
+                utils.track_sink_progress(&event);
+            }
+            Err(err) => {
+                log::error!("error sending message to redis: {}", err);
+                return Err(Box::new(err));
+            }
+        }
     }
 
     Ok(())
