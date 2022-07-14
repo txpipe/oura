@@ -1,6 +1,6 @@
 # Custom networks
 
-Required configuration connect Oura to a custom network (aka: not mainnet/testnet).
+Instructions on how to configure Oura for connecting to a custom network (aka: other than mainnet / testnet).
 
 ## Context
 
