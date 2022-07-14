@@ -70,9 +70,6 @@ pub fn assertion_loop(
     let mut state = State::default();
 
     for event in input.iter() {
-        // notify pipeline about the progress
-        utils.track_sink_progress(&event);
-
         log::info!("starting assertions for event: {:?}", event.fingerprint);
 
         state = reduce_state(state, event);
@@ -83,6 +80,11 @@ pub fn assertion_loop(
         run_check!(config, &state, event_timestamp_increases);
         run_check!(config, &state, tx_records_matches_block_count);
         run_check!(config, &state, tx_has_input_and_output);
+
+        if let Some(event) = &state.current_event {
+            // notify pipeline about the progress
+            utils.track_sink_progress(event);
+        }
     }
 
     Ok(())

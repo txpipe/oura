@@ -29,12 +29,21 @@ pub fn reducer_loop(
     for evt in input.iter() {
         let (width, _) = crossterm::terminal::size()?;
 
-        // notify progress to the pipeline
-        utils.track_sink_progress(&evt);
-
         throttle.wait_turn();
-        let line = LogLine::new(evt, width as usize, &utils);
-        stdout.execute(Print(line))?;
+        let line = LogLine::new(&evt, width as usize, &utils);
+
+        let result = stdout.execute(Print(line));
+
+        match result {
+            Ok(_) => {
+                // notify progress to the pipeline
+                utils.track_sink_progress(&evt);
+            }
+            Err(err) => {
+                log::error!("error writing to terminal: {}", err);
+                return Err(Box::new(err));
+            }
+        }
     }
 
     Ok(())

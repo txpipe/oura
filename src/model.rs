@@ -351,7 +351,7 @@ pub enum EventData {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Event {
     pub context: EventContext,
 

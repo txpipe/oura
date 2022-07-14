@@ -106,12 +106,9 @@ pub fn writer_loop(
         .build()?;
 
     for event in input.iter() {
-        // notify the pipeline where we are
-        utils.track_sink_progress(&event);
-
-        if let EventData::Block(record) = event.data {
-            let key = define_obj_key(prefix, &naming, &record);
-            let content = define_content(&content_type, &record);
+        if let EventData::Block(record) = &event.data {
+            let key = define_obj_key(prefix, &naming, record);
+            let content = define_content(&content_type, record);
 
             let client = client.clone();
 
@@ -121,12 +118,18 @@ pub fn writer_loop(
                 &key,
                 content,
                 &content_type,
-                &record,
+                record,
             ));
 
-            if let Err(err) = result {
-                log::error!("unrecoverable error sending block to S3: {:?}", err);
-                return Err(err);
+            match result {
+                Ok(_) => {
+                    // notify the pipeline where we are
+                    utils.track_sink_progress(&event);
+                }
+                Err(err) => {
+                    log::error!("unrecoverable error sending block to S3: {:?}", err);
+                    return Err(err);
+                }
             }
         }
     }
