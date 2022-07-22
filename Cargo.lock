@@ -703,6 +703,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "129eabb7b0b78644a3a7e7cf220714aba47463bb281f69fa7a71ca5d12564cca"
 
 [[package]]
+name = "cryptoxide"
+version = "0.4.2"
+source = "git+https://github.com/typed-io/cryptoxide.git?branch=master#f50c82e623e5a791e0f193fe68c92f526b37d290"
+
+[[package]]
 name = "ct-logs"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1597,6 +1602,7 @@ dependencies = [
  "cloud-pubsub",
  "config",
  "crossterm",
+ "cryptoxide 0.4.2 (git+https://github.com/typed-io/cryptoxide.git?branch=master)",
  "elasticsearch",
  "env_logger",
  "file-rotate",
@@ -1662,7 +1668,7 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd6845888ac675c4cbef6fb9d8c2b33bb05e6a3e7a7cf8e9f8e8faed1422119d"
 dependencies = [
- "cryptoxide",
+ "cryptoxide 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex",
  "pallas-codec",
  "rand_core",

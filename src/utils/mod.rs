@@ -28,6 +28,7 @@ pub mod throttle;
 pub(crate) mod bech32;
 pub(crate) mod retry;
 pub(crate) mod time;
+pub(crate) mod cip14;
 
 mod facade;
 
