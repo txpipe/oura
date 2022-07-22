@@ -87,5 +87,4 @@ mod tests {
 
         assert_eq!(bech32, "addr1q8kx44w6a607h03sp3skpgmdfkhsc5nx4ch7sfzuhdvp8yrznq2ds9jl64rmdulk74vy9f0sg27tzylgapnz00q8rumsuhj834");
     }
-    
 }

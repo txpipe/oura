@@ -1,9 +1,10 @@
-//! An utility to build fingerprints for Cardano assets
+//! An utility to build fingerprints for Cardano assets CIP14
+//! https://cips.cardano.org/cips/cip14/
+//! 
 use cryptoxide::{digest::Digest, blake2b::Blake2b};
 use crate::utils::bech32::{Bech32Config,Bech32Provider};
 
-
-pub fn blake2b160(data: &[u8]) -> [u8;20] {//Vec::<u8> {
+pub fn blake2b160(data: &[u8]) -> [u8;20] {
     let mut out = [0u8; 20];
     let mut context = Blake2b::new(20);
     context.input(data);
@@ -31,7 +32,7 @@ mod tests {
         let assetname =hex::decode("4261627943726f63202332323237").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1et8j5whwuqrxvdyxfh4grmmrx4exeg4juzx88z");
     }
 
@@ -41,7 +42,7 @@ mod tests {
         let assetname =hex::decode("").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1rjklcrnsdzqp65wjgrg55sy9723kw09mlgvlc3");
     }
 
@@ -51,7 +52,7 @@ mod tests {
         let assetname =hex::decode("").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1nl0puwxmhas8fawxp8nx4e2q3wekg969n2auw3");
     }
 
@@ -61,7 +62,7 @@ mod tests {
         let assetname =hex::decode("").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1uyuxku60yqe57nusqzjx38aan3f2wq6s93f6ea");
     }
 
@@ -71,7 +72,7 @@ mod tests {
         let assetname =hex::decode("504154415445").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92");
     }
 
@@ -81,7 +82,7 @@ mod tests {
         let assetname =hex::decode("504154415445").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1hv4p5tv2a837mzqrst04d0dcptdjmluqvdx9k3");
     }
 
@@ -91,7 +92,7 @@ mod tests {
         let assetname =hex::decode("7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1aqrdypg669jgazruv5ah07nuyqe0wxjhe2el6f");
     }
 
@@ -101,17 +102,17 @@ mod tests {
         let assetname =hex::decode("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset17jd78wukhtrnmjh3fngzasxm8rck0l2r4hhyyt");
     }
-    
+
     #[test]
     fn cip14_ok_9() {
         let policy = hex::decode("7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373").unwrap();
         let assetname =hex::decode("0000000000000000000000000000000000000000000000000000000000000000").unwrap();
 
         let bech32 = cip14_fingerprint(&policy,&assetname).unwrap();
-        println!("{}",bech32);
+        log::debug!("{}",bech32);
         assert_eq!(bech32, "asset1pkpwyknlvul7az0xx8czhl60pyel45rpje4z8w");
 
     }
