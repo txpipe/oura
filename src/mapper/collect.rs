@@ -1,9 +1,9 @@
 use pallas::{
-    codec::utils::MaybeIndefArray,
+    codec::utils::{KeyValuePairs, MaybeIndefArray},
     ledger::primitives::{
         alonzo::{
-            AuxiliaryData, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
-            Redeemer, TransactionInput, VKeyWitness, Value,
+            AuxiliaryData, Coin, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
+            Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
         },
         babbage::{
             LegacyTransacionOutput, PlutusV2Script, PostAlonzoTransactionOutput, TransactionOutput,
@@ -16,7 +16,7 @@ use crate::{
     model::{
         MetadataRecord, MintRecord, NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord,
         PlutusRedeemerRecord, PlutusWitnessRecord, TransactionRecord, TxInputRecord,
-        TxOutputRecord, VKeyWitnessRecord,
+        TxOutputRecord, VKeyWitnessRecord, WithdrawalRecord,
     },
     Error,
 };
@@ -84,6 +84,19 @@ impl EventWriter {
                 assets
                     .iter()
                     .map(|(asset, amount)| self.to_mint_record(policy, asset, *amount))
+            })
+            .collect()
+    }
+
+    pub fn collect_withdrawal_records(
+        &self,
+        withdrawls: &KeyValuePairs<RewardAccount, Coin>,
+    ) -> Vec<WithdrawalRecord> {
+        withdrawls
+            .iter()
+            .map(|(reward_account, coin)| WithdrawalRecord {
+                reward_account: reward_account.to_hex(),
+                coin: coin.into(),
             })
             .collect()
     }
