@@ -266,7 +266,7 @@ impl LogLine {
                 source,
                 max_width,
             },
-            EventData::GenesisKeyDelegation => LogLine {
+            EventData::GenesisKeyDelegation { } => LogLine {
                 prefix: "GENESIS",
                 color: Color::Magenta,
                 content: "{{ ... }}".to_string(),
