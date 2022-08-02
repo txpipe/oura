@@ -37,16 +37,19 @@ pub fn writer_loop(
         .build()?;
 
     for event in input.iter() {
-        // notify the pipeline where we are
-        utils.track_sink_progress(&event);
-
         let client = client.clone();
 
         let result = rt.block_on(invoke_lambda_function(client, function_name, &event));
 
-        if let Err(err) = result {
-            log::error!("unrecoverable error invoking lambda function: {:?}", err);
-            return Err(err);
+        match result {
+            Ok(_) => {
+                // notify the pipeline where we are
+                utils.track_sink_progress(&event);
+            }
+            Err(err) => {
+                log::error!("unrecoverable error invoking lambda function: {:?}", err);
+                return Err(err);
+            }
         }
     }
 

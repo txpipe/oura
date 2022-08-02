@@ -47,7 +47,11 @@ fn build_witer(config: &Config) -> Result<impl Write, Error> {
             .unwrap_or(DEFAULT_MAX_BYTES_PER_FILE),
     );
 
-    let compression = file_rotate::compression::Compression::OnRotate(2);
+    let compression = if let Some(true) = config.compress_files {
+        file_rotate::compression::Compression::OnRotate(2)
+    } else {
+        file_rotate::compression::Compression::None
+    };
 
     let writer = FileRotate::new(output_path, suffix_scheme, content_limit, compression);
 

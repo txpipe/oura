@@ -101,22 +101,31 @@ pub fn writer_loop(
         .build()?;
 
     for event in input.iter() {
-        // notify the pipeline where we are
-        utils.track_sink_progress(&event);
-
         let index = index.to_owned();
         let client = client.clone();
 
+        let event2 = event.clone();
         let result = rt.block_on(async move {
             match idempotency {
-                true => index_event_with_id(client, &index, event).await,
-                false => index_event_without_id(client, &index, event).await,
+                true => index_event_with_id(client, &index, event2).await,
+                false => index_event_without_id(client, &index, event2).await,
             }
         });
 
         if let Err(err) = result {
             log::error!("error indexing record in Elasticsearch: {}", err);
             return Err(err);
+        }
+
+        match result {
+            Ok(_) => {
+                // notify progress to the pipeline
+                utils.track_sink_progress(&event);
+            }
+            Err(err) => {
+                log::error!("error indexing record in Elasticsearch: {}", err);
+                return Err(err);
+            }
         }
     }
 

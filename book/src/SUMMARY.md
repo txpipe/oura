@@ -26,6 +26,7 @@
     - [AWS SQS](./sinks/aws_sqs.md)
     - [AWS Lambda](./sinks/aws_lambda.md)
     - [AWS S3](./sinks/aws_s3.md)
+    - [Redis Streams](./sinks/redis_streams.md)
 - [Reference](reference/README.md)
     - [Data Dictionary](./reference/data_dictionary.md)
 - [Advanced Features](./advanced/README.md)
@@ -34,6 +35,7 @@
     - [Pipeline Metrics](./advanced/pipeline_metrics.md)
     - [Mapper Options](./advanced/mapper_options.md)
     - [Intersect Options](./advanced/intersect_options.md)
+    - [Custom Network](./advanced/custom_network.md)
 - [Guides](./guides/README.md)
     - [Cardano => Kafka](./guides/cardano_2_kafka.md)
-    - [Custom networks](./guides/connecting_to_custom_networks.md)
+

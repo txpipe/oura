@@ -1,0 +1,53 @@
+# Custom networks
+
+Instructions on how to configure Oura for connecting to a custom network (aka: other than mainnet / testnet).
+
+## Context
+
+Oura requires certain information about the chain it is reading from. In a way, this is similar to the json config files required to run the Cardano node. These values are used for procedures such as encoding bech32 addresses, computing wall-clock time for blocks, etc. 
+
+Since `mainnet` and `testnet` are well-known, heavily used networks, Oura hardcodes these values as part of the binary release so that the user is spared from having to manually specify them. On the other hand, custom networks require the user to configure these values manually for Oura to establish a connection.
+
+## Feature
+
+By adding a `[chain]` section in the daemon configuration file, users can provide the information required by Oura to connect to a custom network.
+
+The `[chain]` section has the following propoerties:
+
+| Name                 | DataType | Description                                                |
+| :------------------- | :------- | :--------------------------------------------------------- |
+| byron_epoch_length   | integer  | the length (in seconds) of a Byron epoch in this network   |
+| byron_slot_length    | integer  | the length (in seconds) of a Byron slot in this network    |
+| byron_known_slot     | integer  | the slot of a Byron block known to exist in this network   |
+| byron_known_hash     | string   | the hash of the known Byron block                          |
+| byron_known_time     | integer  | the unix timestamp of the known Byron block                |
+| shelley_epoch_length | integer  | the length (in seconds) of a Shelley epoch in this network |
+| shelley_slot_length  | integer  | the length (in seconds) of a Shelley slot in this network  |
+| shelley_known_slot   | integer  | the slot of a Shelley block known to exist in this network |
+| shelley_known_hash   | String   | the hash of the known Shelley block                        |
+| shelley_known_time   | integer  | the unix timestamp of the known Shelley block              |
+| address_hrp          | string   | the human readable part for addresses of this network      |
+| adahandle_policy     | string   | the minting policy for AdaHandle on this network.          |
+
+
+## Examples
+
+### Chain information for Testnet
+
+This example configuration shows the values for Testnet. Since testnet values are hardcoded as part of Oura's release, users are not required to input these exact values anywhere, but it serves as a good example of what the configuration looks like.
+
+```toml 
+[chain]
+byron_epoch_length  = 432000
+byron_slot_length = 20
+byron_known_slot = 0
+byron_known_hash = "8f8602837f7c6f8b8867dd1cbc1842cf51a27eaed2c70ef48325d00f8efb320f"
+byron_known_time = 1564010416
+shelley_epoch_length = 432000
+shelley_slot_length = 1
+shelley_known_slot = 1598400
+shelley_known_hash = "02b1c561715da9e540411123a6135ee319b02f60b9a11a603d3305556c04329f"
+shelley_known_time = 1595967616
+address_hrp = "addr_test"
+adahandle_policy = "8d18d786e92776c824607fd8e193ec535c79dc61ea2405ddf3b09fe3"
+```

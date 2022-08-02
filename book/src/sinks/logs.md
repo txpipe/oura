@@ -13,7 +13,7 @@ output_path = "/var/oura/mainnet"
 output_format = "JSONL"
 max_bytes_per_file = 1_000_000
 max_total_files = 10
-compression = true
+compress_files = true
 ```
 
 ### Section: `sink`
@@ -23,4 +23,4 @@ compression = true
 - `output_format` (optional): specified the type of syntax to use for the serialization of the events. Only available option at the moment is `JSONL` (json + line break)
 - `max_bytes_per_file` (optional): the max amount of bytes to add in a file before rotating it
 - `max_total_files` (optional): the max amount of files to keep in the file system before start deleting the old ones
-- `compression` (optional): a boolean indicating if the rotated files should be compressed.
+- `compress_files` (optional): a boolean indicating if the rotated files should be compressed.
