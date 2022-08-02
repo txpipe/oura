@@ -204,7 +204,7 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_prefix("reti")
             .append_optional(&event.context.tx_hash)?
             .append_optional_to_string(&event.context.certificate_idx)?,
-        EventData::GenesisKeyDelegation => b
+        EventData::GenesisKeyDelegation { .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("gene")
             .append_optional(&event.context.tx_hash)?

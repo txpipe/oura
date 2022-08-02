@@ -358,9 +358,8 @@ impl EventWriter {
                     },
                 }
             }
-
             // TODO: not likely, leaving for later
-            Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation,
+            Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation {},
         }
     }
 
