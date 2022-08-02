@@ -338,7 +338,7 @@ pub enum EventData {
         pool: String,
         epoch: u64,
     },
-    GenesisKeyDelegation,
+    GenesisKeyDelegation {},
     MoveInstantaneousRewardsCert {
         from_reserves: bool,
         from_treasury: bool,
