@@ -6,7 +6,7 @@ use pallas::{
             Redeemer, TransactionInput, VKeyWitness, Value,
         },
         babbage::{
-            LegacyTransacionOutput, PlutusV2Script, PostAlonzoTransactionOutput, TransactionOutput,
+            LegacyTransactionOutput, PlutusV2Script, PostAlonzoTransactionOutput, TransactionOutput,
         },
         ToHash,
     },
@@ -33,7 +33,7 @@ impl EventWriter {
 
     pub fn collect_legacy_output_records(
         &self,
-        source: &[LegacyTransacionOutput],
+        source: &[LegacyTransactionOutput],
     ) -> Result<Vec<TxOutputRecord>, Error> {
         source
             .iter()

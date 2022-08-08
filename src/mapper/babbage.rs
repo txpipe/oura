@@ -116,7 +116,12 @@ impl EventWriter {
             slot: source.header.header_body.slot,
             epoch: relative_epoch.map(|(epoch, _)| epoch),
             epoch_slot: relative_epoch.map(|(_, epoch_slot)| epoch_slot),
-            previous_hash: hex::encode(source.header.header_body.prev_hash),
+            previous_hash: source
+                .header
+                .header_body
+                .prev_hash
+                .map(hex::encode)
+                .unwrap_or_default(),
             cbor_hex: match self.config.include_block_cbor {
                 true => hex::encode(cbor).into(),
                 false => None,
