@@ -11,5 +11,5 @@ The following instructions show how to build and install _Oura_ from source code
 ```
 git clone git@github.com:txpipe/oura.git
 cd oura
-cargo install --path .
+cargo install --all-features --path .
 ```
