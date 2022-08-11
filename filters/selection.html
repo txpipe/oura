@@ -162,8 +162,8 @@ argument = &lt;predicate argument&gt;
 <li><code>variant_not_in (string[])</code>: This predicate will yield true when the variant of the event doesn't match any of the items in the argument array.</li>
 <li><code>policy_equals (string)</code>: This predicate will yield true when the policy of a mint or output asset matches the value in the argument.</li>
 <li><code>asset_equals (string)</code>: This predicate will yield true when the policy of a mint or output asset matches the value in the argument.</li>
-<li><code>metadata_key_equals (string)</code>: This predicate will yield true when the root key of a metadata entry matches the value in the argument.</li>
-<li><code>metadata_subkey_equals (string)</code>: This predicate will yield true when any of the sub key in a metadata entry matches the value in the argument.</li>
+<li><code>metadata_label_equals (string)</code>: This predicate will yield true when the root label of a metadata entry matches the value in the argument.</li>
+<li><code>metadata_any_sub_label_equals (string)</code>: This predicate will yield true when <em>at least one</em> of the sub labels in a metadata entry matches the value in the argument.</li>
 <li><code>not (predicate)</code>: This predicate will yield true when the predicate in the arguments yields false.</li>
 <li><code>any_of (predicate[])</code>: This predicate will yield true when <em>any</em> of the predicates in the argument yields true.</li>
 <li><code>all_of (predicate[])</code>: This predicate will yield true when <em>all</em> of the predicates in the argument yields true.</li>
