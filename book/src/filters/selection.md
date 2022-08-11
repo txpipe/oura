@@ -34,8 +34,8 @@ argument = <predicate argument>
 - `variant_not_in (string[])`: This predicate will yield true when the variant of the event doesn't match any of the items in the argument array.
 - `policy_equals (string)`: This predicate will yield true when the policy of a mint or output asset matches the value in the argument.
 - `asset_equals (string)`: This predicate will yield true when the policy of a mint or output asset matches the value in the argument.
-- `metadata_key_equals (string)`: This predicate will yield true when the root key of a metadata entry matches the value in the argument.
-- `metadata_subkey_equals (string)`: This predicate will yield true when any of the sub key in a metadata entry matches the value in the argument.
+- `metadata_label_equals (string)`: This predicate will yield true when the root label of a metadata entry matches the value in the argument.
+- `metadata_any_sub_label_equals (string)`: This predicate will yield true when _at least one_ of the sub labels in a metadata entry matches the value in the argument.
 - `not (predicate)`: This predicate will yield true when the predicate in the arguments yields false.
 - `any_of (predicate[])`: This predicate will yield true when _any_ of the predicates in the argument yields true.
 - `all_of (predicate[])`: This predicate will yield true when _all_ of the predicates in the argument yields true.
