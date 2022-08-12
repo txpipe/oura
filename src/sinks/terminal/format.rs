@@ -282,12 +282,12 @@ impl LogLine {
                 max_width,
                 format!("{{ pool: {}, epoch: {} }}", pool, epoch),
             ),
-            EventData::GenesisKeyDelegation => LogLine::new_raw(
+            EventData::GenesisKeyDelegation { } => LogLine::new_raw(
                 source,
                 "GENESIS",
                 Color::Magenta,
                 max_width,
-                "{{ ... }}".to_string(),
+                 "{{ ... }}".to_string(),
             ),
             EventData::MoveInstantaneousRewardsCert {
                 from_reserves,
