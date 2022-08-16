@@ -21,7 +21,7 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            match u64::from(label) {
+            match label {
                 721u64 => self.crawl_metadata_label_721(content)?,
                 61284u64 => self.crawl_metadata_label_61284(content)?,
                 _ => (),
@@ -75,11 +75,9 @@ impl EventWriter {
         if let Value::Multiasset(_, policies) = amount {
             for (policy, assets) in policies.iter() {
                 for (asset, amount) in assets.iter() {
-                    self.append_from(self.to_transaction_output_asset_record(
-                        policy,
-                        asset,
-                        amount.into(),
-                    ))?;
+                    self.append_from(
+                        self.to_transaction_output_asset_record(policy, asset, *amount),
+                    )?;
                 }
             }
         }

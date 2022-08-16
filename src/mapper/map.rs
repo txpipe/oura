@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
-use pallas::{
-    codec::{minicbor::bytes::ByteVec, utils::KeepRaw},
-    crypto::hash::Hash,
-    ledger::primitives::babbage::DatumOption,
-};
+use pallas::codec::utils::{Bytes, KeepRaw};
+use pallas::{crypto::hash::Hash, ledger::primitives::babbage::DatumOption};
 
 use pallas::ledger::primitives::{
     alonzo::{
@@ -101,8 +98,8 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
 
 fn get_tx_output_coin_value(amount: &Value) -> u64 {
     match amount {
-        Value::Coin(x) => x.into(),
-        Value::Multiasset(x, _) => x.into(),
+        Value::Coin(x) => *x,
+        Value::Multiasset(x, _) => *x,
     }
 }
 
@@ -144,7 +141,7 @@ impl EventWriter {
         value: &Metadatum,
     ) -> Result<MetadataRecord, Error> {
         let data = MetadataRecord {
-            label: u64::from(label).to_string(),
+            label: label.to_string(),
             content: match value {
                 Metadatum::Int(x) => MetadatumRendition::IntScalar(i128::from(*x)),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
@@ -201,8 +198,8 @@ impl EventWriter {
 
     pub fn to_transaction_output_asset_record(
         &self,
-        policy: &ByteVec,
-        asset: &ByteVec,
+        policy: &Hash<28>,
+        asset: &Bytes,
         amount: u64,
     ) -> OutputAssetRecord {
         OutputAssetRecord {
@@ -213,7 +210,7 @@ impl EventWriter {
         }
     }
 
-    pub fn to_mint_record(&self, policy: &ByteVec, asset: &ByteVec, quantity: i64) -> MintRecord {
+    pub fn to_mint_record(&self, policy: &Hash<28>, asset: &Bytes, quantity: i64) -> MintRecord {
         MintRecord {
             policy: policy.to_hex(),
             asset: asset.to_hex(),
@@ -328,8 +325,8 @@ impl EventWriter {
             } => EventData::PoolRegistration {
                 operator: operator.to_hex(),
                 vrf_keyhash: vrf_keyhash.to_hex(),
-                pledge: pledge.into(),
-                cost: cost.into(),
+                pledge: *pledge,
+                cost: *cost,
                 margin: (margin.numerator as f64 / margin.denominator as f64),
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),

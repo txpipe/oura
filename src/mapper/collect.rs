@@ -1,15 +1,14 @@
-use pallas::{
-    codec::utils::{KeyValuePairs, MaybeIndefArray},
-    ledger::primitives::{
-        alonzo::{
-            AuxiliaryData, Coin, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
-            Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
-        },
-        babbage::{
-            LegacyTransactionOutput, PlutusV2Script, PostAlonzoTransactionOutput, TransactionOutput,
-        },
-        ToHash,
+use std::collections::BTreeMap;
+
+use pallas::ledger::primitives::{
+    alonzo::{
+        AuxiliaryData, Coin, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
+        Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
     },
+    babbage::{
+        LegacyTransactionOutput, PlutusV2Script, PostAlonzoTransactionOutput, TransactionOutput,
+    },
+    ToHash,
 };
 
 use crate::{
@@ -71,7 +70,7 @@ impl EventWriter {
                 .iter()
                 .flat_map(|(policy, assets)| {
                     assets.iter().map(|(asset, amount)| {
-                        self.to_transaction_output_asset_record(policy, asset, amount.into())
+                        self.to_transaction_output_asset_record(policy, asset, *amount)
                     })
                 })
                 .collect(),
@@ -90,16 +89,20 @@ impl EventWriter {
 
     pub fn collect_withdrawal_records(
         &self,
-        withdrawls: &KeyValuePairs<RewardAccount, Coin>,
+        withdrawls: &BTreeMap<RewardAccount, Coin>,
     ) -> Vec<WithdrawalRecord> {
         withdrawls
             .iter()
             .map(|(reward_account, coin)| WithdrawalRecord {
                 reward_account: {
                     let ra_str = reward_account.to_hex();
-                    if ra_str.starts_with("e1") { ra_str[2..].to_string() } else { ra_str }
+                    if ra_str.starts_with("e1") {
+                        ra_str[2..].to_string()
+                    } else {
+                        ra_str
+                    }
                 },
-                coin: coin.into(),
+                coin: *coin,
             })
             .collect()
     }
@@ -109,9 +112,9 @@ impl EventWriter {
         aux_data: &AuxiliaryData,
     ) -> Result<Vec<MetadataRecord>, Error> {
         let metadata = match aux_data {
-            AuxiliaryData::PostAlonzo(data) => data.metadata.as_deref(),
-            AuxiliaryData::Shelley(data) => Some(data.as_ref()),
-            AuxiliaryData::ShelleyMa(data) => Some(data.transaction_metadata.as_ref()),
+            AuxiliaryData::PostAlonzo(data) => data.metadata.as_ref(),
+            AuxiliaryData::Shelley(data) => Some(data),
+            AuxiliaryData::ShelleyMa(data) => Some(&data.transaction_metadata),
         };
 
         match metadata {
@@ -125,7 +128,7 @@ impl EventWriter {
 
     pub fn collect_vkey_witness_records(
         &self,
-        witness_set: &Option<MaybeIndefArray<VKeyWitness>>,
+        witness_set: &Option<Vec<VKeyWitness>>,
     ) -> Result<Vec<VKeyWitnessRecord>, Error> {
         match witness_set {
             Some(all) => all.iter().map(|i| self.to_vkey_witness_record(i)).collect(),
@@ -135,7 +138,7 @@ impl EventWriter {
 
     pub fn collect_native_witness_records(
         &self,
-        witness_set: &Option<MaybeIndefArray<NativeScript>>,
+        witness_set: &Option<Vec<NativeScript>>,
     ) -> Result<Vec<NativeWitnessRecord>, Error> {
         match witness_set {
             Some(all) => all
@@ -148,7 +151,7 @@ impl EventWriter {
 
     pub fn collect_plutus_v1_witness_records(
         &self,
-        witness_set: &Option<MaybeIndefArray<PlutusScript>>,
+        witness_set: &Option<Vec<PlutusScript>>,
     ) -> Result<Vec<PlutusWitnessRecord>, Error> {
         match &witness_set {
             Some(all) => all
@@ -161,7 +164,7 @@ impl EventWriter {
 
     pub fn collect_plutus_v2_witness_records(
         &self,
-        witness_set: &Option<MaybeIndefArray<PlutusV2Script>>,
+        witness_set: &Option<Vec<PlutusV2Script>>,
     ) -> Result<Vec<PlutusWitnessRecord>, Error> {
         match &witness_set {
             Some(all) => all
@@ -174,7 +177,7 @@ impl EventWriter {
 
     pub fn collect_plutus_redeemer_records(
         &self,
-        witness_set: &Option<MaybeIndefArray<Redeemer>>,
+        witness_set: &Option<Vec<Redeemer>>,
     ) -> Result<Vec<PlutusRedeemerRecord>, Error> {
         match &witness_set {
             Some(all) => all
@@ -187,7 +190,7 @@ impl EventWriter {
 
     pub fn collect_plutus_datum_records(
         &self,
-        witness_set: &Option<MaybeIndefArray<PlutusData>>,
+        witness_set: &Option<Vec<PlutusData>>,
     ) -> Result<Vec<PlutusDatumRecord>, Error> {
         match &witness_set {
             Some(all) => all.iter().map(|i| self.to_plutus_datum_record(i)).collect(),
