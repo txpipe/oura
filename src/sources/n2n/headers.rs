@@ -37,9 +37,7 @@ impl TryFrom<HeaderContent> for MultiEraHeader {
                 let header = decode(&value.cbor)?;
                 Ok(MultiEraHeader::Babbage(header))
             }
-            x => {
-                return Err(format!("This version of Oura can't handle era: {}", x).into());
-            }
+            x => Err(format!("This version of Oura can't handle era: {}", x).into()),
         }
     }
 }
