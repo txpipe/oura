@@ -1,10 +1,15 @@
 use elasticsearch::{params::OpType, Elasticsearch, IndexParts};
-use log::{debug, warn};
+use reqwest::StatusCode;
 use serde::Serialize;
 use serde_json::json;
 use std::sync::Arc;
+use tokio::runtime::Runtime;
 
-use crate::{model::Event, pipelining::StageReceiver, utils::Utils, Error};
+use crate::{
+    model::Event,
+    pipelining::StageReceiver,
+    utils::{retry, Utils},
+};
 
 #[derive(Serialize)]
 struct ESRecord {
@@ -36,7 +41,7 @@ async fn index_event<'b>(
     client: Arc<Elasticsearch>,
     parts: IndexParts<'_>,
     event: Event,
-) -> Result<(), Error> {
+) -> Result<(), String> {
     let req_body = json!(ESRecord::from(event));
 
     let response = client
@@ -44,18 +49,25 @@ async fn index_event<'b>(
         .body(req_body)
         .op_type(OpType::Create)
         .send()
-        .await?;
+        .await
+        .map_err(|err| err.to_string())?;
 
-    if response.status_code().is_success() {
-        debug!("pushed event to elastic");
-        Ok(())
-    } else {
-        let msg = format!(
-            "error pushing event to elastic: {:?}",
-            response.text().await
-        );
+    match response.status_code() {
+        StatusCode::CONFLICT => {
+            log::warn!("skiping event since it already exists");
+            Ok(())
+        }
+        x if x.is_success() => {
+            log::debug!("pushed event to elastic");
+            Ok(())
+        }
+        x => {
+            if let Ok(body) = response.text().await {
+                log::debug!("error response from ES: {}", body);
+            }
 
-        Err(msg.into())
+            Err(format!("response with status code {}", x))
+        }
     }
 }
 
@@ -63,13 +75,13 @@ async fn index_event_with_id<'b>(
     client: Arc<Elasticsearch>,
     index: &'_ str,
     event: Event,
-) -> Result<(), Error> {
+) -> Result<(), String> {
     let fingerprint = event.fingerprint.clone();
 
     let parts = match &fingerprint {
         Some(id) => IndexParts::IndexId(index, id),
         _ => {
-            warn!("trying to index with idempotency but no event fingerprint available");
+            log::warn!("trying to index with idempotency but no event fingerprint available");
             IndexParts::Index(index)
         }
     };
@@ -81,9 +93,27 @@ async fn index_event_without_id<'b>(
     client: Arc<Elasticsearch>,
     index: &'_ str,
     event: Event,
-) -> Result<(), Error> {
+) -> Result<(), String> {
     let parts = IndexParts::Index(index);
     index_event(client, parts, event).await
+}
+
+fn execute_fallible_request(
+    client: &Arc<Elasticsearch>,
+    event: &Event,
+    idempotency: bool,
+    index: &str,
+    rt: &Runtime,
+) -> Result<(), String> {
+    let client = client.clone();
+    let event = event.clone();
+
+    rt.block_on(async move {
+        match idempotency {
+            true => index_event_with_id(client, index, event).await,
+            false => index_event_without_id(client, index, event).await,
+        }
+    })
 }
 
 pub fn writer_loop(
@@ -91,31 +121,25 @@ pub fn writer_loop(
     client: Elasticsearch,
     index: String,
     idempotency: bool,
+    retry_policy: retry::Policy,
     utils: Arc<Utils>,
-) -> Result<(), Error> {
+) -> Result<(), String> {
     let client = Arc::new(client);
 
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_time()
         .enable_io()
-        .build()?;
+        .build()
+        .map_err(|x| x.to_string())?;
 
     for event in input.iter() {
         let index = index.to_owned();
         let client = client.clone();
 
-        let event2 = event.clone();
-        let result = rt.block_on(async move {
-            match idempotency {
-                true => index_event_with_id(client, &index, event2).await,
-                false => index_event_without_id(client, &index, event2).await,
-            }
-        });
-
-        if let Err(err) = result {
-            log::error!("error indexing record in Elasticsearch: {}", err);
-            return Err(err);
-        }
+        let result = retry::retry_operation(
+            || execute_fallible_request(&client, &event, idempotency, &index, &rt),
+            &retry_policy,
+        );
 
         match result {
             Ok(_) => {
@@ -123,7 +147,7 @@ pub fn writer_loop(
                 utils.track_sink_progress(&event);
             }
             Err(err) => {
-                log::error!("error indexing record in Elasticsearch: {}", err);
+                format!("error indexing record in Elasticsearch: {}", err);
                 return Err(err);
             }
         }
