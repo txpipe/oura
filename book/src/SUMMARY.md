@@ -36,6 +36,7 @@
     - [Mapper Options](./advanced/mapper_options.md)
     - [Intersect Options](./advanced/intersect_options.md)
     - [Custom Network](./advanced/custom_network.md)
+    - [Retry Policy](./advanced/retry_policy.md)
 - [Guides](./guides/README.md)
     - [Cardano => Kafka](./guides/cardano_2_kafka.md)
 
