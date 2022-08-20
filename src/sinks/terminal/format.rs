@@ -287,7 +287,7 @@ impl LogLine {
                 "GENESIS",
                 Color::Magenta,
                 max_width,
-                 "{{ ... }}".to_string(),
+                "{{ ... }}".to_string(),
             ),
             EventData::MoveInstantaneousRewardsCert {
                 from_reserves,
