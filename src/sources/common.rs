@@ -5,6 +5,7 @@ use pallas::network::{
     miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
     multiplexer::{bearers::Bearer, StdChannelBuffer, StdPlexer},
 };
+
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +13,9 @@ use crate::{
     utils::{retry, ChainWellKnownInfo, Utils},
     Error,
 };
+
+// TODO: these should come from Pallas
+use crate::utils::{PREPROD_MAGIC, PREVIEW_MAGIC};
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum BearerKind {
@@ -88,6 +92,8 @@ impl FromStr for MagicArg {
         let m = match s {
             "testnet" => MagicArg(TESTNET_MAGIC),
             "mainnet" => MagicArg(MAINNET_MAGIC),
+            "preview" => MagicArg(PREVIEW_MAGIC),
+            "preprod" => MagicArg(PREPROD_MAGIC),
             _ => MagicArg(u64::from_str(s).map_err(|_| "can't parse magic value")?),
         };
 

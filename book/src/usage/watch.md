@@ -49,3 +49,15 @@ oura watch relays-new.cardano-mainnet.iohk.io:3001 \
     --bearer tcp \
     --since 49159253,d034a2d0e4c3076f57368ed59319010c265718f0923057f8ff914a3b6bfd1314
 ```
+
+### Watch Live Data From the "Preview" testnet
+
+```sh
+oura watch preview-node.world.dev.cardano.org:30002 --bearer tcp --magic preview
+```
+
+### Watch Live Data From the "Pre-Production" testnet
+
+```sh
+oura watch preprod-node.world.dev.cardano.org:30000 --bearer tcp --magic preprod
+```
