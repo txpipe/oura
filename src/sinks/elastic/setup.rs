@@ -12,7 +12,7 @@ use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
-    utils::WithUtils,
+    utils::{retry, WithUtils},
 };
 
 use super::run::writer_loop;
@@ -41,6 +41,8 @@ pub struct Config {
 
     #[serde(default)]
     pub idempotency: bool,
+
+    pub retry_policy: Option<retry::Policy>,
 }
 
 impl SinkProvider for WithUtils<Config> {
@@ -57,9 +59,11 @@ impl SinkProvider for WithUtils<Config> {
 
         let index = self.inner.index.clone();
         let idempotency = self.inner.idempotency;
+        let retry_policy = self.inner.retry_policy.unwrap_or_default();
         let utils = self.utils.clone();
         let handle = std::thread::spawn(move || {
-            writer_loop(input, client, index, idempotency, utils).expect("writer loop failed")
+            writer_loop(input, client, index, idempotency, retry_policy, utils)
+                .expect("writer loop failed")
         });
 
         Ok(handle)
