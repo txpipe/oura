@@ -97,7 +97,11 @@ impl EventWriter {
             .map(|(reward_account, coin)| WithdrawalRecord {
                 reward_account: {
                     let ra_str = reward_account.to_hex();
-                    if ra_str.starts_with("e1") { ra_str[2..].to_string() } else { ra_str }
+                    if ra_str.starts_with("e1") {
+                        ra_str[2..].to_string()
+                    } else {
+                        ra_str
+                    }
                 },
                 coin: coin.into(),
             })
