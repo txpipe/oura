@@ -7,6 +7,7 @@ Advanced options for instructing Oura how to deal with failed attempts in certai
 - [GCP CloudFunction](../sinks/gcp_cloudfunction.md)
 - [GCP PubSub](../sinks/gcp_pubsub.md)
 - [Webhook](../sinks/webhook.md)
+- [Elasticsearch](../sinks/elastic.md)
 
 ## Configuration
 

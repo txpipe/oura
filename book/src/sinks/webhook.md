@@ -34,4 +34,4 @@ extra_header_2 = "123"
 - `allow_invalid_certs` (optional): a flag to skip TLS cert validation (usually for self-signed certs).
 - `timeout` (optional): the timeout value for the HTTP response in milliseconds. Default value is `30000`.
 - `error_policy` (optional): either `Continue` or `Exit`. Default value is `Exit`.
-- [retry_policy](../advanced/retry_policy.md)
+- `retry_policy` (optional): controls the policy to retry failed requests (see [retry policy](../advanced/retry_policy.md))
