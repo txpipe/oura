@@ -31,6 +31,7 @@ extra_header_2 = "123"
 - `url`: url of your remote endpoint (needs to accept POST method)
 - `authorization` (optional): value to add as the 'Authorization' HTTP header
 - `headers` (optional): key-value map of extra headers to pass in each HTTP call
+- `allow_invalid_certs` (optional): a flag to skip TLS cert validation (usually for self-signed certs).
 - `timeout` (optional): the timeout value for the HTTP response in milliseconds. Default value is `30000`.
 - `error_policy` (optional): either `Continue` or `Exit`. Default value is `Exit`.
 - [retry_policy](../advanced/retry_policy.md)

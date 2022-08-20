@@ -14,6 +14,14 @@ pub struct Config {
     pub authorization: Option<String>,
     pub headers: Option<HashMap<String, String>>,
     pub timeout: Option<u64>,
+
+    /// Accept invalid TLS certificates
+    ///
+    /// DANGER Will Robinson! Set this flag to skip TLS verification. Main
+    /// use-case for this flag is to allow self-signed certificates. Beware that
+    /// other invalid properties will be ommited too, such as expiration date.
+    pub allow_invalid_certs: Option<bool>,
+
     pub error_policy: Option<ErrorPolicy>,
     pub retry_policy: Option<retry::Policy>,
 }
@@ -26,6 +34,7 @@ impl SinkProvider for WithUtils<Config> {
                 self.inner.authorization.as_ref(),
                 self.inner.headers.as_ref(),
             )?)
+            .danger_accept_invalid_certs(self.inner.allow_invalid_certs.unwrap_or(false))
             .timeout(Duration::from_millis(self.inner.timeout.unwrap_or(30000)))
             .build()?;
 
