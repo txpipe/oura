@@ -77,8 +77,8 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => None,
     };
 
-    let terminal_width = match args.is_present("terminal_width") {
-        true => Some(args.value_of_t("terminal_width")?),
+    let terminal_width = match args.is_present("terminal-width") {
+        true => Some(args.value_of_t("terminal-width")?),
         false => None
     };
 
@@ -159,8 +159,8 @@ pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
                 .help("milliseconds to wait between output lines (for easier reading)"),
         )
         .arg(
-            clap::Arg::new("terminal_width")
-                .long("terminal_width")
+            clap::Arg::new("terminal-width")
+                .long("terminal-width")
                 .takes_value(true)
                 .help("width of the terminal"),
         )
