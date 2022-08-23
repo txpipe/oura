@@ -1,0 +1,11 @@
+controller:
+  extraArgs:
+    - --namespace-whitelist=cardano2dgraph
+  service:
+    type: ClusterIP
+    enablePorts:
+      http: true
+      https: false
+      stat: false
+defaultBackend:
+  enabled: false

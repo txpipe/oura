@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: handlers
+data:   
+  default.json: |-
+    {
+      "Version": "1.0",
+      "Name": "oura-to-dgraph",
+      "Info": "Transforms and forwards oura's webhook events/payload to dgraph",
+      "Active": true,
+      "Match": null,
+      "IsMatchByExample": false,
+      "TerminateOnMatch": true,
+      "Transformation": {
+          "{{/set}}": "{{/}}"
+      },
+      "IsTransformationByExample": false,
+      "Path": "",
+      "Verb": "POST",
+    	"Protocol": "http",
+      "Endpoint": "http://dgraph-public:8080/mutate?commitNow=true"
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+data:
+  config.json: |-
+    {
+      "Name": "Default",
+      "AppName": "eel",
+      "Endpoint": "http://localhost:8088",
+      "MaxAttempts": 30,
+      "InitialDelay": 30,
+      "InitialBackoff": 999,
+      "Pad": 0,
+      "BackoffMethod": "Exponential",
+      "MaxMessageSize": 5120000,
+      "MessageQueueTimeout": 1000,
+      "MessageQueueDepth": 500,
+      "WorkerPoolSize": {
+        "": 150
+      },
+      "HttpTimeout": 1500,
+      "ResponseHeaderTimeout": 1000,
+      "MaxIdleConnsPerHost": 100,
+      "DuplicateTimeout": 0,
+      "HttpTransactionHeader": "X-B3-TraceId",
+      "HttpTenantHeader": "Xrs-Tenant-Id",
+      "HttpPartnerHeader": "Partner-Id",
+      "HttpDebugHeader": "X-Debug",
+      "CustomProperties": {
+        "key": "value"
+      },
+      "LogStats": false,
+      "TopicPath": "{{/topic}}",
+      "CloseIdleConnectionIntervalSec": 0,
+      "Version": "1.0",
+      "HandlerConfigPath": "",
+      "TraceLogParams": {
+        "Active": false,
+        "FileName": "event.trace.log",
+        "LogIncoming": true,
+        "LogOutgoing": false,
+        "LogParams": {
+          "payload": "{{/}}"
+        }
+      },
+      "AllowPartner": false,
+      "DefaultPartner": ""
+    }
+
+  plugins.json: |-
+    [
+    	{
+    		"Type" : "WEBHOOK",
+    		"Name" : "WEBHOOK",
+    		"AutoStart" : true,
+    		"RestartOk": false,
+    		"ExitOnErr": true,
+    		"Parameters" : {
+    		    "EventPort": 8080,
+    		    "EventProxyPath": "/v1/events",
+    		    "EventProcPath": "/v1/sync/events"
+    		}
+    	},
+    	{
+    		"Type" : "STDIN",
+    		"Name" : "STDIN",
+    		"AutoStart" : false,
+    		"RestartOk": false,
+    		"ExitOnErr": false,
+    		"Parameters" : {}
+    	}
+    ]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oura-2-dgraph-etl
+  labels:
+    app: oura-2-dgraph-etl
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: oura-2-dgraph-etl
+  template:
+    metadata:
+      labels:
+        app: oura-2-dgraph-etl
+    spec:
+      containers:
+        - name: main
+          image: gimbalabs/eel:latest
+          command: ["/bin/sh", "-c", "mkdir -p /config/config-handlers/tenant1 && cp /handlers/default.json /config/config-handlers/tenant1 && ./bin/eel ${EEL_PARAMS} | grep after_transformation"]
+          env:
+            - name: EEL_PARAMS
+              value: "-loglevel debug -path /config"
+          ports:
+            - containerPort: 8080
+          resources: {}
+          volumeMounts:
+            - mountPath: /config/config-eel
+              name: config
+            - mountPath: /handlers
+              name: handlers
+      volumes:
+        - name: config
+          configMap:
+            name: config
+        - name: handlers
+          configMap:
+            name: handlers
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oura-2-dgraph-etl
+spec:
+  selector:
+    app: oura-2-dgraph-etl
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oura-2-dgraph-etl
+  annotations:
+    kubernetes.io/ingress.class: "haproxy"
+spec:
+  rules:
+    - host: oura-2-dgraph-etl.local
+      http:
+        paths:
+          - backend:
+              service:
+                name: oura-2-dgraph-etl
+                port:
+                  number: 5000
+            path: /
+            pathType: Prefix

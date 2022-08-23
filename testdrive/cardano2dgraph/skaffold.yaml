@@ -1,0 +1,24 @@
+apiVersion: skaffold/v2beta26
+kind: Config
+metadata:
+  name: endpoint
+deploy:
+  kubectl:
+    manifests:
+      - k8s/payload-transformer.yaml
+      - k8s/dgraph.yaml
+  kustomize:
+    buildArgs: ["--enable-helm"]
+    paths:
+      - k8s/kustomize-haproxy
+---
+apiVersion: skaffold/v2beta26
+kind: Config
+metadata:
+  name: oura
+requires:
+  - configs: [elastic]
+deploy:
+  kubectl:
+    manifests:
+      - k8s/oura.yaml

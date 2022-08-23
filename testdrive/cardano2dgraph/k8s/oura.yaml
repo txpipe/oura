@@ -1,0 +1,101 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oura
+data:
+  disabled: |-
+    [source.intersect]
+    type = "Tip"
+
+    [source.intersect]
+    type = "Origin"
+
+    [source.intersect]
+    type = "Fallbacks"
+    value = [
+      [4492799, "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"]
+      [4490688, "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de"] # epoch 208 first slot
+      [4490687, "f8084c61b6a238acec985b59310b6ecec49c0ab8352249afd7268da5cff2a457"] # epoch 207 last slot
+    ]
+
+  daemon.toml: |-
+    [source]
+    type = "N2N"
+    address = ["Tcp", "europe.relays-new.cardano-mainnet.iohk.io:3001"]
+    magic = "mainnet"
+
+    [source.intersect]
+    type = "Origin"
+
+    [source.mapper]
+    include_transaction_details = true
+
+    [[filters]]
+    type = "Fingerprint"
+
+    [sink]
+    type = "Webhook"
+    url = "http://init0-kubernetes-ingress/v1/events"
+    timeout = 3000
+    max_retries = 30
+    backoff_delay = 5000
+    [sink.headers]
+    Host = "oura-2-dgraph-etl.local"
+
+    [cursor]
+    type = "File"
+    path = "/var/oura/cursor"
+
+    [metrics]
+    address = "0.0.0.0:9186"
+    endpoint = "/metrics"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oura
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oura
+  labels:
+    app: oura
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oura
+  template:
+    metadata:
+      labels:
+        app: oura
+    spec:
+      containers:
+        - name: main
+          image: ghcr.io/txpipe/oura:v1.6.0
+          env:
+            - name: "RUST_LOG"
+              value: "warn"
+          args:
+            - "daemon"
+          volumeMounts:
+            - mountPath: /etc/oura
+              name: oura-config
+            - mountPath: /var/oura
+              name: oura-var
+      volumes:
+        - name: oura-config
+          configMap:
+            name: oura
+        - name: oura-var
+          persistentVolumeClaim:
+            claimName: oura
