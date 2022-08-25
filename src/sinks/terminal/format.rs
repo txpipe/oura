@@ -391,12 +391,11 @@ impl Display for LogLine {
 
             match self.content.len() {
                 x if x > max_width => {
-                    let chunks = (x as f32 /  max_width as f32).ceil() as usize;
                     let wrapped: String = self.content
                         .chars()
                         .enumerate()
                         .fold(String::new(), |acc, (i, c)| {
-                            if i != 0 && i == chunks {
+                            if i != 0 && i % max_width == 0 {
                                 format!("{}\n{}", acc, c)
                             } else {
                                 format!("{}{}", acc, c)
