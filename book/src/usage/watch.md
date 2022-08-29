@@ -17,7 +17,7 @@ oura watch [OPTIONS] <socket>
 ### Options
 
 - `--bearer <bearer>`: an option that specifies the type of bearer to use. Possible values are `tcp` and `unix`. If omitted, the value `unix` is used as default.
-- `--magic <magic>`: the magic number of the network you're connecting to. Possible values are `mainnet`, `testnet` or a numeric value. If omitted, the value `mainnet` is used as default.
+- `--magic <magic>`: the magic number of the network you're connecting to. Possible values are `mainnet`, `testnet`, `preview`, `preprod` or a numeric value. If omitted, the value `mainnet` is used as default.
 - `--mode <mode>`: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: `node` and `client`.  If omitted, _Oura_ will infer the standard protocols for the specified bearer.
 - `--since <slot>,<hash>`: an option to specify from which point in the chain _Oura_ should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (`<slot>,<hash>`). If omitted, _Oura_ will start reading from the tail (tip) of the node.
 
