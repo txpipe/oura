@@ -231,7 +231,7 @@ pub fn do_chainsync(
         || match do_chainsync_attempt(config, utils.clone(), &output_tx) {
             Ok(()) => Ok(()),
             Err(AttemptError::Other(msg)) => {
-                log::error!("N2N error: {}", msg);
+                log::error!("N2C error: {}", msg);
                 log::warn!("unrecoverable error performing chainsync, will exit");
                 Ok(())
             }
