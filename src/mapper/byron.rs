@@ -85,6 +85,7 @@ impl EventWriter {
 
             //fee: source.compute_fee_with_defaults()?,
             fee: 0,
+            size: (source.transaction.raw_cbor().len() + source.witness.raw_cbor().len()) as u32,
             input_count: input_records.len(),
             output_count: output_records.len(),
             total_output: output_records.iter().map(|o| o.amount).sum(),
