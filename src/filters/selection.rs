@@ -8,7 +8,7 @@ use serde_json::Value as JsonValue;
 use crate::{
     model::{
         Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-        TransactionRecord,
+        TransactionRecord, TxOutputRecord,
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
@@ -20,6 +20,7 @@ pub enum Predicate {
     VariantNotIn(Vec<String>),
     PolicyEquals(String),
     AssetEquals(String),
+    AddressEquals(String),
     MetadataLabelEquals(String),
     MetadataAnySubLabelEquals(String),
     Not(Box<Predicate>),
@@ -46,6 +47,14 @@ fn policy_matches(event: &Event, policy: &str) -> bool {
             relaxed_str_matches(x, policy)
         }
         EventData::Mint(MintRecord { policy: x, .. }) => relaxed_str_matches(x, policy),
+        _ => false,
+    }
+}
+
+#[inline]
+fn address_matches(event: &Event, address: &str) -> bool {
+    match &event.data {
+        EventData::TxOutput(TxOutputRecord { address: x, .. }) => relaxed_str_matches(x, address),
         _ => false,
     }
 }
@@ -90,6 +99,7 @@ impl Predicate {
             Predicate::VariantIn(x) => variant_in_matches(event, x),
             Predicate::VariantNotIn(x) => !variant_in_matches(event, x),
             Predicate::PolicyEquals(x) => policy_matches(event, x),
+            Predicate::AddressEquals(x) => address_matches(event, x),
             Predicate::AssetEquals(x) => asset_matches(event, x),
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
