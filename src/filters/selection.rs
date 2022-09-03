@@ -6,7 +6,10 @@ use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
 use crate::{
-    model::{Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord},
+    model::{
+        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
+        TransactionRecord,
+    },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
 
@@ -59,6 +62,9 @@ fn asset_matches(event: &Event, asset: &str) -> bool {
 #[inline]
 fn metadata_label_matches(event: &Event, label: &str) -> bool {
     match &event.data {
+        EventData::Transaction(TransactionRecord {
+            metadata: Some(x), ..
+        }) => x.iter().any(|r| relaxed_str_matches(&r.label, label)),
         EventData::Metadata(MetadataRecord { label: x, .. }) => relaxed_str_matches(x, label),
         _ => false,
     }
