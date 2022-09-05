@@ -152,15 +152,14 @@ impl ChainWellKnownInfo {
         }
     }
 
-    /// Uses the value of the magic to return either mainnet or testnet
-    /// hardcoded values.
+    /// Try to identify the chain based on the specified magic value.
     pub fn try_from_magic(magic: u64) -> Result<ChainWellKnownInfo, Error> {
         match magic {
             MAINNET_MAGIC => Ok(Self::mainnet()),
             TESTNET_MAGIC => Ok(Self::testnet()),
             PREVIEW_MAGIC => Ok(Self::preview()),
             PREPROD_MAGIC => Ok(Self::preprod()),
-            _ => Err("can't infer well-known chain infro from specified magic".into()),
+            _ => Err(format!("can't identify chain from specified magic value: {}", magic).into()),
         }
     }
 }
