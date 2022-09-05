@@ -1,0 +1,12 @@
+helmCharts:
+- name: kubernetes-ingress
+  repo: https://haproxytech.github.io/helm-charts
+  version: 1.21.1
+  releaseName: init0
+  namespace: cardano2dgraph
+  valuesFile: helm-values.yaml
+
+#resources:
+#- ../dgraph.yaml
+#- ../oura.yaml
+#- ../payload-transformer.yaml
