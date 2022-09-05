@@ -163,7 +163,7 @@ impl EventWriter {
 
     fn crawl_shelley_transaction(
         &self,
-        tx: &TransactionBody,
+        tx: &KeepRaw<TransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
         witness_set: Option<&KeepRaw<TransactionWitnessSet>>,

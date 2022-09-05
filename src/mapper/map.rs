@@ -372,7 +372,7 @@ impl EventWriter {
 
     pub fn to_transaction_record(
         &self,
-        body: &TransactionBody,
+        body: &KeepRaw<TransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
         witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
@@ -380,8 +380,11 @@ impl EventWriter {
         let mut record = TransactionRecord::default();
 
         record.hash.push_str(tx_hash);
-
+        record.size = (body.raw_cbor().len() +
+                         aux_data.map(|ax| ax.raw_cbor().len()).unwrap_or(2) +
+                         witness_set.map(|ws| ws.raw_cbor().len()).unwrap_or(1)) as u32;
         record.fee = body.fee;
+
         record.ttl = body.ttl;
         record.validity_interval_start = body.validity_interval_start;
 
