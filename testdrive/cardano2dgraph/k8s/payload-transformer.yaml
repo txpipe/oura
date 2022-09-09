@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: handlers
-data:   
+data:
   default.json: |-
     {
       "Version": "1.0",
@@ -117,7 +117,12 @@ spec:
       containers:
         - name: main
           image: gimbalabs/eel:latest
-          command: ["/bin/sh", "-c", "mkdir -p /config/config-handlers/tenant1 && cp /handlers/default.json /config/config-handlers/tenant1 && ./bin/eel ${EEL_PARAMS} | grep after_transformation"]
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "mkdir -p /config/config-handlers/tenant1 && cp /handlers/default.json /config/config-handlers/tenant1 && ./bin/eel ${EEL_PARAMS} | grep after_transformation",
+            ]
           env:
             - name: EEL_PARAMS
               value: "-loglevel debug -path /config"
