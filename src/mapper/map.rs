@@ -210,6 +210,7 @@ impl EventWriter {
             asset: asset.to_hex(),
             asset_ascii: String::from_utf8(asset.to_vec()).ok(),
             amount,
+            fingerprint: crate::utils::cip14::cip14_fingerprint(&policy, &asset),
         }
     }
 

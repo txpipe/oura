@@ -111,6 +111,7 @@ pub struct OutputAssetRecord {
     pub asset: String,
     pub asset_ascii: Option<String>,
     pub amount: u64,
+    pub fingerprint : Option<String>,
 }
 
 impl From<OutputAssetRecord> for EventData {

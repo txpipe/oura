@@ -20,6 +20,12 @@ impl Bech32Config {
             address_hrp: info.address_hrp.to_owned(),
         }
     }
+
+    pub(crate) fn for_cip14() -> Self {
+        Self {
+            address_hrp: "asset".to_string(),
+        }
+    }
 }
 
 impl Default for Bech32Config {
@@ -46,6 +52,22 @@ impl Bech32Provider {
         )?;
 
         Ok(enc)
+    }
+
+    pub fn encode_cip14(&self, data: &[u8]) -> Option<String> {
+        match bech32::encode(
+            &self.0.address_hrp,
+            data.to_base32(),
+            bech32::Variant::Bech32,
+        ){
+            Ok(ok) => {
+                Some(ok)
+            },
+            Err(e) => {
+                log::error!("Could not encode cip14 assetname: '{}'",e.to_string());
+                None
+            }
+        }
     }
 }
 
