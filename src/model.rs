@@ -175,7 +175,7 @@ pub struct TransactionRecord {
     pub plutus_redeemers: Option<Vec<PlutusRedeemerRecord>>,
     pub plutus_data: Option<Vec<PlutusDatumRecord>>,
     pub withdrawals: Option<Vec<WithdrawalRecord>>,
-    pub size: u32
+    pub size: u32,
 }
 
 impl From<TransactionRecord> for EventData {
