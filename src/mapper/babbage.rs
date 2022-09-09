@@ -18,6 +18,17 @@ use crate::{
 use super::{map::ToHex, EventWriter};
 
 impl EventWriter {
+    pub fn to_babbage_tx_size(
+        &self,
+        body: &KeepRaw<TransactionBody>,
+        aux_data: Option<&KeepRaw<AuxiliaryData>>,
+        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+    ) -> usize {
+        body.raw_cbor().len()
+            + aux_data.map(|ax| ax.raw_cbor().len()).unwrap_or(2)
+            + witness_set.map(|ws| ws.raw_cbor().len()).unwrap_or(1)
+    }
+
     pub fn to_babbage_transaction_record(
         &self,
         body: &KeepRaw<TransactionBody>,
@@ -25,20 +36,18 @@ impl EventWriter {
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
         witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
     ) -> Result<TransactionRecord, Error> {
-        let mut record = TransactionRecord::default();
-        record.size = (body.raw_cbor().len() +
-                         aux_data.map(|ax| ax.raw_cbor().len()).unwrap_or(2) +
-                         witness_set.map(|ws| ws.raw_cbor().len()).unwrap_or(1)) as u32;
-        record.hash.push_str(tx_hash);
-
-        record.fee = body.fee;
-        record.ttl = body.ttl;
-        record.validity_interval_start = body.validity_interval_start;
-
-        record.network_id = body.network_id.as_ref().map(|x| match x {
-            NetworkId::One => 1,
-            NetworkId::Two => 2,
-        });
+        let mut record = TransactionRecord {
+            hash: tx_hash.to_owned(),
+            size: self.to_babbage_tx_size(body, aux_data, witness_set) as u32,
+            fee: body.fee,
+            ttl: body.ttl,
+            validity_interval_start: body.validity_interval_start,
+            network_id: body.network_id.as_ref().map(|x| match x {
+                NetworkId::One => 1,
+                NetworkId::Two => 2,
+            }),
+            ..Default::default()
+        };
 
         let outputs = self.collect_any_output_records(&body.outputs)?;
         record.output_count = outputs.len();
