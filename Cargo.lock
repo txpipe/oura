@@ -1896,9 +1896,9 @@ dependencies = [
 
 [[package]]
 name = "prometheus_exporter"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "019a192344efa197e8edfb2b864a5369ba8a837578d1bee469f21d98a8ed1233"
+checksum = "caf17cbebe0bfdf4f279ef84eeefe0d50468b0b7116f078acf41d456e48fe81a"
 dependencies = [
  "ascii",
  "prometheus",
