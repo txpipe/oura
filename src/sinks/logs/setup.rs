@@ -53,7 +53,11 @@ fn build_witer(config: &Config) -> Result<impl Write, Error> {
         file_rotate::compression::Compression::None
     };
 
+    #[cfg(unix)]
     let writer = FileRotate::new(output_path, suffix_scheme, content_limit, compression, None);
+
+    #[cfg(not(unix))]
+    let writer = FileRotate::new(output_path, suffix_scheme, content_limit, compression);
 
     Ok(writer)
 }
