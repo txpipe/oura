@@ -160,7 +160,7 @@ pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
                 .long("wrap")
                 .short('w')
                 .takes_value(false)
-                .help("wether long texts should break and continue in the following line"),
+                .help("long text output should break and continue in the following line"),
         )
         .arg(
             clap::Arg::new("mode")
