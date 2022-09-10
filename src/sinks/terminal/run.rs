@@ -15,7 +15,7 @@ use super::format::*;
 
 pub fn reducer_loop(
     throttle_min_span: Duration,
-    terminal_width: Option<u16>,
+    wrap: bool,
     input: StageReceiver,
     utils: Arc<Utils>,
 ) -> Result<(), Error> {
@@ -28,14 +28,13 @@ pub fn reducer_loop(
     ))?;
 
     for evt in input.iter() {
-        
-        let width = match terminal_width {
-             Some(w) => w,
-             None => crossterm::terminal::size()?.0
+        let width = match wrap {
+            true => None,
+            false => Some(crossterm::terminal::size()?.0 as usize),
         };
 
         throttle.wait_turn();
-        let line = LogLine::new(&evt, width as usize, &utils);
+        let line = LogLine::new(&evt, width, &utils);
 
         let result = stdout.execute(Print(line));
 

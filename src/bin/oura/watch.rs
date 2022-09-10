@@ -77,10 +77,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
         false => None,
     };
 
-    let terminal_width = match args.is_present("terminal-width") {
-        true => Some(args.value_of_t("terminal-width")?),
-        false => None
-    };
+    let wrap = args.is_present("wrap");
 
     let mapper = MapperConfig {
         include_block_end_events: true,
@@ -119,7 +116,7 @@ pub fn run(args: &ArgMatches) -> Result<(), Error> {
 
     let sink_setup = oura::sinks::terminal::Config {
         throttle_min_span_millis: throttle,
-        terminal_width: terminal_width
+        wrap: Some(wrap),
     };
 
     let (source_handle, source_output) = match source_setup {
@@ -159,10 +156,11 @@ pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
                 .help("milliseconds to wait between output lines (for easier reading)"),
         )
         .arg(
-            clap::Arg::new("terminal-width")
-                .long("terminal-width")
-                .takes_value(true)
-                .help("width of the terminal"),
+            clap::Arg::new("wrap")
+                .long("wrap")
+                .short('w')
+                .takes_value(false)
+                .help("long text output should break and continue in the following line"),
         )
         .arg(
             clap::Arg::new("mode")
@@ -170,5 +168,4 @@ pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
                 .takes_value(true)
                 .possible_values(&["node", "client"]),
         )
-        
 }
