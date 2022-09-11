@@ -147,9 +147,10 @@
 <h3 id="options"><a class="header" href="#options">Options</a></h3>
 <ul>
 <li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If omitted, the value <code>unix</code> is used as default.</li>
-<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If omitted, the value <code>mainnet</code> is used as default.</li>
+<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code>, <code>preview</code>, <code>preprod</code> or a numeric value. If omitted, the value <code>mainnet</code> is used as default.</li>
 <li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If omitted, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
 <li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If omitted, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
+<li><code>--wrap</code>: indicates that long output text should break and continue in the following line. If omitted, lines will be truncated to fit in the available terminal width.</li>
 </ul>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <h3 id="watch-live-data-from-a-remote-relay-node"><a class="header" href="#watch-live-data-from-a-remote-relay-node">Watch Live Data From A Remote Relay Node</a></h3>

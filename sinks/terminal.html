@@ -140,10 +140,12 @@
 <pre><code class="language-toml">[sink]
 type = &quot;Terminal&quot;
 throttle_min_span_millis = 500
+wrap = true
 </code></pre>
 <ul>
 <li><code>type</code> (required): the literal value <code>Terminal</code>.</li>
 <li><code>throttle_min_span_millis</code> (optional, default = <code>500</code>): the amount of time (milliseconds) to wait between printing each event into the console. This is used to facilitate the reading for human following the output.</li>
+<li><code>wrap</code> (optional, default = <code>false</code>): a true value indicates that long output text should break and continue in the following line. If false, lines will be truncated to fit in the available terminal width.</li>
 </ul>
 
                     </main>

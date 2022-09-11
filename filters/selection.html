@@ -136,8 +136,8 @@
                     <main>
                         <h1 id="selection-filter"><a class="header" href="#selection-filter">Selection Filter</a></h1>
 <p>A filter that evaluates a set of configurable predicates against each event in the pipeline to decide which records should be sent to the following stage.</p>
-<p>Not every use-case requires each and every event to be processed. For example, a pipeline interested in creating a 'metadata' search engine might not care about transactions outputs. With a similar logic, a pipeline aggregating transaction amounts might not care about metadata. The <em>selection filter</em> provides a way to optimize the pipeline so that only relevant events are processed.</p>
-<p>The filter works by evaluating a predicate against each event. If the predicate returns <code>true</code>, then the event will continue down the pipeline. If the predicate evalutes to <code>false</code>, the event will be dopped. We currently provide some common built-in predicate to facilitate common use-cases (eg: matching event type, matching policy id, matching a metadata key, etc). We also include some 'connecting' predicates (and / or / not) which can be used to create complex conditions by composing other predicates.</p>
+<p>Not every use-case requires each and every event to be processed. For example, a pipeline interested in creating a 'metadata' search engine might not care about transaction outputs. With a similar logic, a pipeline aggregating transaction amounts might not care about metadata. The <em>selection filter</em> provides a way to optimize the pipeline so that only relevant events are processed.</p>
+<p>The filter works by evaluating a predicate against each event. If the predicate returns <code>true</code>, then the event will continue down the pipeline. If the predicate evalutes to <code>false</code>, the event will be dopped. We currently provide some common built-in predicate to facilitate common use-cases (eg: matching event type, matching policy id, matching a metadata key, etc.). We also provide some 'connecting' predicates like <code>all_of</code>, <code>any_of</code>, and <code>not</code> which can be used to create complex conditions by composing other predicates.</p>
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p>Adding the following section to the daemon config file will enable the filter as part of the pipeline:</p>
 <pre><code class="language-toml">[[filters]]
@@ -188,7 +188,7 @@ predicate = &quot;not&quot;
 predicate = &quot;variant_in&quot;
 argument = [&quot;Transaction&quot;]
 </code></pre>
-<p>Using the <code>any_of</code> (aka: &quot;or&quot;) predicate to filter events presenting any of two different policies:</p>
+<p>Using the <code>any_of</code> predicate to filter events presenting any of two different policies (Boolean &quot;or&quot;):</p>
 <pre><code class="language-toml">[filters.check]
 predicate = &quot;any_of&quot;
 
@@ -200,7 +200,7 @@ argument = &quot;4bf184e01e0f163296ab253edd60774e2d34367d0e7b6cbc689b567d&quot;
 predicate = &quot;policy_equals&quot;
 argument = &quot;a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559&quot;
 </code></pre>
-<p>Using the <code>all_of</code> (aka: &quot;and&quot;) to filter only &quot;asset&quot; events presenting a particular policy:</p>
+<p>Using the <code>all_of</code> predicate to filter only &quot;asset&quot; events presenting a particular policy (Boolean &quot;and&quot;) :</p>
 <pre><code class="language-toml">[filters.check]
 predicate = &quot;all_of&quot;
 

@@ -341,9 +341,10 @@ spec:
 <h3 id="options"><a class="header" href="#options">Options</a></h3>
 <ul>
 <li><code>--bearer &lt;bearer&gt;</code>: an option that specifies the type of bearer to use. Possible values are <code>tcp</code> and <code>unix</code>. If omitted, the value <code>unix</code> is used as default.</li>
-<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code> or a numeric value. If omitted, the value <code>mainnet</code> is used as default.</li>
+<li><code>--magic &lt;magic&gt;</code>: the magic number of the network you're connecting to. Possible values are <code>mainnet</code>, <code>testnet</code>, <code>preview</code>, <code>preprod</code> or a numeric value. If omitted, the value <code>mainnet</code> is used as default.</li>
 <li><code>--mode &lt;mode&gt;</code>: an option to force the which set of mini-protocols to use when connecting to the Cardano node. Possible values: <code>node</code> and <code>client</code>.  If omitted, <em>Oura</em> will infer the standard protocols for the specified bearer.</li>
 <li><code>--since &lt;slot&gt;,&lt;hash&gt;</code>: an option to specify from which point in the chain <em>Oura</em> should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (<code>&lt;slot&gt;,&lt;hash&gt;</code>). If omitted, <em>Oura</em> will start reading from the tail (tip) of the node.</li>
+<li><code>--wrap</code>: indicates that long output text should break and continue in the following line. If omitted, lines will be truncated to fit in the available terminal width.</li>
 </ul>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <h3 id="watch-live-data-from-a-remote-relay-node"><a class="header" href="#watch-live-data-from-a-remote-relay-node">Watch Live Data From A Remote Relay Node</a></h3>
@@ -500,8 +501,8 @@ type = &quot;Fingerprint&quot;
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="selection-filter"><a class="header" href="#selection-filter">Selection Filter</a></h1>
 <p>A filter that evaluates a set of configurable predicates against each event in the pipeline to decide which records should be sent to the following stage.</p>
-<p>Not every use-case requires each and every event to be processed. For example, a pipeline interested in creating a 'metadata' search engine might not care about transactions outputs. With a similar logic, a pipeline aggregating transaction amounts might not care about metadata. The <em>selection filter</em> provides a way to optimize the pipeline so that only relevant events are processed.</p>
-<p>The filter works by evaluating a predicate against each event. If the predicate returns <code>true</code>, then the event will continue down the pipeline. If the predicate evalutes to <code>false</code>, the event will be dopped. We currently provide some common built-in predicate to facilitate common use-cases (eg: matching event type, matching policy id, matching a metadata key, etc). We also include some 'connecting' predicates (and / or / not) which can be used to create complex conditions by composing other predicates.</p>
+<p>Not every use-case requires each and every event to be processed. For example, a pipeline interested in creating a 'metadata' search engine might not care about transaction outputs. With a similar logic, a pipeline aggregating transaction amounts might not care about metadata. The <em>selection filter</em> provides a way to optimize the pipeline so that only relevant events are processed.</p>
+<p>The filter works by evaluating a predicate against each event. If the predicate returns <code>true</code>, then the event will continue down the pipeline. If the predicate evalutes to <code>false</code>, the event will be dopped. We currently provide some common built-in predicate to facilitate common use-cases (eg: matching event type, matching policy id, matching a metadata key, etc.). We also provide some 'connecting' predicates like <code>all_of</code>, <code>any_of</code>, and <code>not</code> which can be used to create complex conditions by composing other predicates.</p>
 <h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
 <p>Adding the following section to the daemon config file will enable the filter as part of the pipeline:</p>
 <pre><code class="language-toml">[[filters]]
@@ -552,7 +553,7 @@ predicate = &quot;not&quot;
 predicate = &quot;variant_in&quot;
 argument = [&quot;Transaction&quot;]
 </code></pre>
-<p>Using the <code>any_of</code> (aka: &quot;or&quot;) predicate to filter events presenting any of two different policies:</p>
+<p>Using the <code>any_of</code> predicate to filter events presenting any of two different policies (Boolean &quot;or&quot;):</p>
 <pre><code class="language-toml">[filters.check]
 predicate = &quot;any_of&quot;
 
@@ -564,7 +565,7 @@ argument = &quot;4bf184e01e0f163296ab253edd60774e2d34367d0e7b6cbc689b567d&quot;
 predicate = &quot;policy_equals&quot;
 argument = &quot;a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559&quot;
 </code></pre>
-<p>Using the <code>all_of</code> (aka: &quot;and&quot;) to filter only &quot;asset&quot; events presenting a particular policy:</p>
+<p>Using the <code>all_of</code> predicate to filter only &quot;asset&quot; events presenting a particular policy (Boolean &quot;and&quot;) :</p>
 <pre><code class="language-toml">[filters.check]
 predicate = &quot;all_of&quot;
 
@@ -735,10 +736,12 @@ include_block_cbor = true
 <pre><code class="language-toml">[sink]
 type = &quot;Terminal&quot;
 throttle_min_span_millis = 500
+wrap = true
 </code></pre>
 <ul>
 <li><code>type</code> (required): the literal value <code>Terminal</code>.</li>
 <li><code>throttle_min_span_millis</code> (optional, default = <code>500</code>): the amount of time (milliseconds) to wait between printing each event into the console. This is used to facilitate the reading for human following the output.</li>
+<li><code>wrap</code> (optional, default = <code>false</code>): a true value indicates that long output text should break and continue in the following line. If false, lines will be truncated to fit in the available terminal width.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="kafka"><a class="header" href="#kafka">Kafka</a></h1>
 <p>A sink that implements a <em>Kafka</em> producer. Each event is json-encoded and sent as a message to a single Kafka topic.</p>
@@ -1415,7 +1418,7 @@ source_event_count 2277715
 <h2 id="context-3"><a class="header" href="#context-3">Context</a></h2>
 <p>One of the main concerns of Oura is turning block / tx data into atomic events to send down the pipeline for further processing. The <code>source</code> stage is responsible for executing these mapping procedures.</p>
 <p>Most of the time, this logic is generic enough that it can be reused in different scenarios. For example, the <code>N2N</code> and the <code>N2C</code> sources share the same mapping procedures. If a particular use-case needs to cherry-pick, enrich or alter the data in some way, the recommendation is to handle the transformation in downstream stages, by using any of the built-in filter or by creating new ones.</p>
-<p>There are some exception though, whenever a mapping has a heavy impact on performance, it is better to disable it completely at the <code>source</code> level to avoid paying the overhead associated with the initial processing of the data.</p>
+<p>There are some exceptions though, whenever a mapping has a heavy impact on performance, it is better to disable it completely at the <code>source</code> level to avoid paying the overhead associated with the initial processing of the data.</p>
 <h2 id="feature-3"><a class="header" href="#feature-3">Feature</a></h2>
 <p>We consider a mapping procedure &quot;expensive&quot; if it involves: handling a relative large amount of data, computing some relatively expensive value or generating redundant data required only for very particular use cases.</p>
 <p>For these expensive procedures, we provide configurable options that instructs an Oura instance running in daemon mode to opt-in on each particular rule.</p>
@@ -1433,7 +1436,7 @@ include_byron_ebb = &lt;bool&gt;
 <li><code>include_transaction_details</code>: if enabled, each transaction event payload will contain an nested version of all of the details of the transaction (inputs, outputs, mint, assets, metadata, etc). Useful when the pipeline needs to process the tx as a unit, instead of handling each sub-object as an independent event. Default value is <code>false</code>.</li>
 <li><code>include_transaction_end_events</code>: if enabled, the source will output an event signaling the end of a transaction, duplicating all of the data already sent in the corresponding transaction start event. Defaul value is <code>false</code>.</li>
 <li><code>include_block_cbor</code>: if enabled, the block event will include the raw, unaltered cbor content received from the node, formatted as an hex string. Useful when some custom cbor decoding is required. Default value is <code>false</code>.</li>
-<li><code>include_byron_ebb</code>: if enabled, a block event will be emmitted for legacy epoch boundary block of the Byron era (deprecated in newer eras). Useful when performing validation on previous block hashes.</li>
+<li><code>include_byron_ebb</code>: if enabled, a block event will be emmitted for legacy epoch boundary block of the Byron era (deprecated in newer eras). Useful when performing validation on previous block hashes. Default value is <code>false</code>.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="intersect-options"><a class="header" href="#intersect-options">Intersect Options</a></h1>
 <p>Advanced options for instructing Oura from which point in the chain to start reading from.</p>
