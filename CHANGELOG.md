@@ -2,6 +2,134 @@
 ## [Unreleased]
 
 
+<a name="1.7.0"></a>
+## [1.7.0] - 2022-09-10
+### Features
+- Add transaction size value to TransactionRecord ([#403](https://github.com/txpipe/oura/issues/403))
+- Add cardano2dgraph testdrive example ([#395](https://github.com/txpipe/oura/issues/395))
+- Implement selection filter by Address ([#396](https://github.com/txpipe/oura/issues/396))
+- **terminal:** Allow user-defined terminal width ([#393](https://github.com/txpipe/oura/issues/393))
+
+### Doc
+- Fix typos and improve grammar in `selection` docs ([#399](https://github.com/txpipe/oura/issues/399))
+
+### Bug Fixes
+- Fix lint warning across the board  ([#410](https://github.com/txpipe/oura/issues/410))
+- Fix incorrect error message in N2C stage ([#402](https://github.com/txpipe/oura/issues/402))
+- Fix typo in try_from_magic error output ([#405](https://github.com/txpipe/oura/issues/405))
+- Evaluate Tx records for metadata filters ([#406](https://github.com/txpipe/oura/issues/406))
+- **logs:** Fix log sink for non-unix targets ([#425](https://github.com/txpipe/oura/issues/425))
+
+### Docs
+- Add preview and preprod magic values to `watch` usage ([#398](https://github.com/txpipe/oura/issues/398))
+- Improve mapper options docs ([#400](https://github.com/txpipe/oura/issues/400))
+
+### Chore
+- **deps:** bump openssl from 0.10.40 to 0.10.41 ([#394](https://github.com/txpipe/oura/issues/394))
+- **deps:** bump file-rotate from 0.6.0 to 0.7.0 ([#420](https://github.com/txpipe/oura/issues/420))
+- **deps:** bump bech32 from 0.9.0 to 0.9.1 ([#424](https://github.com/txpipe/oura/issues/424))
+- **deps:** bump strum_macros from 0.24.0 to 0.24.3 ([#413](https://github.com/txpipe/oura/issues/413))
+- **deps:** bump crossterm from 0.23.2 to 0.25.0 ([#422](https://github.com/txpipe/oura/issues/422))
+- **deps:** bump serde from 1.0.137 to 1.0.144 ([#423](https://github.com/txpipe/oura/issues/423))
+- **deps:** bump strum from 0.24.0 to 0.24.1 ([#418](https://github.com/txpipe/oura/issues/418))
+- **deps:** bump reqwest from 0.11.10 to 0.11.11 ([#421](https://github.com/txpipe/oura/issues/421))
+- **deps:** bump prometheus_exporter from 0.8.4 to 0.8.5 ([#419](https://github.com/txpipe/oura/issues/419))
+- **deps:** bump tokio from 1.20.1 to 1.21.0 ([#416](https://github.com/txpipe/oura/issues/416))
+- **deps:** bump serde_json from 1.0.81 to 1.0.85 ([#417](https://github.com/txpipe/oura/issues/417))
+- **deps:** bump clap from 3.1.18 to 3.2.20 ([#415](https://github.com/txpipe/oura/issues/415))
+- **deps:** bump redis from 0.21.5 to 0.21.6 ([#411](https://github.com/txpipe/oura/issues/411))
+- **deps:** bump config from 0.13.1 to 0.13.2 ([#414](https://github.com/txpipe/oura/issues/414))
+- **deps:** bump pallas from 0.13.1 to 0.13.2 ([#408](https://github.com/txpipe/oura/issues/408))
+- **deps:** Upgrade aws-sdk to 0.14 ([#409](https://github.com/txpipe/oura/issues/409))
+- **terminal:** Use 'wrap' semantics for terminal width ([#426](https://github.com/txpipe/oura/issues/426))
+
+
+<a name="v1.6.0"></a>
+## [v1.6.0] - 2022-08-20
+### Features
+- Add shortcuts for 'preview' and 'pre-prod' networks ([#385](https://github.com/txpipe/oura/issues/385))
+- Remove e1 prefix from reward account ([#379](https://github.com/txpipe/oura/issues/379))
+- Allow json & yaml as configuration file formats ([#347](https://github.com/txpipe/oura/issues/347))
+- **webhook:** Allow self-signed certificates ([#390](https://github.com/txpipe/oura/issues/390))
+
+### Bug Fixes
+- Move cursor only after side-effect ([#364](https://github.com/txpipe/oura/issues/364))
+- Honor config field that toggles compression ([#358](https://github.com/txpipe/oura/issues/358))
+- **elastic:** Don't panic on ID conflicts ([#391](https://github.com/txpipe/oura/issues/391))
+
+### Docs
+- Describe 'retry policy' mechanism ([#392](https://github.com/txpipe/oura/issues/392))
+- Update metadata-based selection predicates ([#380](https://github.com/txpipe/oura/issues/380))
+- Expand Redis sink section ([#366](https://github.com/txpipe/oura/issues/366))
+- Add redis streams documentation to book index ([#363](https://github.com/txpipe/oura/issues/363))
+- Add custom network config instructions ([#362](https://github.com/txpipe/oura/issues/362))
+
+### Chore
+- Fix formatting issues ([#388](https://github.com/txpipe/oura/issues/388))
+- Add all features flag in from source docs ([#377](https://github.com/txpipe/oura/issues/377))
+- **deps:** bump tokio from 1.18.2 to 1.20.1 ([#369](https://github.com/txpipe/oura/issues/369))
+- **deps:** bump openssl-src from 111.17.0+1.1.1m to 111.22.0+1.1.1q ([#389](https://github.com/txpipe/oura/issues/389))
+
+
+<a name="v1.5.3"></a>
+## [v1.5.3] - 2022-08-08
+### Chore
+- **deps:** Update Pallas to v0.13.1 ([#378](https://github.com/txpipe/oura/issues/378))
+
+
+<a name="v1.5.2"></a>
+## [v1.5.2] - 2022-08-01
+### Bug Fixes
+- Fix JSON serialization of genesis key delegation ([#372](https://github.com/txpipe/oura/issues/372))
+
+
+<a name="v1.5.1"></a>
+## [v1.5.1] - 2022-07-03
+### Bug Fixes
+- Fix n2n babbage header parsing ([#355](https://github.com/txpipe/oura/issues/355))
+
+
+<a name="v1.5.0"></a>
+## [v1.5.0] - 2022-07-03
+### Features
+- Implement Babbage compatibility ([#351](https://github.com/txpipe/oura/issues/351))
+- Add metadata hash to pool registration event ([#336](https://github.com/txpipe/oura/issues/336))
+- Add a nix flake ([#335](https://github.com/txpipe/oura/issues/335))
+- Retry whole chainsync operation when possible ([#332](https://github.com/txpipe/oura/issues/332))
+- Introduce Redis Streams sink ([#253](https://github.com/txpipe/oura/issues/253))
+
+### Bug Fixes
+- Decode block wrappers correctly ([#353](https://github.com/txpipe/oura/issues/353))
+- Add default values for retry policies ([#352](https://github.com/txpipe/oura/issues/352))
+- Accommodate partial features build ([#333](https://github.com/txpipe/oura/issues/333))
+- Allow integer values in magic args ([#320](https://github.com/txpipe/oura/issues/320))
+
+### Docs
+- Add guide on connecting to custom networks ([#306](https://github.com/txpipe/oura/issues/306))
+- Improve "data dictionary" section ([#297](https://github.com/txpipe/oura/issues/297))
+- Fix typo in daemon example ([#294](https://github.com/txpipe/oura/issues/294))
+
+### Code Refactoring
+- Unify retry mechanism across sinks ([#302](https://github.com/txpipe/oura/issues/302))
+
+### Chore
+- Fix lint warnings across the board ([#310](https://github.com/txpipe/oura/issues/310))
+- **deps:** Update Pallas to v0.11 ([#350](https://github.com/txpipe/oura/issues/350))
+- **deps:** Update aws-sdk to 0.12 ([#311](https://github.com/txpipe/oura/issues/311))
+- **deps:** bump clap from 3.1.17 to 3.1.18 ([#293](https://github.com/txpipe/oura/issues/293))
+- **deps:** bump tokio from 1.18.1 to 1.18.2 ([#287](https://github.com/txpipe/oura/issues/287))
+- **deps:** bump bech32 from 0.8.1 to 0.9.0 ([#295](https://github.com/txpipe/oura/issues/295))
+
+
+<a name="v1.4.3"></a>
+## [v1.4.3] - 2022-06-08
+### Bug Fixes
+- Add missing details in tx record ([#321](https://github.com/txpipe/oura/issues/321))
+
+### Docs
+- Update changelog
+
+
 <a name="v1.4.2"></a>
 ## [v1.4.2] - 2022-06-05
 ### Bug Fixes
@@ -550,7 +678,14 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 - fix lint issues
 
 
-[Unreleased]: https://github.com/txpipe/oura/compare/v1.4.2...HEAD
+[Unreleased]: https://github.com/txpipe/oura/compare/1.7.0...HEAD
+[1.7.0]: https://github.com/txpipe/oura/compare/v1.6.0...1.7.0
+[v1.6.0]: https://github.com/txpipe/oura/compare/v1.5.3...v1.6.0
+[v1.5.3]: https://github.com/txpipe/oura/compare/v1.5.2...v1.5.3
+[v1.5.2]: https://github.com/txpipe/oura/compare/v1.5.1...v1.5.2
+[v1.5.1]: https://github.com/txpipe/oura/compare/v1.5.0...v1.5.1
+[v1.5.0]: https://github.com/txpipe/oura/compare/v1.4.3...v1.5.0
+[v1.4.3]: https://github.com/txpipe/oura/compare/v1.4.2...v1.4.3
 [v1.4.2]: https://github.com/txpipe/oura/compare/v1.4.1...v1.4.2
 [v1.4.1]: https://github.com/txpipe/oura/compare/v1.4.0...v1.4.1
 [v1.4.0]: https://github.com/txpipe/oura/compare/v1.3.2...v1.4.0
