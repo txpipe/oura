@@ -1,6 +1,7 @@
 use std::fmt::{Display, Write};
 
 use crossterm::style::{Attribute, Color, Stylize};
+use unicode_truncate::UnicodeTruncateStr;
 
 use crate::{
     model::{
@@ -389,9 +390,9 @@ impl Display for LogLine {
 
             match available_width {
                 Some(width) if width < self.content.len() => {
-                    let wrapped = &self.content[..width];
-                    let wrapped = format!("{wrapped}...");
-                    wrapped.with(Color::Grey).fmt(f)?;
+                    let (partial, _) = &self.content.unicode_truncate(width);
+                    let partial = format!("{partial}...");
+                    partial.with(Color::Grey).fmt(f)?;
                 }
                 _ => {
                     let full = &self.content[..];
