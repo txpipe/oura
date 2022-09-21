@@ -21,6 +21,7 @@ bech32 = "0.9.1"
 clap = "3.2.22"
 log = "0.4.17"
 env_logger = "0.9.1"
+json_env_logger2 = { version = "0.2", features = ["iso-timestamps", "backtrace"], optional = true }
 crossterm = "0.25"
 merge = "0.1.0"
 config = { version = "0.13.2", default-features = false, features = [
@@ -79,3 +80,4 @@ fingerprint = ["murmur3"]
 aws = ["aws-config", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3", "tokio"]
 redissink = ["redis", "tokio"]
 gcp = ["cloud-pubsub", "tokio", "web"]
+json_logs = ["json_env_logger2"]
