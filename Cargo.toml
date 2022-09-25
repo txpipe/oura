@@ -28,7 +28,7 @@ config = { version = "0.13.2", default-features = false, features = [
     "yaml",
     "json",
 ] }
-serde = { version = "1.0.144", features = ["derive"] }
+serde = { version = "1.0.145", features = ["derive"] }
 serde_json = { version = "1.0.85", features = ["arbitrary_precision"] }
 strum = "0.24"
 strum_macros = "0.24"
