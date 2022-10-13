@@ -20,7 +20,7 @@ This examples assumes the following prerequisites:
 
 ## Instructions
 
-### 1. Create an Oura configuration file `caradno2kafka.toml`
+### 1. Create an Oura configuration file `cardano2kafka.toml`
 
 ```toml
 [source]
