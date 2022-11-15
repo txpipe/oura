@@ -11,7 +11,10 @@ pub(crate) fn block_depth_doesnt_skip_numbers(state: &State) -> Outcome {
 
 pub(crate) fn block_slot_increases(state: &State) -> Outcome {
     match (&state.previous_block, &state.current_block) {
-        (Some(prev), Some(curr)) => Outcome::from(prev.slot < curr.slot),
+        (Some(prev), Some(curr)) => match curr.era {
+            crate::model::Era::Byron => Outcome::from(prev.slot <= curr.slot),
+            _ => Outcome::from(prev.slot < curr.slot),
+        },
         _ => Outcome::Unknown,
     }
 }

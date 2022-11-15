@@ -7,8 +7,8 @@ data:
   daemon.toml: |-
     [source]
     type = "N2N"
-    address = ["Tcp", "relays-new.cardano-testnet.iohkdev.io:3001"]
-    magic = "testnet"
+    address = ["Tcp", "preview-node.world.dev.cardano.org:30002"]
+    magic = "preview"
     min_depth = 6
 
     [source.finalize]

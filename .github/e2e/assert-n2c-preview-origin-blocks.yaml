@@ -8,18 +8,21 @@ data:
     [source]
     type = "N2C"
     address = ["Unix", "/opt/cardano/cnode/sockets/node0.socket"]
-    magic = "testnet"
+    magic = "preview"
     min_depth = 6
+
+    [source.mapper]
+    include_byron_ebb = true
 
     [source.retry_policy]
     connection_max_retries = 5
     connection_max_backoff = 60
 
     [source.finalize]
-    max_block_quantity = 20
+    max_block_quantity = 2000
 
     [source.intersect]
-    type = "Tip"
+    type = "Origin"
 
     [sink]
     type = "Assert"
@@ -64,7 +67,7 @@ spec:
           args:
             [
               "UNIX-LISTEN:/opt/cardano/cnode/sockets/node0.socket,reuseaddr,fork",
-              "TCP-CONNECT:node-0.nodes.testnet.svc.cluster.local:3307",
+              "TCP-CONNECT:node-preview-1-35-3-0.nodes.ftr-nodes-v0.svc.cluster.local:3307",
             ]
           volumeMounts:
             - name: unix-socket

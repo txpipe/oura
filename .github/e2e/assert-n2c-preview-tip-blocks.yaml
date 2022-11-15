@@ -6,15 +6,20 @@ metadata:
 data:
   daemon.toml: |-
     [source]
-    type = "N2N"
-    address = ["Tcp", "relays-new.cardano-testnet.iohkdev.io:3001"]
-    magic = "testnet"
+    type = "N2C"
+    address = ["Unix", "/opt/cardano/cnode/sockets/node0.socket"]
+    magic = "preview"
+    min_depth = 6
+
+    [source.retry_policy]
+    connection_max_retries = 5
+    connection_max_backoff = 60
 
     [source.finalize]
-    max_block_quantity = 2000
+    max_block_quantity = 20
 
     [source.intersect]
-    type = "Origin"
+    type = "Tip"
 
     [sink]
     type = "Assert"
@@ -50,9 +55,23 @@ spec:
           args:
             - "daemon"
           volumeMounts:
-            - mountPath: /etc/oura
-              name: oura-config
+            - name: oura-config
+              mountPath: /etc/oura
+            - name: unix-socket
+              mountPath: /opt/cardano/cnode/sockets
+        - name: socat
+          image: alpine/socat
+          args:
+            [
+              "UNIX-LISTEN:/opt/cardano/cnode/sockets/node0.socket,reuseaddr,fork",
+              "TCP-CONNECT:node-preview-1-35-3-0.nodes.ftr-nodes-v0.svc.cluster.local:3307",
+            ]
+          volumeMounts:
+            - name: unix-socket
+              mountPath: /opt/cardano/cnode/sockets
       volumes:
         - name: oura-config
           configMap:
             name: ${TEST_NAME}
+        - name: unix-socket
+          emptyDir: {}
