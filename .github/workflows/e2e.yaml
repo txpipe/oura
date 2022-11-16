@@ -71,12 +71,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: assert-n2c-testnet-origin-blocks
-          - name: assert-n2c-testnet-tip-blocks
+          - name: assert-n2c-preview-origin-blocks
+          - name: assert-n2c-preview-tip-blocks
           - name: assert-n2n-mainnet-origin-blocks
           - name: assert-n2n-mainnet-tip-blocks
-          - name: assert-n2n-testnet-origin-blocks
-          - name: assert-n2n-testnet-tip-blocks
+          - name: assert-n2n-preview-origin-blocks
+          - name: assert-n2n-preview-tip-blocks
           - name: aws-lambda-10-blocks
           - name: aws-s3-500-blocks
           - name: aws-sqs-10-blocks
