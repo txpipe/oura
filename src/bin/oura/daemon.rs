@@ -1,348 +1,145 @@
-use std::{sync::Arc, thread::JoinHandle};
-
-use clap::ArgMatches;
-use config::{Config, ConfigError, Environment, File};
-use log::debug;
+use clap;
+use oura::{bootstrap, crosscut, filter, mapper, sinks, sources};
 use serde::Deserialize;
+use std::time::Duration;
 
-use oura::{
-    pipelining::{
-        BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
-        StageReceiver,
-    },
-    sources::{MagicArg, PointArg},
-    utils::{cursor, metrics, ChainWellKnownInfo, Utils, WithUtils},
-    Error,
-};
+use crate::console;
 
-use oura::filters::noop::Config as NoopFilterConfig;
-use oura::filters::selection::Config as SelectionConfig;
-use oura::sinks::assert::Config as AssertConfig;
-use oura::sinks::stdout::Config as StdoutConfig;
-use oura::sinks::terminal::Config as TerminalConfig;
-use oura::sources::n2c::Config as N2CConfig;
-use oura::sources::n2n::Config as N2NConfig;
-
-#[cfg(feature = "logs")]
-use oura::sinks::logs::Config as WriterConfig;
-
-#[cfg(feature = "webhook")]
-use oura::sinks::webhook::Config as WebhookConfig;
-
-#[cfg(feature = "kafkasink")]
-use oura::sinks::kafka::Config as KafkaConfig;
-
-#[cfg(feature = "elasticsink")]
-use oura::sinks::elastic::Config as ElasticConfig;
-
-#[cfg(feature = "aws")]
-use oura::sinks::aws_sqs::Config as AwsSqsConfig;
-
-#[cfg(feature = "aws")]
-use oura::sinks::aws_lambda::Config as AwsLambdaConfig;
-
-#[cfg(feature = "aws")]
-use oura::sinks::aws_s3::Config as AwsS3Config;
-
-#[cfg(feature = "redissink")]
-use oura::sinks::redis::Config as RedisConfig;
-
-#[cfg(feature = "gcp")]
-use oura::sinks::gcp_pubsub::Config as GcpPubSubConfig;
-
-#[cfg(feature = "gcp")]
-use oura::sinks::gcp_cloudfunction::Config as GcpCloudFunctionConfig;
-
-#[cfg(feature = "rabbitmqsink")]
-use oura::sinks::rabbitmq::Config as RabbitmqConfig;
-
-#[cfg(feature = "fingerprint")]
-use oura::filters::fingerprint::Config as FingerprintConfig;
-
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(tag = "type")]
-enum Source {
-    N2C(N2CConfig),
-    N2N(N2NConfig),
+pub enum ChainConfig {
+    Mainnet,
+    Testnet,
+    PreProd,
+    Preview,
+    Custom(crosscut::ChainWellKnownInfo),
 }
 
-fn bootstrap_source(config: Source, utils: Arc<Utils>) -> PartialBootstrapResult {
-    match config {
-        Source::N2C(config) => WithUtils::new(config, utils).bootstrap(),
-        Source::N2N(config) => WithUtils::new(config, utils).bootstrap(),
+impl Default for ChainConfig {
+    fn default() -> Self {
+        Self::Mainnet
     }
 }
 
-fn infer_magic_from_source(config: &Source) -> Option<MagicArg> {
-    match config {
-        Source::N2C(config) => config.magic.clone(),
-        Source::N2N(config) => config.magic.clone(),
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(tag = "type")]
-enum Filter {
-    Noop(NoopFilterConfig),
-    Selection(SelectionConfig),
-
-    #[cfg(feature = "fingerprint")]
-    Fingerprint(FingerprintConfig),
-}
-
-impl FilterProvider for Filter {
-    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
-        match self {
-            Filter::Noop(c) => c.bootstrap(input),
-            Filter::Selection(c) => c.bootstrap(input),
-
-            #[cfg(feature = "fingerprint")]
-            Filter::Fingerprint(c) => c.bootstrap(input),
+impl From<ChainConfig> for crosscut::ChainWellKnownInfo {
+    fn from(other: ChainConfig) -> Self {
+        match other {
+            ChainConfig::Mainnet => crosscut::ChainWellKnownInfo::mainnet(),
+            ChainConfig::Testnet => crosscut::ChainWellKnownInfo::testnet(),
+            ChainConfig::PreProd => crosscut::ChainWellKnownInfo::preprod(),
+            ChainConfig::Preview => crosscut::ChainWellKnownInfo::preview(),
+            ChainConfig::Custom(x) => x,
         }
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "type")]
-enum Sink {
-    Terminal(TerminalConfig),
-    Stdout(StdoutConfig),
-    Assert(AssertConfig),
-
-    #[cfg(feature = "logs")]
-    Logs(WriterConfig),
-
-    #[cfg(feature = "webhook")]
-    Webhook(WebhookConfig),
-
-    #[cfg(feature = "kafkasink")]
-    Kafka(KafkaConfig),
-
-    #[cfg(feature = "elasticsink")]
-    Elastic(ElasticConfig),
-
-    #[cfg(feature = "aws")]
-    AwsSqs(AwsSqsConfig),
-
-    #[cfg(feature = "aws")]
-    AwsLambda(AwsLambdaConfig),
-
-    #[cfg(feature = "aws")]
-    AwsS3(AwsS3Config),
-
-    #[cfg(feature = "redissink")]
-    Redis(RedisConfig),
-
-    #[cfg(feature = "gcp")]
-    GcpPubSub(GcpPubSubConfig),
-
-    #[cfg(feature = "gcp")]
-    GcpCloudFunction(GcpCloudFunctionConfig),
-
-    #[cfg(feature = "rabbitmqsink")]
-    Rabbitmq(RabbitmqConfig),
-}
-
-fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
-    match config {
-        Sink::Terminal(c) => WithUtils::new(c, utils).bootstrap(input),
-        Sink::Stdout(c) => WithUtils::new(c, utils).bootstrap(input),
-        Sink::Assert(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "logs")]
-        Sink::Logs(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "webhook")]
-        Sink::Webhook(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "kafkasink")]
-        Sink::Kafka(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "elasticsink")]
-        Sink::Elastic(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "aws")]
-        Sink::AwsSqs(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "aws")]
-        Sink::AwsLambda(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "aws")]
-        Sink::AwsS3(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "redissink")]
-        Sink::Redis(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "gcp")]
-        Sink::GcpPubSub(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "gcp")]
-        Sink::GcpCloudFunction(c) => WithUtils::new(c, utils).bootstrap(input),
-
-        #[cfg(feature = "rabbitmqsink")]
-        Sink::Rabbitmq(c) => WithUtils::new(c, utils).bootstrap(input),
-    }
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 struct ConfigRoot {
-    source: Source,
-
-    #[serde(default)]
-    filters: Vec<Filter>,
-
-    sink: Sink,
-
-    chain: Option<ChainWellKnownInfo>,
-
-    cursor: Option<cursor::Config>,
-
-    metrics: Option<metrics::Config>,
+    source: sources::Config,
+    filter: Option<filter::Config>,
+    mapper: Vec<mapper::Config>,
+    sink: sinks::Config,
+    intersect: crosscut::IntersectConfig,
+    finalize: Option<crosscut::FinalizeConfig>,
+    chain: Option<ChainConfig>,
+    policy: Option<crosscut::policies::RuntimePolicy>,
 }
 
 impl ConfigRoot {
-    pub fn new(explicit_file: Option<String>) -> Result<Self, ConfigError> {
-        let mut s = Config::builder();
+    pub fn new(explicit_file: &Option<std::path::PathBuf>) -> Result<Self, config::ConfigError> {
+        let mut s = config::Config::builder();
 
-        // our base config will always be in /etc/oura
-        s = s.add_source(File::with_name("/etc/oura/daemon.toml").required(false));
+        // our base config will always be in /etc/scrolls
+        s = s.add_source(config::File::with_name("/etc/oura/daemon.toml").required(false));
 
         // but we can override it by having a file in the working dir
-        s = s.add_source(File::with_name("oura.toml").required(false));
+        s = s.add_source(config::File::with_name("oura.toml").required(false));
 
         // if an explicit file was passed, then we load it as mandatory
-        if let Some(explicit) = explicit_file {
-            s = s.add_source(File::with_name(&explicit).required(true));
+        if let Some(explicit) = explicit_file.as_ref().and_then(|x| x.to_str()) {
+            s = s.add_source(config::File::with_name(explicit).required(true));
         }
 
         // finally, we use env vars to make some last-step overrides
-        s = s.add_source(Environment::with_prefix("OURA").separator("_"));
+        s = s.add_source(config::Environment::with_prefix("OURA").separator("_"));
 
         s.build()?.try_deserialize()
     }
 }
 
-fn define_chain_info(
-    explicit: Option<ChainWellKnownInfo>,
-    magic: &MagicArg,
-) -> Result<ChainWellKnownInfo, Error> {
-    match explicit {
-        Some(x) => Ok(x),
-        None => ChainWellKnownInfo::try_from_magic(**magic),
+fn should_stop(pipeline: &bootstrap::Pipeline) -> bool {
+    pipeline
+        .tethers
+        .iter()
+        .any(|tether| match tether.check_state() {
+            gasket::runtime::TetherState::Alive(x) => match x {
+                gasket::runtime::StageState::StandBy => true,
+                _ => false,
+            },
+            _ => true,
+        })
+}
+
+fn shutdown(pipeline: bootstrap::Pipeline) {
+    for tether in pipeline.tethers {
+        let state = tether.check_state();
+        log::warn!("dismissing stage: {} with state {:?}", tether.name(), state);
+        tether.dismiss_stage().expect("stage stops");
+
+        // Can't join the stage because there's a risk of deadlock, usually
+        // because a stage gets stuck sending into a port which depends on a
+        // different stage not yet dismissed. The solution is to either create a
+        // DAG of dependencies and dismiss in the correct order, or implement a
+        // 2-phase teardown where ports are disconnected and flushed
+        // before joining the stage.
+
+        //tether.join_stage();
     }
 }
 
-fn define_cursor(
-    explicit: Option<PointArg>,
-    config: Option<cursor::Config>,
-) -> Option<cursor::Config> {
-    match (explicit, config) {
-        (Some(x), _) => Some(cursor::Config::Memory(x)),
-        (_, x) => x,
-    }
-}
+pub fn run(args: &Args) -> Result<(), oura::Error> {
+    console::initialize(&args.console);
 
-fn bootstrap_utils(
-    chain: ChainWellKnownInfo,
-    cursor: Option<cursor::Config>,
-    metrics: Option<metrics::Config>,
-) -> Utils {
-    let mut utils = Utils::new(chain);
+    let config = ConfigRoot::new(&args.config)
+        .map_err(|err| oura::Error::ConfigError(format!("{:?}", err)))?;
 
-    if let Some(cursor) = cursor {
-        utils = utils.with_cursor(cursor);
-    }
+    let chain = config.chain.unwrap_or_default().into();
+    let policy = config.policy.unwrap_or_default().into();
 
-    if let Some(metrics) = metrics {
-        utils = utils.with_metrics(metrics);
-    }
+    let source = config
+        .source
+        .bootstrapper(&chain, &config.intersect, &config.finalize, &policy);
 
-    utils
-}
+    let filter = config.filter.unwrap_or_default().bootstrapper(&policy);
 
-/// Sets up the whole pipeline from configuration
-fn bootstrap(
-    config: ConfigRoot,
-    explicit_cursor: Option<PointArg>,
-) -> Result<Vec<JoinHandle<()>>, Error> {
-    let ConfigRoot {
-        source,
-        filters,
-        sink,
-        chain,
-        cursor,
-        metrics,
-    } = config;
+    let mapper = config.mapper.unwrap_or_default().bootstrapper(&policy);
 
-    let magic = infer_magic_from_source(&source).unwrap_or_default();
+    let sink = config.sink.plugin(&chain, &config.intersect, &policy);
 
-    let chain = define_chain_info(chain, &magic)?;
+    let pipeline = bootstrap::build(source, filter, mapper, sink)?;
 
-    let cursor = define_cursor(explicit_cursor, cursor);
+    log::info!("oura is running...");
 
-    let utils = Arc::new(bootstrap_utils(chain, cursor, metrics));
-
-    let mut threads = Vec::with_capacity(10);
-
-    let (source_handle, source_rx) = bootstrap_source(source, utils.clone())?;
-    threads.push(source_handle);
-
-    let mut last_rx = source_rx;
-
-    for filter in filters.iter() {
-        let (filter_handle, filter_rx) = filter.bootstrap(last_rx)?;
-        threads.push(filter_handle);
-        last_rx = filter_rx;
+    while !should_stop(&pipeline) {
+        console::refresh(&args.console, &pipeline);
+        std::thread::sleep(Duration::from_millis(1500));
     }
 
-    let sink_handle = bootstrap_sink(sink, last_rx, utils)?;
-    threads.push(sink_handle);
+    log::info!("Oura is stopping...");
 
-    Ok(threads)
-}
-
-pub fn run(args: &ArgMatches) -> Result<(), Error> {
-    env_logger::init();
-
-    let explicit_config = match args.is_present("config") {
-        true => Some(args.value_of_t("config")?),
-        false => None,
-    };
-
-    let explicit_cursor = match args.is_present("cursor") {
-        true => Some(args.value_of_t("cursor")?),
-        false => None,
-    };
-
-    let root = ConfigRoot::new(explicit_config)?;
-
-    debug!("daemon starting with this config: {:?}", root);
-
-    let threads = bootstrap(root, explicit_cursor)?;
-
-    // TODO: refactor into new loop that monitors thread health
-    for handle in threads {
-        handle.join().expect("error in pipeline thread");
-    }
+    shutdown(pipeline);
 
     Ok(())
 }
 
-/// Creates the clap definition for this sub-command
-pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
-    clap::Command::new("daemon")
-        .arg(
-            clap::Arg::new("config")
-                .long("config")
-                .takes_value(true)
-                .help("config file to load by the daemon"),
-        )
-        .arg(
-            clap::Arg::new("cursor")
-                .long("cursor")
-                .takes_value(true)
-                .help(
-                    "initial chain cursor, overrides configuration file, expects format `slot,hex-hash`",
-                ),
-        )
+#[derive(clap::Args)]
+#[clap(author, version, about, long_about = None)]
+pub struct Args {
+    #[clap(long, value_parser)]
+    //#[clap(description = "config file to load by the daemon")]
+    config: Option<std::path::PathBuf>,
+
+    #[clap(long, value_parser)]
+    //#[clap(description = "type of progress to display")],
+    console: Option<console::Mode>,
 }
