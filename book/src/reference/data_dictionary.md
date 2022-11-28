@@ -111,7 +111,7 @@ Data on a transaction output (UTXO).
 | :---         | :---            | :---                                  |
 | block_number | Option\<u64>    | Height of block from genesis.         |
 | slot         | Option\<u64>    | Current slot.                         |
-| tx_idx       | Option\<usize>  | Transaction ID.                       |
+| tx_idx       | Option\<usize>  | Transaction Index.                       |
 | tx_hash      | Option\<String> | Transaction hash.                     |
 | output_idx   | Option\<usize>  | Output ID.                            |
 
