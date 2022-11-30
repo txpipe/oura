@@ -167,7 +167,7 @@ jobs:
           go-version: "1.16"
 
       - name: Setup | Artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
 
       - name: Setup | Checksums
         run: for file in oura-*/oura-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
