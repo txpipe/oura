@@ -268,6 +268,7 @@ pub struct BlockRecord {
     pub epoch_slot: Option<u64>,
     pub body_size: usize,
     pub issuer_vkey: String,
+    pub vrf_vkey: String,
     pub tx_count: usize,
     pub slot: u64,
     pub hash: String,
