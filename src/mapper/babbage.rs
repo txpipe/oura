@@ -162,11 +162,7 @@ impl EventWriter {
         &self,
         block: &MintedBlock,
     ) -> Option<Vec<u32>> {
-        if let Some(im) = &block.invalid_transactions {
-            Some((*im.deref()).to_vec())
-        } else {
-            None
-        }
+        block.invalid_transactions.clone().map(|im| im.deref().to_vec())
     }
 
     pub fn collect_babbage_tx_records(
