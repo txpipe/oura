@@ -275,6 +275,7 @@ pub struct BlockRecord {
     pub previous_hash: String,
     pub cbor_hex: Option<String>,
     pub transactions: Option<Vec<TransactionRecord>>,
+    pub invalid_transactions: Option<Vec<u32>>
 }
 
 impl From<BlockRecord> for EventData {
