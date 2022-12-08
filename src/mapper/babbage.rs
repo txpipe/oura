@@ -68,7 +68,7 @@ impl EventWriter {
         // Add Collateral Stuff
         let collateral_inputs = &body.collateral.as_deref();
         record.collateral_input_count = collateral_inputs.iter().count();
-        record.has_collateral_output = body.collateral_return.is_none();
+        record.has_collateral_output = body.collateral_return.is_some();
 
         // TODO
         // TransactionBodyComponent::ScriptDataHash(_)
