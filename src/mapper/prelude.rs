@@ -26,9 +26,6 @@ pub struct Config {
     pub include_transaction_end_events: bool,
 
     #[serde(default)]
-    pub include_invalid_transaction_details: bool,
-
-    #[serde(default)]
     pub include_block_details: bool,
 
     #[serde(default)]

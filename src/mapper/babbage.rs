@@ -144,15 +144,11 @@ impl EventWriter {
                 false => None,
             },
             transactions: None,
-            invalid_transactions: None
+            invalid_transactions: self.collect_invalid_tx_indices(source)
         };
 
         if self.config.include_block_details {
             record.transactions = Some(self.collect_babbage_tx_records(source)?);
-        }
-
-        if self.config.include_invalid_transaction_details {
-            record.invalid_transactions = self.collect_invalid_tx_indices(source);
         }
 
         Ok(record)
