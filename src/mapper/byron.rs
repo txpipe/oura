@@ -163,7 +163,7 @@ impl EventWriter {
             era: Era::Byron,
             body_size: cbor.len() as usize,
             issuer_vkey: source.header.consensus_data.1.to_hex(),
-            vrf_vkey: None,
+            vrf_vkey: Default::default(),
             tx_count: source.body.tx_payload.len(),
             hash: hash.to_hex(),
             number: source.header.consensus_data.2[0],
