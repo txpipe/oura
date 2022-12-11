@@ -363,13 +363,6 @@ impl EventWriter {
         }
     }
 
-    pub fn to_collateral_event(&self, collateral: &TransactionInput) -> EventData {
-        EventData::Collateral {
-            tx_id: collateral.transaction_id.to_hex(),
-            index: collateral.index,
-        }
-    }
-
     pub fn to_tx_size(
         &self,
         body: &KeepRaw<TransactionBody>,

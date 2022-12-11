@@ -122,6 +122,16 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .with_prefix("utxo")
             .append_optional(&event.context.tx_hash)?
             .append_optional_to_string(&event.context.output_idx)?,
+        EventData::CollateralTxInput { .. } => b
+            .with_slot(&event.context.slot)
+            .with_prefix("colin")
+            .append_optional(&event.context.tx_hash)?
+            .append_optional_to_string(&event.context.input_idx)?,
+        EventData::CollateralTxOutput { .. } => b
+            .with_slot(&event.context.slot)
+            .with_prefix("colout")
+            .append_optional(&event.context.tx_hash)?
+            .append_optional_to_string(&event.context.output_idx)?,
         EventData::OutputAsset(OutputAssetRecord { policy, asset, .. }) => b
             .with_slot(&event.context.slot)
             .with_prefix("asst")
@@ -140,11 +150,6 @@ fn build_fingerprint(event: &Event, seed: u32) -> Result<String, Error> {
             .append_optional(&event.context.tx_hash)?
             .append_slice(policy)?
             .append_slice(asset)?,
-        EventData::Collateral { tx_id, index } => b
-            .with_slot(&event.context.slot)
-            .with_prefix("coll")
-            .append_slice(tx_id)?
-            .append_to_string(index)?,
         EventData::NativeScript { policy_id, .. } => b
             .with_slot(&event.context.slot)
             .with_prefix("scpt")

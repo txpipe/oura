@@ -105,6 +105,27 @@ impl From<TxInputRecord> for EventData {
     }
 }
 
+impl From<TxInputRecord> for CollateralTxInputRecord {
+    fn from(x: TxInputRecord) -> Self {
+        CollateralTxInputRecord {
+            tx_id: x.tx_id,
+            index: x.index,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct CollateralTxInputRecord {
+    pub tx_id: String,
+    pub index: u64,
+}
+
+impl From<CollateralTxInputRecord> for EventData {
+    fn from(x: CollateralTxInputRecord) -> Self {
+        EventData::CollateralTxInput(x)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct OutputAssetRecord {
     pub policy: String,
@@ -130,6 +151,31 @@ pub struct TxOutputRecord {
 impl From<TxOutputRecord> for EventData {
     fn from(x: TxOutputRecord) -> Self {
         EventData::TxOutput(x)
+    }
+}
+
+impl From<TxOutputRecord> for CollateralTxOutputRecord {
+    fn from(x: TxOutputRecord) -> Self {
+        CollateralTxOutputRecord {
+            address: x.address,
+            amount: x.amount,
+            assets: x.assets,
+            datum_hash: x.datum_hash,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct CollateralTxOutputRecord {
+    pub address: String,
+    pub amount: u64,
+    pub assets: Option<Vec<OutputAssetRecord>>,
+    pub datum_hash: Option<String>,
+}
+
+impl From<CollateralTxOutputRecord> for EventData {
+    fn from(x: CollateralTxOutputRecord) -> Self {
+        EventData::CollateralTxOutput(x)
     }
 }
 
@@ -296,6 +342,8 @@ pub enum EventData {
     TransactionEnd(TransactionRecord),
     TxInput(TxInputRecord),
     TxOutput(TxOutputRecord),
+    CollateralTxInput(CollateralTxInputRecord),
+    CollateralTxOutput(CollateralTxOutputRecord),
     OutputAsset(OutputAssetRecord),
     Metadata(MetadataRecord),
 
@@ -312,10 +360,6 @@ pub enum EventData {
     CIP15Asset(CIP15AssetRecord),
 
     Mint(MintRecord),
-    Collateral {
-        tx_id: String,
-        index: u64,
-    },
     NativeScript {
         policy_id: String,
         script: JsonValue,

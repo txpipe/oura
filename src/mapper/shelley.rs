@@ -8,6 +8,7 @@ use pallas::ledger::primitives::alonzo::{
 
 use pallas::crypto::hash::Hash;
 
+use crate::model::CollateralTxInputRecord;
 use crate::{
     model::{Era, EventContext, EventData},
     Error,
@@ -111,8 +112,13 @@ impl EventWriter {
         // more complex event goes here (eg: pool metadata?)
     }
 
-    pub(crate) fn crawl_collateral(&self, collateral: &TransactionInput) -> Result<(), Error> {
-        self.append(self.to_collateral_event(collateral))
+    pub(crate) fn crawl_collateral_input(
+        &self,
+        collateral_input: &TransactionInput,
+    ) -> Result<(), Error> {
+        let input: CollateralTxInputRecord =
+            self.to_transaction_input_record(collateral_input).into();
+        self.append_from(input)
 
         // TODO: should we have a collateral idx in context?
         // more complex event goes here (eg: ???)
@@ -205,7 +211,7 @@ impl EventWriter {
             for (_idx, collateral) in collateral.iter().enumerate() {
                 // TODO: collateral context?
 
-                self.crawl_collateral(collateral)?;
+                self.crawl_collateral_input(collateral)?;
             }
         }
 

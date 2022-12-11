@@ -8,7 +8,7 @@ use serde_json::Value as JsonValue;
 use crate::{
     model::{
         Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-        TransactionRecord, TxOutputRecord,
+        TransactionRecord, TxOutputRecord
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
