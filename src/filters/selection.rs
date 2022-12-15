@@ -7,8 +7,8 @@ use serde_json::Value as JsonValue;
 
 use crate::{
     model::{
-        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-        TransactionRecord, TxOutputRecord,
+        CIP25AssetRecord, Event, EventData, MetadataRecord, MetadatumRendition, MintRecord,
+        OutputAssetRecord, TransactionRecord, TxOutputRecord,
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
@@ -68,6 +68,14 @@ fn mint_policy_matches(event: &Event, policy: &str) -> bool {
             relaxed_str_matches(x, policy)
         }
         EventData::Mint(MintRecord { policy: x, .. }) => relaxed_str_matches(x, policy),
+        _ => false,
+    }
+}
+
+#[inline]
+fn cip25_policy_matches(event: &Event, policy: &str) -> bool {
+    match &event.data {
+        EventData::CIP25Asset(CIP25AssetRecord { policy: x, .. }) => relaxed_str_matches(x, policy),
         _ => false,
     }
 }
@@ -141,7 +149,9 @@ impl Predicate {
             Predicate::VariantIn(x) => variant_in_matches(event, x),
             Predicate::VariantNotIn(x) => !variant_in_matches(event, x),
             Predicate::PolicyEquals(x) => {
-                output_policy_matches(event, x) || mint_policy_matches(event, x)
+                output_policy_matches(event, x)
+                    || mint_policy_matches(event, x)
+                    || cip25_policy_matches(event, x)
             }
             Predicate::AddressEquals(x) => address_matches(event, x),
             Predicate::AssetEquals(x) => {
