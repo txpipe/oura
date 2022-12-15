@@ -119,6 +119,14 @@ fn mint_asset_matches(event: &Event, asset: &str) -> bool {
 }
 
 #[inline]
+fn cip25_asset_matches(event: &Event, asset: &str) -> bool {
+    match &event.data {
+        EventData::CIP25Asset(CIP25AssetRecord { asset: x, .. }) => relaxed_str_matches(x, asset),
+        _ => false,
+    }
+}
+
+#[inline]
 fn metadata_label_matches(event: &Event, label: &str) -> bool {
     match &event.data {
         EventData::Transaction(TransactionRecord {
@@ -155,7 +163,9 @@ impl Predicate {
             }
             Predicate::AddressEquals(x) => address_matches(event, x),
             Predicate::AssetEquals(x) => {
-                output_asset_matches(event, x) || mint_asset_matches(event, x)
+                output_asset_matches(event, x)
+                    || mint_asset_matches(event, x)
+                    || cip25_asset_matches(event, x)
             }
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
