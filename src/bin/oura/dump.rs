@@ -14,6 +14,12 @@ use oura::sinks::stdout::Config as StdoutConfig;
 use oura::sources::n2c::Config as N2CConfig;
 use oura::sources::n2n::Config as N2NConfig;
 
+#[cfg(not(feature = "json_logs"))]
+use env_logger as logger;
+
+#[cfg(feature = "json_logs")]
+use json_env_logger2 as logger;
+
 #[cfg(feature = "logs")]
 use oura::sinks::logs::Config as LogsConfig;
 
@@ -58,7 +64,7 @@ fn bootstrap_sink(sink: DumpSink, input: StageReceiver, utils: Arc<Utils>) -> Bo
 }
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
-    env_logger::builder()
+    logger::builder()
         .filter_module("oura::dump", log::LevelFilter::Info)
         .init();
 

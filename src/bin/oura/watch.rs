@@ -15,6 +15,12 @@ use oura::sources::n2n::Config as N2NConfig;
 
 use crate::Error;
 
+#[cfg(not(feature = "json_logs"))]
+use env_logger as logger;
+
+#[cfg(feature = "json_logs")]
+use json_env_logger2 as logger;
+
 #[derive(Clone, Debug, Deserialize)]
 pub enum PeerMode {
     AsNode,
@@ -39,7 +45,7 @@ enum WatchSource {
 }
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
-    env_logger::builder()
+    logger::builder()
         .filter_level(log::LevelFilter::Error)
         .init();
 

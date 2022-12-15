@@ -5,6 +5,12 @@ use config::{Config, ConfigError, Environment, File};
 use log::debug;
 use serde::Deserialize;
 
+#[cfg(not(feature = "json_logs"))]
+use env_logger as logger;
+
+#[cfg(feature = "json_logs")]
+use json_env_logger2 as logger;
+
 use oura::{
     pipelining::{
         BootstrapResult, FilterProvider, PartialBootstrapResult, SinkProvider, SourceProvider,
@@ -293,7 +299,7 @@ fn bootstrap(
 }
 
 pub fn run(args: &ArgMatches) -> Result<(), Error> {
-    env_logger::init();
+    logger::init();
 
     let explicit_config = match args.is_present("config") {
         true => Some(args.value_of_t("config")?),
