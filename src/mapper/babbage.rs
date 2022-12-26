@@ -139,6 +139,7 @@ impl EventWriter {
             era: Era::Babbage,
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
+            vrf_vkey: source.header.header_body.vrf_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),
             hash: hex::encode(hash),
             number: source.header.header_body.block_number,

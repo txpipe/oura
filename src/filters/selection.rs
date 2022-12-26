@@ -7,8 +7,8 @@ use serde_json::Value as JsonValue;
 
 use crate::{
     model::{
-        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-        TransactionRecord, TxOutputRecord
+        CIP25AssetRecord, Event, EventData, MetadataRecord, MetadatumRendition, MintRecord,
+        OutputAssetRecord, TransactionRecord, TxOutputRecord,
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
@@ -73,6 +73,14 @@ fn mint_policy_matches(event: &Event, policy: &str) -> bool {
 }
 
 #[inline]
+fn cip25_policy_matches(event: &Event, policy: &str) -> bool {
+    match &event.data {
+        EventData::CIP25Asset(CIP25AssetRecord { policy: x, .. }) => relaxed_str_matches(x, policy),
+        _ => false,
+    }
+}
+
+#[inline]
 fn address_matches(event: &Event, address: &str) -> bool {
     match &event.data {
         EventData::Transaction(TransactionRecord {
@@ -111,6 +119,14 @@ fn mint_asset_matches(event: &Event, asset: &str) -> bool {
 }
 
 #[inline]
+fn cip25_asset_matches(event: &Event, asset: &str) -> bool {
+    match &event.data {
+        EventData::CIP25Asset(CIP25AssetRecord { asset: x, .. }) => relaxed_str_matches(x, asset),
+        _ => false,
+    }
+}
+
+#[inline]
 fn metadata_label_matches(event: &Event, label: &str) -> bool {
     match &event.data {
         EventData::Transaction(TransactionRecord {
@@ -141,11 +157,15 @@ impl Predicate {
             Predicate::VariantIn(x) => variant_in_matches(event, x),
             Predicate::VariantNotIn(x) => !variant_in_matches(event, x),
             Predicate::PolicyEquals(x) => {
-                output_policy_matches(event, x) || mint_policy_matches(event, x)
+                output_policy_matches(event, x)
+                    || mint_policy_matches(event, x)
+                    || cip25_policy_matches(event, x)
             }
             Predicate::AddressEquals(x) => address_matches(event, x),
             Predicate::AssetEquals(x) => {
-                output_asset_matches(event, x) || mint_asset_matches(event, x)
+                output_asset_matches(event, x)
+                    || mint_asset_matches(event, x)
+                    || cip25_asset_matches(event, x)
             }
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
