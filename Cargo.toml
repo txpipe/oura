@@ -16,7 +16,7 @@ pallas = "0.13.4"
 # pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
-net2 = "0.2.37"
+net2 = "0.2.38"
 bech32 = "0.9.1"
 clap = "3.2.22"
 log = "0.4.17"
