@@ -25,6 +25,8 @@ async fn send_pubsub_msg(publisher: &Publisher, event: &Event) -> Result<(), cra
         .await
         .map_err(|err| err.message().to_owned())?;
 
+    log::debug!("gcp message sent");
+
     Ok(())
 }
 
@@ -40,9 +42,11 @@ pub fn writer_loop(
         .enable_io()
         .build()?;
 
-    let client = rt.block_on(Client::new(ClientConfig::default()))?;
-    let topic = client.topic(topic_name);
-    let publisher = topic.new_publisher(None);
+    let publisher: Publisher = rt.block_on(async {
+        let client = Client::new(ClientConfig::default()).await?;
+        let topic = client.topic(topic_name);
+        Result::<_, crate::Error>::Ok(topic.new_publisher(None))
+    })?;
 
     for event in input.iter() {
         let result = retry::retry_operation(

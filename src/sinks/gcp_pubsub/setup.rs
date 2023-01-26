@@ -15,7 +15,7 @@ pub struct Config {
     pub retry_policy: Option<retry::Policy>,
 
     #[warn(deprecated)]
-    pub credentials: String,
+    pub credentials: Option<String>,
 }
 
 impl SinkProvider for WithUtils<Config> {
