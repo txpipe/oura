@@ -11,14 +11,15 @@ use super::run::writer_loop;
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
     pub topic: String,
-    pub credentials: String,
     pub error_policy: Option<ErrorPolicy>,
     pub retry_policy: Option<retry::Policy>,
+
+    #[warn(deprecated)]
+    pub credentials: Option<String>,
 }
 
 impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        let credentials = self.inner.credentials.to_owned();
         let topic_name = self.inner.topic.to_owned();
 
         let error_policy = self
@@ -33,15 +34,8 @@ impl SinkProvider for WithUtils<Config> {
         let utils = self.utils.clone();
 
         let handle = std::thread::spawn(move || {
-            writer_loop(
-                input,
-                credentials,
-                topic_name,
-                &error_policy,
-                &retry_policy,
-                utils,
-            )
-            .expect("writer loop failed");
+            writer_loop(input, &topic_name, &error_policy, &retry_policy, utils)
+                .expect("writer loop failed");
         });
 
         Ok(handle)
