@@ -5,10 +5,10 @@ use unicode_truncate::UnicodeTruncateStr;
 
 use crate::{
     model::{
-        BlockRecord, CIP15AssetRecord, CIP25AssetRecord, Event, EventData, MetadataRecord,
-        MintRecord, NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord,
-        PlutusRedeemerRecord, PlutusWitnessRecord, TransactionRecord, TxInputRecord,
-        TxOutputRecord, VKeyWitnessRecord,
+        BlockRecord, CIP15AssetRecord, CIP25AssetRecord, CollateralTxInputRecord,
+        CollateralTxOutputRecord, Event, EventData, MetadataRecord, MintRecord,
+        NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
+        PlutusWitnessRecord, TransactionRecord, TxInputRecord, TxOutputRecord, VKeyWitnessRecord,
     },
     utils::Utils,
 };
@@ -126,6 +126,22 @@ impl LogLine {
                 source,
                 "UTXO",
                 Color::Blue,
+                max_width,
+                format!("{{ to: {}, amount: {} }}", address, amount),
+            ),
+            EventData::CollateralTxInput(CollateralTxInputRecord { tx_id, index }) => LogLine::new_raw(
+                source,
+                "COLIN",
+                Color::Cyan,
+                max_width,
+                format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+            ),
+            EventData::CollateralTxOutput(CollateralTxOutputRecord {
+                address, amount, ..
+            }) => LogLine::new_raw(
+                source,
+                "COLOUT",
+                Color::Cyan,
                 max_width,
                 format!("{{ to: {}, amount: {} }}", address, amount),
             ),
@@ -314,13 +330,6 @@ impl LogLine {
                 Color::Red,
                 max_width,
                 format!("{{ slot: {}, hash: {} }}", block_slot, block_hash),
-            ),
-            EventData::Collateral { tx_id, index } => LogLine::new_raw(
-                source,
-                "COLLAT",
-                Color::Blue,
-                max_width,
-                format!("{{ tx_id: {}, index: {} }}", tx_id, index),
             ),
             EventData::CIP25Asset(CIP25AssetRecord {
                 policy,

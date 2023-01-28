@@ -8,7 +8,7 @@ use pallas::ledger::primitives::babbage::{
 
 use pallas::crypto::hash::Hash;
 
-use crate::model::{BlockRecord, Era, TransactionRecord};
+use crate::model::{BlockRecord, CollateralTxOutputRecord, Era, TransactionRecord};
 use crate::utils::time::TimeProvider;
 use crate::{
     model::{EventContext, EventData},
@@ -85,9 +85,7 @@ impl EventWriter {
 
             record.collateral_output = body.collateral_return.as_ref().map(|output| match output {
                 TransactionOutput::Legacy(x) => self.to_legacy_output_record(x).unwrap(),
-                TransactionOutput::PostAlonzo(x) => {
-                    self.to_post_alonzo_output_record(x).unwrap()
-                }
+                TransactionOutput::PostAlonzo(x) => self.to_post_alonzo_output_record(x).unwrap(),
             });
 
             record.metadata = match aux_data {
@@ -288,9 +286,12 @@ impl EventWriter {
         if let Some(collateral) = &tx.collateral {
             for (_idx, collateral) in collateral.iter().enumerate() {
                 // TODO: collateral context?
-
-                self.crawl_collateral(collateral)?;
+                self.crawl_collateral_input(collateral)?;
             }
+        }
+
+        if let Some(collateral_return) = &tx.collateral_return {
+            self.crawl_collateral_output(collateral_return)?;
         }
 
         if let Some(mint) = &tx.mint {
@@ -379,5 +380,23 @@ impl EventWriter {
     pub fn crawl_from_babbage_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
         let (_, block): (u16, MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
         self.crawl_babbage_with_cbor(&block, cbor)
+    }
+
+    pub(crate) fn crawl_collateral_output(
+        &self,
+        collateral_return: &TransactionOutput,
+    ) -> Result<(), Error> {
+        match collateral_return {
+            TransactionOutput::Legacy(x) => {
+                let output: CollateralTxOutputRecord =
+                    self.to_legacy_output_record(x).unwrap().into();
+                self.append_from(output)
+            }
+            TransactionOutput::PostAlonzo(x) => {
+                let output: CollateralTxOutputRecord =
+                    self.to_post_alonzo_output_record(x).unwrap().into();
+                self.append_from(output)
+            }
+        }
     }
 }
