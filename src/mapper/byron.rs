@@ -6,7 +6,8 @@ use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord
 use crate::{model::EventContext, Error};
 
 use pallas::crypto::hash::Hash;
-use pallas::ledger::primitives::{byron, ToHash};
+use pallas::ledger::primitives::byron;
+use pallas::ledger::traverse::OriginalHash;
 
 impl EventWriter {
     fn to_byron_input_record(&self, source: &byron::TxIn) -> Option<TxInputRecord> {
@@ -40,8 +41,10 @@ impl EventWriter {
     }
 
     fn to_byron_output_record(&self, source: &byron::TxOut) -> Result<TxOutputRecord, Error> {
+        let address = pallas::ledger::addresses::Address::from_bytes(&source.address.payload)?;
+
         Ok(TxOutputRecord {
-            address: source.address.to_addr_string()?,
+            address: address.to_string(),
             amount: source.amount,
             assets: None,
             datum_hash: None,
@@ -109,7 +112,7 @@ impl EventWriter {
             .tx_payload
             .iter()
             .map(|tx| {
-                let tx_hash = tx.transaction.to_hash().to_string();
+                let tx_hash = tx.transaction.original_hash().to_hex();
                 self.to_byron_transaction_record(tx, &tx_hash)
             })
             .collect()
@@ -159,6 +162,11 @@ impl EventWriter {
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
+        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
+            source.header.consensus_data.0.epoch,
+            source.header.consensus_data.0.slot,
+        );
+
         let mut record = BlockRecord {
             era: Era::Byron,
             body_size: cbor.len() as usize,
@@ -167,7 +175,7 @@ impl EventWriter {
             tx_count: source.body.tx_payload.len(),
             hash: hash.to_hex(),
             number: source.header.consensus_data.2[0],
-            slot: source.header.consensus_data.0.to_abs_slot(),
+            slot: abs_slot,
             epoch: Some(source.header.consensus_data.0.epoch),
             epoch_slot: Some(source.header.consensus_data.0.slot),
             previous_hash: source.header.prev_block.to_hex(),
@@ -196,7 +204,7 @@ impl EventWriter {
         self.append(EventData::Block(record.clone()))?;
 
         for (idx, tx) in block.body.tx_payload.iter().enumerate() {
-            let tx_hash = tx.transaction.to_hash().to_string();
+            let tx_hash = tx.transaction.original_hash().to_hex();
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
@@ -216,10 +224,15 @@ impl EventWriter {
 
     pub fn to_byron_epoch_boundary_record(
         &self,
-        source: &byron::EbBlock,
+        source: &byron::MintedEbBlock,
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
+        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
+            source.header.consensus_data.epoch_id,
+            0,
+        );
+
         Ok(BlockRecord {
             era: Era::Byron,
             body_size: cbor.len() as usize,
@@ -228,7 +241,7 @@ impl EventWriter {
             vrf_vkey: Default::default(),
             tx_count: 0,
             number: source.header.consensus_data.difficulty[0],
-            slot: source.header.to_abs_slot(),
+            slot: abs_slot,
             epoch: Some(source.header.consensus_data.epoch_id),
             epoch_slot: Some(0),
             previous_hash: source.header.prev_block.to_hex(),
@@ -242,7 +255,7 @@ impl EventWriter {
 
     fn crawl_byron_ebb_block(
         &self,
-        block: &byron::EbBlock,
+        block: &byron::MintedEbBlock,
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<(), Error> {
@@ -267,8 +280,12 @@ impl EventWriter {
         block: &byron::MintedBlock,
         cbor: &[u8],
     ) -> Result<(), Error> {
-        let hash = block.header.to_hash();
-        let abs_slot = block.header.consensus_data.0.to_abs_slot();
+        let hash = block.header.original_hash();
+
+        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
+            block.header.consensus_data.0.epoch,
+            block.header.consensus_data.0.slot,
+        );
 
         let child = self.child_writer(EventContext {
             block_hash: Some(hex::encode(&hash)),
@@ -297,10 +314,18 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we already have a decoded block (for example, N2C). The raw CBOR is also
     /// passed through in case we need to attach it to outbound events.
-    pub fn crawl_ebb_with_cbor(&self, block: &byron::EbBlock, cbor: &[u8]) -> Result<(), Error> {
+    pub fn crawl_ebb_with_cbor(
+        &self,
+        block: &byron::MintedEbBlock,
+        cbor: &[u8],
+    ) -> Result<(), Error> {
         if self.config.include_byron_ebb {
-            let hash = block.header.to_hash();
-            let abs_slot = block.header.to_abs_slot();
+            let hash = block.header.original_hash();
+
+            let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
+                block.header.consensus_data.epoch_id,
+                0,
+            );
 
             let child = self.child_writer(EventContext {
                 block_hash: Some(hex::encode(&hash)),
@@ -321,7 +346,7 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
     pub fn crawl_from_ebb_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let (_, block): (u16, byron::EbBlock) = pallas::codec::minicbor::decode(cbor)?;
+        let (_, block): (u16, byron::MintedEbBlock) = pallas::codec::minicbor::decode(cbor)?;
         self.crawl_ebb_with_cbor(&block, cbor)
     }
 }

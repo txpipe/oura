@@ -1,4 +1,3 @@
-mod blocks;
 mod run;
 mod setup;
 
