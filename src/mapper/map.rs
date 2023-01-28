@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use pallas::{
-    codec::{minicbor::bytes::ByteVec, utils::KeepRaw},
+    codec::{
+        minicbor::{bytes::ByteVec, to_vec},
+        utils::KeepRaw,
+    },
     crypto::hash::Hash,
     ledger::primitives::babbage::DatumOption,
 };
@@ -178,6 +181,7 @@ impl EventWriter {
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
+            datum_cbor: None,
         })
     }
 
@@ -192,8 +196,13 @@ impl EventWriter {
                 .encode_address(output.address.as_slice())?,
             amount: get_tx_output_coin_value(&output.value),
             assets: self.collect_asset_records(&output.value).into(),
-            datum_hash: match output.datum_option {
+            datum_hash: match &output.datum_option {
                 Some(DatumOption::Hash(x)) => Some(x.to_string()),
+                Some(DatumOption::Data(x)) => Some(x.to_hash().to_string()),
+                _ => None,
+            },
+            datum_cbor: match &output.datum_option {
+                Some(DatumOption::Data(x)) => Some(to_vec(&x.0)?.to_hex()),
                 _ => None,
             },
         })

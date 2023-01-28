@@ -125,6 +125,7 @@ pub struct TxOutputRecord {
     pub amount: u64,
     pub assets: Option<Vec<OutputAssetRecord>>,
     pub datum_hash: Option<String>,
+    pub datum_cbor: Option<String>,
 }
 
 impl From<TxOutputRecord> for EventData {
