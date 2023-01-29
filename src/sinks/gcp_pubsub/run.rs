@@ -17,8 +17,10 @@ use crate::{
 
 async fn send_pubsub_msg(publisher: &Publisher, event: &Event) -> Result<(), crate::Error> {
     let body = json!(event).to_string();
-    let mut msg = PubsubMessage::default();
-    msg.data = body.into();
+    let msg = PubsubMessage {
+        data: body.into(),
+        ..Default::default()
+    };
 
     publisher
         .publish_immediately(vec![msg], None, None)

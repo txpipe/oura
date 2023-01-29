@@ -171,7 +171,7 @@ pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
             clap::Arg::new("bearer")
                 .long("bearer")
                 .takes_value(true)
-                .possible_values(&["tcp", "unix"]),
+                .possible_values(["tcp", "unix"]),
         )
         .arg(clap::Arg::new("magic").long("magic").takes_value(true))
         .arg(
@@ -184,7 +184,7 @@ pub(crate) fn command_definition<'a>() -> clap::Command<'a> {
             clap::Arg::new("mode")
                 .long("mode")
                 .takes_value(true)
-                .possible_values(&["node", "client"]),
+                .possible_values(["node", "client"]),
         )
         .arg(
             clap::Arg::new("output")
