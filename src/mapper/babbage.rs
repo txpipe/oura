@@ -1,12 +1,12 @@
 use pallas::codec::utils::KeepRaw;
-use pallas::ledger::primitives::ToHash;
 
 use pallas::ledger::primitives::babbage::{
-    AuxiliaryData, MintedBlock, NetworkId, PostAlonzoTransactionOutput, TransactionBody,
-    TransactionOutput, TransactionWitnessSet,
+    AuxiliaryData, MintedBlock, MintedWitnessSet, NetworkId, PostAlonzoTransactionOutput,
+    TransactionBody, TransactionOutput,
 };
 
 use pallas::crypto::hash::Hash;
+use pallas::ledger::traverse::OriginalHash;
 
 use crate::model::{BlockRecord, Era, TransactionRecord};
 use crate::utils::time::TimeProvider;
@@ -22,7 +22,7 @@ impl EventWriter {
         &self,
         body: &KeepRaw<TransactionBody>,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> usize {
         body.raw_cbor().len()
             + aux_data.map(|ax| ax.raw_cbor().len()).unwrap_or(2)
@@ -34,7 +34,7 @@ impl EventWriter {
         body: &KeepRaw<TransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> Result<TransactionRecord, Error> {
         let mut record = TransactionRecord {
             hash: tx_hash.to_owned(),
@@ -85,9 +85,7 @@ impl EventWriter {
 
             record.collateral_output = body.collateral_return.as_ref().map(|output| match output {
                 TransactionOutput::Legacy(x) => self.to_legacy_output_record(x).unwrap(),
-                TransactionOutput::PostAlonzo(x) => {
-                    self.to_post_alonzo_output_record(x).unwrap()
-                }
+                TransactionOutput::PostAlonzo(x) => self.to_post_alonzo_output_record(x).unwrap(),
             });
 
             record.metadata = match aux_data {
@@ -185,7 +183,7 @@ impl EventWriter {
 
                 let witness_set = block.transaction_witness_sets.get(idx);
 
-                let tx_hash = tx.to_hash().to_hex();
+                let tx_hash = tx.original_hash().to_hex();
 
                 self.to_babbage_transaction_record(tx, &tx_hash, aux_data, witness_set)
             })
@@ -217,7 +215,10 @@ impl EventWriter {
         }
     }
 
-    fn crawl_babbage_witness_set(&self, witness_set: &TransactionWitnessSet) -> Result<(), Error> {
+    fn crawl_babbage_witness_set(
+        &self,
+        witness_set: &KeepRaw<MintedWitnessSet>,
+    ) -> Result<(), Error> {
         if let Some(native) = &witness_set.native_script {
             for script in native.iter() {
                 self.append_from(self.to_native_witness_record(script)?)?;
@@ -250,7 +251,7 @@ impl EventWriter {
         tx: &KeepRaw<TransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> Result<(), Error> {
         let record = self.to_babbage_transaction_record(tx, tx_hash, aux_data, witness_set)?;
 
@@ -331,7 +332,7 @@ impl EventWriter {
 
             let witness_set = block.transaction_witness_sets.get(idx);
 
-            let tx_hash = tx.to_hash().to_hex();
+            let tx_hash = tx.original_hash().to_hex();
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
@@ -359,10 +360,10 @@ impl EventWriter {
         block: &'b MintedBlock<'b>,
         cbor: &'b [u8],
     ) -> Result<(), Error> {
-        let hash = block.header.to_hash();
+        let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
