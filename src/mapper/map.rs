@@ -168,11 +168,10 @@ impl EventWriter {
         &self,
         output: &alonzo::TransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
+        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+
         Ok(TxOutputRecord {
-            address: self
-                .utils
-                .bech32
-                .encode_address(output.address.as_slice())?,
+            address: address.to_string(),
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
@@ -183,11 +182,10 @@ impl EventWriter {
         &self,
         output: &babbage::PostAlonzoTransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
+        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+
         Ok(TxOutputRecord {
-            address: self
-                .utils
-                .bech32
-                .encode_address(output.address.as_slice())?,
+            address: address.to_string(),
             amount: get_tx_output_coin_value(&output.value),
             assets: self.collect_asset_records(&output.value).into(),
             datum_hash: match &output.datum_option {
