@@ -120,13 +120,13 @@ impl ChainWellKnownInfo {
             byron_slot_length: 20,
             byron_known_slot: 0,
             byron_known_hash: "".to_string(),
-            byron_known_time: 1660003200,
+            byron_known_time: 1666656000,
             shelley_epoch_length: 432000,
             shelley_slot_length: 1,
-            shelley_known_slot: 25260,
-            shelley_known_hash: "cac921895ef5f2e85f7e6e6b51b663ab81b3605cd47d6b6d66e8e785e5c65011"
+            shelley_known_slot: 0,
+            shelley_known_hash: "268ae601af8f9214804735910a3301881fbe0eec9936db7d1fb9fc39e93d1e37"
                 .to_string(),
-            shelley_known_time: 1660003200,
+            shelley_known_time: 1666656000,
             address_hrp: "addr_test".to_string(),
             adahandle_policy: "".to_string(),
         }
@@ -144,9 +144,9 @@ impl ChainWellKnownInfo {
             shelley_epoch_length: 432000,
             shelley_slot_length: 1,
             shelley_known_slot: 86400,
-            shelley_known_hash: "c4a1595c5cc7a31eda9e544986fe9387af4e3491afe0ca9a80714f01951bbd5c"
+            shelley_known_hash: "c971bfb21d2732457f9febf79d9b02b20b9a3bef12c561a78b818bcb8b35a574"
                 .to_string(),
-            shelley_known_time: 1654041600,
+            shelley_known_time: 1655769600,
             address_hrp: "addr_test".to_string(),
             adahandle_policy: "".to_string(),
         }
