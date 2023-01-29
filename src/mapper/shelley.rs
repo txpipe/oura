@@ -89,12 +89,10 @@ impl EventWriter {
         let record = self.to_legacy_output_record(output)?;
         self.append(record.into())?;
 
+        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+
         let child = &self.child_writer(EventContext {
-            output_address: self
-                .utils
-                .bech32
-                .encode_address(output.address.as_slice())?
-                .into(),
+            output_address: address.to_string().into(),
             ..EventContext::default()
         });
 

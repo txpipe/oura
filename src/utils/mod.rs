@@ -15,13 +15,7 @@ pub const PREVIEW_MAGIC: u64 = 2;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    model::Event,
-    utils::{
-        bech32::{Bech32Config, Bech32Provider},
-        time::NaiveProvider as NaiveTime,
-    },
-};
+use crate::{model::Event, utils::time::NaiveProvider as NaiveTime};
 
 use crate::Error;
 
@@ -29,7 +23,6 @@ pub mod cursor;
 pub mod metrics;
 pub mod throttle;
 
-pub(crate) mod bech32;
 pub(crate) mod retry;
 pub(crate) mod time;
 
@@ -174,7 +167,6 @@ impl Default for ChainWellKnownInfo {
 pub struct Utils {
     pub(crate) well_known: ChainWellKnownInfo,
     pub(crate) time: Option<NaiveTime>,
-    pub(crate) bech32: Bech32Provider,
     pub(crate) cursor: Option<cursor::Provider>,
     pub(crate) metrics: Option<metrics::Provider>,
 }
@@ -184,7 +176,6 @@ impl Utils {
     pub fn new(well_known: ChainWellKnownInfo) -> Self {
         Self {
             time: NaiveTime::new(well_known.clone()).into(),
-            bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
             well_known,
             cursor: None,
             metrics: None,
