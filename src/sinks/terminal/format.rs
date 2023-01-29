@@ -80,12 +80,7 @@ impl LogLine {
                 "ENDBLK",
                 Color::DarkMagenta,
                 max_width,
-                format!(
-                    "{{ slot: {}, hash: {}, number: {} }}",
-                    slot,
-                    hash,
-                    number,
-                )),
+                format!("{{ slot: {slot}, hash: {hash}, number: {number} }}")),
 
             EventData::Transaction(TransactionRecord {
                 total_output,
@@ -98,27 +93,21 @@ impl LogLine {
                 "TX",
                 Color::DarkBlue,
                 max_width,
-                format!(
-                    "{{ total_output: {}, fee: {}, hash: {}, ttl: {:?} }}",
-                    total_output, fee, hash, ttl
-                ),
+                format!("{{ total_output: {total_output}, fee: {fee}, hash: {hash}, ttl: {ttl:?} }}"),
             ),
             EventData::TransactionEnd(TransactionRecord { hash, .. }) => LogLine::new_raw(
                 source,
                 "ENDTX",
                 Color::DarkBlue,
                 max_width,
-                format!(
-                    "{{ hash: {} }}",
-                    hash
-                ),
+                format!("{{ hash: {hash} }}"),
             ),
             EventData::TxInput(TxInputRecord { tx_id, index }) => LogLine::new_raw(
                 source,
                 "STXI",
                 Color::Blue,
                 max_width,
-                format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+                format!("{{ tx_id: {tx_id}, index: {index} }}"),
             ),
             EventData::TxOutput(TxOutputRecord {
                 address, amount, ..
@@ -127,7 +116,7 @@ impl LogLine {
                 "UTXO",
                 Color::Blue,
                 max_width,
-                format!("{{ to: {}, amount: {} }}", address, amount),
+                format!("{{ to: {address}, amount: {amount} }}"),
             ),
             EventData::OutputAsset(OutputAssetRecord {
                 policy,
@@ -166,7 +155,7 @@ impl LogLine {
                 "META",
                 Color::Yellow,
                 max_width,
-                format!("{{ label: {}, content: {} }}", label, content),
+                format!("{{ label: {label}, content: {content} }}"),
             ),
             EventData::Mint(MintRecord {
                 policy,
@@ -178,72 +167,70 @@ impl LogLine {
                 Color::DarkGreen,
                 max_width,
                 format!(
-                    "{{ policy: {}, asset: {}, quantity: {} }}",
-                    policy, asset, quantity
-                ),
+                    "{{ policy: {policy}, asset: {asset}, quantity: {quantity} }}"),
             ),
             EventData::NativeScript { policy_id, script } => LogLine::new_raw(
                 source,
                 "NATIVE",
                 Color::White,
                 max_width,
-                format!("{{ policy: {}, script: {} }}", policy_id, script),
+                format!("{{ policy: {policy_id}, script: {script} }}"),
             ),
             EventData::PlutusScript { hash, .. } => LogLine::new_raw(
                 source,
                 "PLUTUS",
                 Color::White,
                 max_width,
-                format!("{{ hash: {} }}", hash),
+                format!("{{ hash: {hash} }}"),
             ),
             EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => LogLine::new_raw(
                 source,
                 "DATUM",
                 Color::White,
                 max_width,
-                format!("{{ hash: {} }}", datum_hash),
+                format!("{{ hash: {datum_hash} }}"),
             ),
             EventData::PlutusRedeemer(PlutusRedeemerRecord { purpose, input_idx, .. }) => LogLine::new_raw(
                 source,
                 "REDEEM",
                 Color::White,
                 max_width,
-                format!("{{ purpose: {}, input: {} }}", purpose, input_idx),
+                format!("{{ purpose: {purpose}, input: {input_idx} }}"),
             ),
             EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine::new_raw(
                 source,
                 "WITNESS",
                 Color::White,
                 max_width,
-                format!("{{ plutus script: {} }}", script_hash ),
+                format!("{{ plutus script: {script_hash} }}"),
             ),
             EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => LogLine::new_raw(
                 source,
                 "WITNESS",
                 Color::White,
                 max_width,
-                format!("{{ native policy: {} }}", policy_id),
+                format!("{{ native policy: {policy_id} }}"),
             ),
             EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => LogLine::new_raw(
                 source,
                 "WITNESS",
                 Color::White,
                 max_width,
-                format!("{{ vkey: {} }}", vkey_hex),
+                format!("{{ vkey: {vkey_hex} }}"),
             ),
             EventData::StakeRegistration { credential } => LogLine::new_raw(
                 source,
                 "STAKE+",
                 Color::Magenta,
                 max_width,
-                format!("{{ credential: {:?} }}", credential),
+                format!("{{ credential: {credential:?} }}"),
             ),
             EventData::StakeDeregistration { credential } => LogLine::new_raw(
                 source,
                 "STAKE-",
                 Color::DarkMagenta,
                 max_width,
-                format!("{{ credential: {:?} }}", credential),
+                format!("{{ credential: {credential:?} }}"),
             ),
             EventData::StakeDelegation {
                 credential,
@@ -253,7 +240,7 @@ impl LogLine {
                 "DELE",
                 Color::Magenta,
                 max_width,
-                format!("{{ credential: {:?}, pool: {} }}", credential, pool_hash),
+                format!("{{ credential: {credential:?}, pool: {pool_hash} }}"),
             ),
             EventData::PoolRegistration {
                 operator,
@@ -272,16 +259,14 @@ impl LogLine {
                 Color::Magenta,
                 max_width,
                 format!(
-                    "{{ operator: {}, pledge: {}, cost: {}, margin: {}, metadata: {:?} }}",
-                    operator, pledge, cost, margin, pool_metadata
-                ),
+                    "{{ operator: {operator}, pledge: {pledge}, cost: {cost}, margin: {margin}, metadata: {pool_metadata:?} }}"),
             ),
             EventData::PoolRetirement { pool, epoch } => LogLine::new_raw(
                 source,
                 "POOL-",
                 Color::DarkMagenta,
                 max_width,
-                format!("{{ pool: {}, epoch: {} }}", pool, epoch),
+                format!("{{ pool: {pool}, epoch: {epoch} }}"),
             ),
             EventData::GenesisKeyDelegation { } => LogLine::new_raw(
                 source,
@@ -301,9 +286,7 @@ impl LogLine {
                 Color::Magenta,
                 max_width,
                 format!(
-                    "{{ reserves: {}, treasury: {}, to_credentials: {:?}, to_other_pot: {:?} }}",
-                    from_reserves, from_treasury, to_stake_credentials, to_other_pot
-                ),
+                    "{{ reserves: {from_reserves}, treasury: {from_treasury}, to_credentials: {to_stake_credentials:?}, to_other_pot: {to_other_pot:?} }}"),
             ),
             EventData::RollBack {
                 block_slot,
@@ -313,14 +296,14 @@ impl LogLine {
                 "RLLBCK",
                 Color::Red,
                 max_width,
-                format!("{{ slot: {}, hash: {} }}", block_slot, block_hash),
+                format!("{{ slot: {block_slot}, hash: {block_hash} }}"),
             ),
             EventData::Collateral { tx_id, index } => LogLine::new_raw(
                 source,
                 "COLLAT",
                 Color::Blue,
                 max_width,
-                format!("{{ tx_id: {}, index: {} }}", tx_id, index),
+                format!("{{ tx_id: {tx_id}, index: {index} }}"),
             ),
             EventData::CIP25Asset(CIP25AssetRecord {
                 policy,
@@ -350,11 +333,7 @@ impl LogLine {
                 "CIP15",
                 Color::DarkYellow,
                 max_width,
-                format!(
-                    "{{ voting key: {}, stake pub: {} }}",
-                    voting_key,
-                    stake_pub,
-                ),
+                format!("{{ voting key: {voting_key}, stake pub: {stake_pub} }}"),
             ),
         }
     }
