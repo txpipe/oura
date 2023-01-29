@@ -140,15 +140,15 @@ pub(crate) fn fetch_blocks_forever(
     event_writer: EventWriter,
     input: Receiver<Point>,
 ) -> Result<(), Error> {
-    loop {
-        let point = input.recv()?;
-
+    for point in input {
         let body = client.fetch_single(point.clone())?;
 
         unknown_block_to_events(&event_writer, &body)?;
 
         log::debug!("blockfetch succeeded: {:?}", point);
     }
+
+    Ok(())
 }
 
 fn observe_headers_forever(
