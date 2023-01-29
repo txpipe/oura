@@ -190,9 +190,10 @@ impl EventWriter {
                 .encode_address(output.address.as_slice())?,
             amount: get_tx_output_coin_value(&output.value),
             assets: self.collect_asset_records(&output.value).into(),
-            datum_hash: match output.datum_option {
+            datum_hash: match &output.datum_option {
                 Some(DatumOption::Hash(x)) => Some(x.to_string()),
-                _ => None,
+                Some(DatumOption::Data(x)) => Some(x.compute_hash().to_hex()),
+                None => None,
             },
         })
     }
