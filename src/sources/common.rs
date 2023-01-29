@@ -353,7 +353,7 @@ pub fn unknown_block_to_events(writer: &EventWriter, body: &Vec<u8>) -> Result<(
                     .ok_or_warn("error crawling babbage block for events");
             }
             x => {
-                return Err(format!("This version of Oura can't handle era: {}", x).into());
+                return Err(format!("This version of Oura can't handle era: {x}").into());
             }
         },
         probe::Outcome::EpochBoundary => {

@@ -73,12 +73,12 @@ fn relay_to_string(relay: &Relay) -> String {
             };
 
             match port {
-                Some(port) => format!("{}:{}", ip, port),
+                Some(port) => format!("{ip}:{port}"),
                 None => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
-            Some(port) => format!("{}:{}", host, port),
+            Some(port) => format!("{host}:{port}"),
             None => host.clone(),
         },
         Relay::MultiHostName(host) => host.clone(),

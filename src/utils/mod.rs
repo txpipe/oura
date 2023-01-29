@@ -152,7 +152,7 @@ impl ChainWellKnownInfo {
             TESTNET_MAGIC => Ok(Self::testnet()),
             PREVIEW_MAGIC => Ok(Self::preview()),
             PREPROD_MAGIC => Ok(Self::preprod()),
-            _ => Err(format!("can't identify chain from specified magic value: {}", magic).into()),
+            _ => Err(format!("can't identify chain from specified magic value: {magic}").into()),
         }
     }
 }
