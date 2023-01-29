@@ -169,7 +169,7 @@ impl EventWriter {
 
         let mut record = BlockRecord {
             era: Era::Byron,
-            body_size: cbor.len() as usize,
+            body_size: cbor.len(),
             issuer_vkey: source.header.consensus_data.1.to_hex(),
             vrf_vkey: Default::default(),
             tx_count: source.body.tx_payload.len(),
@@ -235,7 +235,7 @@ impl EventWriter {
 
         Ok(BlockRecord {
             era: Era::Byron,
-            body_size: cbor.len() as usize,
+            body_size: cbor.len(),
             hash: hash.to_hex(),
             issuer_vkey: Default::default(),
             vrf_vkey: Default::default(),
@@ -288,7 +288,7 @@ impl EventWriter {
         );
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.consensus_data.2[0]),
             slot: Some(abs_slot),
             timestamp: self.compute_timestamp(abs_slot),
@@ -328,7 +328,7 @@ impl EventWriter {
             );
 
             let child = self.child_writer(EventContext {
-                block_hash: Some(hex::encode(&hash)),
+                block_hash: Some(hex::encode(hash)),
                 block_number: Some(block.header.consensus_data.difficulty[0]),
                 slot: Some(abs_slot),
                 timestamp: self.compute_timestamp(abs_slot),

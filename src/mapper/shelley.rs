@@ -269,7 +269,7 @@ impl EventWriter {
         let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
@@ -284,7 +284,7 @@ impl EventWriter {
         let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
@@ -308,7 +308,7 @@ impl EventWriter {
         let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),

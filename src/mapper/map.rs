@@ -356,7 +356,7 @@ impl EventWriter {
                         _ => None,
                     },
                     to_other_pot: match move_.target {
-                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x.into()),
+                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x),
                         _ => None,
                     },
                 }
@@ -516,7 +516,7 @@ impl EventWriter {
             },
             Point::Specific(slot, hash) => EventData::RollBack {
                 block_slot: *slot,
-                block_hash: hex::encode(&hash),
+                block_hash: hex::encode(hash),
             },
         };
 
