@@ -4,7 +4,7 @@
         <h2 align="center" style="border-bottom: none">The tail of Cardano</h2>
         <img alt="GitHub" src="https://img.shields.io/github/license/txpipe/oura" />
         <img alt="Crates.io" src="https://img.shields.io/crates/v/oura" />
-        <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/txpipe/oura/Validate" />
+        <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/txpipe/oura/validate.yml" />
     <hr/>
 </div>
 
