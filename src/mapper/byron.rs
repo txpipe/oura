@@ -41,7 +41,12 @@ impl EventWriter {
     }
 
     fn to_byron_output_record(&self, source: &byron::TxOut) -> Result<TxOutputRecord, Error> {
-        let address = pallas::ledger::addresses::Address::from_bytes(&source.address.payload)?;
+        let address: pallas::ledger::addresses::Address =
+            pallas::ledger::addresses::ByronAddress::new(
+                &source.address.payload.0,
+                source.address.crc,
+            )
+            .into();
 
         Ok(TxOutputRecord {
             address: address.to_string(),
