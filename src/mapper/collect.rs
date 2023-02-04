@@ -188,7 +188,7 @@ impl EventWriter {
         }
     }
 
-    pub fn collect_plutus_datum_records(
+    pub fn collect_witness_plutus_datum_records(
         &self,
         witness_set: &Option<Vec<KeepRaw<PlutusData>>>,
     ) -> Result<Vec<PlutusDatumRecord>, Error> {
