@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
 use pallas::ledger::primitives::alonzo::MintedWitnessSet;
-use pallas::ledger::traverse::ComputeHash;
-use pallas::{codec::utils::KeepRaw, crypto::hash::Hash, ledger::primitives::babbage::DatumOption};
+use pallas::ledger::primitives::babbage::MintedDatumOption;
+use pallas::ledger::traverse::{ComputeHash, OriginalHash};
+use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
 
 use pallas::ledger::primitives::{
     alonzo::{
@@ -180,7 +181,7 @@ impl EventWriter {
 
     pub fn to_post_alonzo_output_record(
         &self,
-        output: &babbage::PostAlonzoTransactionOutput,
+        output: &babbage::MintedPostAlonzoTransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
         let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
 
@@ -189,8 +190,8 @@ impl EventWriter {
             amount: get_tx_output_coin_value(&output.value),
             assets: self.collect_asset_records(&output.value).into(),
             datum_hash: match &output.datum_option {
-                Some(DatumOption::Hash(x)) => Some(x.to_string()),
-                Some(DatumOption::Data(x)) => Some(x.compute_hash().to_hex()),
+                Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
+                Some(MintedDatumOption::Data(x)) => Some(x.original_hash().to_hex()),
                 None => None,
             },
         })

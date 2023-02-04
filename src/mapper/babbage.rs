@@ -1,8 +1,8 @@
 use pallas::codec::utils::KeepRaw;
 
 use pallas::ledger::primitives::babbage::{
-    AuxiliaryData, MintedBlock, MintedWitnessSet, NetworkId, PostAlonzoTransactionOutput,
-    TransactionBody, TransactionOutput,
+    AuxiliaryData, MintedBlock, MintedPostAlonzoTransactionOutput, MintedTransactionBody,
+    MintedTransactionOutput, MintedWitnessSet, NetworkId,
 };
 
 use pallas::crypto::hash::Hash;
@@ -20,7 +20,7 @@ use super::{map::ToHex, EventWriter};
 impl EventWriter {
     pub fn to_babbage_tx_size(
         &self,
-        body: &KeepRaw<TransactionBody>,
+        body: &KeepRaw<MintedTransactionBody>,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
         witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> usize {
@@ -31,7 +31,7 @@ impl EventWriter {
 
     pub fn to_babbage_transaction_record(
         &self,
-        body: &KeepRaw<TransactionBody>,
+        body: &KeepRaw<MintedTransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
         witness_set: Option<&KeepRaw<MintedWitnessSet>>,
@@ -84,8 +84,10 @@ impl EventWriter {
                 collateral_inputs.map(|inputs| self.collect_input_records(inputs));
 
             record.collateral_output = body.collateral_return.as_ref().map(|output| match output {
-                TransactionOutput::Legacy(x) => self.to_legacy_output_record(x).unwrap(),
-                TransactionOutput::PostAlonzo(x) => self.to_post_alonzo_output_record(x).unwrap(),
+                MintedTransactionOutput::Legacy(x) => self.to_legacy_output_record(x).unwrap(),
+                MintedTransactionOutput::PostAlonzo(x) => {
+                    self.to_post_alonzo_output_record(x).unwrap()
+                }
             });
 
             record.metadata = match aux_data {
@@ -190,7 +192,10 @@ impl EventWriter {
             .collect()
     }
 
-    fn crawl_post_alonzo_output(&self, output: &PostAlonzoTransactionOutput) -> Result<(), Error> {
+    fn crawl_post_alonzo_output(
+        &self,
+        output: &MintedPostAlonzoTransactionOutput,
+    ) -> Result<(), Error> {
         let record = self.to_post_alonzo_output_record(output)?;
         self.append(record.into())?;
 
@@ -206,10 +211,13 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_babbage_transaction_output(&self, output: &TransactionOutput) -> Result<(), Error> {
+    fn crawl_babbage_transaction_output(
+        &self,
+        output: &MintedTransactionOutput,
+    ) -> Result<(), Error> {
         match output {
-            TransactionOutput::Legacy(x) => self.crawl_legacy_output(x),
-            TransactionOutput::PostAlonzo(x) => self.crawl_post_alonzo_output(x),
+            MintedTransactionOutput::Legacy(x) => self.crawl_legacy_output(x),
+            MintedTransactionOutput::PostAlonzo(x) => self.crawl_post_alonzo_output(x),
         }
     }
 
@@ -246,7 +254,7 @@ impl EventWriter {
 
     fn crawl_babbage_transaction(
         &self,
-        tx: &KeepRaw<TransactionBody>,
+        tx: &KeepRaw<MintedTransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
         witness_set: Option<&KeepRaw<MintedWitnessSet>>,
