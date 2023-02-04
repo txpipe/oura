@@ -7,8 +7,8 @@ use pallas::{
                 PlutusScript, Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
             },
             babbage::{
-                LegacyTransactionOutput, PlutusV2Script, PostAlonzoTransactionOutput,
-                TransactionOutput,
+                LegacyTransactionOutput, MintedPostAlonzoTransactionOutput,
+                MintedTransactionOutput, PlutusV2Script,
             },
         },
         traverse::OriginalHash,
@@ -46,7 +46,7 @@ impl EventWriter {
 
     pub fn collect_post_alonzo_output_records(
         &self,
-        source: &[PostAlonzoTransactionOutput],
+        source: &[MintedPostAlonzoTransactionOutput],
     ) -> Result<Vec<TxOutputRecord>, Error> {
         source
             .iter()
@@ -56,13 +56,13 @@ impl EventWriter {
 
     pub fn collect_any_output_records(
         &self,
-        source: &[TransactionOutput],
+        source: &[MintedTransactionOutput],
     ) -> Result<Vec<TxOutputRecord>, Error> {
         source
             .iter()
             .map(|x| match x {
-                TransactionOutput::Legacy(x) => self.to_legacy_output_record(x),
-                TransactionOutput::PostAlonzo(x) => self.to_post_alonzo_output_record(x),
+                MintedTransactionOutput::Legacy(x) => self.to_legacy_output_record(x),
+                MintedTransactionOutput::PostAlonzo(x) => self.to_post_alonzo_output_record(x),
             })
             .collect()
     }
