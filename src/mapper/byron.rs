@@ -53,6 +53,7 @@ impl EventWriter {
             amount: source.amount,
             assets: None,
             datum_hash: None,
+            inline_datum: None,
         })
     }
 

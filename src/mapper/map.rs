@@ -176,6 +176,7 @@ impl EventWriter {
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
+            inline_datum: None,
         })
     }
 
@@ -193,6 +194,10 @@ impl EventWriter {
                 Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
                 Some(MintedDatumOption::Data(x)) => Some(x.original_hash().to_hex()),
                 None => None,
+            },
+            inline_datum: match &output.datum_option {
+                Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)?),
+                _ => None,
             },
         })
     }
@@ -258,10 +263,10 @@ impl EventWriter {
 
     pub fn to_plutus_datum_record(
         &self,
-        datum: &alonzo::PlutusData,
+        datum: &KeepRaw<'_, alonzo::PlutusData>,
     ) -> Result<PlutusDatumRecord, crate::Error> {
         Ok(PlutusDatumRecord {
-            datum_hash: datum.compute_hash().to_hex(),
+            datum_hash: datum.original_hash().to_hex(),
             plutus_data: datum.to_json(),
         })
     }
@@ -452,7 +457,7 @@ impl EventWriter {
                     .into();
 
                 record.plutus_data = self
-                    .collect_plutus_datum_records(&witnesses.plutus_data)?
+                    .collect_witness_plutus_datum_records(&witnesses.plutus_data)?
                     .into();
             }
 

@@ -1,8 +1,8 @@
 use pallas::codec::utils::KeepRaw;
 
 use pallas::ledger::primitives::babbage::{
-    AuxiliaryData, MintedBlock, MintedPostAlonzoTransactionOutput, MintedTransactionBody,
-    MintedTransactionOutput, MintedWitnessSet, NetworkId,
+    AuxiliaryData, MintedBlock, MintedDatumOption, MintedPostAlonzoTransactionOutput,
+    MintedTransactionBody, MintedTransactionOutput, MintedWitnessSet, NetworkId,
 };
 
 use pallas::crypto::hash::Hash;
@@ -113,7 +113,7 @@ impl EventWriter {
                     .into();
 
                 record.plutus_data = self
-                    .collect_plutus_datum_records(&witnesses.plutus_data)?
+                    .collect_witness_plutus_datum_records(&witnesses.plutus_data)?
                     .into();
             }
 
@@ -207,6 +207,11 @@ impl EventWriter {
         });
 
         child.crawl_transaction_output_amount(&output.value)?;
+
+        if let Some(MintedDatumOption::Data(datum)) = &output.datum_option {
+            let record = self.to_plutus_datum_record(datum)?;
+            child.append(record.into())?;
+        }
 
         Ok(())
     }
