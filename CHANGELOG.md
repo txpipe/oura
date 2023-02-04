@@ -2,8 +2,24 @@
 ## [Unreleased]
 
 
-<a name="v1.8"></a>
-## [v1.8] - 2023-01-29
+<a name="v1.8.1"></a>
+## [v1.8.1] - 2023-02-04
+### Features
+- Send inline datum as new events ([#539](https://github.com/txpipe/oura/issues/539))
+
+### Bug Fixes
+- Use correct bytes for Byron addresses ([#537](https://github.com/txpipe/oura/issues/537))
+- Use original cbor to define inline datum hash ([#538](https://github.com/txpipe/oura/issues/538))
+
+### Docs
+- Add missing GCP PubSub item to index ([#534](https://github.com/txpipe/oura/issues/534))
+
+### Chore
+- Fix build badge ([#533](https://github.com/txpipe/oura/issues/533))
+
+
+<a name="v1.8.0"></a>
+## [v1.8.0] - 2023-01-30
 ### Features
 - Add vrf_key to block event data ([#489](https://github.com/txpipe/oura/issues/489))
 - Expose collateral data ([#495](https://github.com/txpipe/oura/issues/495))
@@ -667,17 +683,16 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 ## [v0.3.1-docker3] - 2021-12-12
 ### Continuous Integration
 - remove extra container platforms to speed up workflow
+
+
+<a name="v0.3.1-docker2"></a>
+## [v0.3.1-docker2] - 2021-12-12
+### Continuous Integration
 - add docker build to release workflow
 
 
 <a name="v0.3.1-docker"></a>
 ## [v0.3.1-docker] - 2021-12-12
-### Continuous Integration
-- add docker build to release workflow
-
-
-<a name="v0.3.1-docker2"></a>
-## [v0.3.1-docker2] - 2021-12-12
 ### Continuous Integration
 - add docker build to release workflow
 
@@ -752,8 +767,9 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 - fix lint issues
 
 
-[Unreleased]: https://github.com/txpipe/oura/compare/v1.8...HEAD
-[v1.8]: https://github.com/txpipe/oura/compare/v1.7.3...v1.8
+[Unreleased]: https://github.com/txpipe/oura/compare/v1.8.1...HEAD
+[v1.8.1]: https://github.com/txpipe/oura/compare/v1.8.0...v1.8.1
+[v1.8.0]: https://github.com/txpipe/oura/compare/v1.7.3...v1.8.0
 [v1.7.3]: https://github.com/txpipe/oura/compare/v1.7.2...v1.7.3
 [v1.7.2]: https://github.com/txpipe/oura/compare/v1.7.1...v1.7.2
 [v1.7.1]: https://github.com/txpipe/oura/compare/v1.7.0...v1.7.1
@@ -787,9 +803,9 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 [v0.3.4]: https://github.com/txpipe/oura/compare/v0.3.3...v0.3.4
 [v0.3.3]: https://github.com/txpipe/oura/compare/v0.3.2...v0.3.3
 [v0.3.2]: https://github.com/txpipe/oura/compare/v0.3.1-docker3...v0.3.2
-[v0.3.1-docker3]: https://github.com/txpipe/oura/compare/v0.3.1-docker...v0.3.1-docker3
-[v0.3.1-docker]: https://github.com/txpipe/oura/compare/v0.3.1-docker2...v0.3.1-docker
-[v0.3.1-docker2]: https://github.com/txpipe/oura/compare/v0.3.1...v0.3.1-docker2
+[v0.3.1-docker3]: https://github.com/txpipe/oura/compare/v0.3.1-docker2...v0.3.1-docker3
+[v0.3.1-docker2]: https://github.com/txpipe/oura/compare/v0.3.1-docker...v0.3.1-docker2
+[v0.3.1-docker]: https://github.com/txpipe/oura/compare/v0.3.1...v0.3.1-docker
 [v0.3.1]: https://github.com/txpipe/oura/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/txpipe/oura/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/txpipe/oura/compare/v0.1.0...v0.2.0
