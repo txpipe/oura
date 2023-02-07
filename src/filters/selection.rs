@@ -23,6 +23,7 @@ pub enum Predicate {
     AddressEquals(String),
     MetadataLabelEquals(String),
     MetadataAnySubLabelEquals(String),
+    VKeyWitnessesIncludes(String),
     Not(Box<Predicate>),
     AnyOf(Vec<Predicate>),
     AllOf(Vec<Predicate>),
@@ -150,6 +151,14 @@ fn metadata_any_sub_label_matches(event: &Event, sub_label: &str) -> bool {
     }
 }
 
+#[inline]
+fn vkey_witnesses_matches(event: &Event, witness: &str) -> bool {
+    match &event.data {
+        EventData::VKeyWitness(x) => x.vkey_hex == witness,
+        _ => false 
+    }
+}
+
 impl Predicate {
     #![allow(deprecated)]
     fn event_matches(&self, event: &Event) -> bool {
@@ -169,6 +178,7 @@ impl Predicate {
             }
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
+            Predicate::VKeyWitnessesIncludes(x) => vkey_witnesses_matches(event, x),
             Predicate::Not(x) => !x.event_matches(event),
             Predicate::AnyOf(x) => x.iter().any(|c| c.event_matches(event)),
             Predicate::AllOf(x) => x.iter().all(|c| c.event_matches(event)),
