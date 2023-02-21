@@ -24,6 +24,8 @@ pub enum Predicate {
     MetadataLabelEquals(String),
     MetadataAnySubLabelEquals(String),
     VKeyWitnessesIncludes(String),
+    NativeScriptsIncludes(String),
+    PlutusScriptsIncludes(String),
     Not(Box<Predicate>),
     AnyOf(Vec<Predicate>),
     AllOf(Vec<Predicate>),
@@ -155,6 +157,26 @@ fn metadata_any_sub_label_matches(event: &Event, sub_label: &str) -> bool {
 fn vkey_witnesses_matches(event: &Event, witness: &str) -> bool {
     match &event.data {
         EventData::VKeyWitness(x) => x.vkey_hex == witness,
+        EventData::Transaction(x) => 
+            x.vkey_witnesses.as_ref()
+                .map(|vs| vs.iter().any(|v| v.vkey_hex == witness))
+                .unwrap_or(false),
+        _ => false 
+    }
+}
+
+#[inline]
+fn native_scripts_matches(event: &Event, id: &str) -> bool {
+    match &event.data {
+        EventData::NativeScript { policy_id, .. } => policy_id == id,
+        _ => false 
+    }
+}
+
+#[inline]
+fn plutus_scripts_matches(event: &Event, script_hash: &str) -> bool {
+    match &event.data {
+        EventData::PlutusScript { hash, .. } => hash == script_hash,
         _ => false 
     }
 }
@@ -179,6 +201,8 @@ impl Predicate {
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
             Predicate::VKeyWitnessesIncludes(x) => vkey_witnesses_matches(event, x),
+            Predicate::NativeScriptsIncludes(x) => native_scripts_matches(event, x),
+            Predicate::PlutusScriptsIncludes(x) => plutus_scripts_matches(event, x),
             Predicate::Not(x) => !x.event_matches(event),
             Predicate::AnyOf(x) => x.iter().any(|c| c.event_matches(event)),
             Predicate::AllOf(x) => x.iter().all(|c| c.event_matches(event)),
