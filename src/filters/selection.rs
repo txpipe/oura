@@ -166,9 +166,13 @@ fn vkey_witnesses_matches(event: &Event, witness: &str) -> bool {
 }
 
 #[inline]
-fn native_scripts_matches(event: &Event, id: &str) -> bool {
+fn native_scripts_matches(event: &Event, policy_id: &str) -> bool {
     match &event.data {
-        EventData::NativeScript { policy_id, .. } => policy_id == id,
+        EventData::NativeWitness(x) => x.policy_id == policy_id,
+        EventData::Transaction(x) => 
+            x.native_witnesses.as_ref()
+                .map(|vs| vs.iter().any(|v| v.policy_id == policy_id))
+                .unwrap_or(false),
         _ => false 
     }
 }
@@ -176,7 +180,11 @@ fn native_scripts_matches(event: &Event, id: &str) -> bool {
 #[inline]
 fn plutus_scripts_matches(event: &Event, script_hash: &str) -> bool {
     match &event.data {
-        EventData::PlutusScript { hash, .. } => hash == script_hash,
+        EventData::PlutusWitness(x) => x.script_hash == script_hash,
+        EventData::Transaction(x) => 
+            x.plutus_witnesses.as_ref()
+                .map(|vs| vs.iter().any(|v| v.script_hash == script_hash))
+                .unwrap_or(false),
         _ => false 
     }
 }
