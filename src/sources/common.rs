@@ -1,16 +1,20 @@
 use core::fmt;
 use std::{ops::Deref, str::FromStr, time::Duration};
 
-use pallas::network::{
-    miniprotocols::{chainsync::TipFinder, run_agent, Point, MAINNET_MAGIC, TESTNET_MAGIC},
-    multiplexer::{bearers::Bearer, StdChannelBuffer, StdPlexer},
+use pallas::{
+    ledger::traverse::{probe, Era},
+    network::{
+        miniprotocols::{chainsync, Point, MAINNET_MAGIC, TESTNET_MAGIC},
+        multiplexer::{bearers::Bearer, StdChannel, StdPlexer},
+    },
 };
 
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    utils::{retry, ChainWellKnownInfo, Utils},
+    mapper::EventWriter,
+    utils::{retry, SwallowResult, Utils},
     Error,
 };
 
@@ -258,81 +262,109 @@ pub fn should_finalize(
     false
 }
 
-pub(crate) fn find_end_of_chain(
-    channel: &mut StdChannelBuffer,
-    well_known: &ChainWellKnownInfo,
-) -> Result<Point, crate::Error> {
-    let point = Point::Specific(
-        well_known.shelley_known_slot,
-        hex::decode(&well_known.shelley_known_hash)?,
-    );
-
-    let agent = TipFinder::initial(point);
-    let agent = run_agent(agent, channel)?;
-    log::info!("chain point query output: {:?}", agent.output);
-
-    match agent.output {
-        Some(tip) => Ok(tip.0),
-        None => Err("failure acquiring end of chain".into()),
-    }
-}
-
-pub(crate) fn define_start_point(
-    intersect: &Option<IntersectArg>,
-    since: &Option<PointArg>,
+pub(crate) fn intersect_starting_point<O>(
+    client: &mut chainsync::Client<StdChannel, O>,
+    intersect_arg: &Option<IntersectArg>,
+    since_arg: &Option<PointArg>,
     utils: &Utils,
-    cs_channel: &mut StdChannelBuffer,
-) -> Result<Option<Vec<Point>>, Error> {
+) -> Result<Option<Point>, Error>
+where
+    chainsync::Message<O>: pallas::codec::Fragment,
+{
     let cursor = utils.get_cursor_if_any();
 
     match cursor {
         Some(cursor) => {
             log::info!("found persisted cursor, will use as starting point");
-            let points = vec![cursor.try_into()?];
+            let desired = cursor.try_into()?;
+            let (point, _) = client.find_intersect(vec![desired])?;
 
-            Ok(Some(points))
+            Ok(point)
         }
-        None => match intersect {
+        None => match intersect_arg {
             Some(IntersectArg::Fallbacks(x)) => {
                 log::info!("found 'fallbacks' intersect argument, will use as starting point");
-                let points: Result<Vec<_>, _> = x.iter().map(|x| x.clone().try_into()).collect();
+                let options: Result<Vec<_>, _> = x.iter().map(|x| x.clone().try_into()).collect();
 
-                Ok(Some(points?))
+                let (point, _) = client.find_intersect(options?)?;
+
+                Ok(point)
             }
             Some(IntersectArg::Origin) => {
                 log::info!("found 'origin' intersect argument, will use as starting point");
 
-                Ok(None)
+                let point = client.intersect_origin()?;
+
+                Ok(Some(point))
             }
             Some(IntersectArg::Point(x)) => {
                 log::info!("found 'point' intersect argument, will use as starting point");
-                let points = vec![x.clone().try_into()?];
+                let options = vec![x.clone().try_into()?];
 
-                Ok(Some(points))
+                let (point, _) = client.find_intersect(options)?;
+
+                Ok(point)
             }
             Some(IntersectArg::Tip) => {
                 log::info!("found 'tip' intersect argument, will use as starting point");
-                let tip = find_end_of_chain(cs_channel, &utils.well_known)?;
-                let points = vec![tip];
 
-                Ok(Some(points))
+                let point = client.intersect_tip()?;
+
+                Ok(Some(point))
             }
-            None => match since {
+            None => match since_arg {
                 Some(x) => {
                     log::info!("explicit 'since' argument, will use as starting point");
                     log::warn!("`since` value is deprecated, please use `intersect`");
-                    let points = vec![x.clone().try_into()?];
+                    let options = vec![x.clone().try_into()?];
 
-                    Ok(Some(points))
+                    let (point, _) = client.find_intersect(options)?;
+
+                    Ok(point)
                 }
                 None => {
                     log::info!("no starting point specified, will use tip of chain");
-                    let tip = find_end_of_chain(cs_channel, &utils.well_known)?;
-                    let points = vec![tip];
 
-                    Ok(Some(points))
+                    let point = client.intersect_tip()?;
+
+                    Ok(Some(point))
                 }
             },
         },
     }
+}
+
+pub fn unknown_block_to_events(writer: &EventWriter, body: &Vec<u8>) -> Result<(), Error> {
+    match probe::block_era(body) {
+        probe::Outcome::Matched(era) => match era {
+            Era::Byron => {
+                writer
+                    .crawl_from_byron_cbor(body)
+                    .ok_or_warn("error crawling byron block for events");
+            }
+            Era::Allegra | Era::Alonzo | Era::Mary | Era::Shelley => {
+                writer
+                    .crawl_from_shelley_cbor(body, era.into())
+                    .ok_or_warn("error crawling alonzo-compatible block for events");
+            }
+            Era::Babbage => {
+                writer
+                    .crawl_from_babbage_cbor(body)
+                    .ok_or_warn("error crawling babbage block for events");
+            }
+            x => {
+                return Err(format!("This version of Oura can't handle era: {x}").into());
+            }
+        },
+        probe::Outcome::EpochBoundary => {
+            writer
+                .crawl_from_ebb_cbor(body)
+                .ok_or_warn("error crawling block for events");
+        }
+        probe::Outcome::Inconclusive => {
+            log::error!("can't infer primitive block from cbor, inconclusive probing. CBOR hex for debugging: {}", hex::encode(body));
+        }
+    }
+
+    Ok(())
 }

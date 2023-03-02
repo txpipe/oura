@@ -1,7 +1,7 @@
 [package]
 name = "oura"
 description = "The tail of Cardano"
-version = "1.7.3"
+version = "1.8.1"
 edition = "2021"
 repository = "https://github.com/txpipe/oura"
 homepage = "https://github.com/txpipe/oura"
@@ -12,7 +12,7 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.13.4"
+pallas = "0.18.0"
 # pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
@@ -20,7 +20,7 @@ net2 = "0.2.37"
 bech32 = "0.9.1"
 clap = "3.2.22"
 log = "0.4.17"
-env_logger = "0.9.1"
+env_logger = "0.10.0"
 crossterm = "0.25"
 merge = "0.1.0"
 config = { version = "0.13.2", default-features = false, features = [
@@ -28,7 +28,7 @@ config = { version = "0.13.2", default-features = false, features = [
     "yaml",
     "json",
 ] }
-serde = { version = "1.0.145", features = ["derive"] }
+serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.89", features = ["arbitrary_precision"] }
 strum = "0.24"
 strum_macros = "0.24"
@@ -57,7 +57,7 @@ aws-sdk-lambda = { version = "0.14.0", optional = true }
 aws-sdk-s3 = { version = "0.14.0", optional = true }
 
 # features: elasticsearch || aws
-tokio = { version = "1.21.0", optional = true, features = ["rt"] }
+tokio = { version = "1.24.2", optional = true, features = ["rt"] }
 
 # required for CI to complete successfully
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
@@ -66,7 +66,8 @@ openssl = { version = "0.10", optional = true, features = ["vendored"] }
 redis = { version = "0.21.6", optional = true, features = ["tokio-comp"] }
 
 # features: gcp
-cloud-pubsub = { version = "0.8.0", optional = true }
+google-cloud-pubsub = { version = "0.12.0", optional = true }
+google-cloud-googleapis = { version = "0.7.0", optional = true }
 
 [features]
 default = []
@@ -78,4 +79,4 @@ elasticsink = ["elasticsearch", "tokio"]
 fingerprint = ["murmur3"]
 aws = ["aws-config", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3", "tokio"]
 redissink = ["redis", "tokio"]
-gcp = ["cloud-pubsub", "tokio", "web"]
+gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "tokio", "web"]

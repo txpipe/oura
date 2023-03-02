@@ -119,12 +119,13 @@ impl From<OutputAssetRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TxOutputRecord {
     pub address: String,
     pub amount: u64,
     pub assets: Option<Vec<OutputAssetRecord>>,
     pub datum_hash: Option<String>,
+    pub inline_datum: Option<PlutusDatumRecord>,
 }
 
 impl From<TxOutputRecord> for EventData {

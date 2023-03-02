@@ -15,13 +15,7 @@ pub const PREVIEW_MAGIC: u64 = 2;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    model::Event,
-    utils::{
-        bech32::{Bech32Config, Bech32Provider},
-        time::NaiveProvider as NaiveTime,
-    },
-};
+use crate::{model::Event, utils::time::NaiveProvider as NaiveTime};
 
 use crate::Error;
 
@@ -29,7 +23,6 @@ pub mod cursor;
 pub mod metrics;
 pub mod throttle;
 
-pub(crate) mod bech32;
 pub(crate) mod retry;
 pub(crate) mod time;
 
@@ -120,13 +113,13 @@ impl ChainWellKnownInfo {
             byron_slot_length: 20,
             byron_known_slot: 0,
             byron_known_hash: "".to_string(),
-            byron_known_time: 1660003200,
+            byron_known_time: 1666656000,
             shelley_epoch_length: 432000,
             shelley_slot_length: 1,
-            shelley_known_slot: 25260,
-            shelley_known_hash: "cac921895ef5f2e85f7e6e6b51b663ab81b3605cd47d6b6d66e8e785e5c65011"
+            shelley_known_slot: 0,
+            shelley_known_hash: "268ae601af8f9214804735910a3301881fbe0eec9936db7d1fb9fc39e93d1e37"
                 .to_string(),
-            shelley_known_time: 1660003200,
+            shelley_known_time: 1666656000,
             address_hrp: "addr_test".to_string(),
             adahandle_policy: "".to_string(),
         }
@@ -144,9 +137,9 @@ impl ChainWellKnownInfo {
             shelley_epoch_length: 432000,
             shelley_slot_length: 1,
             shelley_known_slot: 86400,
-            shelley_known_hash: "c4a1595c5cc7a31eda9e544986fe9387af4e3491afe0ca9a80714f01951bbd5c"
+            shelley_known_hash: "c971bfb21d2732457f9febf79d9b02b20b9a3bef12c561a78b818bcb8b35a574"
                 .to_string(),
-            shelley_known_time: 1654041600,
+            shelley_known_time: 1655769600,
             address_hrp: "addr_test".to_string(),
             adahandle_policy: "".to_string(),
         }
@@ -159,7 +152,7 @@ impl ChainWellKnownInfo {
             TESTNET_MAGIC => Ok(Self::testnet()),
             PREVIEW_MAGIC => Ok(Self::preview()),
             PREPROD_MAGIC => Ok(Self::preprod()),
-            _ => Err(format!("can't identify chain from specified magic value: {}", magic).into()),
+            _ => Err(format!("can't identify chain from specified magic value: {magic}").into()),
         }
     }
 }
@@ -174,7 +167,6 @@ impl Default for ChainWellKnownInfo {
 pub struct Utils {
     pub(crate) well_known: ChainWellKnownInfo,
     pub(crate) time: Option<NaiveTime>,
-    pub(crate) bech32: Bech32Provider,
     pub(crate) cursor: Option<cursor::Provider>,
     pub(crate) metrics: Option<metrics::Provider>,
 }
@@ -184,7 +176,6 @@ impl Utils {
     pub fn new(well_known: ChainWellKnownInfo) -> Self {
         Self {
             time: NaiveTime::new(well_known.clone()).into(),
-            bech32: Bech32Provider::new(Bech32Config::from_well_known(&well_known)),
             well_known,
             cursor: None,
             metrics: None,

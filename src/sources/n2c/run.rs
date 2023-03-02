@@ -1,27 +1,28 @@
 use std::{collections::HashMap, fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
-use pallas::network::{
-    miniprotocols::{chainsync, handshake, run_agent, Point, MAINNET_MAGIC},
-    multiplexer::StdChannelBuffer,
+use pallas::{
+    ledger::traverse::MultiEraBlock,
+    network::{
+        miniprotocols::{chainsync, handshake, Point, MAINNET_MAGIC},
+        multiplexer::StdChannel,
+    },
 };
 
 use crate::{
     mapper::EventWriter,
     pipelining::StageSender,
     sources::{
-        define_start_point, n2c::blocks::CborHolder, setup_multiplexer, should_finalize,
+        intersect_starting_point, setup_multiplexer, should_finalize, unknown_block_to_events,
         FinalizeConfig,
     },
     utils::{retry, Utils},
     Error,
 };
 
-use super::blocks::MultiEraBlock;
-
 struct ChainObserver {
     chain_buffer: chainsync::RollbackBuffer,
     min_depth: usize,
-    blocks: HashMap<Point, CborHolder>,
+    blocks: HashMap<Point, Vec<u8>>,
     event_writer: EventWriter,
     finalize_config: Option<FinalizeConfig>,
     block_count: u64,
@@ -43,19 +44,23 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     );
 }
 
-impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
+enum Continuation {
+    Proceed,
+    DropOut,
+}
+
+impl ChainObserver {
     fn on_roll_forward(
         &mut self,
         content: chainsync::BlockContent,
         tip: &chainsync::Tip,
-    ) -> Result<chainsync::Continuation, Box<dyn std::error::Error>> {
+    ) -> Result<Continuation, Box<dyn std::error::Error>> {
         // parse the block and extract the point of the chain
-        let cbor = content.into();
-        let block = CborHolder::new(cbor);
-        let point = block.parse()?.read_cursor()?;
+        let block = MultiEraBlock::decode(content.deref())?;
+        let point = Point::Specific(block.slot(), block.hash().to_vec());
 
         // store the block for later retrieval
-        self.blocks.insert(point.clone(), block);
+        self.blocks.insert(point.clone(), content.into());
 
         // track the new point in our memory buffer
         log::info!("rolling forward to point {:?}", point);
@@ -72,26 +77,13 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
                 .remove(&point)
                 .expect("required block not found in memory");
 
-            match block.parse()? {
-                MultiEraBlock::EpochBoundary(model) => self
-                    .event_writer
-                    .crawl_ebb_with_cbor(&model, block.cbor())?,
-                MultiEraBlock::Byron(model) => self
-                    .event_writer
-                    .crawl_byron_with_cbor(&model, block.cbor())?,
-                MultiEraBlock::AlonzoCompatible(model, era) => self
-                    .event_writer
-                    .crawl_shelley_with_cbor(&model, block.cbor(), era.into())?,
-                MultiEraBlock::Babbage(model) => self
-                    .event_writer
-                    .crawl_babbage_with_cbor(&model, block.cbor())?,
-            };
+            unknown_block_to_events(&self.event_writer, &block)?;
 
             self.block_count += 1;
 
             // evaluate if we should finalize the thread according to config
             if should_finalize(&self.finalize_config, &point, self.block_count) {
-                return Ok(chainsync::Continuation::DropOut);
+                return Ok(Continuation::DropOut);
             }
         }
 
@@ -100,17 +92,17 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
         // notify chain tip to the pipeline metrics
         self.event_writer.utils.track_chain_tip(tip.1);
 
-        Ok(chainsync::Continuation::Proceed)
+        Ok(Continuation::Proceed)
     }
 
-    fn on_rollback(&mut self, point: &Point) -> Result<chainsync::Continuation, Error> {
+    fn on_rollback(&mut self, point: &Point) -> Result<(), Error> {
         log::info!("rolling block to point {:?}", point);
 
         match self.chain_buffer.roll_back(point) {
             chainsync::RollbackEffect::Handled => {
                 log::debug!("handled rollback within buffer {:?}", point);
 
-                // drain memory blocks afther the rollback slot
+                // drain memory blocks after the rollback slot
                 self.blocks
                     .retain(|x, _| x.slot_or_default() <= point.slot_or_default());
             }
@@ -126,18 +118,41 @@ impl chainsync::Observer<chainsync::BlockContent> for ChainObserver {
 
         log_buffer_state(&self.chain_buffer);
 
-        Ok(chainsync::Continuation::Proceed)
+        Ok(())
+    }
+
+    fn on_next_message(
+        &mut self,
+        msg: chainsync::NextResponse<chainsync::BlockContent>,
+        client: &mut chainsync::N2CClient<StdChannel>,
+    ) -> Result<Continuation, AttemptError> {
+        match msg {
+            chainsync::NextResponse::RollForward(c, t) => match self.on_roll_forward(c, &t) {
+                Ok(x) => Ok(x),
+                Err(err) => Err(AttemptError::Other(err)),
+            },
+            chainsync::NextResponse::RollBackward(x, _) => match self.on_rollback(&x) {
+                Ok(_) => Ok(Continuation::Proceed),
+                Err(err) => Err(AttemptError::Other(err)),
+            },
+            chainsync::NextResponse::Await => {
+                let next = client
+                    .recv_while_must_reply()
+                    .map_err(|x| AttemptError::Recoverable(x.into()))?;
+
+                self.on_next_message(next, client)
+            }
+        }
     }
 }
 
 fn observe_forever(
-    mut channel: StdChannelBuffer,
+    mut client: chainsync::N2CClient<StdChannel>,
     event_writer: EventWriter,
-    known_points: Option<Vec<Point>>,
     min_depth: usize,
     finalize_config: Option<FinalizeConfig>,
 ) -> Result<(), AttemptError> {
-    let observer = ChainObserver {
+    let mut observer = ChainObserver {
         chain_buffer: Default::default(),
         blocks: HashMap::new(),
         min_depth,
@@ -146,14 +161,15 @@ fn observe_forever(
         finalize_config,
     };
 
-    let agent = chainsync::BlockConsumer::initial(known_points, observer);
-
-    match run_agent(agent, &mut channel) {
-        Ok(agent) => {
-            log::debug!("chainsync agent final state: {:?}", agent.state);
-            Ok(())
+    loop {
+        match client.request_next() {
+            Ok(next) => match observer.on_next_message(next, &mut client) {
+                Ok(Continuation::Proceed) => (),
+                Ok(Continuation::DropOut) => break Ok(()),
+                Err(err) => break Err(err),
+            },
+            Err(err) => break Err(AttemptError::Recoverable(err.into())),
         }
-        Err(err) => Err(AttemptError::Recoverable(err.into())),
     }
 }
 
@@ -163,12 +179,13 @@ enum AttemptError {
     Other(Error),
 }
 
-fn do_handshake(channel: &mut StdChannelBuffer, magic: u64) -> Result<(), AttemptError> {
+fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
+    let mut client = handshake::N2CClient::new(channel);
     let versions = handshake::n2c::VersionTable::v1_and_above(magic);
 
-    match run_agent(handshake::Initiator::initial(versions), channel) {
-        Ok(agent) => match agent.output {
-            handshake::Output::Accepted(_, _) => Ok(()),
+    match client.handshake(versions) {
+        Ok(confirmation) => match confirmation {
+            handshake::Confirmation::Accepted(_, _) => Ok(()),
             _ => Err(AttemptError::Other(
                 "couldn't agree on handshake version".into(),
             )),
@@ -190,34 +207,36 @@ fn do_chainsync_attempt(
     let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
         .map_err(|x| AttemptError::Recoverable(x))?;
 
-    let mut hs_channel = plexer.use_channel(0).into();
-    let mut cs_channel = plexer.use_channel(5).into();
+    let hs_channel = plexer.use_channel(0);
+    let cs_channel = plexer.use_channel(5);
 
     plexer.muxer.spawn();
     plexer.demuxer.spawn();
 
-    do_handshake(&mut hs_channel, magic)?;
+    do_handshake(hs_channel, magic)?;
 
-    let known_points = define_start_point(
+    let mut client = chainsync::N2CClient::new(cs_channel);
+
+    let intersection = intersect_starting_point(
+        &mut client,
         &config.intersect,
         #[allow(deprecated)]
         &config.since,
         &utils,
-        &mut cs_channel,
     )
     .map_err(|err| AttemptError::Recoverable(err))?;
 
-    log::info!("starting chain sync from: {:?}", &known_points);
+    if intersection.is_none() {
+        return Err(AttemptError::Other(
+            "Can't find chain intersection point".into(),
+        ));
+    }
+
+    log::info!("starting chain sync from: {:?}", &intersection);
 
     let writer = EventWriter::new(output_tx.clone(), utils, config.mapper.clone());
 
-    observe_forever(
-        cs_channel,
-        writer,
-        known_points,
-        config.min_depth,
-        config.finalize.clone(),
-    )?;
+    observe_forever(client, writer, config.min_depth, config.finalize.clone())?;
 
     Ok(())
 }

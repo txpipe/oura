@@ -1,11 +1,8 @@
 use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
-use pallas::{
-    ledger::traverse::{probe, Era},
-    network::{
-        miniprotocols::{blockfetch, chainsync, handshake, run_agent, Point, MAINNET_MAGIC},
-        multiplexer::StdChannelBuffer,
-    },
+use pallas::network::{
+    miniprotocols::{blockfetch, chainsync, handshake, Point, MAINNET_MAGIC},
+    multiplexer::StdChannel,
 };
 
 use std::sync::mpsc::{Receiver, SyncSender};
@@ -13,59 +10,13 @@ use std::sync::mpsc::{Receiver, SyncSender};
 use crate::{
     mapper::EventWriter,
     pipelining::StageSender,
-    sources::{define_start_point, setup_multiplexer, should_finalize, FinalizeConfig},
-    utils::{retry, SwallowResult, Utils},
+    sources::{
+        intersect_starting_point, setup_multiplexer, should_finalize, unknown_block_to_events,
+        FinalizeConfig,
+    },
+    utils::{retry, Utils},
     Error,
 };
-
-use super::headers::MultiEraHeader;
-
-struct Block2EventMapper(EventWriter);
-
-impl Debug for Block2EventMapper {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Block2EventMapper").finish()
-    }
-}
-
-impl blockfetch::Observer for Block2EventMapper {
-    fn on_block_received(&mut self, body: Vec<u8>) -> Result<(), Error> {
-        let Self(writer) = self;
-
-        match probe::block_era(&body) {
-            probe::Outcome::Matched(era) => match era {
-                Era::Byron => {
-                    writer
-                        .crawl_from_byron_cbor(&body)
-                        .ok_or_warn("error crawling byron block for events");
-                }
-                Era::Allegra | Era::Alonzo | Era::Mary | Era::Shelley => {
-                    writer
-                        .crawl_from_shelley_cbor(&body, era.into())
-                        .ok_or_warn("error crawling alonzo-compatible block for events");
-                }
-                Era::Babbage => {
-                    writer
-                        .crawl_from_babbage_cbor(&body)
-                        .ok_or_warn("error crawling babbage block for events");
-                }
-                x => {
-                    return Err(format!("This version of Oura can't handle era: {}", x).into());
-                }
-            },
-            probe::Outcome::EpochBoundary => {
-                writer
-                    .crawl_from_ebb_cbor(&body)
-                    .ok_or_warn("error crawling block for events");
-            }
-            probe::Outcome::Inconclusive => {
-                log::error!("can't infer primitive block from cbor, inconclusive probing. CBOR hex for debugging: {}", hex::encode(body));
-            }
-        }
-
-        Ok(())
-    }
-}
 
 struct ChainObserver {
     min_depth: usize,
@@ -92,15 +43,26 @@ fn log_buffer_state(buffer: &chainsync::RollbackBuffer) {
     );
 }
 
-impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
+enum Continuation {
+    Proceed,
+    DropOut,
+}
+
+impl ChainObserver {
     fn on_roll_forward(
         &mut self,
         content: chainsync::HeaderContent,
         tip: &chainsync::Tip,
-    ) -> Result<chainsync::Continuation, Error> {
+    ) -> Result<Continuation, Error> {
         // parse the header and extract the point of the chain
-        let header = MultiEraHeader::try_from(content)?;
-        let point = header.read_cursor()?;
+
+        let header = pallas::ledger::traverse::MultiEraHeader::decode(
+            content.variant,
+            content.byron_prefix.map(|x| x.0),
+            &content.cbor,
+        )?;
+
+        let point = Point::Specific(header.slot(), header.hash().to_vec());
 
         // track the new point in our memory buffer
         log::info!("rolling forward to point {:?}", point);
@@ -118,7 +80,7 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
 
             // evaluate if we should finalize the thread according to config
             if should_finalize(&self.finalize_config, &point, self.block_count) {
-                return Ok(chainsync::Continuation::DropOut);
+                return Ok(Continuation::DropOut);
             }
         }
 
@@ -127,10 +89,10 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
         // notify chain tip to the pipeline metrics
         self.event_writer.utils.track_chain_tip(tip.1);
 
-        Ok(chainsync::Continuation::Proceed)
+        Ok(Continuation::Proceed)
     }
 
-    fn on_rollback(&mut self, point: &Point) -> Result<chainsync::Continuation, Error> {
+    fn on_rollback(&mut self, point: &Point) -> Result<(), Error> {
         log::info!("rolling block to point {:?}", point);
 
         match self.chain_buffer.roll_back(point) {
@@ -145,27 +107,53 @@ impl chainsync::Observer<chainsync::HeaderContent> for &mut ChainObserver {
 
         log_buffer_state(&self.chain_buffer);
 
-        Ok(chainsync::Continuation::Proceed)
+        Ok(())
+    }
+
+    fn on_next_message(
+        &mut self,
+        msg: chainsync::NextResponse<chainsync::HeaderContent>,
+        client: &mut chainsync::N2NClient<StdChannel>,
+    ) -> Result<Continuation, AttemptError> {
+        match msg {
+            chainsync::NextResponse::RollForward(c, t) => match self.on_roll_forward(c, &t) {
+                Ok(x) => Ok(x),
+                Err(err) => Err(AttemptError::Other(err)),
+            },
+            chainsync::NextResponse::RollBackward(x, _) => match self.on_rollback(&x) {
+                Ok(_) => Ok(Continuation::Proceed),
+                Err(err) => Err(AttemptError::Other(err)),
+            },
+            chainsync::NextResponse::Await => {
+                let next = client
+                    .recv_while_must_reply()
+                    .map_err(|x| AttemptError::Recoverable(x.into()))?;
+
+                self.on_next_message(next, client)
+            }
+        }
     }
 }
 
 pub(crate) fn fetch_blocks_forever(
-    mut channel: StdChannelBuffer,
+    mut client: blockfetch::Client<StdChannel>,
     event_writer: EventWriter,
     input: Receiver<Point>,
 ) -> Result<(), Error> {
-    let observer = Block2EventMapper(event_writer);
-    let agent = blockfetch::OnDemandClient::initial(input.iter(), observer);
-    let agent = run_agent(agent, &mut channel)?;
-    log::debug!("blockfetch agent final state: {:?}", agent.state);
+    for point in input {
+        let body = client.fetch_single(point.clone())?;
+
+        unknown_block_to_events(&event_writer, &body)?;
+
+        log::debug!("blockfetch succeeded: {:?}", point);
+    }
 
     Ok(())
 }
 
 fn observe_headers_forever(
-    mut channel: StdChannelBuffer,
+    mut client: chainsync::N2NClient<StdChannel>,
     event_writer: EventWriter,
-    known_points: Option<Vec<Point>>,
     block_requests: SyncSender<Point>,
     min_depth: usize,
     finalize_config: Option<FinalizeConfig>,
@@ -179,14 +167,15 @@ fn observe_headers_forever(
         finalize_config,
     };
 
-    let agent = chainsync::HeaderConsumer::initial(known_points, observer);
-
-    match run_agent(agent, &mut channel) {
-        Ok(agent) => {
-            log::debug!("chainsync agent final state: {:?}", agent.state);
-            Ok(())
+    loop {
+        match client.request_next() {
+            Ok(next) => match observer.on_next_message(next, &mut client) {
+                Ok(Continuation::Proceed) => (),
+                Ok(Continuation::DropOut) => break Ok(()),
+                Err(err) => break Err(err),
+            },
+            Err(err) => break Err(AttemptError::Recoverable(err.into())),
         }
-        Err(err) => Err(AttemptError::Recoverable(err.into())),
     }
 }
 
@@ -196,12 +185,13 @@ enum AttemptError {
     Other(Error),
 }
 
-fn do_handshake(channel: &mut StdChannelBuffer, magic: u64) -> Result<(), AttemptError> {
-    let versions = handshake::n2n::VersionTable::v6_and_above(magic);
+fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
+    let mut client = handshake::N2NClient::new(channel);
+    let versions = handshake::n2n::VersionTable::v4_and_above(magic);
 
-    match run_agent(handshake::Initiator::initial(versions), channel) {
-        Ok(agent) => match agent.output {
-            handshake::Output::Accepted(_, _) => Ok(()),
+    match client.handshake(versions) {
+        Ok(confirmation) => match confirmation {
+            handshake::Confirmation::Accepted(_, _) => Ok(()),
             _ => Err(AttemptError::Other(
                 "couldn't agree on handshake version".into(),
             )),
@@ -223,42 +213,50 @@ fn do_chainsync_attempt(
     let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
         .map_err(|x| AttemptError::Recoverable(x))?;
 
-    let mut hs_channel = plexer.use_channel(0).into();
-    let mut cs_channel = plexer.use_channel(2).into();
-    let bf_channel = plexer.use_channel(3).into();
+    let hs_channel = plexer.use_channel(0);
+    let cs_channel = plexer.use_channel(2);
+    let bf_channel = plexer.use_channel(3);
 
     plexer.muxer.spawn();
     plexer.demuxer.spawn();
 
-    do_handshake(&mut hs_channel, magic)?;
+    do_handshake(hs_channel, magic)?;
 
-    let known_points = define_start_point(
+    let mut cs_client = chainsync::N2NClient::new(cs_channel);
+
+    let intersection = intersect_starting_point(
+        &mut cs_client,
         &config.intersect,
         #[allow(deprecated)]
         &config.since,
         &utils,
-        &mut cs_channel,
     )
     .map_err(|err| AttemptError::Recoverable(err))?;
 
-    log::info!("starting chain sync from: {:?}", &known_points);
+    if intersection.is_none() {
+        return Err(AttemptError::Other(
+            "Can't find chain intersection point".into(),
+        ));
+    }
 
+    log::info!("starting chain sync from: {:?}", &intersection);
+
+    let bf_client = blockfetch::Client::new(bf_channel);
     let writer = EventWriter::new(output_tx.clone(), utils, config.mapper.clone());
 
     let (headers_tx, headers_rx) = std::sync::mpsc::sync_channel(100);
 
     let bf_writer = writer.clone();
     std::thread::spawn(move || {
-        fetch_blocks_forever(bf_channel, bf_writer, headers_rx).expect("blockfetch loop failed");
+        fetch_blocks_forever(bf_client, bf_writer, headers_rx).expect("blockfetch loop failed");
 
         log::info!("block fetch thread ended");
     });
 
     // this will block
     observe_headers_forever(
-        cs_channel,
+        cs_client,
         writer,
-        known_points,
         headers_tx,
         config.min_depth,
         config.finalize.clone(),
