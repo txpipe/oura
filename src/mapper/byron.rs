@@ -54,6 +54,7 @@ impl EventWriter {
             assets: None,
             datum_hash: None,
             inline_datum: None,
+            datum_cbor: None,
         })
     }
 

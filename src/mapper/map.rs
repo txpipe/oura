@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use pallas::ledger::primitives::alonzo::MintedWitnessSet;
 use pallas::ledger::primitives::babbage::MintedDatumOption;
 use pallas::ledger::traverse::{ComputeHash, OriginalHash};
-use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
+use pallas::{codec::utils::KeepRaw, crypto::hash::Hash, codec::{minicbor::{to_vec}}};
 
 use pallas::ledger::primitives::{
     alonzo::{
@@ -177,6 +177,7 @@ impl EventWriter {
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
             inline_datum: None,
+            datum_cbor: None,
         })
     }
 
@@ -199,6 +200,10 @@ impl EventWriter {
                 Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)?),
                 _ => None,
             },
+            datum_cbor: match &output.datum_option {
+                Some(MintedDatumOption::Data(x)) => Some(to_vec(&x.0)?.to_hex()),
+                _ => None,
+            }
         })
     }
 
