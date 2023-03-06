@@ -191,7 +191,6 @@ impl EventWriter {
                 false => None,
             },
             transactions: None,
-            invalid_transactions: None
         };
 
         if self.config.include_block_details {
@@ -258,7 +257,6 @@ impl EventWriter {
                 false => None,
             },
             transactions: None,
-            invalid_transactions: None
         })
     }
 

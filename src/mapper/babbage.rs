@@ -8,8 +8,6 @@ use pallas::ledger::primitives::babbage::{
 use pallas::crypto::hash::Hash;
 use pallas::ledger::traverse::OriginalHash;
 
-use std::ops::Deref;
-
 use crate::model::{BlockRecord, Era, TransactionRecord};
 use crate::utils::time::TimeProvider;
 use crate::{
@@ -161,7 +159,6 @@ impl EventWriter {
                 false => None,
             },
             transactions: None,
-            invalid_transactions: self.collect_invalid_tx_indices(source)
         };
 
         if self.config.include_block_details {
@@ -169,13 +166,6 @@ impl EventWriter {
         }
 
         Ok(record)
-    }
-
-    pub fn collect_invalid_tx_indices(
-        &self,
-        block: &MintedBlock,
-    ) -> Option<Vec<u32>> {
-        block.invalid_transactions.as_ref().map(|im| im.deref().to_vec())
     }
 
     pub fn collect_babbage_tx_records(
