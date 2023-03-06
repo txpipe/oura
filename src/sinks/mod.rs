@@ -35,3 +35,6 @@ pub mod gcp_pubsub;
 
 #[cfg(feature = "gcp")]
 pub mod gcp_cloudfunction;
+
+#[cfg(feature = "rabbitmqsink")]
+pub mod rabbitmq;
