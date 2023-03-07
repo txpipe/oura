@@ -63,7 +63,7 @@ tokio = { version = "1.24.2", optional = true, features = ["rt"] }
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 
 # redis support
-redis = { version = "0.21.6", optional = true, features = ["tokio-comp"] }
+redis = { version = "0.22.3", optional = true, features = ["tokio-comp"] }
 
 # features: gcp
 google-cloud-pubsub = { version = "0.12.0", optional = true }
