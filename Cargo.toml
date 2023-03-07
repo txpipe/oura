@@ -69,6 +69,9 @@ redis = { version = "0.21.6", optional = true, features = ["tokio-comp"] }
 google-cloud-pubsub = { version = "0.12.0", optional = true }
 google-cloud-googleapis = { version = "0.7.0", optional = true }
 
+# features: rabbitmqsink
+lapin = { version = "2.1.1", optional = true }
+
 [features]
 default = []
 web = ["reqwest"]
@@ -80,3 +83,4 @@ fingerprint = ["murmur3"]
 aws = ["aws-config", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3", "tokio"]
 redissink = ["redis", "tokio"]
 gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "tokio", "web"]
+rabbitmqsink = ["lapin", "tokio"]

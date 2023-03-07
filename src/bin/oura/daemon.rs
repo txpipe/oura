@@ -53,6 +53,9 @@ use oura::sinks::gcp_pubsub::Config as GcpPubSubConfig;
 #[cfg(feature = "gcp")]
 use oura::sinks::gcp_cloudfunction::Config as GcpCloudFunctionConfig;
 
+#[cfg(feature = "rabbitmqsink")]
+use oura::sinks::rabbitmq::Config as RabbitmqConfig;
+
 #[cfg(feature = "fingerprint")]
 use oura::filters::fingerprint::Config as FingerprintConfig;
 
@@ -135,6 +138,9 @@ enum Sink {
 
     #[cfg(feature = "gcp")]
     GcpCloudFunction(GcpCloudFunctionConfig),
+
+    #[cfg(feature = "rabbitmqsink")]
+    Rabbitmq(RabbitmqConfig),
 }
 
 fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> BootstrapResult {
@@ -172,6 +178,9 @@ fn bootstrap_sink(config: Sink, input: StageReceiver, utils: Arc<Utils>) -> Boot
 
         #[cfg(feature = "gcp")]
         Sink::GcpCloudFunction(c) => WithUtils::new(c, utils).bootstrap(input),
+
+        #[cfg(feature = "rabbitmqsink")]
+        Sink::Rabbitmq(c) => WithUtils::new(c, utils).bootstrap(input),
     }
 }
 
