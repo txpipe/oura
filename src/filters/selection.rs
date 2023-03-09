@@ -7,8 +7,8 @@ use serde_json::Value as JsonValue;
 
 use crate::{
     model::{
-        Event, EventData, MetadataRecord, MetadatumRendition, MintRecord, OutputAssetRecord,
-        TransactionRecord, TxOutputRecord,
+        CIP25AssetRecord, Event, EventData, MetadataRecord, MetadatumRendition, MintRecord,
+        OutputAssetRecord, TransactionRecord, TxOutputRecord,
     },
     pipelining::{new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver},
 };
@@ -23,6 +23,9 @@ pub enum Predicate {
     AddressEquals(String),
     MetadataLabelEquals(String),
     MetadataAnySubLabelEquals(String),
+    VKeyWitnessesIncludes(String),
+    NativeScriptsIncludes(String),
+    PlutusScriptsIncludes(String),
     Not(Box<Predicate>),
     AnyOf(Vec<Predicate>),
     AllOf(Vec<Predicate>),
@@ -73,6 +76,14 @@ fn mint_policy_matches(event: &Event, policy: &str) -> bool {
 }
 
 #[inline]
+fn cip25_policy_matches(event: &Event, policy: &str) -> bool {
+    match &event.data {
+        EventData::CIP25Asset(CIP25AssetRecord { policy: x, .. }) => relaxed_str_matches(x, policy),
+        _ => false,
+    }
+}
+
+#[inline]
 fn address_matches(event: &Event, address: &str) -> bool {
     match &event.data {
         EventData::Transaction(TransactionRecord {
@@ -111,6 +122,14 @@ fn mint_asset_matches(event: &Event, asset: &str) -> bool {
 }
 
 #[inline]
+fn cip25_asset_matches(event: &Event, asset: &str) -> bool {
+    match &event.data {
+        EventData::CIP25Asset(CIP25AssetRecord { asset: x, .. }) => relaxed_str_matches(x, asset),
+        _ => false,
+    }
+}
+
+#[inline]
 fn metadata_label_matches(event: &Event, label: &str) -> bool {
     match &event.data {
         EventData::Transaction(TransactionRecord {
@@ -134,6 +153,42 @@ fn metadata_any_sub_label_matches(event: &Event, sub_label: &str) -> bool {
     }
 }
 
+#[inline]
+fn vkey_witnesses_matches(event: &Event, witness: &str) -> bool {
+    match &event.data {
+        EventData::VKeyWitness(x) => x.vkey_hex == witness,
+        EventData::Transaction(x) => 
+            x.vkey_witnesses.as_ref()
+                .map(|vs| vs.iter().any(|v| v.vkey_hex == witness))
+                .unwrap_or(false),
+        _ => false 
+    }
+}
+
+#[inline]
+fn native_scripts_matches(event: &Event, policy_id: &str) -> bool {
+    match &event.data {
+        EventData::NativeWitness(x) => x.policy_id == policy_id,
+        EventData::Transaction(x) => 
+            x.native_witnesses.as_ref()
+                .map(|vs| vs.iter().any(|v| v.policy_id == policy_id))
+                .unwrap_or(false),
+        _ => false 
+    }
+}
+
+#[inline]
+fn plutus_scripts_matches(event: &Event, script_hash: &str) -> bool {
+    match &event.data {
+        EventData::PlutusWitness(x) => x.script_hash == script_hash,
+        EventData::Transaction(x) => 
+            x.plutus_witnesses.as_ref()
+                .map(|vs| vs.iter().any(|v| v.script_hash == script_hash))
+                .unwrap_or(false),
+        _ => false 
+    }
+}
+
 impl Predicate {
     #![allow(deprecated)]
     fn event_matches(&self, event: &Event) -> bool {
@@ -141,14 +196,21 @@ impl Predicate {
             Predicate::VariantIn(x) => variant_in_matches(event, x),
             Predicate::VariantNotIn(x) => !variant_in_matches(event, x),
             Predicate::PolicyEquals(x) => {
-                output_policy_matches(event, x) || mint_policy_matches(event, x)
+                output_policy_matches(event, x)
+                    || mint_policy_matches(event, x)
+                    || cip25_policy_matches(event, x)
             }
             Predicate::AddressEquals(x) => address_matches(event, x),
             Predicate::AssetEquals(x) => {
-                output_asset_matches(event, x) || mint_asset_matches(event, x)
+                output_asset_matches(event, x)
+                    || mint_asset_matches(event, x)
+                    || cip25_asset_matches(event, x)
             }
             Predicate::MetadataLabelEquals(x) => metadata_label_matches(event, x),
             Predicate::MetadataAnySubLabelEquals(x) => metadata_any_sub_label_matches(event, x),
+            Predicate::VKeyWitnessesIncludes(x) => vkey_witnesses_matches(event, x),
+            Predicate::NativeScriptsIncludes(x) => native_scripts_matches(event, x),
+            Predicate::PlutusScriptsIncludes(x) => plutus_scripts_matches(event, x),
             Predicate::Not(x) => !x.event_matches(event),
             Predicate::AnyOf(x) => x.iter().any(|c| c.event_matches(event)),
             Predicate::AllOf(x) => x.iter().all(|c| c.event_matches(event)),

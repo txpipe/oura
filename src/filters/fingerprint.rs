@@ -87,7 +87,7 @@ impl FingerprintBuilder {
         let slot = self.slot.ok_or("missing slot value")?;
         let prefix = self.prefix.ok_or("missing prefix value")?;
         let hash = murmur3::murmur3_x64_128(&mut Cursor::new(self.hasheable), self.seed)?;
-        Ok(format!("{}.{}.{}", slot, prefix, hash))
+        Ok(format!("{slot}.{prefix}.{hash}"))
     }
 }
 

@@ -63,10 +63,10 @@ async fn index_event<'b>(
         }
         x => {
             if let Ok(body) = response.text().await {
-                log::debug!("error response from ES: {}", body);
+                log::debug!("error response from ES: {body}");
             }
 
-            Err(format!("response with status code {}", x))
+            Err(format!("response with status code {x}"))
         }
     }
 }
@@ -147,7 +147,7 @@ pub fn writer_loop(
                 utils.track_sink_progress(&event);
             }
             Err(err) => {
-                format!("error indexing record in Elasticsearch: {}", err);
+                format!("error indexing record in Elasticsearch: {err}");
                 return Err(err);
             }
         }
