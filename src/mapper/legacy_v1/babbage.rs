@@ -6,7 +6,7 @@ use pallas::ledger::primitives::babbage::{
 };
 
 use pallas::crypto::hash::Hash;
-use pallas::ledger::traverse::OriginalHash;
+use pallas::ledger::traverse::{MultiEraBlock, OriginalHash};
 
 use crate::model::{BlockRecord, Era, TransactionRecord};
 use crate::utils::time::TimeProvider;
@@ -125,27 +125,26 @@ impl EventWriter {
         Ok(record)
     }
 
-    pub fn to_babbage_block_record(
+    pub fn to_block_record(
         &self,
-        source: &MintedBlock,
-        hash: &Hash<32>,
+        source: &MultiEraBlock,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
         let relative_epoch = self
             .utils
             .time
             .as_ref()
-            .map(|time| time.absolute_slot_to_relative(source.header.header_body.slot));
+            .map(|time| time.absolute_slot_to_relative(source.slot()));
 
         let mut record = BlockRecord {
-            era: Era::Babbage,
-            body_size: source.header.header_body.block_body_size as usize,
-            issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
+            era: source.era(),
+            body_size: source.body_size(),
+            issuer_vkey: source.source.header.header_body.issuer_vkey.to_hex(),
             vrf_vkey: source.header.header_body.vrf_vkey.to_hex(),
-            tx_count: source.transaction_bodies.len(),
-            hash: hex::encode(hash),
-            number: source.header.header_body.block_number,
-            slot: source.header.header_body.slot,
+            tx_count: source.tx_count(),
+            hash: source.hash().to_string(),
+            number: source.number(),
+            slot: source.slot(),
             epoch: relative_epoch.map(|(epoch, _)| epoch),
             epoch_slot: relative_epoch.map(|(_, epoch_slot)| epoch_slot),
             previous_hash: source
@@ -155,7 +154,7 @@ impl EventWriter {
                 .map(hex::encode)
                 .unwrap_or_default(),
             cbor_hex: match self.config.include_block_cbor {
-                true => hex::encode(cbor).into(),
+                true => source.encode(),
                 false => None,
             },
             transactions: None,
@@ -324,13 +323,8 @@ impl EventWriter {
         Ok(())
     }
 
-    fn crawl_babbage_block(
-        &self,
-        block: &MintedBlock,
-        hash: &Hash<32>,
-        cbor: &[u8],
-    ) -> Result<(), Error> {
-        let record = self.to_babbage_block_record(block, hash, cbor)?;
+    fn crawl_block(&self, block: &MultiEraBlock, cbor: &[u8]) -> Result<(), Error> {
+        let record = self.to_block_record(block, cbor)?;
 
         self.append(EventData::Block(record.clone()))?;
 
@@ -361,35 +355,25 @@ impl EventWriter {
         Ok(())
     }
 
-    /// Mapper entry-point for decoded Babbage blocks
-    ///
-    /// Entry-point to start crawling a blocks for events. Meant to be used when
-    /// we already have a decoded block (for example, N2C). The raw CBOR is also
-    /// passed through in case we need to attach it to outbound events.
-    pub fn crawl_babbage_with_cbor<'b>(
-        &self,
-        block: &'b MintedBlock<'b>,
-        cbor: &'b [u8],
-    ) -> Result<(), Error> {
-        let hash = block.header.original_hash();
-
-        let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(hash)),
-            block_number: Some(block.header.header_body.block_number),
-            slot: Some(block.header.header_body.slot),
-            timestamp: self.compute_timestamp(block.header.header_body.slot),
-            ..EventContext::default()
-        });
-
-        child.crawl_babbage_block(block, &hash, cbor)
-    }
-
     /// Mapper entry-point for raw Babbage cbor blocks
     ///
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
-    pub fn crawl_from_babbage_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let (_, block): (u16, MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
-        self.crawl_babbage_with_cbor(&block, cbor)
+    pub fn crawl_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
+        let block = pallas::ledger::traverse::MultiEraBlock::decode(cbor).map_err(Error::parse)?;
+
+        let hash = block.hash();
+
+        let child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(hash)),
+            block_number: Some(block.number()),
+            slot: Some(block.slot()),
+            timestamp: self.compute_timestamp(block.slot()),
+            ..EventContext::default()
+        });
+
+        child.crawl_block(&block, cbor);
+
+        Ok(())
     }
 }
