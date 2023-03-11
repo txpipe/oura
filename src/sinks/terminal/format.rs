@@ -1,17 +1,13 @@
-use std::fmt::{Display, Write};
+use std::{
+    fmt::{Display, Write},
+    ops::Deref,
+};
 
 use crossterm::style::{Attribute, Color, Stylize};
+use pallas::network::miniprotocols::Point;
 use unicode_truncate::UnicodeTruncateStr;
 
-use crate::{
-    model::{
-        BlockRecord, CIP15AssetRecord, CIP25AssetRecord, Event, EventData, MetadataRecord,
-        MintRecord, NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord,
-        PlutusRedeemerRecord, PlutusWitnessRecord, TransactionRecord, TxInputRecord,
-        TxOutputRecord, VKeyWitnessRecord,
-    },
-    utils::Utils,
-};
+use crate::{framework::legacy_v1::*, framework::*};
 
 pub struct LogLine {
     prefix: &'static str,
@@ -24,7 +20,7 @@ pub struct LogLine {
 
 impl LogLine {
     fn new_raw(
-        source: &Event,
+        source: &legacy_v1::Event,
         prefix: &'static str,
         color: Color,
         max_width: Option<usize>,
@@ -39,10 +35,12 @@ impl LogLine {
             block_num: source.context.block_number,
         }
     }
-}
 
-impl LogLine {
-    pub fn new(source: &Event, max_width: Option<usize>, utils: &Utils) -> LogLine {
+    pub fn new_from_legacy_v1(
+        source: &legacy_v1::Event,
+        max_width: Option<usize>,
+        adahandle_policy: &str,
+    ) -> LogLine {
         match &source.data {
             EventData::Block(BlockRecord {
                 era,
@@ -123,7 +121,7 @@ impl LogLine {
                 asset,
                 asset_ascii,
                 ..
-            }) if policy == &utils.well_known.adahandle_policy => LogLine::new_raw(
+            }) if policy == adahandle_policy => LogLine::new_raw(
                 source,
                 "$HNDL",
                 Color::DarkGreen,
@@ -336,6 +334,40 @@ impl LogLine {
                 format!("{{ voting key: {voting_key}, stake pub: {stake_pub} }}"),
             ),
         }
+    }
+
+    pub fn new_apply(
+        source: &Record,
+        max_width: Option<usize>,
+        adahandle_policy: &Option<String>,
+    ) -> LogLine {
+        match source {
+            Record::OuraV1Event(evt) => LogLine::new_from_legacy_v1(
+                evt,
+                max_width,
+                adahandle_policy.as_deref().unwrap_or_default(),
+            ),
+            _ => todo!(),
+        }
+    }
+
+    pub fn new_undo(
+        source: &Record,
+        max_width: Option<usize>,
+        adahandle_policy: &Option<String>,
+    ) -> LogLine {
+        match source {
+            Record::OuraV1Event(evt) => LogLine::new_from_legacy_v1(
+                evt,
+                max_width,
+                adahandle_policy.as_deref().unwrap_or_default(),
+            ),
+            _ => todo!(),
+        }
+    }
+
+    pub fn new_reset(point: Point) -> LogLine {
+        todo!()
     }
 }
 

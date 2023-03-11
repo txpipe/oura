@@ -1439,6 +1439,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gasket"
+version = "0.1.0"
+source = "git+https://github.com/construkts/gasket-rs#605dcbcb952ce51ec8d60f4821a071c29023b790"
+dependencies = [
+ "crossbeam",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2267,7 +2277,7 @@ dependencies = [
  "elasticsearch",
  "env_logger",
  "file-rotate",
- "gasket",
+ "gasket 0.1.0",
  "google-cloud-googleapis",
  "google-cloud-pubsub",
  "hex",
@@ -2286,6 +2296,7 @@ dependencies = [
  "serde_json",
  "strum",
  "strum_macros",
+ "thiserror",
  "tokio",
  "unicode-truncate",
 ]
@@ -2310,8 +2321,6 @@ dependencies = [
 [[package]]
 name = "pallas"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dbf8964263ee8b776741a0e25d73475e4d1834ec890d686a05e891f11e7701e"
 dependencies = [
  "pallas-addresses",
  "pallas-codec",
@@ -2320,13 +2329,12 @@ dependencies = [
  "pallas-multiplexer",
  "pallas-primitives",
  "pallas-traverse",
+ "pallas-upstream",
 ]
 
 [[package]]
 name = "pallas-addresses"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8af9e9683d7adb7c45b58bf8949c16af0556214c14b01cac92761b3c221377b9"
 dependencies = [
  "base58",
  "bech32",
@@ -2339,8 +2347,6 @@ dependencies = [
 [[package]]
 name = "pallas-codec"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "848a3cd192a1afa0e8c7121e40e0c5991715722399c51359dbf9246443a649fb"
 dependencies = [
  "hex",
  "minicbor",
@@ -2350,8 +2356,6 @@ dependencies = [
 [[package]]
 name = "pallas-crypto"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3d7e5248d3c81960fa2a1a430edc54d99601cf963ad7a4da8f9e13808d98c7f"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -2364,8 +2368,6 @@ dependencies = [
 [[package]]
 name = "pallas-miniprotocols"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "625e7c774664644f252d2ab2632eaed446239f180e1f03c87ffed2b8ff180f43"
 dependencies = [
  "hex",
  "itertools",
@@ -2378,8 +2380,6 @@ dependencies = [
 [[package]]
 name = "pallas-multiplexer"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e66af1c76d81a6baf905828d2e527f29c7877e33486e4f955a90d93b357636bf"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -2393,8 +2393,6 @@ dependencies = [
 [[package]]
 name = "pallas-primitives"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "286a2d69437c9b3deaa58b8832edce3b80868ca6afeee8aff7d78f338ada9854"
 dependencies = [
  "base58",
  "bech32",
@@ -2409,8 +2407,6 @@ dependencies = [
 [[package]]
 name = "pallas-traverse"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "519f950d87a031770d302fdd510dc0b744c283b65d99a1a9896f399122a9c182"
 dependencies = [
  "hex",
  "pallas-addresses",
@@ -2418,6 +2414,22 @@ dependencies = [
  "pallas-crypto",
  "pallas-primitives",
  "thiserror",
+]
+
+[[package]]
+name = "pallas-upstream"
+version = "0.18.0"
+dependencies = [
+ "gasket 0.1.0 (git+https://github.com/construkts/gasket-rs)",
+ "pallas-codec",
+ "pallas-crypto",
+ "pallas-miniprotocols",
+ "pallas-multiplexer",
+ "pallas-traverse",
+ "rayon",
+ "serde",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]
@@ -2670,6 +2682,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rayon"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d2df5196e37bcc87abebc0053e20787d73847bb33134a69841207dd0a47f03b"
+dependencies = [
+ "either",
+ "rayon-core",
+]
+
+[[package]]
+name = "rayon-core"
+version = "1.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b8f95bd6966f5c87776639160a66bd8ab9895d9d4ab01ddba9fc60661aebe8d"
+dependencies = [
+ "crossbeam-channel",
+ "crossbeam-deque",
+ "crossbeam-utils",
+ "num_cpus",
 ]
 
 [[package]]

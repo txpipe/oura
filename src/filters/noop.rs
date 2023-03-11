@@ -1,26 +1,64 @@
 //! A noop filter used as example and placeholder for other filters
 
-use std::thread;
-
 use serde::Deserialize;
 
-use crate::pipelining::{
-    new_inter_stage_channel, FilterProvider, PartialBootstrapResult, StageReceiver,
-};
+use crate::framework::*;
 
-#[derive(Debug, Deserialize)]
+#[derive(Default)]
+struct Worker {
+    msg_count: gasket::metrics::Counter,
+    input: FilterInputPort,
+    output: FilterOutputPort,
+}
+
+impl gasket::runtime::Worker for Worker {
+    fn metrics(&self) -> gasket::metrics::Registry {
+        gasket::metrics::Builder::new()
+            .with_counter("msg_count", &self.msg_count)
+            .build()
+    }
+
+    fn work(&mut self) -> gasket::runtime::WorkResult {
+        let msg = self.input.recv_or_idle()?;
+        self.output.send(msg)?;
+
+        Ok(gasket::runtime::WorkOutcome::Partial)
+    }
+}
+
+pub struct Runtime {
+    worker_tether: gasket::runtime::Tether,
+}
+
+pub struct Bootstrapper(Worker);
+
+impl Bootstrapper {
+    pub fn borrow_input_port(&mut self) -> &mut FilterInputPort {
+        &mut self.0.input
+    }
+
+    pub fn borrow_output_port(&mut self) -> &mut FilterOutputPort {
+        &mut self.0.output
+    }
+
+    pub fn spawn(self) -> Result<Runtime, Error> {
+        let worker_tether = gasket::runtime::spawn_stage(
+            self.0,
+            gasket::runtime::Policy::default(),
+            Some("filter_noop"),
+        );
+
+        Ok(Runtime { worker_tether })
+    }
+}
+
+#[derive(Deserialize)]
 pub struct Config {}
 
-impl FilterProvider for Config {
-    fn bootstrap(&self, input: StageReceiver) -> PartialBootstrapResult {
-        let (output_tx, output_rx) = new_inter_stage_channel(None);
+impl Config {
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
+        let worker = Worker::default();
 
-        let handle = thread::spawn(move || {
-            for msg in input.iter() {
-                output_tx.send(msg).expect("error sending filter message");
-            }
-        });
-
-        Ok((handle, output_rx))
+        Ok(Bootstrapper(worker))
     }
 }

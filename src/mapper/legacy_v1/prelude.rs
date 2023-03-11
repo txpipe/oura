@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
+    framework::StageSender,
     model::{Era, Event, EventContext, EventData},
-    pipelining::StageSender,
     utils::{time::TimeProvider, Utils},
 };
 

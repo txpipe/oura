@@ -1,43 +1,19 @@
 use clap;
-use oura::{bootstrap, crosscut, filter, mapper, sinks, sources};
+use oura::{
+    bootstrap, crosscut, filter, filters,
+    framework::{ChainConfig, Context},
+    mapper, sinks, sources,
+};
 use serde::Deserialize;
 use std::time::Duration;
 
 use crate::console;
 
 #[derive(Deserialize)]
-#[serde(tag = "type")]
-pub enum ChainConfig {
-    Mainnet,
-    Testnet,
-    PreProd,
-    Preview,
-    Custom(crosscut::ChainWellKnownInfo),
-}
-
-impl Default for ChainConfig {
-    fn default() -> Self {
-        Self::Mainnet
-    }
-}
-
-impl From<ChainConfig> for crosscut::ChainWellKnownInfo {
-    fn from(other: ChainConfig) -> Self {
-        match other {
-            ChainConfig::Mainnet => crosscut::ChainWellKnownInfo::mainnet(),
-            ChainConfig::Testnet => crosscut::ChainWellKnownInfo::testnet(),
-            ChainConfig::PreProd => crosscut::ChainWellKnownInfo::preprod(),
-            ChainConfig::Preview => crosscut::ChainWellKnownInfo::preview(),
-            ChainConfig::Custom(x) => x,
-        }
-    }
-}
-
-#[derive(Deserialize)]
 struct ConfigRoot {
     source: sources::Config,
-    filter: Option<filter::Config>,
-    mapper: Vec<mapper::Config>,
+    filter: Option<filters::Config>,
+    mapper: Vec<mappers::Config>,
     sink: sinks::Config,
     intersect: crosscut::IntersectConfig,
     finalize: Option<crosscut::FinalizeConfig>,
@@ -97,6 +73,32 @@ fn shutdown(pipeline: bootstrap::Pipeline) {
     }
 }
 
+pub fn bootstrap(
+    source: sources::Bootstrapper,
+    filter: filters::Bootstrapper,
+    mapper: mappers::Bootstrapper,
+    sink: sinks::Bootstrapper,
+) -> Runtime {
+    let source_output = source.borrow_output_port();
+    let filter_input = filter.borrow_input_port();
+    gasket::messaging::connect_ports(source_output, filters_input, 100);
+
+    let filter_output = filter.borrow_output_port();
+    let mapper_input = mapper.borrow_input_port();
+    gasket::messaging::connect_ports(filter_output, mapper_output, 100);
+
+    let mapper_output = mapper.borrow_output_port();
+    let sink_input = sink.borrow_input_port();
+    gasket::messaging::connect_ports(mapper_output, sink_output, 100);
+
+    Runtime {
+        source: source.spawn(),
+        filter: filter.spawn(),
+        mapper: mapper.spawn(),
+        sink: sink.spawn(),
+    }
+}
+
 pub fn run(args: &Args) -> Result<(), oura::Error> {
     console::initialize(&args.console);
 
@@ -105,18 +107,17 @@ pub fn run(args: &Args) -> Result<(), oura::Error> {
 
     let chain = config.chain.unwrap_or_default().into();
     let policy = config.policy.unwrap_or_default().into();
+    let intersect = config.intersect;
+    let finalize = config.finalize;
 
-    let source = config
-        .source
-        .bootstrapper(&chain, &config.intersect, &config.finalize, &policy);
+    let context = Context { chain }; //, policy, intersect, finalize);
 
-    let filter = config.filter.unwrap_or_default().bootstrapper(&policy);
+    let source = config.source.bootstrapper(&ctx);
+    let filter = config.filter.unwrap_or_default().bootstrapper(&ctx);
+    let mapper = config.mapper.unwrap_or_default().bootstrapper(&ctx);
+    let sink = config.sink.bootstrapper(&ctx);
 
-    let mapper = config.mapper.unwrap_or_default().bootstrapper(&policy);
-
-    let sink = config.sink.plugin(&chain, &config.intersect, &policy);
-
-    let pipeline = bootstrap::build(source, filter, mapper, sink)?;
+    let runtime = bootstrap(source, filter, mapper, sink);
 
     log::info!("oura is running...");
 
