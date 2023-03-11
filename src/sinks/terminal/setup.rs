@@ -1,37 +1,56 @@
-use std::time::Duration;
-
 use serde::Deserialize;
+use std::io::stdout;
 
-use crate::{
-    pipelining::{BootstrapResult, SinkProvider, StageReceiver},
-    utils::WithUtils,
-};
+use crate::framework::*;
 
-use super::run::reducer_loop;
+use super::run::Worker;
 
-const THROTTLE_MIN_SPAN_MILLIS: u64 = 300;
+pub struct Runtime {
+    worker_tether: gasket::runtime::Tether,
+}
+
+pub struct Bootstrapper(Worker);
+
+impl Bootstrapper {
+    pub fn borrow_input_port(&mut self) -> &mut MapperInputPort {
+        &mut self.0.input
+    }
+
+    pub fn borrow_output_port(&mut self) -> &mut MapperOutputPort {
+        &mut self.0.output
+    }
+
+    pub fn spawn(self) -> Result<Runtime, Error> {
+        let worker_tether = gasket::runtime::spawn_stage(
+            self.0,
+            gasket::runtime::Policy::default(),
+            Some("sink_terminal"),
+        );
+
+        Ok(Runtime { worker_tether })
+    }
+}
 
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
     pub throttle_min_span_millis: Option<u64>,
     pub wrap: Option<bool>,
+    pub adahandle_policy: Option<String>,
 }
 
-impl SinkProvider for WithUtils<Config> {
-    fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
-        let throttle_min_span = Duration::from_millis(
-            self.inner
-                .throttle_min_span_millis
-                .unwrap_or(THROTTLE_MIN_SPAN_MILLIS),
-        );
+impl Config {
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
+        let worker = Worker {
+            stdout: stdout(),
+            throttle: self.throttle_min_span_millis.into(),
+            wrap: self.wrap.unwrap_or(false),
+            adahandle_policy: self.adahandle_policy,
+            msg_count: Default::default(),
+            input: Default::default(),
+            output: Default::default(),
+            cursor: ctx.cursor.clone(),
+        };
 
-        let wrap = self.inner.wrap.unwrap_or(false);
-        let utils = self.utils.clone();
-
-        let handle = std::thread::spawn(move || {
-            reducer_loop(throttle_min_span, wrap, input, utils).expect("terminal sink loop failed");
-        });
-
-        Ok(handle)
+        Ok(Bootstrapper(worker))
     }
 }

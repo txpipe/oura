@@ -1,54 +1,82 @@
-use std::sync::Arc;
-use std::time::Duration;
-
-use crate::pipelining::StageReceiver;
-use crate::utils::throttle::Throttle;
-use crate::utils::Utils;
-
-pub type Error = Box<dyn std::error::Error>;
-
 use crossterm::style::{Color, Print, Stylize};
 use crossterm::ExecutableCommand;
-use std::io::stdout;
+use gasket::error::AsWorkError;
+use pallas::network::upstream::cursor::Cursor;
+use std::io::Stdout;
+
+use crate::framework::*;
 
 use super::format::*;
+use super::throttle::Throttle;
 
-pub fn reducer_loop(
-    throttle_min_span: Duration,
+pub struct Worker {
+    msg_count: gasket::metrics::Counter,
+    stdout: Stdout,
+    throttle: Throttle,
     wrap: bool,
-    input: StageReceiver,
-    utils: Arc<Utils>,
-) -> Result<(), Error> {
-    let mut stdout = stdout();
+    adahandle_policy: Option<String>,
+    cursor: Cursor,
+    pub input: MapperInputPort,
+    pub output: MapperOutputPort,
+}
 
-    let mut throttle = Throttle::new(throttle_min_span);
-
-    stdout.execute(Print(
-        "Oura terminal output started, waiting for chain data\n".with(Color::DarkGrey),
-    ))?;
-
-    for evt in input.iter() {
-        let width = match wrap {
-            true => None,
-            false => Some(crossterm::terminal::size()?.0 as usize),
-        };
-
-        throttle.wait_turn();
-        let line = LogLine::new(&evt, width, &utils);
-
-        let result = stdout.execute(Print(line));
-
-        match result {
-            Ok(_) => {
-                // notify progress to the pipeline
-                utils.track_sink_progress(&evt);
-            }
-            Err(err) => {
-                log::error!("error writing to terminal: {}", err);
-                return Err(Box::new(err));
-            }
+impl Worker {
+    fn compute_terminal_width(&self) -> Option<usize> {
+        if !self.wrap {
+            return None;
         }
+
+        if let Ok((x, y)) = crossterm::terminal::size() {
+            return Some(x as usize);
+        }
+
+        None
+    }
+}
+
+impl gasket::runtime::Worker for Worker {
+    fn metrics(&self) -> gasket::metrics::Registry {
+        gasket::metrics::Builder::new()
+            .with_counter("msg_count", &self.msg_count)
+            .build()
     }
 
-    Ok(())
+    fn bootstrap(&mut self) -> Result<(), gasket::error::Error> {
+        self.stdout
+            .execute(Print(
+                "Oura terminal output started, waiting for chain data\n".with(Color::DarkGrey),
+            ))
+            .or_panic();
+
+        Ok(())
+    }
+
+    fn work(&mut self) -> gasket::runtime::WorkResult {
+        let msg = self.input.recv_or_idle()?;
+
+        let width = self.compute_terminal_width();
+
+        let (point, line) = match msg.payload {
+            ChainEvent::Apply(point, record) => {
+                let line = LogLine::new_apply(&record, width, &self.adahandle_policy);
+                (point, line)
+            }
+            ChainEvent::Undo(point, record) => {
+                let line = LogLine::new_undo(&record, width, &self.adahandle_policy);
+                (point, line)
+            }
+            ChainEvent::Reset(point) => {
+                let line = LogLine::new_reset(point);
+                (point, line)
+            }
+        };
+
+        self.stdout.execute(Print(line)).or_panic()?;
+
+        self.cursor.add_breadcrumb(point);
+
+        self.throttle.wait_turn();
+
+        Ok(gasket::runtime::WorkOutcome::Partial)
+    }
 }

@@ -469,50 +469,6 @@ impl EventWriter {
         Ok(record)
     }
 
-    pub fn to_block_record(
-        &self,
-        source: &MintedBlock,
-        hash: &Hash<32>,
-        cbor: &[u8],
-        era: Era,
-    ) -> Result<BlockRecord, Error> {
-        let relative_epoch = self
-            .utils
-            .time
-            .as_ref()
-            .map(|time| time.absolute_slot_to_relative(source.header.header_body.slot));
-
-        let mut record = BlockRecord {
-            era,
-            body_size: source.header.header_body.block_body_size as usize,
-            issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
-            vrf_vkey: source.header.header_body.vrf_vkey.to_hex(),
-            tx_count: source.transaction_bodies.len(),
-            hash: hex::encode(hash),
-            number: source.header.header_body.block_number,
-            slot: source.header.header_body.slot,
-            epoch: relative_epoch.map(|(epoch, _)| epoch),
-            epoch_slot: relative_epoch.map(|(_, epoch_slot)| epoch_slot),
-            previous_hash: source
-                .header
-                .header_body
-                .prev_hash
-                .map(hex::encode)
-                .unwrap_or_default(),
-            cbor_hex: match self.config.include_block_cbor {
-                true => hex::encode(cbor).into(),
-                false => None,
-            },
-            transactions: None,
-        };
-
-        if self.config.include_block_details {
-            record.transactions = Some(self.collect_shelley_tx_records(source)?);
-        }
-
-        Ok(record)
-    }
-
     pub(crate) fn append_rollback_event(&self, point: &Point) -> Result<(), Error> {
         let data = match point {
             Point::Origin => EventData::RollBack {
