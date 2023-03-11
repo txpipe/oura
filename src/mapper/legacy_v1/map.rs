@@ -1,18 +1,17 @@
 use std::collections::HashMap;
 
-use pallas::{
-    codec::{minicbor::bytes::ByteVec, utils::KeepRaw},
-    crypto::hash::Hash,
-    ledger::primitives::babbage::DatumOption,
-};
+use pallas::ledger::primitives::alonzo::MintedWitnessSet;
+use pallas::ledger::primitives::babbage::MintedDatumOption;
+use pallas::ledger::traverse::{ComputeHash, OriginalHash};
+use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
 
 use pallas::ledger::primitives::{
     alonzo::{
         self as alonzo, AuxiliaryData, Certificate, InstantaneousRewardSource,
         InstantaneousRewardTarget, Metadatum, MetadatumLabel, MintedBlock, NetworkId, Relay,
-        TransactionBody, TransactionInput, TransactionWitnessSet, Value,
+        TransactionBody, TransactionInput, Value,
     },
-    babbage, ToCanonicalJson, ToHash,
+    babbage, ToCanonicalJson,
 };
 
 use pallas::network::miniprotocols::Point;
@@ -75,12 +74,12 @@ fn relay_to_string(relay: &Relay) -> String {
             };
 
             match port {
-                Some(port) => format!("{}:{}", ip, port),
+                Some(port) => format!("{ip}:{port}"),
                 None => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
-            Some(port) => format!("{}:{}", host, port),
+            Some(port) => format!("{host}:{port}"),
             None => host.clone(),
         },
         Relay::MultiHostName(host) => host.clone(),
@@ -101,8 +100,8 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
 
 fn get_tx_output_coin_value(amount: &Value) -> u64 {
     match amount {
-        Value::Coin(x) => x.into(),
-        Value::Multiasset(x, _) => x.into(),
+        Value::Coin(x) => *x,
+        Value::Multiasset(x, _) => *x,
     }
 }
 
@@ -144,7 +143,7 @@ impl EventWriter {
         value: &Metadatum,
     ) -> Result<MetadataRecord, Error> {
         let data = MetadataRecord {
-            label: u64::from(label).to_string(),
+            label: label.to_string(),
             content: match value {
                 Metadatum::Int(x) => MetadatumRendition::IntScalar(i128::from(*x)),
                 Metadatum::Bytes(x) => MetadatumRendition::BytesHex(hex::encode(x.as_slice())),
@@ -170,30 +169,34 @@ impl EventWriter {
         &self,
         output: &alonzo::TransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
+        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+
         Ok(TxOutputRecord {
-            address: self
-                .utils
-                .bech32
-                .encode_address(output.address.as_slice())?,
+            address: address.to_string(),
             amount: get_tx_output_coin_value(&output.amount),
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
+            inline_datum: None,
         })
     }
 
     pub fn to_post_alonzo_output_record(
         &self,
-        output: &babbage::PostAlonzoTransactionOutput,
+        output: &babbage::MintedPostAlonzoTransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
+        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+
         Ok(TxOutputRecord {
-            address: self
-                .utils
-                .bech32
-                .encode_address(output.address.as_slice())?,
+            address: address.to_string(),
             amount: get_tx_output_coin_value(&output.value),
             assets: self.collect_asset_records(&output.value).into(),
-            datum_hash: match output.datum_option {
-                Some(DatumOption::Hash(x)) => Some(x.to_string()),
+            datum_hash: match &output.datum_option {
+                Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
+                Some(MintedDatumOption::Data(x)) => Some(x.original_hash().to_hex()),
+                None => None,
+            },
+            inline_datum: match &output.datum_option {
+                Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)?),
                 _ => None,
             },
         })
@@ -201,8 +204,8 @@ impl EventWriter {
 
     pub fn to_transaction_output_asset_record(
         &self,
-        policy: &ByteVec,
-        asset: &ByteVec,
+        policy: &Hash<28>,
+        asset: &pallas::codec::utils::Bytes,
         amount: u64,
     ) -> OutputAssetRecord {
         OutputAssetRecord {
@@ -213,7 +216,12 @@ impl EventWriter {
         }
     }
 
-    pub fn to_mint_record(&self, policy: &ByteVec, asset: &ByteVec, quantity: i64) -> MintRecord {
+    pub fn to_mint_record(
+        &self,
+        policy: &Hash<28>,
+        asset: &pallas::codec::utils::Bytes,
+        quantity: i64,
+    ) -> MintRecord {
         MintRecord {
             policy: policy.to_hex(),
             asset: asset.to_hex(),
@@ -223,14 +231,14 @@ impl EventWriter {
 
     pub fn to_aux_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
         EventData::NativeScript {
-            policy_id: script.to_hash().to_hex(),
+            policy_id: script.compute_hash().to_hex(),
             script: script.to_json(),
         }
     }
 
     pub fn to_aux_plutus_script_event(&self, script: &alonzo::PlutusScript) -> EventData {
         EventData::PlutusScript {
-            hash: script.to_hash().to_hex(),
+            hash: script.compute_hash().to_hex(),
             data: script.0.to_hex(),
         }
     }
@@ -255,10 +263,10 @@ impl EventWriter {
 
     pub fn to_plutus_datum_record(
         &self,
-        datum: &alonzo::PlutusData,
+        datum: &KeepRaw<'_, alonzo::PlutusData>,
     ) -> Result<PlutusDatumRecord, crate::Error> {
         Ok(PlutusDatumRecord {
-            datum_hash: datum.to_hash().to_hex(),
+            datum_hash: datum.original_hash().to_hex(),
             plutus_data: datum.to_json(),
         })
     }
@@ -268,7 +276,7 @@ impl EventWriter {
         script: &alonzo::PlutusScript,
     ) -> Result<PlutusWitnessRecord, crate::Error> {
         Ok(PlutusWitnessRecord {
-            script_hash: script.to_hash().to_hex(),
+            script_hash: script.compute_hash().to_hex(),
             script_hex: script.as_ref().to_hex(),
         })
     }
@@ -278,7 +286,7 @@ impl EventWriter {
         script: &babbage::PlutusV2Script,
     ) -> Result<PlutusWitnessRecord, crate::Error> {
         Ok(PlutusWitnessRecord {
-            script_hash: script.to_hash().to_hex(),
+            script_hash: script.compute_hash().to_hex(),
             script_hex: script.as_ref().to_hex(),
         })
     }
@@ -288,7 +296,7 @@ impl EventWriter {
         script: &alonzo::NativeScript,
     ) -> Result<NativeWitnessRecord, crate::Error> {
         Ok(NativeWitnessRecord {
-            policy_id: script.to_hash().to_hex(),
+            policy_id: script.compute_hash().to_hex(),
             script_json: script.to_json(),
         })
     }
@@ -328,8 +336,8 @@ impl EventWriter {
             } => EventData::PoolRegistration {
                 operator: operator.to_hex(),
                 vrf_keyhash: vrf_keyhash.to_hex(),
-                pledge: pledge.into(),
-                cost: cost.into(),
+                pledge: *pledge,
+                cost: *cost,
                 margin: (margin.numerator as f64 / margin.denominator as f64),
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
@@ -353,7 +361,7 @@ impl EventWriter {
                         _ => None,
                     },
                     to_other_pot: match move_.target {
-                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x.into()),
+                        InstantaneousRewardTarget::OtherAccountingPot(x) => Some(x),
                         _ => None,
                     },
                 }
@@ -374,7 +382,7 @@ impl EventWriter {
         &self,
         body: &KeepRaw<TransactionBody>,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> usize {
         body.raw_cbor().len()
             + aux_data.map(|ax| ax.raw_cbor().len()).unwrap_or(2)
@@ -386,7 +394,7 @@ impl EventWriter {
         body: &KeepRaw<TransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> Result<TransactionRecord, Error> {
         let mut record = TransactionRecord {
             hash: tx_hash.to_owned(),
@@ -449,7 +457,7 @@ impl EventWriter {
                     .into();
 
                 record.plutus_data = self
-                    .collect_plutus_datum_records(&witnesses.plutus_data)?
+                    .collect_witness_plutus_datum_records(&witnesses.plutus_data)?
                     .into();
             }
 
@@ -478,6 +486,7 @@ impl EventWriter {
             era,
             body_size: source.header.header_body.block_body_size as usize,
             issuer_vkey: source.header.header_body.issuer_vkey.to_hex(),
+            vrf_vkey: source.header.header_body.vrf_vkey.to_hex(),
             tx_count: source.transaction_bodies.len(),
             hash: hex::encode(hash),
             number: source.header.header_body.block_number,
@@ -512,7 +521,7 @@ impl EventWriter {
             },
             Point::Specific(slot, hash) => EventData::RollBack {
                 block_slot: *slot,
-                block_hash: hex::encode(&hash),
+                block_hash: hex::encode(hash),
             },
         };
 

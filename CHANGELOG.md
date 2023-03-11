@@ -2,8 +2,98 @@
 ## [Unreleased]
 
 
-<a name="1.7.0"></a>
-## [1.7.0] - 2022-09-10
+<a name="v1.8.1"></a>
+## [v1.8.1] - 2023-02-04
+### Features
+- Send inline datum as new events ([#539](https://github.com/txpipe/oura/issues/539))
+
+### Bug Fixes
+- Use correct bytes for Byron addresses ([#537](https://github.com/txpipe/oura/issues/537))
+- Use original cbor to define inline datum hash ([#538](https://github.com/txpipe/oura/issues/538))
+
+### Docs
+- Add missing GCP PubSub item to index ([#534](https://github.com/txpipe/oura/issues/534))
+
+### Chore
+- Fix build badge ([#533](https://github.com/txpipe/oura/issues/533))
+
+
+<a name="v1.8.0"></a>
+## [v1.8.0] - 2023-01-30
+### Features
+- Add vrf_key to block event data ([#489](https://github.com/txpipe/oura/issues/489))
+- Expose collateral data ([#495](https://github.com/txpipe/oura/issues/495))
+
+### Bug Fixes
+- Fix byron address string representation ([#530](https://github.com/txpipe/oura/issues/530))
+- Compute datum hash for inline values ([#529](https://github.com/txpipe/oura/issues/529))
+- Fix time calculation for preview / preprod ([#528](https://github.com/txpipe/oura/issues/528))
+- Evaluate CIP25 policy / asset in selection filter ([#498](https://github.com/txpipe/oura/issues/498))
+- **gcp:** Switch to pubsub lib that handles token refresh ([#512](https://github.com/txpipe/oura/issues/512))
+
+### Docs
+- Fix typos across the board ([#523](https://github.com/txpipe/oura/issues/523))
+- Fix Transaction ID typo in data dictionary
+
+### Code Refactoring
+- Switch to Pallas v0.17 (huge change) ([#527](https://github.com/txpipe/oura/issues/527))
+
+### Chore
+- Upgrade Debian base image in Dockerfile ([#520](https://github.com/txpipe/oura/issues/520))
+- Fix remaining lint warnings ([#531](https://github.com/txpipe/oura/issues/531))
+- **deps:** bump tokio from 1.21.0 to 1.24.2 ([#510](https://github.com/txpipe/oura/issues/510))
+- **deps:** bump docker/login-action from 1 to 2 in /.github/workflows ([#516](https://github.com/txpipe/oura/issues/516))
+- **deps:** bump actions/setup-go from 2 to 3 in /.github/workflows ([#477](https://github.com/txpipe/oura/issues/477))
+- **deps:** bump actions/cache in /.github/workflows ([#514](https://github.com/txpipe/oura/issues/514))
+- **deps:** bump env_logger from 0.9.1 to 0.10.0 ([#518](https://github.com/txpipe/oura/issues/518))
+- **deps:** bump actions/upload-artifact in /.github/workflows ([#517](https://github.com/txpipe/oura/issues/517))
+- **deps:** bump docker/setup-buildx-action in /.github/workflows ([#515](https://github.com/txpipe/oura/issues/515))
+- **deps:** bump openssl from 0.10.42 to 0.10.45 ([#513](https://github.com/txpipe/oura/issues/513))
+- **deps:** bump actions/checkout from 2 to 3 in /.github/workflows ([#479](https://github.com/txpipe/oura/issues/479))
+- **deps:** bump docker/metadata-action in /.github/workflows ([#476](https://github.com/txpipe/oura/issues/476))
+- **deps:** bump serde from 1.0.145 to 1.0.152 ([#503](https://github.com/txpipe/oura/issues/503))
+- **deps:** bump docker/build-push-action in /.github/workflows ([#480](https://github.com/txpipe/oura/issues/480))
+- **deps:** bump azure/setup-kubectl in /.github/workflows ([#508](https://github.com/txpipe/oura/issues/508))
+- **deps:** bump actions/download-artifact in /.github/workflows ([#478](https://github.com/txpipe/oura/issues/478))
+- **deps:** bump file-rotate from 0.7.0 to 0.7.1 ([#458](https://github.com/txpipe/oura/issues/458))
+- **deps:** bump serde_json from 1.0.85 to 1.0.89 ([#475](https://github.com/txpipe/oura/issues/475))
+
+
+<a name="v1.7.3"></a>
+## [v1.7.3] - 2022-11-16
+### Bug Fixes
+- Bump Pallas to fix Plutus data issue ([#469](https://github.com/txpipe/oura/issues/469))
+
+### Continuous Integration
+- Update broken e2e tests ([#470](https://github.com/txpipe/oura/issues/470))
+
+
+<a name="v1.7.2"></a>
+## [v1.7.2] - 2022-10-18
+### Docks
+- Fix small typo in proposed filename ([#448](https://github.com/txpipe/oura/issues/448))
+
+### Bug Fixes
+- Upgrade Pallas to fix CBOR issue ([#460](https://github.com/txpipe/oura/issues/460))
+
+### Chore
+- **deps:** bump openssl from 0.10.41 to 0.10.42 ([#440](https://github.com/txpipe/oura/issues/440))
+- **deps:** bump murmur3 from 0.5.1 to 0.5.2 ([#449](https://github.com/txpipe/oura/issues/449))
+- **deps:** bump reqwest from 0.11.11 to 0.11.12 ([#436](https://github.com/txpipe/oura/issues/436))
+- **deps:** bump serde from 1.0.144 to 1.0.145 ([#439](https://github.com/txpipe/oura/issues/439))
+- **deps:** bump clap from 3.2.20 to 3.2.22 ([#433](https://github.com/txpipe/oura/issues/433))
+- **deps:** bump env_logger from 0.9.0 to 0.9.1 ([#434](https://github.com/txpipe/oura/issues/434))
+
+
+<a name="v1.7.1"></a>
+## [v1.7.1] - 2022-09-13
+### Bug Fixes
+- Apply missing selection filters at Tx level ([#430](https://github.com/txpipe/oura/issues/430))
+- **terminal:** Be aware of UTF-8 chars when truncating output ([#431](https://github.com/txpipe/oura/issues/431))
+
+
+<a name="v1.7.0"></a>
+## [v1.7.0] - 2022-09-10
 ### Features
 - Add transaction size value to TransactionRecord ([#403](https://github.com/txpipe/oura/issues/403))
 - Add cardano2dgraph testdrive example ([#395](https://github.com/txpipe/oura/issues/395))
@@ -593,17 +683,16 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 ## [v0.3.1-docker3] - 2021-12-12
 ### Continuous Integration
 - remove extra container platforms to speed up workflow
+
+
+<a name="v0.3.1-docker2"></a>
+## [v0.3.1-docker2] - 2021-12-12
+### Continuous Integration
 - add docker build to release workflow
 
 
 <a name="v0.3.1-docker"></a>
 ## [v0.3.1-docker] - 2021-12-12
-### Continuous Integration
-- add docker build to release workflow
-
-
-<a name="v0.3.1-docker2"></a>
-## [v0.3.1-docker2] - 2021-12-12
 ### Continuous Integration
 - add docker build to release workflow
 
@@ -678,8 +767,13 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 - fix lint issues
 
 
-[Unreleased]: https://github.com/txpipe/oura/compare/1.7.0...HEAD
-[1.7.0]: https://github.com/txpipe/oura/compare/v1.6.0...1.7.0
+[Unreleased]: https://github.com/txpipe/oura/compare/v1.8.1...HEAD
+[v1.8.1]: https://github.com/txpipe/oura/compare/v1.8.0...v1.8.1
+[v1.8.0]: https://github.com/txpipe/oura/compare/v1.7.3...v1.8.0
+[v1.7.3]: https://github.com/txpipe/oura/compare/v1.7.2...v1.7.3
+[v1.7.2]: https://github.com/txpipe/oura/compare/v1.7.1...v1.7.2
+[v1.7.1]: https://github.com/txpipe/oura/compare/v1.7.0...v1.7.1
+[v1.7.0]: https://github.com/txpipe/oura/compare/v1.6.0...v1.7.0
 [v1.6.0]: https://github.com/txpipe/oura/compare/v1.5.3...v1.6.0
 [v1.5.3]: https://github.com/txpipe/oura/compare/v1.5.2...v1.5.3
 [v1.5.2]: https://github.com/txpipe/oura/compare/v1.5.1...v1.5.2
@@ -709,9 +803,9 @@ Configuration keys for the 'Selection' filter changed to reflect new metadata st
 [v0.3.4]: https://github.com/txpipe/oura/compare/v0.3.3...v0.3.4
 [v0.3.3]: https://github.com/txpipe/oura/compare/v0.3.2...v0.3.3
 [v0.3.2]: https://github.com/txpipe/oura/compare/v0.3.1-docker3...v0.3.2
-[v0.3.1-docker3]: https://github.com/txpipe/oura/compare/v0.3.1-docker...v0.3.1-docker3
-[v0.3.1-docker]: https://github.com/txpipe/oura/compare/v0.3.1-docker2...v0.3.1-docker
-[v0.3.1-docker2]: https://github.com/txpipe/oura/compare/v0.3.1...v0.3.1-docker2
+[v0.3.1-docker3]: https://github.com/txpipe/oura/compare/v0.3.1-docker2...v0.3.1-docker3
+[v0.3.1-docker2]: https://github.com/txpipe/oura/compare/v0.3.1-docker...v0.3.1-docker2
+[v0.3.1-docker]: https://github.com/txpipe/oura/compare/v0.3.1...v0.3.1-docker
 [v0.3.1]: https://github.com/txpipe/oura/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/txpipe/oura/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/txpipe/oura/compare/v0.1.0...v0.2.0

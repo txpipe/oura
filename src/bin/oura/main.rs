@@ -20,7 +20,7 @@ fn main() {
     };
 
     if let Err(err) = &result {
-        eprintln!("ERROR: {:#?}", err);
+        eprintln!("ERROR: {err:#?}");
         process::exit(1);
     }
 

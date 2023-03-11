@@ -26,6 +26,7 @@
     - [AWS SQS](./sinks/aws_sqs.md)
     - [AWS Lambda](./sinks/aws_lambda.md)
     - [AWS S3](./sinks/aws_s3.md)
+    - [GCP PubSub](./sinks/gcp_pubsub.md)
     - [Redis Streams](./sinks/redis_streams.md)
 - [Reference](reference/README.md)
     - [Data Dictionary](./reference/data_dictionary.md)

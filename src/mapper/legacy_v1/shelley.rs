@@ -1,12 +1,12 @@
 use pallas::codec::utils::KeepRaw;
-use pallas::ledger::primitives::ToHash;
 
 use pallas::ledger::primitives::alonzo::{
-    AuxiliaryData, Certificate, Metadata, MintedBlock, Multiasset, TransactionBody,
-    TransactionInput, TransactionOutput, TransactionWitnessSet, Value,
+    AuxiliaryData, Certificate, Metadata, MintedBlock, MintedWitnessSet, Multiasset,
+    TransactionBody, TransactionInput, TransactionOutput, Value,
 };
 
 use pallas::crypto::hash::Hash;
+use pallas::ledger::traverse::OriginalHash;
 
 use crate::{
     model::{Era, EventContext, EventData},
@@ -21,7 +21,7 @@ impl EventWriter {
             let record = self.to_metadata_record(label, content)?;
             self.append_from(record)?;
 
-            match u64::from(label) {
+            match label {
                 721u64 => self.crawl_metadata_label_721(content)?,
                 61284u64 => self.crawl_metadata_label_61284(content)?,
                 _ => (),
@@ -75,11 +75,9 @@ impl EventWriter {
         if let Value::Multiasset(_, policies) = amount {
             for (policy, assets) in policies.iter() {
                 for (asset, amount) in assets.iter() {
-                    self.append_from(self.to_transaction_output_asset_record(
-                        policy,
-                        asset,
-                        amount.into(),
-                    ))?;
+                    self.append_from(
+                        self.to_transaction_output_asset_record(policy, asset, *amount),
+                    )?;
                 }
             }
         }
@@ -91,12 +89,10 @@ impl EventWriter {
         let record = self.to_legacy_output_record(output)?;
         self.append(record.into())?;
 
+        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+
         let child = &self.child_writer(EventContext {
-            output_address: self
-                .utils
-                .bech32
-                .encode_address(output.address.as_slice())?
-                .into(),
+            output_address: address.to_string().into(),
             ..EventContext::default()
         });
 
@@ -132,7 +128,7 @@ impl EventWriter {
 
     pub(crate) fn crawl_witness_set(
         &self,
-        witness_set: &TransactionWitnessSet,
+        witness_set: &KeepRaw<MintedWitnessSet>,
     ) -> Result<(), Error> {
         if let Some(native) = &witness_set.native_script {
             for script in native.iter() {
@@ -166,7 +162,7 @@ impl EventWriter {
         tx: &KeepRaw<TransactionBody>,
         tx_hash: &str,
         aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<TransactionWitnessSet>>,
+        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
     ) -> Result<(), Error> {
         let record = self.to_transaction_record(tx, tx_hash, aux_data, witness_set)?;
 
@@ -248,7 +244,7 @@ impl EventWriter {
 
             let witness_set = block.transaction_witness_sets.get(idx);
 
-            let tx_hash = tx.to_hash().to_hex();
+            let tx_hash = tx.original_hash().to_hex();
 
             let child = self.child_writer(EventContext {
                 tx_idx: Some(idx),
@@ -268,10 +264,10 @@ impl EventWriter {
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl_with_cbor(&self, block: &MintedBlock, cbor: &[u8]) -> Result<(), Error> {
-        let hash = block.header.to_hash();
+        let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
@@ -283,10 +279,10 @@ impl EventWriter {
 
     #[deprecated(note = "use crawl_from_shelley_cbor instead")]
     pub fn crawl(&self, block: &MintedBlock) -> Result<(), Error> {
-        let hash = block.header.to_hash();
+        let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
@@ -307,10 +303,10 @@ impl EventWriter {
         cbor: &'b [u8],
         era: Era,
     ) -> Result<(), Error> {
-        let hash = block.header.to_hash();
+        let hash = block.header.original_hash();
 
         let child = self.child_writer(EventContext {
-            block_hash: Some(hex::encode(&hash)),
+            block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.header_body.block_number),
             slot: Some(block.header.header_body.slot),
             timestamp: self.compute_timestamp(block.header.header_body.slot),
