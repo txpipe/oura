@@ -1,13 +1,6 @@
-use pallas::codec::utils::KeepRaw;
-
-use pallas::ledger::primitives::babbage::{
-    AuxiliaryData, MintedBlock, MintedDatumOption, MintedTransactionBody, MintedTransactionOutput,
-    MintedWitnessSet, NetworkId,
-};
-
+use pallas::ledger::primitives::babbage::{MintedDatumOption, MintedTransactionOutput, NetworkId};
 use pallas::ledger::traverse::{
-    MultiEraAsset, MultiEraBlock, MultiEraCert, MultiEraInput, MultiEraOutput, MultiEraTx,
-    OriginalHash,
+    MultiEraAsset, MultiEraBlock, MultiEraInput, MultiEraOutput, MultiEraTx, OriginalHash,
 };
 
 use crate::framework::legacy_v1::*;
@@ -17,43 +10,24 @@ use crate::Error;
 use super::{map::ToHex, EventWriter};
 
 impl EventWriter {
-    pub fn collect_withdrawal_records(
-        &self,
-        withdrawls: &KeyValuePairs<RewardAccount, Coin>,
-    ) -> Vec<WithdrawalRecord> {
-        withdrawls
-            .iter()
-            .map(|(reward_account, coin)| WithdrawalRecord {
-                reward_account: {
-                    let hex = reward_account.to_hex();
-                    hex.strip_prefix("e1").map(|x| x.to_string()).unwrap_or(hex)
-                },
-                coin: *coin,
-            })
-            .collect()
+    pub fn to_withdrawal_record(&self, withdrawal: (&[u8], u64)) -> WithdrawalRecord {
+        WithdrawalRecord {
+            reward_account: {
+                let hex = withdrawal.0.to_hex();
+                hex.strip_prefix("e1").map(|x| x.to_string()).unwrap_or(hex)
+            },
+            coin: withdrawal.1,
+        }
     }
 
     pub fn to_transaction_record(&self, tx: &MultiEraTx) -> Result<TransactionRecord, Error> {
         let mut record = TransactionRecord {
             hash: tx.hash().to_string(),
             size: tx.size() as u32,
-            // TODO: we have a problem here. AFAIK, there's no reference to the tx fee in Byron
-            // block content. This leaves us with the two alternative: a) compute the value, b)
-            // omit the value.
-            //
-            // Computing the value is not trivial, the linear policy is easy to
-            // implement, but tracking the parameters for each epoch means hardcoding values or
-            // doing some extra queries.
-            //
-            // Ommiting the value elegantly would require turning the property data type into an
-            // option, which is a breaking change.
-            //
-            // Chossing the lesser evil, going to send a `0` in the field and add a comment to the
-            // docs notifying about this as a known issue to be fixed in v2.
             fee: tx.fee().unwrap_or_default(),
             ttl: tx.ttl(),
-            validity_interval_start: body.validity_interval_start,
-            network_id: body.network_id.as_ref().map(|x| match x {
+            validity_interval_start: tx.validity_start(),
+            network_id: tx.network_id().map(|x| match x {
                 NetworkId::One => 1,
                 NetworkId::Two => 2,
             }),
@@ -64,7 +38,7 @@ impl EventWriter {
             .outputs()
             .iter()
             .map(|x| self.to_transaction_output_record(x))
-            .collect()?;
+            .collect::<Result<_, _>>()?;
 
         record.output_count = outputs.len();
         record.total_output = outputs.iter().map(|o| o.amount).sum();
@@ -73,15 +47,11 @@ impl EventWriter {
             .inputs()
             .iter()
             .map(|x| self.to_transaction_input_record(x))
-            .collect()?;
+            .collect();
 
         record.input_count = inputs.len();
 
-        let mints: Vec<_> = tx
-            .mints()
-            .iter()
-            .map(|x| self.to_mint_record(x))
-            .collect()?;
+        let mints: Vec<_> = tx.mints().iter().map(|x| self.to_mint_record(x)).collect();
 
         record.mint_count = mints.len();
 
@@ -89,10 +59,13 @@ impl EventWriter {
             .collateral()
             .iter()
             .map(|x| self.to_transaction_input_record(x))
-            .collect()?;
+            .collect();
 
         record.collateral_input_count = collateral_inputs.len();
-        record.has_collateral_output = body.collateral_return.is_some();
+
+        let collateral_return = tx.collateral_return();
+
+        record.has_collateral_output = collateral_return.is_some();
 
         // TODO
         // TransactionBodyComponent::ScriptDataHash(_)
@@ -106,65 +79,67 @@ impl EventWriter {
 
             record.collateral_inputs = Some(collateral_inputs);
 
-            record.collateral_output = body.collateral_return.as_ref().map(|output| match output {
-                MintedTransactionOutput::Legacy(x) => self.to_legacy_output_record(x).unwrap(),
-                MintedTransactionOutput::PostAlonzo(x) => {
-                    self.to_post_alonzo_output_record(x).unwrap()
-                }
-            });
+            record.collateral_output = collateral_return
+                .map(|x| self.to_transaction_output_record(&x))
+                .map_or(Ok(None), |x| x.map(Some))?;
 
-            record.metadata = match aux_data {
-                Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
-                None => None,
-            };
+            record.metadata = tx
+                .metadata()
+                .collect::<Vec<_>>()
+                .iter()
+                .map(|(l, v)| self.to_metadata_record(l, v))
+                .collect::<Result<Vec<_>, _>>()?
+                .into();
 
             record.vkey_witnesses = tx
                 .vkey_witnesses()
                 .iter()
                 .map(|x| self.to_vkey_witness_record(x))
-                .collect()?
+                .collect::<Result<Vec<_>, _>>()?
                 .into();
 
             record.native_witnesses = tx
                 .native_scripts()
                 .iter()
                 .map(|x| self.to_native_witness_record(x))
-                .collect()?
+                .collect::<Result<Vec<_>, _>>()?
                 .into();
 
             let v1_scripts = tx
                 .plutus_v1_scripts()
                 .iter()
                 .map(|x| self.to_plutus_v1_witness_record(x))
-                .collect()?
-                .into();
+                .collect::<Result<Vec<_>, _>>()?;
 
             let v2_scripts = tx
                 .plutus_v2_scripts()
                 .iter()
                 .map(|x| self.to_plutus_v2_witness_record(x))
-                .collect()?
-                .into();
+                .collect::<Result<Vec<_>, _>>()?;
 
-            record.plutus_witnesses = [v1_scripts, v2_scripts].concat();
+            record.plutus_witnesses = Some([v1_scripts, v2_scripts].concat());
 
             record.plutus_redeemers = tx
                 .redeemers()
                 .iter()
                 .map(|x| self.to_plutus_redeemer_record(x))
-                .collect()?
+                .collect::<Result<Vec<_>, _>>()?
                 .into();
 
             record.plutus_data = tx
                 .plutus_data()
                 .iter()
                 .map(|x| self.to_plutus_datum_record(x))
-                .collect()?
+                .collect::<Result<Vec<_>, _>>()?
                 .into();
 
-            if let Some(withdrawals) = &body.withdrawals {
-                record.withdrawals = self.collect_withdrawal_records(withdrawals).into();
-            }
+            record.withdrawals = tx
+                .withdrawals()
+                .collect::<Vec<_>>()
+                .iter()
+                .map(|x| self.to_withdrawal_record(*x))
+                .collect::<Vec<_>>()
+                .into();
         }
 
         Ok(record)
@@ -181,47 +156,41 @@ impl EventWriter {
             .as_ref()
             .map(|time| time.absolute_slot_to_relative(source.slot()));
 
+        let header = source.header();
+
         let mut record = BlockRecord {
-            era: source.era(),
-            body_size: source.body_size(),
-            issuer_vkey: source.source.header.header_body.issuer_vkey.to_hex(),
-            vrf_vkey: source.header.header_body.vrf_vkey.to_hex(),
+            era: source.era().into(),
+            body_size: source.body_size().unwrap_or_default(),
+            issuer_vkey: header.issuer_vkey().map(hex::encode).unwrap_or_default(),
+            vrf_vkey: header.vrf_vkey().map(hex::encode).unwrap_or_default(),
             tx_count: source.tx_count(),
             hash: source.hash().to_string(),
             number: source.number(),
             slot: source.slot(),
             epoch: relative_epoch.map(|(epoch, _)| epoch),
             epoch_slot: relative_epoch.map(|(_, epoch_slot)| epoch_slot),
-            previous_hash: source
-                .header
-                .header_body
-                .prev_hash
-                .map(hex::encode)
+            previous_hash: header
+                .previous_hash()
+                .map(|x| x.to_string())
                 .unwrap_or_default(),
             cbor_hex: match self.config.include_block_cbor {
-                true => source.encode(),
+                true => Some(hex::encode(cbor)),
                 false => None,
             },
             transactions: None,
         };
 
         if self.config.include_block_details {
-            let txs: Vec<_> = source
+            let txs = source
                 .txs()
                 .iter()
                 .map(|x| self.to_transaction_record(x))
-                .collect()?;
+                .collect::<Result<_, _>>()?;
 
             record.transactions = Some(txs);
         }
 
         Ok(record)
-    }
-
-    fn crawl_certificate(&self, certificate: &MultiEraCert) -> Result<(), Error> {
-        self.append(self.to_certificate_event(certificate))
-
-        // more complex event goes here (eg: pool metadata?)
     }
 
     fn crawl_collateral(&self, collateral: &MultiEraInput) -> Result<(), Error> {
@@ -239,16 +208,6 @@ impl EventWriter {
         }
     }
 
-    fn crawl_mints(&self, tx: &MultiEraTx) -> Result<(), Error> {
-        // should we have a policy context?
-
-        for asset in tx.mints() {
-            self.append_from(self.to_mint_record(&asset))?;
-        }
-
-        Ok(())
-    }
-
     fn crawl_metadata(&self, tx: &MultiEraTx) -> Result<(), Error> {
         let metadata = tx.metadata().collect::<Vec<_>>();
 
@@ -261,20 +220,6 @@ impl EventWriter {
                 61284u64 => self.crawl_metadata_label_61284(content)?,
                 _ => (),
             }
-        }
-
-        Ok(())
-    }
-
-    fn crawl_auxdata(&self, tx: &MultiEraTx) -> Result<(), Error> {
-        self.crawl_metadata(tx);
-
-        for script in tx.aux_native_scripts() {
-            self.append(self.to_aux_native_script_event(script))?;
-        }
-
-        for script in tx.aux_plutus_v1_scripts() {
-            self.append(self.to_aux_plutus_script_event(script))?;
         }
 
         Ok(())
@@ -309,7 +254,7 @@ impl EventWriter {
                 .non_ada_assets()
                 .iter()
                 .map(|x| self.to_transaction_output_asset_record(x))
-                .collect()
+                .collect::<Vec<_>>()
                 .into(),
             datum_hash: match &output.datum() {
                 Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
@@ -374,13 +319,14 @@ impl EventWriter {
         let record = self.to_transaction_record(tx)?;
         self.append_from(record.clone())?;
 
+        // crawl inputs
         for (idx, input) in tx.inputs().iter().enumerate() {
             let child = self.child_writer(EventContext {
                 input_idx: Some(idx),
                 ..EventContext::default()
             });
 
-            child.crawl_transaction_input(input)?;
+            self.append_from(self.to_transaction_input_record(input))?;
         }
 
         for (idx, output) in tx.outputs().iter().enumerate() {
@@ -392,13 +338,16 @@ impl EventWriter {
             child.crawl_transaction_output(output)?;
         }
 
+        //crawl certs
         for (idx, cert) in tx.certs().iter().enumerate() {
-            let child = self.child_writer(EventContext {
-                certificate_idx: Some(idx),
-                ..EventContext::default()
-            });
+            if let Some(evt) = self.to_certificate_event(cert) {
+                let child = self.child_writer(EventContext {
+                    certificate_idx: Some(idx),
+                    ..EventContext::default()
+                });
 
-            child.crawl_certificate(cert)?;
+                self.append(evt);
+            }
         }
 
         for collateral in tx.collateral().iter() {
@@ -406,9 +355,22 @@ impl EventWriter {
             self.crawl_collateral(collateral)?;
         }
 
-        self.crawl_mints(tx)?;
+        // crawl mints
+        for asset in tx.mints() {
+            self.append_from(self.to_mint_record(&asset))?;
+        }
 
-        self.crawl_auxdata(tx)?;
+        self.crawl_metadata(tx);
+
+        // crawl aux native scripts
+        for script in tx.aux_native_scripts() {
+            self.append(self.to_aux_native_script_event(script))?;
+        }
+
+        // crawl aux plutus v1 scripts
+        for script in tx.aux_plutus_v1_scripts() {
+            self.append(self.to_aux_plutus_script_event(script))?;
+        }
 
         self.crawl_witnesses(tx)?;
 

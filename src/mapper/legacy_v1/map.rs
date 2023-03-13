@@ -229,8 +229,12 @@ impl EventWriter {
         })
     }
 
-    pub fn to_certificate_event(&self, cert: &MultiEraCert) -> EventData {
-        match cert.as_alonzo() {
+    pub fn to_certificate_event(&self, cert: &MultiEraCert) -> Option<EventData> {
+        if !cert.as_alonzo().is_some() {
+            return None;
+        }
+
+        let evt = match cert.as_alonzo().unwrap() {
             Certificate::StakeRegistration(credential) => EventData::StakeRegistration {
                 credential: credential.into(),
             },
@@ -286,7 +290,9 @@ impl EventWriter {
             }
             // TODO: not likely, leaving for later
             Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation {},
-        }
+        };
+
+        Some(evt)
     }
 
     pub fn to_collateral_event(&self, collateral: &MultiEraInput) -> EventData {
