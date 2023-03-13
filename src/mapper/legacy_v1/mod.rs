@@ -1,13 +1,10 @@
 //! A mapper that maintains schema-compatibility with Oura v1
 
 mod babbage;
-mod byron;
 mod cip15;
 mod cip25;
-mod collect;
 mod map;
 mod prelude;
-mod shelley;
 
 pub use prelude::*;
 use serde::Deserialize;
@@ -55,15 +52,33 @@ impl Bootstrapper {
         let worker_tether = gasket::runtime::spawn_stage(
             self.0,
             gasket::runtime::Policy::default(),
-            Some("mapper_noop"),
+            Some("mapper_legacy_v1"),
         );
 
         Ok(Runtime { worker_tether })
     }
 }
 
-#[derive(Deserialize)]
-pub struct Config {}
+#[derive(Deserialize, Clone, Debug, Default)]
+pub struct Config {
+    #[serde(default)]
+    pub include_block_end_events: bool,
+
+    #[serde(default)]
+    pub include_transaction_details: bool,
+
+    #[serde(default)]
+    pub include_transaction_end_events: bool,
+
+    #[serde(default)]
+    pub include_block_details: bool,
+
+    #[serde(default)]
+    pub include_block_cbor: bool,
+
+    #[serde(default)]
+    pub include_byron_ebb: bool,
+}
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {

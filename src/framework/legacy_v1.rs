@@ -1,4 +1,3 @@
-
 use std::fmt::Display;
 
 use merge::Merge;
@@ -126,6 +125,7 @@ pub struct TxOutputRecord {
     pub amount: u64,
     pub assets: Option<Vec<OutputAssetRecord>>,
     pub datum_hash: Option<String>,
+    pub inline_datum: Option<PlutusDatumRecord>,
 }
 
 impl From<TxOutputRecord> for EventData {
