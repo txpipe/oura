@@ -21,7 +21,6 @@ use crate::Error;
 
 pub mod cursor;
 pub mod metrics;
-pub mod throttle;
 
 pub(crate) mod retry;
 pub(crate) mod time;
