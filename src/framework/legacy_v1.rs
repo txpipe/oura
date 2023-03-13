@@ -1,4 +1,3 @@
-
 use std::fmt::Display;
 
 use merge::Merge;
@@ -120,12 +119,13 @@ impl From<OutputAssetRecord> for EventData {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct TxOutputRecord {
     pub address: String,
     pub amount: u64,
     pub assets: Option<Vec<OutputAssetRecord>>,
     pub datum_hash: Option<String>,
+    pub inline_datum: Option<PlutusDatumRecord>,
 }
 
 impl From<TxOutputRecord> for EventData {
@@ -161,6 +161,8 @@ pub struct TransactionRecord {
     pub validity_interval_start: Option<u64>,
     pub network_id: Option<u32>,
     pub input_count: usize,
+    pub collateral_input_count: usize,
+    pub has_collateral_output: bool,
     pub output_count: usize,
     pub mint_count: usize,
     pub total_output: u64,
@@ -169,6 +171,8 @@ pub struct TransactionRecord {
     pub metadata: Option<Vec<MetadataRecord>>,
     pub inputs: Option<Vec<TxInputRecord>>,
     pub outputs: Option<Vec<TxOutputRecord>>,
+    pub collateral_inputs: Option<Vec<TxInputRecord>>,
+    pub collateral_output: Option<TxOutputRecord>,
     pub mint: Option<Vec<MintRecord>>,
     pub vkey_witnesses: Option<Vec<VKeyWitnessRecord>>,
     pub native_witnesses: Option<Vec<NativeWitnessRecord>>,
@@ -261,7 +265,6 @@ impl From<PlutusDatumRecord> for EventData {
         EventData::PlutusDatum(x)
     }
 }
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct BlockRecord {
     pub era: Era,
@@ -269,6 +272,7 @@ pub struct BlockRecord {
     pub epoch_slot: Option<u64>,
     pub body_size: usize,
     pub issuer_vkey: String,
+    pub vrf_vkey: String,
     pub tx_count: usize,
     pub slot: u64,
     pub hash: String,

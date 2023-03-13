@@ -1,50 +1,28 @@
 use std::sync::Arc;
 
 use crate::{
-    framework::StageSender,
-    model::{Era, Event, EventContext, EventData},
+    framework::{legacy_v1::*, MapperOutputPort},
     utils::{time::TimeProvider, Utils},
 };
 
 use merge::Merge;
-use serde::Deserialize;
 
+use super::Config;
 use crate::Error;
 
 #[deprecated]
 pub use crate::utils::ChainWellKnownInfo;
 
-#[derive(Deserialize, Clone, Debug, Default)]
-pub struct Config {
-    #[serde(default)]
-    pub include_block_end_events: bool,
-
-    #[serde(default)]
-    pub include_transaction_details: bool,
-
-    #[serde(default)]
-    pub include_transaction_end_events: bool,
-
-    #[serde(default)]
-    pub include_block_details: bool,
-
-    #[serde(default)]
-    pub include_block_cbor: bool,
-
-    #[serde(default)]
-    pub include_byron_ebb: bool,
-}
-
 #[derive(Clone)]
 pub struct EventWriter {
     context: EventContext,
-    output: StageSender,
+    output: MapperOutputPort,
     pub(crate) config: Config,
     pub(crate) utils: Arc<Utils>,
 }
 
 impl EventWriter {
-    pub fn new(output: StageSender, utils: Arc<Utils>, config: Config) -> Self {
+    pub fn new(output: MapperOutputPort, utils: Arc<Utils>, config: Config) -> Self {
         EventWriter {
             context: EventContext::default(),
             output,
@@ -55,7 +33,7 @@ impl EventWriter {
 
     #[allow(unused)]
     pub fn standalone(
-        output: StageSender,
+        output: MapperOutputPort,
         well_known: Option<ChainWellKnownInfo>,
         config: Config,
     ) -> Self {
@@ -70,8 +48,6 @@ impl EventWriter {
             data,
             fingerprint: None,
         };
-
-        self.utils.track_source_progress(&evt);
 
         self.output
             .send(evt)

@@ -1,15 +1,11 @@
-use std::collections::HashMap;
-
-use pallas::ledger::primitives::alonzo::MintedWitnessSet;
-use pallas::ledger::primitives::babbage::MintedDatumOption;
-use pallas::ledger::traverse::{ComputeHash, OriginalHash};
+use pallas::ledger::traverse::{ComputeHash, MultiEraCert, MultiEraInput, OriginalHash};
 use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
+use std::collections::HashMap;
 
 use pallas::ledger::primitives::{
     alonzo::{
-        self as alonzo, AuxiliaryData, Certificate, InstantaneousRewardSource,
-        InstantaneousRewardTarget, Metadatum, MetadatumLabel, MintedBlock, NetworkId, Relay,
-        TransactionBody, TransactionInput, Value,
+        self as alonzo, Certificate, InstantaneousRewardSource, InstantaneousRewardTarget,
+        Metadatum, MetadatumLabel, Relay, Value,
     },
     babbage, ToCanonicalJson,
 };
@@ -17,14 +13,7 @@ use pallas::ledger::primitives::{
 use pallas::network::miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
-use crate::model::{
-    BlockRecord, Era, EventData, MetadataRecord, MetadatumRendition, MintRecord,
-    NativeWitnessRecord, OutputAssetRecord, PlutusDatumRecord, PlutusRedeemerRecord,
-    PlutusWitnessRecord, StakeCredential, TransactionRecord, TxInputRecord, TxOutputRecord,
-    VKeyWitnessRecord,
-};
-
-use crate::utils::time::TimeProvider;
+use crate::framework::legacy_v1::*;
 use crate::Error;
 
 use super::EventWriter;
@@ -158,77 +147,6 @@ impl EventWriter {
         Ok(data)
     }
 
-    pub fn to_transaction_input_record(&self, input: &TransactionInput) -> TxInputRecord {
-        TxInputRecord {
-            tx_id: input.transaction_id.to_hex(),
-            index: input.index,
-        }
-    }
-
-    pub fn to_legacy_output_record(
-        &self,
-        output: &alonzo::TransactionOutput,
-    ) -> Result<TxOutputRecord, Error> {
-        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
-
-        Ok(TxOutputRecord {
-            address: address.to_string(),
-            amount: get_tx_output_coin_value(&output.amount),
-            assets: self.collect_asset_records(&output.amount).into(),
-            datum_hash: output.datum_hash.map(|hash| hash.to_string()),
-            inline_datum: None,
-        })
-    }
-
-    pub fn to_post_alonzo_output_record(
-        &self,
-        output: &babbage::MintedPostAlonzoTransactionOutput,
-    ) -> Result<TxOutputRecord, Error> {
-        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
-
-        Ok(TxOutputRecord {
-            address: address.to_string(),
-            amount: get_tx_output_coin_value(&output.value),
-            assets: self.collect_asset_records(&output.value).into(),
-            datum_hash: match &output.datum_option {
-                Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
-                Some(MintedDatumOption::Data(x)) => Some(x.original_hash().to_hex()),
-                None => None,
-            },
-            inline_datum: match &output.datum_option {
-                Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)?),
-                _ => None,
-            },
-        })
-    }
-
-    pub fn to_transaction_output_asset_record(
-        &self,
-        policy: &Hash<28>,
-        asset: &pallas::codec::utils::Bytes,
-        amount: u64,
-    ) -> OutputAssetRecord {
-        OutputAssetRecord {
-            policy: policy.to_hex(),
-            asset: asset.to_hex(),
-            asset_ascii: String::from_utf8(asset.to_vec()).ok(),
-            amount,
-        }
-    }
-
-    pub fn to_mint_record(
-        &self,
-        policy: &Hash<28>,
-        asset: &pallas::codec::utils::Bytes,
-        quantity: i64,
-    ) -> MintRecord {
-        MintRecord {
-            policy: policy.to_hex(),
-            asset: asset.to_hex(),
-            quantity,
-        }
-    }
-
     pub fn to_aux_native_script_event(&self, script: &alonzo::NativeScript) -> EventData {
         EventData::NativeScript {
             policy_id: script.compute_hash().to_hex(),
@@ -311,8 +229,12 @@ impl EventWriter {
         })
     }
 
-    pub fn to_certificate_event(&self, certificate: &Certificate) -> EventData {
-        match certificate {
+    pub fn to_certificate_event(&self, cert: &MultiEraCert) -> Option<EventData> {
+        if !cert.as_alonzo().is_some() {
+            return None;
+        }
+
+        let evt = match cert.as_alonzo().unwrap() {
             Certificate::StakeRegistration(credential) => EventData::StakeRegistration {
                 credential: credential.into(),
             },
@@ -368,105 +290,16 @@ impl EventWriter {
             }
             // TODO: not likely, leaving for later
             Certificate::GenesisKeyDelegation(..) => EventData::GenesisKeyDelegation {},
-        }
-    }
-
-    pub fn to_collateral_event(&self, collateral: &TransactionInput) -> EventData {
-        EventData::Collateral {
-            tx_id: collateral.transaction_id.to_hex(),
-            index: collateral.index,
-        }
-    }
-
-    pub fn to_tx_size(
-        &self,
-        body: &KeepRaw<TransactionBody>,
-        aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
-    ) -> usize {
-        body.raw_cbor().len()
-            + aux_data.map(|ax| ax.raw_cbor().len()).unwrap_or(2)
-            + witness_set.map(|ws| ws.raw_cbor().len()).unwrap_or(1)
-    }
-
-    pub fn to_transaction_record(
-        &self,
-        body: &KeepRaw<TransactionBody>,
-        tx_hash: &str,
-        aux_data: Option<&KeepRaw<AuxiliaryData>>,
-        witness_set: Option<&KeepRaw<MintedWitnessSet>>,
-    ) -> Result<TransactionRecord, Error> {
-        let mut record = TransactionRecord {
-            hash: tx_hash.to_owned(),
-            size: self.to_tx_size(body, aux_data, witness_set) as u32,
-            fee: body.fee,
-            ttl: body.ttl,
-            validity_interval_start: body.validity_interval_start,
-            network_id: body.network_id.as_ref().map(|x| match x {
-                NetworkId::One => 1,
-                NetworkId::Two => 2,
-            }),
-            ..TransactionRecord::default()
         };
 
-        let outputs = self.collect_legacy_output_records(&body.outputs)?;
-        record.output_count = outputs.len();
-        record.total_output = outputs.iter().map(|o| o.amount).sum();
+        Some(evt)
+    }
 
-        let inputs = self.collect_input_records(&body.inputs);
-        record.input_count = inputs.len();
-
-        if let Some(mint) = &body.mint {
-            let mints = self.collect_mint_records(mint);
-            record.mint_count = mints.len();
-
-            if self.config.include_transaction_details {
-                record.mint = mints.into();
-            }
+    pub fn to_collateral_event(&self, collateral: &MultiEraInput) -> EventData {
+        EventData::Collateral {
+            tx_id: collateral.hash().to_string(),
+            index: collateral.index(),
         }
-
-        // TODO
-        // TransactionBodyComponent::ScriptDataHash(_)
-        // TransactionBodyComponent::RequiredSigners(_)
-        // TransactionBodyComponent::AuxiliaryDataHash(_)
-
-        if self.config.include_transaction_details {
-            record.outputs = outputs.into();
-            record.inputs = inputs.into();
-
-            record.metadata = match aux_data {
-                Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
-                None => None,
-            };
-
-            if let Some(witnesses) = witness_set {
-                record.vkey_witnesses = self
-                    .collect_vkey_witness_records(&witnesses.vkeywitness)?
-                    .into();
-
-                record.native_witnesses = self
-                    .collect_native_witness_records(&witnesses.native_script)?
-                    .into();
-
-                record.plutus_witnesses = self
-                    .collect_plutus_v1_witness_records(&witnesses.plutus_script)?
-                    .into();
-
-                record.plutus_redeemers = self
-                    .collect_plutus_redeemer_records(&witnesses.redeemer)?
-                    .into();
-
-                record.plutus_data = self
-                    .collect_witness_plutus_datum_records(&witnesses.plutus_data)?
-                    .into();
-            }
-
-            if let Some(withdrawals) = &body.withdrawals {
-                record.withdrawals = self.collect_withdrawal_records(withdrawals).into();
-            }
-        }
-
-        Ok(record)
     }
 
     pub(crate) fn append_rollback_event(&self, point: &Point) -> Result<(), Error> {
