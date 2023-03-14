@@ -12,10 +12,10 @@ The following list represent the already implemented events. These data structur
 
 Data on chain rollback(The result of the local node switching to the consensus chains).
 
-| Name       | DataType        | Description                    |
-| :---       | :---            | :---                           |
-| block_slot | u64             | Slot of the rolled back block. |
-| block_hash | Option\<String> | Hash of the rolled back block. |
+| Name       | DataType        | Description                                |
+| :---       | :---            | :---                                       |
+| block_slot | u64             | Slot of the rolled back block.             |
+| block_hash | Option\<String> | Block hash. Hash of the rolled back block. |
 
 
 <br />
@@ -37,9 +37,9 @@ Data on an issued block.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 
 
 <br />
@@ -63,9 +63,9 @@ Data on a transaction.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -89,9 +89,9 @@ Data on a transaction input.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 | input_idx    | Option\<usize>  | Input ID.                     |
@@ -116,9 +116,9 @@ Data on a transaction output (UTXO).
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 | output_idx   | Option\<usize>  | Output ID.                    |
@@ -144,9 +144,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 | output_idx   | Option\<usize>  | Output ID.                    |
@@ -170,9 +170,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -193,9 +193,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 
 <br />
 <br />
@@ -213,9 +213,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -235,9 +235,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -260,9 +260,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -282,9 +282,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -310,9 +310,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash | Option\<String> | Block hash.                               |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp | Option\<u64> | Timestamp.                               |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -335,9 +335,9 @@ Data on a non-ADA asset in a UTXO.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash | Option\<String> | Block hash.                               |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp | Option\<u64> | Timestamp.                               |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -360,9 +360,9 @@ Data on the minting of a non-ADA asset.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -386,9 +386,9 @@ Data on [collateral inputs](https://docs.cardano.org/plutus/collateral-mechanism
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -409,9 +409,9 @@ Data on [collateral inputs](https://docs.cardano.org/plutus/collateral-mechanism
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 
 <br />
 <br />
@@ -429,9 +429,9 @@ Data on [collateral inputs](https://docs.cardano.org/plutus/collateral-mechanism
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -454,9 +454,9 @@ Data on stake registration event.
 | Name            | DataType        | Description                   |
 | :---            | :---            | :---                          |
 | block_number    | Option\<u64>    | Height of block from genesis. |
-| block_hash      | Option\<String> |                               |
+| block_hash      | Option\<String> | Block hash.                   |
 | slot            | Option\<u64>    | Current slot.                 |
-| timestamp       | Option\<u64>    |                               |
+| timestamp       | Option\<u64>    | Timestamp.                    |
 | tx_idx          | Option\<usize>  | Transaction Index.            |
 | tx_hash         | Option\<String> | Transaction hash.             |
 | certificate_idx | Option\<usize>  |                               |
@@ -480,9 +480,9 @@ Data on stake deregistration event.
 | Name            | DataType        | Description                   |
 | :---            | :---            | :---                          |
 | block_number    | Option\<u64>    | Height of block from genesis. |
-| block_hash      | Option\<String> |                               |
+| block_hash      | Option\<String> | Block hash.                   |
 | slot            | Option\<u64>    | Current slot.                 |
-| timestamp       | Option\<u64>    |                               |
+| timestamp       | Option\<u64>    | Timestamp.                    |
 | tx_idx          | Option\<usize>  | Transaction Index.            |
 | tx_hash         | Option\<String> | Transaction hash.             |
 | certificate_idx | Option\<usize>  |                               |
@@ -507,9 +507,9 @@ Data on [stake delegation](https://docs.cardano.org/core-concepts/delegation) ev
 | Name            | DataType        | Description                   |
 | :---            | :---            | :---                          |
 | block_number    | Option\<u64>    | Height of block from genesis. |
-| block_hash      | Option\<String> |                               |
+| block_hash      | Option\<String> | Block hash.                   |
 | slot            | Option\<u64>    | Current slot.                 |
-| timestamp       | Option\<u64>    |                               |
+| timestamp       | Option\<u64>    | Timestamp.                    |
 | tx_idx          | Option\<usize>  | Transaction Index.            |
 | tx_hash         | Option\<String> | Transaction hash.             |
 | certificate_idx | Option\<usize>  |                               |
@@ -541,9 +541,9 @@ Data on the stake [registration event](https://developers.cardano.org/docs/stake
 | Name            | DataType        | Description                   |
 | :---            | :---            | :---                          |
 | block_number    | Option\<u64>    | Height of block from genesis. |
-| block_hash      | Option\<String> |                               |
+| block_hash      | Option\<String> | Block hash.                   |
 | slot            | Option\<u64>    | Current slot.                 |
-| timestamp       | Option\<u64>    |                               |
+| timestamp       | Option\<u64>    | Timestamp.                    |
 | tx_idx          | Option\<usize>  | Transaction Index.            |
 | tx_hash         | Option\<String> | Transaction hash.             |
 | certificate_idx | Option\<usize>  |                               |
@@ -568,9 +568,9 @@ Data on [stake pool retirement](https://cardano-foundation.gitbook.io/stake-pool
 | Name            | DataType        | Description                   |
 | :---            | :---            | :---                          |
 | block_number    | Option\<u64>    | Height of block from genesis. |
-| block_hash      | Option\<String> |                               |
+| block_hash      | Option\<String> | Block hash.                   |
 | slot            | Option\<u64>    | Current slot.                 |
-| timestamp       | Option\<u64>    |                               |
+| timestamp       | Option\<u64>    | Timestamp.                    |
 | tx_idx          | Option\<usize>  | Transaction Index.            |
 | tx_hash         | Option\<String> | Transaction hash.             |
 | certificate_idx | Option\<usize>  |                               |
@@ -590,9 +590,9 @@ Data on genesis key delegation.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
@@ -616,8 +616,8 @@ Data on genesis key delegation.
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash   | Option\<String> |                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Blockchain slot.              |
-| timestamp    | Option\<u64>    |                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
