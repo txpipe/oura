@@ -159,11 +159,16 @@ Data on a non-ADA asset in a UTXO.
 
 ### `Metadata` Event
 
-| Name   | DataType        | Description |
-| :---   | :---            | :---        |
-| key    | String          | ....        |
-| subkey | Option\<String> | ....        |
-| value  | Option\<String> | ....        |
+| Name            | DataType           | Description   |
+| :---            | :---               | :---          |
+| label           | String             | Metada label. |
+| map_json (*)    | Option\<JsonValue> | Json map.     |
+| array_json (*)  | Option\<JsonValue> | Json array.   |
+| int_scalar (*)  | Option\<i128       | Number.       |
+| text_scalar (*) | Option\<String>    | Text.         |
+| bytes_hex (*)   | Option\<String>    | Bytes.        |
+
+(*) Only one of these options will be used.
 
 **Context**
 
@@ -294,25 +299,25 @@ Data on a non-ADA asset in a UTXO.
 
 ### `CIP25Asset` Event
 
-| Name        | DataType        | Description |
-| :---        | :---            | :---        |
-| version     | String          |             |
-| policy      | String          |             |
-| asset       | String          |             |
-| name        | Option\<String> |             |
-| image       | Option\<String> |             |
-| media_type  | Option\<String> |             |
-| description | Option\<String> |             |
-| raw_json    | JsonValue       |             |
+| Name        | DataType        | Description                                          |
+| :---        | :---            | :---                                                 |
+| version     | String          | [version](https://cips.cardano.org/cips/cip25/#cddl) |
+| policy      | String          |                                                      |
+| asset       | String          |                                                      |
+| name        | Option\<String> |                                                      |
+| image       | Option\<String> |                                                      |
+| media_type  | Option\<String> |                                                      |
+| description | Option\<String> |                                                      |
+| raw_json    | JsonValue       |                                                      |
 
 **Context**
 
 | Name         | DataType        | Description                   |
 | :---         | :---            | :---                          |
 | block_number | Option\<u64>    | Height of block from genesis. |
-| block_hash | Option\<String> | Block hash.                               |
+| block_hash   | Option\<String> | Block hash.                   |
 | slot         | Option\<u64>    | Current slot.                 |
-| timestamp | Option\<u64> | Timestamp.                               |
+| timestamp    | Option\<u64>    | Timestamp.                    |
 | tx_idx       | Option\<usize>  | Transaction Index.            |
 | tx_hash      | Option\<String> | Transaction hash.             |
 
