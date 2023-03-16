@@ -1,5 +1,6 @@
 //! A filter that can select which events to block and which to let pass
 
+use gasket::{messaging::*, runtime::Tether};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
@@ -238,29 +239,25 @@ impl gasket::runtime::Worker for Worker {
     }
 }
 
-pub struct Runtime {
-    worker_tether: gasket::runtime::Tether,
-}
-
 pub struct Bootstrapper(Worker);
 
 impl Bootstrapper {
-    pub fn borrow_input_port(&mut self) -> &mut FilterInputPort {
-        &mut self.0.input
+    pub fn connect_input(&mut self, adapter: FilterInputAdapter) {
+        self.0.input.connect(adapter);
     }
 
-    pub fn borrow_output_port(&mut self) -> &mut FilterOutputPort {
-        &mut self.0.output
+    pub fn connect_output(&mut self, adapter: FilterOutputAdapter) {
+        self.0.output.connect(adapter);
     }
 
-    pub fn spawn(self) -> Result<Runtime, Error> {
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
         let worker_tether = gasket::runtime::spawn_stage(
             self.0,
             gasket::runtime::Policy::default(),
             Some("filter_noop"),
         );
 
-        Ok(Runtime { worker_tether })
+        Ok(vec![worker_tether])
     }
 }
 
