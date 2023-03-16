@@ -1,8 +1,8 @@
+use gasket::error::Error;
+use pallas::ledger::primitives::alonzo::Metadatum;
 use serde_json::Value as JsonValue;
 
-use pallas::ledger::primitives::alonzo::Metadatum;
-
-use crate::{model::CIP25AssetRecord, Error};
+use crate::framework::legacy_v1::CIP25AssetRecord;
 
 use super::EventWriter;
 
@@ -34,7 +34,7 @@ fn extract_json_property(json: &JsonValue, key: &str) -> Option<String> {
         .map(|x| x.to_string())
 }
 
-impl EventWriter {
+impl EventWriter<'_> {
     fn search_cip25_version(&self, content_721: &Metadatum) -> Option<String> {
         match content_721 {
             Metadatum::Map(entries) => entries.iter().find_map(|(key, value)| match key {
@@ -54,10 +54,10 @@ impl EventWriter {
         policy: &str,
         asset: &str,
         content: &Metadatum,
-    ) -> Result<CIP25AssetRecord, Error> {
-        let raw_json = self.to_metadatum_json(content)?;
+    ) -> CIP25AssetRecord {
+        let raw_json = self.to_metadatum_json(content);
 
-        Ok(CIP25AssetRecord {
+        CIP25AssetRecord {
             policy: policy.to_string(),
             asset: asset.to_string(),
             version: version.to_string(),
@@ -66,11 +66,11 @@ impl EventWriter {
             image: extract_json_property(&raw_json, "image"),
             description: extract_json_property(&raw_json, "description"),
             raw_json,
-        })
+        }
     }
 
     fn crawl_721_policy(
-        &self,
+        &mut self,
         version: &str,
         policy: &str,
         content: &Metadatum,
@@ -78,8 +78,7 @@ impl EventWriter {
         if let Metadatum::Map(entries) = content {
             for (key, sub_content) in entries.iter() {
                 if let Some(asset) = is_asset_key(key) {
-                    let record =
-                        self.to_cip25_asset_record(version, policy, &asset, sub_content)?;
+                    let record = self.to_cip25_asset_record(version, policy, &asset, sub_content);
                     self.append_from(record)?;
                 }
             }
@@ -90,7 +89,7 @@ impl EventWriter {
         Ok(())
     }
 
-    pub(crate) fn crawl_metadata_label_721(&self, content: &Metadatum) -> Result<(), Error> {
+    pub(crate) fn crawl_metadata_label_721(&mut self, content: &Metadatum) -> Result<(), Error> {
         let version = self
             .search_cip25_version(content)
             .unwrap_or_else(|| "1.0".to_string());

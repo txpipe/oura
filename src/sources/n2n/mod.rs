@@ -1,3 +1,4 @@
+use gasket::{messaging::SendPort, runtime::Tether};
 use pallas::network::upstream::n2n::{
     Bootstrapper as PallasBootstrapper, Runtime as PallasRuntime,
 };
@@ -7,16 +8,31 @@ use crate::framework::*;
 
 pub struct Runtime(PallasRuntime);
 
-pub struct Bootstrapper(PallasBootstrapper);
+pub struct Bootstrapper(PallasBootstrapper<ChainEvent>);
 
 impl Bootstrapper {
-    pub fn borrow_output_port(&mut self) -> &mut SourceOutputPort {
-        self.borrow_output_port()
+    pub fn connect_output(&mut self, adapter: SourceOutputAdapter) {
+        let adapter = gasket::messaging::MapSendAdapter::new(adapter, |x| match x {
+            pallas::network::upstream::BlockFetchEvent::RollForward(slot, hash, body) => {
+                Some(ChainEvent::Apply(
+                    pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
+                    Record::CborBlock(body),
+                ))
+            }
+            pallas::network::upstream::BlockFetchEvent::Rollback(x) => Some(ChainEvent::Reset(x)),
+        });
+
+        self.0.borrow_output_port().connect(adapter);
     }
 
-    pub fn spawn(self) -> Result<Runtime, Error> {
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
         let upstream = self.0.spawn().map_err(Error::custom)?;
-        Ok(Runtime(upstream))
+
+        Ok(vec![
+            upstream.plexer_tether,
+            upstream.chainsync_tether,
+            upstream.blockfetch_tether,
+        ])
     }
 }
 

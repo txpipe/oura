@@ -1,15 +1,10 @@
+use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use crate::framework::*;
 
 pub mod dsl;
 pub mod noop;
-
-pub enum Runtime {
-    Noop(noop::Runtime),
-    Dsl(dsl::Runtime),
-    //Wasm,
-}
 
 pub enum Bootstrapper {
     Noop(noop::Bootstrapper),
@@ -18,24 +13,24 @@ pub enum Bootstrapper {
 }
 
 impl Bootstrapper {
-    pub fn borrow_input_port(&mut self) -> &mut FilterInputPort {
+    pub fn connect_input(&mut self, adapter: FilterInputAdapter) {
         match self {
-            Bootstrapper::Noop(p) => p.borrow_input_port(),
-            Bootstrapper::Dsl(p) => p.borrow_input_port(),
+            Bootstrapper::Noop(p) => p.connect_input(adapter),
+            Bootstrapper::Dsl(p) => p.connect_input(adapter),
         }
     }
 
-    pub fn borrow_output_port(&mut self) -> &mut FilterOutputPort {
+    pub fn connect_output(&mut self, adapter: FilterOutputAdapter) {
         match self {
-            Bootstrapper::Noop(p) => p.borrow_output_port(),
-            Bootstrapper::Dsl(p) => p.borrow_output_port(),
+            Bootstrapper::Noop(p) => p.connect_output(adapter),
+            Bootstrapper::Dsl(p) => p.connect_output(adapter),
         }
     }
 
-    pub fn spawn(self) -> Result<Runtime, Error> {
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
-            Bootstrapper::Noop(x) => Ok(Runtime::Noop(x.spawn()?)),
-            Bootstrapper::Dsl(x) => Ok(Runtime::Dsl(x.spawn()?)),
+            Bootstrapper::Noop(x) => x.spawn(),
+            Bootstrapper::Dsl(x) => x.spawn(),
         }
     }
 }
@@ -53,5 +48,11 @@ impl Config {
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
             Config::Dsl(c) => Ok(Bootstrapper::Dsl(c.bootstrapper(ctx)?)),
         }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config::Noop(Default::default())
     }
 }

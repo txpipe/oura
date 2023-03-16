@@ -1,9 +1,7 @@
 use clap;
-use oura::{
-    bootstrap, crosscut, filter, filters,
-    framework::{ChainConfig, Context},
-    mapper, sinks, sources,
-};
+use gasket::runtime::Tether;
+use oura::{filters, framework::*, mappers, sinks, sources};
+use pallas::{ledger::traverse::wellknown::GenesisValues, network::upstream::cursor::Cursor};
 use serde::Deserialize;
 use std::time::Duration;
 
@@ -13,12 +11,12 @@ use crate::console;
 struct ConfigRoot {
     source: sources::Config,
     filter: Option<filters::Config>,
-    mapper: Vec<mappers::Config>,
+    mapper: Option<mappers::Config>,
     sink: sinks::Config,
-    intersect: crosscut::IntersectConfig,
-    finalize: Option<crosscut::FinalizeConfig>,
-    chain: Option<ChainConfig>,
-    policy: Option<crosscut::policies::RuntimePolicy>,
+    intersect: IntersectConfig,
+    finalize: Option<FinalizeConfig>,
+    chain: Option<GenesisValues>,
+    policy: Option<RuntimePolicy>,
 }
 
 impl ConfigRoot {
@@ -43,92 +41,112 @@ impl ConfigRoot {
     }
 }
 
-fn should_stop(pipeline: &bootstrap::Pipeline) -> bool {
-    pipeline
-        .tethers
-        .iter()
-        .any(|tether| match tether.check_state() {
+struct Runtime {
+    source: Vec<Tether>,
+    filter: Vec<Tether>,
+    mapper: Vec<Tether>,
+    sink: Vec<Tether>,
+}
+
+impl Runtime {
+    fn all_tethers(&self) -> impl Iterator<Item = &Tether> {
+        self.source
+            .iter()
+            .chain(self.filter.iter())
+            .chain(self.mapper.iter())
+            .chain(self.sink.iter())
+    }
+
+    fn should_stop(&self) -> bool {
+        self.all_tethers().any(|tether| match tether.check_state() {
             gasket::runtime::TetherState::Alive(x) => match x {
                 gasket::runtime::StageState::StandBy => true,
                 _ => false,
             },
             _ => true,
         })
-}
+    }
 
-fn shutdown(pipeline: bootstrap::Pipeline) {
-    for tether in pipeline.tethers {
-        let state = tether.check_state();
-        log::warn!("dismissing stage: {} with state {:?}", tether.name(), state);
-        tether.dismiss_stage().expect("stage stops");
+    fn shutdown(&self) {
+        for tether in self.all_tethers() {
+            let state = tether.check_state();
+            log::warn!("dismissing stage: {} with state {:?}", tether.name(), state);
+            tether.dismiss_stage().expect("stage stops");
 
-        // Can't join the stage because there's a risk of deadlock, usually
-        // because a stage gets stuck sending into a port which depends on a
-        // different stage not yet dismissed. The solution is to either create a
-        // DAG of dependencies and dismiss in the correct order, or implement a
-        // 2-phase teardown where ports are disconnected and flushed
-        // before joining the stage.
+            // Can't join the stage because there's a risk of deadlock, usually
+            // because a stage gets stuck sending into a port which depends on a
+            // different stage not yet dismissed. The solution is to either
+            // create a DAG of dependencies and dismiss in the
+            // correct order, or implement a 2-phase teardown where
+            // ports are disconnected and flushed before joining the
+            // stage.
 
-        //tether.join_stage();
+            //tether.join_stage();
+        }
     }
 }
 
-pub fn bootstrap(
-    source: sources::Bootstrapper,
-    filter: filters::Bootstrapper,
-    mapper: mappers::Bootstrapper,
-    sink: sinks::Bootstrapper,
-) -> Runtime {
-    let source_output = source.borrow_output_port();
-    let filter_input = filter.borrow_input_port();
-    gasket::messaging::connect_ports(source_output, filters_input, 100);
+fn bootstrap(
+    mut source: sources::Bootstrapper,
+    mut filter: filters::Bootstrapper,
+    mut mapper: mappers::Bootstrapper,
+    mut sink: sinks::Bootstrapper,
+) -> Result<Runtime, Error> {
+    let (to_filter, from_source) = gasket::messaging::crossbeam::channel(100);
+    source.connect_output(to_filter);
+    filter.connect_input(from_source);
 
-    let filter_output = filter.borrow_output_port();
-    let mapper_input = mapper.borrow_input_port();
-    gasket::messaging::connect_ports(filter_output, mapper_output, 100);
+    let (to_mapper, from_filter) = gasket::messaging::crossbeam::channel(100);
+    filter.connect_output(to_mapper);
+    mapper.connect_input(from_filter);
 
-    let mapper_output = mapper.borrow_output_port();
-    let sink_input = sink.borrow_input_port();
-    gasket::messaging::connect_ports(mapper_output, sink_output, 100);
+    let (to_sink, from_mapper) = gasket::messaging::crossbeam::channel(100);
+    mapper.connect_output(to_sink);
+    sink.connect_input(from_mapper);
 
-    Runtime {
-        source: source.spawn(),
-        filter: filter.spawn(),
-        mapper: mapper.spawn(),
-        sink: sink.spawn(),
-    }
+    let runtime = Runtime {
+        source: source.spawn()?,
+        filter: filter.spawn()?,
+        mapper: mapper.spawn()?,
+        sink: sink.spawn()?,
+    };
+
+    Ok(runtime)
 }
 
-pub fn run(args: &Args) -> Result<(), oura::Error> {
+pub fn run(args: &Args) -> Result<(), Error> {
     console::initialize(&args.console);
 
-    let config = ConfigRoot::new(&args.config)
-        .map_err(|err| oura::Error::ConfigError(format!("{:?}", err)))?;
+    let config = ConfigRoot::new(&args.config).map_err(|err| Error::config(err))?;
 
     let chain = config.chain.unwrap_or_default().into();
-    let policy = config.policy.unwrap_or_default().into();
-    let intersect = config.intersect;
+    let cursor = Cursor::new(config.intersect.into());
+    let error_policy = config.policy.unwrap_or_default().into();
     let finalize = config.finalize;
 
-    let context = Context { chain }; //, policy, intersect, finalize);
+    let ctx = Context {
+        chain,
+        error_policy,
+        finalize,
+        cursor,
+    };
 
-    let source = config.source.bootstrapper(&ctx);
-    let filter = config.filter.unwrap_or_default().bootstrapper(&ctx);
-    let mapper = config.mapper.unwrap_or_default().bootstrapper(&ctx);
-    let sink = config.sink.bootstrapper(&ctx);
+    let source = config.source.bootstrapper(&ctx)?;
+    let filter = config.filter.unwrap_or_default().bootstrapper(&ctx)?;
+    let mapper = config.mapper.unwrap_or_default().bootstrapper(&ctx)?;
+    let sink = config.sink.bootstrapper(&ctx)?;
 
-    let runtime = bootstrap(source, filter, mapper, sink);
+    let runtime = bootstrap(source, filter, mapper, sink)?;
 
     log::info!("oura is running...");
 
-    while !should_stop(&pipeline) {
-        console::refresh(&args.console, &pipeline);
+    while !runtime.should_stop() {
+        console::refresh(&args.console, runtime.all_tethers());
         std::thread::sleep(Duration::from_millis(1500));
     }
 
     log::info!("Oura is stopping...");
-
-    shutdown(pipeline);
+    runtime.shutdown();
 
     Ok(())
 }
