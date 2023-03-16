@@ -1,3 +1,4 @@
+use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -6,12 +7,6 @@ pub mod json;
 pub mod legacy_v1;
 pub mod wasm;
 
-pub enum Runtime {
-    Json(json::Runtime),
-    LegacyV1(legacy_v1::Runtime),
-    Wasm(wasm::Runtime),
-}
-
 pub enum Bootstrapper {
     Json(json::Bootstrapper),
     LegacyV1(legacy_v1::Bootstrapper),
@@ -19,27 +14,27 @@ pub enum Bootstrapper {
 }
 
 impl Bootstrapper {
-    pub fn borrow_input_port(&mut self) -> &mut MapperInputPort {
+    pub fn connect_input(&mut self, adapter: MapperInputAdapter) {
         match self {
-            Bootstrapper::Json(p) => p.borrow_input_port(),
-            Bootstrapper::LegacyV1(p) => p.borrow_input_port(),
-            Bootstrapper::Wasm(p) => p.borrow_input_port(),
+            Bootstrapper::Json(p) => p.connect_input(adapter),
+            Bootstrapper::LegacyV1(p) => p.connect_input(adapter),
+            Bootstrapper::Wasm(p) => p.connect_input(adapter),
         }
     }
 
-    pub fn borrow_output_port(&mut self) -> &mut MapperOutputPort {
+    pub fn connect_output(&mut self, adapter: MapperOutputAdapter) {
         match self {
-            Bootstrapper::Json(p) => p.borrow_output_port(),
-            Bootstrapper::LegacyV1(p) => p.borrow_output_port(),
-            Bootstrapper::Wasm(p) => p.borrow_output_port(),
+            Bootstrapper::Json(p) => p.connect_output(adapter),
+            Bootstrapper::LegacyV1(p) => p.connect_output(adapter),
+            Bootstrapper::Wasm(p) => p.connect_output(adapter),
         }
     }
 
-    pub fn spawn(self) -> Result<Runtime, Error> {
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
-            Bootstrapper::Json(x) => Ok(Runtime::Json(x.spawn()?)),
-            Bootstrapper::LegacyV1(x) => Ok(Runtime::LegacyV1(x.spawn()?)),
-            Bootstrapper::Wasm(x) => Ok(Runtime::Wasm(x.spawn()?)),
+            Bootstrapper::Json(x) => x.spawn(),
+            Bootstrapper::LegacyV1(x) => x.spawn(),
+            Bootstrapper::Wasm(x) => x.spawn(),
         }
     }
 }
@@ -59,5 +54,11 @@ impl Config {
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
             Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
         }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config::LegacyV1(Default::default())
     }
 }

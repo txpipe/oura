@@ -10,14 +10,14 @@ use super::format::*;
 use super::throttle::Throttle;
 
 pub struct Worker {
-    msg_count: gasket::metrics::Counter,
-    stdout: Stdout,
-    throttle: Throttle,
-    wrap: bool,
-    adahandle_policy: Option<String>,
-    cursor: Cursor,
-    pub input: MapperInputPort,
-    pub output: MapperOutputPort,
+    pub(crate) msg_count: gasket::metrics::Counter,
+    pub(crate) stdout: Stdout,
+    pub(crate) throttle: Throttle,
+    pub(crate) wrap: bool,
+    pub(crate) adahandle_policy: Option<String>,
+    pub(crate) cursor: Cursor,
+    pub(crate) input: MapperInputPort,
+    pub(crate) output: MapperOutputPort,
 }
 
 impl Worker {
@@ -46,7 +46,7 @@ impl gasket::runtime::Worker for Worker {
             .execute(Print(
                 "Oura terminal output started, waiting for chain data\n".with(Color::DarkGrey),
             ))
-            .or_panic();
+            .or_panic()?;
 
         Ok(())
     }
@@ -66,7 +66,7 @@ impl gasket::runtime::Worker for Worker {
                 (point, line)
             }
             ChainEvent::Reset(point) => {
-                let line = LogLine::new_reset(point);
+                let line = LogLine::new_reset(point.clone());
                 (point, line)
             }
         };

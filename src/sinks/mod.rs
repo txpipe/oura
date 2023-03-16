@@ -1,3 +1,8 @@
+use gasket::runtime::Tether;
+use serde::Deserialize;
+
+use crate::framework::*;
+
 //pub mod assert;
 //pub mod stdout;
 pub mod terminal;
@@ -34,3 +39,35 @@ pub mod terminal;
 
 // #[cfg(feature = "rabbitmqsink")]
 // pub mod rabbitmq;
+
+pub enum Bootstrapper {
+    Terminal(terminal::Bootstrapper),
+}
+
+impl Bootstrapper {
+    pub fn connect_input(&mut self, adapter: SinkInputAdapter) {
+        match self {
+            Bootstrapper::Terminal(p) => p.connect_input(adapter),
+        }
+    }
+
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
+        match self {
+            Bootstrapper::Terminal(x) => x.spawn(),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+pub enum Config {
+    Terminal(terminal::Config),
+}
+
+impl Config {
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
+        match self {
+            Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
+        }
+    }
+}
