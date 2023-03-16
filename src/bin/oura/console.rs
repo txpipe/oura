@@ -3,10 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use gasket::metrics::Reading;
+use gasket::{metrics::Reading, runtime::Tether};
 use lazy_static::{__Deref, lazy_static};
 use log::Log;
-use oura::bootstrap::Pipeline;
 
 #[derive(clap::ValueEnum, Clone)]
 pub enum Mode {
@@ -65,8 +64,8 @@ impl TuiConsole {
         }
     }
 
-    fn refresh(&self, pipeline: &Pipeline) {
-        for tether in pipeline.tethers.iter() {
+    fn refresh<'a>(&self, tethers: impl Iterator<Item = &'a Tether>) {
+        for tether in tethers {
             let state = match tether.check_state() {
                 gasket::runtime::TetherState::Dropped => "dropped!",
                 gasket::runtime::TetherState::Blocked(_) => "blocked!",
@@ -142,14 +141,14 @@ impl PlainConsole {
         }
     }
 
-    fn refresh(&self, pipeline: &Pipeline) {
+    fn refresh<'a>(&self, tethers: impl Iterator<Item = &'a Tether>) {
         let mut last_report = self.last_report.lock().unwrap();
 
         if last_report.elapsed() <= Duration::from_secs(10) {
             return;
         }
 
-        for tether in pipeline.tethers.iter() {
+        for tether in tethers {
             match tether.check_state() {
                 gasket::runtime::TetherState::Dropped => {
                     log::error!("[{}] stage tether has been dropped", tether.name());
@@ -197,9 +196,9 @@ pub fn initialize(mode: &Option<Mode>) {
     }
 }
 
-pub fn refresh(mode: &Option<Mode>, pipeline: &Pipeline) {
+pub fn refresh<'a>(mode: &Option<Mode>, tethers: impl Iterator<Item = &'a Tether>) {
     match mode {
-        Some(Mode::TUI) => TUI_CONSOLE.refresh(pipeline),
-        _ => PLAIN_CONSOLE.refresh(pipeline),
+        Some(Mode::TUI) => TUI_CONSOLE.refresh(tethers),
+        _ => PLAIN_CONSOLE.refresh(tethers),
     }
 }

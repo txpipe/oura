@@ -1,3 +1,4 @@
+use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -7,27 +8,22 @@ use crate::framework::*;
 
 pub mod n2n;
 
-pub enum Runtime {
-    N2N(n2n::Runtime),
-    N2C(),
-}
-
 pub enum Bootstrapper {
     N2N(n2n::Bootstrapper),
     N2C(),
 }
 
 impl Bootstrapper {
-    pub fn borrow_output_port(&mut self) -> &mut SourceOutputPort {
+    pub fn connect_output(&mut self, adapter: SourceOutputAdapter) {
         match self {
-            Bootstrapper::N2N(p) => p.borrow_output_port(),
+            Bootstrapper::N2N(p) => p.connect_output(adapter),
             Bootstrapper::N2C() => todo!(),
         }
     }
 
-    pub fn spawn(self) -> Result<Runtime, Error> {
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
-            Bootstrapper::N2N(x) => Ok(Runtime::N2N(x.spawn()?)),
+            Bootstrapper::N2N(x) => x.spawn(),
             Bootstrapper::N2C() => todo!(),
         }
     }
