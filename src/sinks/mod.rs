@@ -5,6 +5,7 @@ use crate::framework::*;
 
 //pub mod assert;
 //pub mod stdout;
+pub mod noop;
 pub mod terminal;
 
 // #[cfg(feature = "logs")]
@@ -42,18 +43,21 @@ pub mod terminal;
 
 pub enum Bootstrapper {
     Terminal(terminal::Bootstrapper),
+    Noop(noop::Bootstrapper),
 }
 
 impl Bootstrapper {
     pub fn connect_input(&mut self, adapter: SinkInputAdapter) {
         match self {
             Bootstrapper::Terminal(p) => p.connect_input(adapter),
+            Bootstrapper::Noop(p) => p.connect_input(adapter),
         }
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
             Bootstrapper::Terminal(x) => x.spawn(),
+            Bootstrapper::Noop(x) => x.spawn(),
         }
     }
 }
@@ -62,12 +66,14 @@ impl Bootstrapper {
 #[serde(tag = "type")]
 pub enum Config {
     Terminal(terminal::Config),
+    Noop(noop::Config),
 }
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
         match self {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
+            Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
         }
     }
 }
