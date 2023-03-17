@@ -23,7 +23,8 @@ impl Default for Mode {
 
 struct TuiConsole {
     chainsync_progress: indicatif::ProgressBar,
-    received_blocks: indicatif::ProgressBar,
+    fetched_blocks: indicatif::ProgressBar,
+    plexer_ops_count: indicatif::ProgressBar,
     filter_ops_count: indicatif::ProgressBar,
     mapper_ops_count: indicatif::ProgressBar,
     sink_ops_count: indicatif::ProgressBar,
@@ -57,7 +58,8 @@ impl TuiConsole {
                         .unwrap(),
                 ),
             ),
-            received_blocks: Self::build_counter_spinner("received blocks", &container),
+            fetched_blocks: Self::build_counter_spinner("fetched blocks", &container),
+            plexer_ops_count: Self::build_counter_spinner("plexer ops", &container),
             filter_ops_count: Self::build_counter_spinner("filter ops", &container),
             mapper_ops_count: Self::build_counter_spinner("mapper ops", &container),
             sink_ops_count: Self::build_counter_spinner("sink ops", &container),
@@ -88,9 +90,13 @@ impl TuiConsole {
                             (_, "last_block", Reading::Gauge(x)) => {
                                 self.chainsync_progress.set_position(x as u64);
                             }
-                            (_, "received_blocks", Reading::Count(x)) => {
-                                self.received_blocks.set_position(x);
-                                self.received_blocks.set_message(state);
+                            (_, "fetched_blocks", Reading::Count(x)) => {
+                                self.fetched_blocks.set_position(x);
+                                self.fetched_blocks.set_message(state);
+                            }
+                            ("plexer", "ops_count", Reading::Count(x)) => {
+                                self.plexer_ops_count.set_position(x);
+                                self.plexer_ops_count.set_message(state);
                             }
                             ("filter", "ops_count", Reading::Count(x)) => {
                                 self.filter_ops_count.set_position(x);
@@ -192,7 +198,12 @@ pub fn initialize(mode: &Option<Mode>) {
         Some(Mode::TUI) => log::set_logger(TUI_CONSOLE.deref())
             .map(|_| log::set_max_level(log::LevelFilter::Info))
             .unwrap(),
-        _ => env_logger::init(),
+        _ => tracing::subscriber::set_global_default(
+            tracing_subscriber::FmtSubscriber::builder()
+                .with_max_level(tracing::Level::DEBUG)
+                .finish(),
+        )
+        .unwrap(),
     }
 }
 
