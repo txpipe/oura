@@ -254,7 +254,7 @@ impl Bootstrapper {
         let worker_tether = gasket::runtime::spawn_stage(
             self.0,
             gasket::runtime::Policy::default(),
-            Some("filter_noop"),
+            Some("filter"),
         );
 
         Ok(vec![worker_tether])
