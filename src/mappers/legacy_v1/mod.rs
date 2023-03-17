@@ -15,7 +15,7 @@ pub use prelude::*;
 
 #[derive(Default)]
 struct Worker {
-    msg_count: gasket::metrics::Counter,
+    ops_count: gasket::metrics::Counter,
     config: Config,
     genesis: GenesisValues,
     error_policy: RuntimePolicy,
@@ -26,7 +26,7 @@ struct Worker {
 impl gasket::runtime::Worker for Worker {
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
-            .with_counter("msg_count", &self.msg_count)
+            .with_counter("ops_count", &self.ops_count)
             .build()
     }
 
@@ -59,7 +59,7 @@ impl gasket::runtime::Worker for Worker {
             x => self.output.send(x.into())?,
         };
 
-        self.msg_count.inc(1);
+        self.ops_count.inc(1);
 
         Ok(gasket::runtime::WorkOutcome::Partial)
     }
@@ -80,7 +80,7 @@ impl Bootstrapper {
         let worker_tether = gasket::runtime::spawn_stage(
             self.0,
             gasket::runtime::Policy::default(),
-            Some("mapper_legacy_v1"),
+            Some("mapper"),
         );
 
         Ok(vec![worker_tether])

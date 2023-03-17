@@ -7,7 +7,7 @@ use crate::framework::*;
 
 #[derive(Default)]
 struct Worker {
-    msg_count: gasket::metrics::Counter,
+    ops_count: gasket::metrics::Counter,
     input: FilterInputPort,
     output: FilterOutputPort,
 }
@@ -15,13 +15,14 @@ struct Worker {
 impl gasket::runtime::Worker for Worker {
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
-            .with_counter("msg_count", &self.msg_count)
+            .with_counter("ops_count", &self.ops_count)
             .build()
     }
 
     fn work(&mut self) -> gasket::runtime::WorkResult {
         let msg = self.input.recv_or_idle()?;
         self.output.send(msg)?;
+        self.ops_count.inc(1);
 
         Ok(gasket::runtime::WorkOutcome::Partial)
     }
@@ -42,7 +43,7 @@ impl Bootstrapper {
         let worker_tether = gasket::runtime::spawn_stage(
             self.0,
             gasket::runtime::Policy::default(),
-            Some("filter_noop"),
+            Some("filter"),
         );
 
         Ok(vec![worker_tether])
