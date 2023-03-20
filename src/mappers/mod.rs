@@ -3,6 +3,7 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
+pub mod deno;
 pub mod json;
 pub mod legacy_v1;
 pub mod wasm;
@@ -11,6 +12,7 @@ pub enum Bootstrapper {
     Json(json::Bootstrapper),
     LegacyV1(legacy_v1::Bootstrapper),
     Wasm(wasm::Bootstrapper),
+    Deno(deno::Bootstrapper),
 }
 
 impl Bootstrapper {
@@ -19,6 +21,7 @@ impl Bootstrapper {
             Bootstrapper::Json(p) => p.connect_input(adapter),
             Bootstrapper::LegacyV1(p) => p.connect_input(adapter),
             Bootstrapper::Wasm(p) => p.connect_input(adapter),
+            Bootstrapper::Deno(p) => p.connect_input(adapter),
         }
     }
 
@@ -27,6 +30,7 @@ impl Bootstrapper {
             Bootstrapper::Json(p) => p.connect_output(adapter),
             Bootstrapper::LegacyV1(p) => p.connect_output(adapter),
             Bootstrapper::Wasm(p) => p.connect_output(adapter),
+            Bootstrapper::Deno(p) => p.connect_output(adapter),
         }
     }
 
@@ -35,6 +39,7 @@ impl Bootstrapper {
             Bootstrapper::Json(x) => x.spawn(),
             Bootstrapper::LegacyV1(x) => x.spawn(),
             Bootstrapper::Wasm(x) => x.spawn(),
+            Bootstrapper::Deno(x) => x.spawn(),
         }
     }
 }
@@ -45,6 +50,7 @@ pub enum Config {
     Json(json::Config),
     LegacyV1(legacy_v1::Config),
     Wasm(wasm::Config),
+    Deno(deno::Config),
 }
 
 impl Config {
@@ -53,6 +59,7 @@ impl Config {
             Config::Json(c) => Ok(Bootstrapper::Json(c.bootstrapper(ctx)?)),
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
             Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
+            Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
         }
     }
 }

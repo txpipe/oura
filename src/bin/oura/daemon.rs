@@ -123,12 +123,14 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let cursor = Cursor::new(config.intersect.into());
     let error_policy = config.policy.unwrap_or_default().into();
     let finalize = config.finalize;
+    let current_dir = std::env::current_dir().unwrap();
 
     let ctx = Context {
         chain,
         error_policy,
         finalize,
         cursor,
+        current_dir,
     };
 
     let source = config.source.bootstrapper(&ctx)?;

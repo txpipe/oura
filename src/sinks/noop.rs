@@ -20,8 +20,8 @@ impl gasket::runtime::Worker for Worker {
     }
 
     fn work(&mut self) -> gasket::runtime::WorkResult {
-        let _ = self.input.recv_or_idle()?;
-        debug!("message received");
+        let msg = self.input.recv_or_idle()?;
+        debug!(?msg, "message received");
         self.ops_count.inc(1);
 
         Ok(gasket::runtime::WorkOutcome::Partial)
