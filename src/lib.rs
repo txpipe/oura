@@ -1,4 +1,4 @@
-use thiserror::Error;
+#![feature(pin_macro)]
 
 pub mod filters;
 pub mod framework;
