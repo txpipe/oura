@@ -1,0 +1,17 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Point"
+value = [
+    87486641,
+    "43b2980fa1cd003c886cc867344ee5fd53ef481e1a96532c4ac3aba77c51ccaa",
+]
+
+[mapper]
+type = "Deno"
+main_module = "./mapper.js"
+
+[sink]
+type = "Noop"

@@ -4,6 +4,7 @@ use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 use std::collections::VecDeque;
 use std::fmt::Debug;
+use std::path::PathBuf;
 
 use pallas::network::miniprotocols::Point;
 use pallas::network::upstream::cursor::{Cursor, Intersection};
@@ -46,6 +47,7 @@ pub struct Context {
     pub cursor: Cursor,
     pub error_policy: RuntimePolicy,
     pub finalize: Option<FinalizeConfig>,
+    pub current_dir: PathBuf,
 }
 
 use serde_json::Value as JsonValue;
