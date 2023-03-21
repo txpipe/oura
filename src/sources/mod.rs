@@ -13,15 +13,19 @@ pub enum Bootstrapper {
     N2C(),
 }
 
-impl Bootstrapper {
-    pub fn connect_output(&mut self, adapter: SourceOutputAdapter) {
+impl StageBootstrapper for Bootstrapper {
+    fn connect_output(&mut self, adapter: OutputAdapter) {
         match self {
             Bootstrapper::N2N(p) => p.connect_output(adapter),
             Bootstrapper::N2C() => todo!(),
         }
     }
 
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
+    fn connect_input(&mut self, adapter: InputAdapter) {
+        panic!("attempted to use source stage as receiver");
+    }
+
+    fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
             Bootstrapper::N2N(x) => x.spawn(),
             Bootstrapper::N2C() => todo!(),

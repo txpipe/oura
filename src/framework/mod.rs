@@ -1,5 +1,6 @@
 //! Internal pipeline framework
 
+use gasket::messaging::SendAdapter;
 use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 use std::collections::VecDeque;
@@ -100,12 +101,14 @@ pub type MapperInputPort = gasket::messaging::crossbeam::InputPort<ChainEvent>;
 pub type MapperOutputPort = gasket::messaging::crossbeam::OutputPort<ChainEvent>;
 pub type SinkInputPort = gasket::messaging::crossbeam::InputPort<ChainEvent>;
 
-pub type SourceOutputAdapter = gasket::messaging::crossbeam::ChannelSendAdapter<ChainEvent>;
-pub type FilterInputAdapter = gasket::messaging::crossbeam::ChannelRecvAdapter<ChainEvent>;
-pub type FilterOutputAdapter = gasket::messaging::crossbeam::ChannelSendAdapter<ChainEvent>;
-pub type MapperInputAdapter = gasket::messaging::crossbeam::ChannelRecvAdapter<ChainEvent>;
-pub type MapperOutputAdapter = gasket::messaging::crossbeam::ChannelSendAdapter<ChainEvent>;
-pub type SinkInputAdapter = gasket::messaging::crossbeam::ChannelRecvAdapter<ChainEvent>;
+pub type OutputAdapter = gasket::messaging::crossbeam::ChannelSendAdapter<ChainEvent>;
+pub type InputAdapter = gasket::messaging::crossbeam::ChannelRecvAdapter<ChainEvent>;
+
+pub trait StageBootstrapper {
+    fn connect_output(&mut self, adapter: OutputAdapter);
+    fn connect_input(&mut self, adapter: InputAdapter);
+    fn spawn(self) -> Result<Vec<gasket::runtime::Tether>, Error>;
+}
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type", content = "value")]

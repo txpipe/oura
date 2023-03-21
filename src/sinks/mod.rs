@@ -46,15 +46,19 @@ pub enum Bootstrapper {
     Noop(noop::Bootstrapper),
 }
 
-impl Bootstrapper {
-    pub fn connect_input(&mut self, adapter: SinkInputAdapter) {
+impl StageBootstrapper for Bootstrapper {
+    fn connect_output(&mut self, _: OutputAdapter) {
+        panic!("attempted to use sink stage as sender");
+    }
+
+    fn connect_input(&mut self, adapter: InputAdapter) {
         match self {
             Bootstrapper::Terminal(p) => p.connect_input(adapter),
             Bootstrapper::Noop(p) => p.connect_input(adapter),
         }
     }
 
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
+    fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
             Bootstrapper::Terminal(x) => x.spawn(),
             Bootstrapper::Noop(x) => x.spawn(),

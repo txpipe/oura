@@ -9,7 +9,7 @@ use super::run::Worker;
 pub struct Bootstrapper(Worker);
 
 impl Bootstrapper {
-    pub fn connect_input(&mut self, adapter: SinkInputAdapter) {
+    pub fn connect_input(&mut self, adapter: InputAdapter) {
         self.0.input.connect(adapter);
     }
 
