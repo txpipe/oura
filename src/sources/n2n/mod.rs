@@ -8,10 +8,15 @@ use crate::framework::*;
 
 pub struct Runtime(PallasRuntime);
 
-pub struct Bootstrapper(PallasBootstrapper<ChainEvent>);
+pub type Adapter = gasket::messaging::crossbeam::MapSendAdapter<
+    pallas::network::upstream::BlockFetchEvent,
+    ChainEvent,
+>;
+
+pub struct Bootstrapper(PallasBootstrapper<Adapter>);
 
 impl Bootstrapper {
-    pub fn connect_output(&mut self, adapter: SourceOutputAdapter) {
+    pub fn connect_output(&mut self, adapter: OutputAdapter) {
         let adapter = gasket::messaging::MapSendAdapter::new(adapter, |x| match x {
             pallas::network::upstream::BlockFetchEvent::RollForward(slot, hash, body) => {
                 Some(ChainEvent::Apply(
@@ -22,7 +27,7 @@ impl Bootstrapper {
             pallas::network::upstream::BlockFetchEvent::Rollback(x) => Some(ChainEvent::Reset(x)),
         });
 
-        self.0.borrow_output_port().connect(adapter);
+        self.0.connect_output(adapter);
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {

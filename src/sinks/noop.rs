@@ -31,7 +31,7 @@ impl gasket::runtime::Worker for Worker {
 pub struct Bootstrapper(Worker);
 
 impl Bootstrapper {
-    pub fn connect_input(&mut self, adapter: FilterInputAdapter) {
+    pub fn connect_input(&mut self, adapter: InputAdapter) {
         self.0.input.connect(adapter);
     }
 
