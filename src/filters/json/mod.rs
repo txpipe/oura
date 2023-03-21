@@ -1,4 +1,4 @@
-//! A mapper with custom logic from a WASM module
+//! A mapper that outputs events in JSON format
 
 use gasket::{messaging::*, runtime::Tether};
 use serde::Deserialize;
@@ -30,11 +30,11 @@ impl gasket::runtime::Worker for Worker {
 pub struct Bootstrapper(Worker);
 
 impl Bootstrapper {
-    pub fn connect_input(&mut self, adapter: MapperInputAdapter) {
+    pub fn connect_input(&mut self, adapter: InputAdapter) {
         self.0.input.connect(adapter);
     }
 
-    pub fn connect_output(&mut self, adapter: MapperOutputAdapter) {
+    pub fn connect_output(&mut self, adapter: OutputAdapter) {
         self.0.output.connect(adapter);
     }
 
@@ -42,7 +42,7 @@ impl Bootstrapper {
         let worker_tether = gasket::runtime::spawn_stage(
             self.0,
             gasket::runtime::Policy::default(),
-            Some("mapper_noop"),
+            Some("mapper_wasm"),
         );
 
         Ok(vec![worker_tether])

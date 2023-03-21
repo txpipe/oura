@@ -1,6 +1,6 @@
 use clap;
 use gasket::runtime::Tether;
-use oura::{filters, framework::*, mappers, sinks, sources};
+use oura::{filters, framework::*, sinks, sources};
 use pallas::{ledger::traverse::wellknown::GenesisValues, network::upstream::cursor::Cursor};
 use serde::Deserialize;
 use std::time::Duration;
@@ -10,8 +10,7 @@ use crate::console;
 #[derive(Deserialize)]
 struct ConfigRoot {
     source: sources::Config,
-    filter: Option<filters::Config>,
-    mapper: Option<mappers::Config>,
+    filters: Option<Vec<filters::Config>>,
     sink: sinks::Config,
     intersect: IntersectConfig,
     finalize: Option<FinalizeConfig>,
@@ -43,8 +42,7 @@ impl ConfigRoot {
 
 struct Runtime {
     source: Vec<Tether>,
-    filter: Vec<Tether>,
-    mapper: Vec<Tether>,
+    filters: Vec<Tether>,
     sink: Vec<Tether>,
 }
 
@@ -52,8 +50,7 @@ impl Runtime {
     fn all_tethers(&self) -> impl Iterator<Item = &Tether> {
         self.source
             .iter()
-            .chain(self.filter.iter())
-            .chain(self.mapper.iter())
+            .chain(self.filters.iter())
             .chain(self.sink.iter())
     }
 
@@ -86,28 +83,48 @@ impl Runtime {
     }
 }
 
+fn chain_stages<'a>(
+    source: &'a mut dyn StageBootstrapper,
+    filters: Vec<&'a mut dyn StageBootstrapper>,
+    sink: &'a mut dyn StageBootstrapper,
+) {
+    let mut prev = source;
+
+    for filter in filters {
+        let (to_next, from_prev) = gasket::messaging::crossbeam::channel(100);
+        prev.connect_output(to_next);
+        filter.connect_input(from_prev);
+        prev = filter;
+    }
+
+    let (to_next, from_prev) = gasket::messaging::crossbeam::channel(100);
+    prev.connect_output(to_next);
+    sink.connect_input(from_prev);
+}
+
 fn bootstrap(
     mut source: sources::Bootstrapper,
-    mut filter: filters::Bootstrapper,
-    mut mapper: mappers::Bootstrapper,
+    mut filters: Vec<filters::Bootstrapper>,
     mut sink: sinks::Bootstrapper,
 ) -> Result<Runtime, Error> {
-    let (to_filter, from_source) = gasket::messaging::crossbeam::channel(100);
-    source.connect_output(to_filter);
-    filter.connect_input(from_source);
-
-    let (to_mapper, from_filter) = gasket::messaging::crossbeam::channel(100);
-    filter.connect_output(to_mapper);
-    mapper.connect_input(from_filter);
-
-    let (to_sink, from_mapper) = gasket::messaging::crossbeam::channel(100);
-    mapper.connect_output(to_sink);
-    sink.connect_input(from_mapper);
+    chain_stages(
+        &mut source,
+        filters
+            .iter_mut()
+            .map(|x| x as &mut dyn StageBootstrapper)
+            .collect::<Vec<_>>(),
+        &mut sink,
+    );
 
     let runtime = Runtime {
         source: source.spawn()?,
-        filter: filter.spawn()?,
-        mapper: mapper.spawn()?,
+        filters: filters
+            .into_iter()
+            .map(|x| x.spawn())
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .flatten()
+            .collect(),
         sink: sink.spawn()?,
     };
 
@@ -134,11 +151,17 @@ pub fn run(args: &Args) -> Result<(), Error> {
     };
 
     let source = config.source.bootstrapper(&ctx)?;
-    let filter = config.filter.unwrap_or_default().bootstrapper(&ctx)?;
-    let mapper = config.mapper.unwrap_or_default().bootstrapper(&ctx)?;
+
+    let filters = config
+        .filters
+        .into_iter()
+        .flatten()
+        .map(|x| x.bootstrapper(&ctx))
+        .collect::<Result<_, _>>()?;
+
     let sink = config.sink.bootstrapper(&ctx)?;
 
-    let runtime = bootstrap(source, filter, mapper, sink)?;
+    let runtime = bootstrap(source, filters, sink)?;
 
     log::info!("oura is running...");
 
