@@ -1,0 +1,21 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Point"
+value = [
+    87938927,
+    "7d6f25ff981bdc92f6b61c04d7f9d0b7236783da9c66b2d0ba5dc6953b68b34f",
+]
+
+[[filters]]
+type = "LegacyV1"
+include_transaction_details = true
+
+[[filters]]
+type = "Deno"
+main_module = "./parser.js"
+
+[sink]
+type = "Noop"
