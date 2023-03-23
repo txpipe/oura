@@ -14,11 +14,8 @@ impl Bootstrapper {
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage(
-            self.0,
-            gasket::runtime::Policy::default(),
-            Some("sink_terminal"),
-        );
+        let worker_tether =
+            gasket::runtime::spawn_stage(self.0, gasket::runtime::Policy::default(), Some("sink"));
 
         Ok(vec![worker_tether])
     }
@@ -40,7 +37,6 @@ impl Config {
             adahandle_policy: self.adahandle_policy,
             msg_count: Default::default(),
             input: Default::default(),
-            output: Default::default(),
             cursor: ctx.cursor.clone(),
         };
 
