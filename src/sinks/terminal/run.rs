@@ -17,7 +17,6 @@ pub struct Worker {
     pub(crate) adahandle_policy: Option<String>,
     pub(crate) cursor: Cursor,
     pub(crate) input: MapperInputPort,
-    pub(crate) output: MapperOutputPort,
 }
 
 impl Worker {
