@@ -1,6 +1,5 @@
 //! Internal pipeline framework
 
-use gasket::messaging::SendAdapter;
 use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 use std::collections::VecDeque;

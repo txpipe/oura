@@ -1,4 +1,4 @@
-use gasket::{messaging::SendPort, runtime::Tether};
+use gasket::runtime::Tether;
 use pallas::network::upstream::n2n::{
     Bootstrapper as PallasBootstrapper, Runtime as PallasRuntime,
 };

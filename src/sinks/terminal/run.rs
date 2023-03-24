@@ -25,7 +25,7 @@ impl Worker {
             return None;
         }
 
-        if let Ok((x, y)) = crossterm::terminal::size() {
+        if let Ok((x, _y)) = crossterm::terminal::size() {
             return Some(x as usize);
         }
 

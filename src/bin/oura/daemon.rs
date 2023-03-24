@@ -1,4 +1,3 @@
-use clap;
 use gasket::runtime::Tether;
 use oura::{filters, framework::*, sinks, sources};
 use pallas::{ledger::traverse::wellknown::GenesisValues, network::upstream::cursor::Cursor};
@@ -56,10 +55,9 @@ impl Runtime {
 
     fn should_stop(&self) -> bool {
         self.all_tethers().any(|tether| match tether.check_state() {
-            gasket::runtime::TetherState::Alive(x) => match x {
-                gasket::runtime::StageState::StandBy => true,
-                _ => false,
-            },
+            gasket::runtime::TetherState::Alive(x) => {
+                matches!(x, gasket::runtime::StageState::StandBy)
+            }
             _ => true,
         })
     }
@@ -134,11 +132,11 @@ fn bootstrap(
 pub fn run(args: &Args) -> Result<(), Error> {
     console::initialize(&args.console);
 
-    let config = ConfigRoot::new(&args.config).map_err(|err| Error::config(err))?;
+    let config = ConfigRoot::new(&args.config).map_err(Error::config)?;
 
-    let chain = config.chain.unwrap_or_default().into();
+    let chain = config.chain.unwrap_or_default();
     let cursor = Cursor::new(config.intersect.into());
-    let error_policy = config.policy.unwrap_or_default().into();
+    let error_policy = config.policy.unwrap_or_default();
     let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
 

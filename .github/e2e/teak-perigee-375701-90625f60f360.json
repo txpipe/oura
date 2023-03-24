@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "teak-perigee-375701",
+  "private_key_id": "90625f60f360ff18381e6b667fd974bf3ab3045f",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8OcbP8PIt7sr/\njRzU9Dz5BjFijwnCk+hzYIWNueFpZNxunQrh9kOiqNAw2Js4ufxk89lm3ztAexwk\nEdBKwtbPn0696uK6Ad24doPAFwA3O8GkVNqHUv687ULxSvZpkRoT/139jfwt26S5\nWN2f8yb/UzGuyJtxqQHDCTBCDg7oo5LtLwpvTaZZMu3sZ0c/qG0JnOD3YTE4x5km\nMPsj7VF0x3O5QVhgwVyBAy9FCnPSO9zxm7GuT0CoDsbLIAEShsnxHtn5IAi9q7UY\nNHtD1ZWYFuLdWe7QUFkTMDayOQcgzVnbVo/bMVnHyH4gEu3u6ApOiUG9aIfxhCGy\npBWSAh67AgMBAAECggEAEPQ6Ha6YydCTNVu+QWPZS1ImlNEu5ZL4CM7XyMSTWRbU\nkIJ4IZLsIOGIYYkpL7D4J7AboKhlbsq7MqtUfsXR0bRXERE9DqV7YkTYKJW8/byi\nr3NUybdzXYx+qQhOoLY8SjMIaGQ0VxcZKiuNSH2ydHFHoNqavpNxpq7HS4CqEOpl\nqUelFy0te3l2QIJZLeOurtgmCZRNXlSa3PCpNJwOgzn34MOilutUf2zbF5SU675V\n7XL8KscVp5aHcnRKbHnIDgnwDFhNgK/LGuG4vR8T2Fj+mJh3zuFywopoAKs16p/7\nR54I2Rf9zGG/LtIvKzn54rAyV9XQt/WQuMLuyTNU5QKBgQDt0/FucTpeKveuZ5Ze\nOFgW960kzcI/K/4qE+N6VPSK/FJqg6/fygRzkQxda4E/P9wIet0ev9Js4qtATunz\nWTRTrnQm455JiFMb/M8C3m4/vy7TjZ6d1YH2Qqjy6e+V/aD2EFk4r0H4aItuJcS2\n7ziWIBjJV1TA4AgxCzksPCEcLwKBgQDKm5WaNG/yNAKmDYJLhJBXw7oakSziPt5G\nvzKLUmoiwZ9e5ZPBENh9mOF7fctK1vPY5YiezGYcNDE47aUKHOa7iLfIsLKqzf1V\nHgO7rIMLQ3h5eXKxlzhSPXsaT8GbuyCUrSKXCF9VLanoE779xE4ldo0DXNraCKfC\nSgLl3D4HNQKBgQCEvtvvbTvK++irbB4+EOz6RNxbwo09fWysR9WcnnawbQ4DbeVo\n3/WEG93u9uZ5S0ehZBKv6xmktRApIOLsdUoDu0gRvNLI8FKTOJTDYSvgYPHeGxoB\ntv6HWcW7cF/ONHb3YUCrpwcHhDLvFB2sjfHjuZ6cIyanUWTBGyaaTiWc+QKBgHjj\n3J/mKeWaovnxlYz5zCaR4rl3ZhCY8ofEDaSTyEB0x2MYGNFZ+9L1JZVJucMt/tGs\nI5ic3VB20+fj5FXkaMf9C6vzwqenwUDIZ/HTPV27JGdWz9inIjPv+0P30s3ZGdec\ndscnd7qbRIX1QkCooPg5hGo9PVhbUb3b6167y0cBAoGBANXIgiDKc3moOJfI73t+\nuqZ55pBfiX8QaaTqSWdX+pNQemIp97UfW6vPG9gpsEZswUkwSNQjH5111ePLE0te\nK7dqqCuEMK7IIHGaMo48wZ8Et3tbWoLxpJu5iCaqCotxQ6ovUJAHPmb0ab42CxIV\n8vW11v5CXVCWa3f9YnMWfdqF\n-----END PRIVATE KEY-----\n",
+  "client_email": "oura-e2e@teak-perigee-375701.iam.gserviceaccount.com",
+  "client_id": "105764970135434041671",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/oura-e2e%40teak-perigee-375701.iam.gserviceaccount.com"
+}
