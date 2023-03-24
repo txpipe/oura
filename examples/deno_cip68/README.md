@@ -74,3 +74,25 @@ function extractNFTRef(
   };
 }
 ```
+
+## Typescript Bundle
+
+Before being able to use our custom code in Oura, we need to instruct _Deno_ to "bundle" it. This process will resolve all dependencies (local or remote), transpile Typescript into Javascript and generate a single `.js` file which is ready to be used by _Oura_'s pipeline.
+
+Run the following shell script to bundle our custom code:
+
+```sh
+deno bundle parser.ts parser.js
+```
+
+Assuming there aren't any errors in the code, a new `parser.js` should be generated in the same folder.
+
+## Run Oura
+
+We're now ready to run our Oura pipeline to get CIP68 reference NFT records. Assuming you have _Oura_ `v2` installed on your system, run the following shell script from the `examples/deno_cip68` folder to start the pipeline process:
+
+```sh
+oura daemon --config ./daemon.toml
+```
+
+After a while, you should start seeing JSON objects printed out through stdout.
