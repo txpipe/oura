@@ -1,7 +1,7 @@
 [package]
 name = "oura"
 description = "The tail of Cardano"
-version = "1.8.1"
+version = "2.0.0-alpha.1"
 edition = "2021"
 repository = "https://github.com/txpipe/oura"
 homepage = "https://github.com/txpipe/oura"
@@ -13,8 +13,8 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 [dependencies]
 # pallas = "0.18.0"
-# pallas = { git = "https://github.com/txpipe/pallas" }
-pallas = { path = "../pallas/pallas" }
+pallas = { git = "https://github.com/txpipe/pallas" }
+# pallas = { path = "../pallas/pallas" }
 # gasket = { path = "../../construkts/gasket-rs" }
 gasket = { git = "https://github.com/construkts/gasket-rs.git" }
 hex = "0.4.3"

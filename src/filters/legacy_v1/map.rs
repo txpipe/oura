@@ -5,7 +5,7 @@ use pallas::ledger::primitives::babbage::{MintedDatumOption, NetworkId};
 use pallas::ledger::primitives::{
     alonzo::{
         self as alonzo, Certificate, InstantaneousRewardSource, InstantaneousRewardTarget,
-        Metadatum, MetadatumLabel, Relay, Value,
+        Metadatum, MetadatumLabel, Relay,
     },
     babbage, ToCanonicalJson,
 };
@@ -103,13 +103,6 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
             log::warn!("unexpected metadatum type for label: {:?}", x);
             Default::default()
         }
-    }
-}
-
-fn get_tx_output_coin_value(amount: &Value) -> u64 {
-    match amount {
-        Value::Coin(x) => *x,
-        Value::Multiasset(x, _) => *x,
     }
 }
 
@@ -333,7 +326,7 @@ impl EventWriter<'_> {
     pub fn to_mint_record(&self, asset: &MultiEraAsset) -> MintRecord {
         MintRecord {
             policy: asset.policy().map(|x| x.to_string()).unwrap_or_default(),
-            asset: asset.name().map(|x| hex::encode(x)).unwrap_or_default(),
+            asset: asset.name().map(hex::encode).unwrap_or_default(),
             quantity: asset.coin(),
         }
     }
@@ -455,11 +448,7 @@ impl EventWriter<'_> {
     }
 
     pub fn to_certificate_event(&self, cert: &MultiEraCert) -> Option<EventData> {
-        if !cert.as_alonzo().is_some() {
-            return None;
-        }
-
-        let evt = match cert.as_alonzo().unwrap() {
+        let evt = match cert.as_alonzo()? {
             Certificate::StakeRegistration(credential) => EventData::StakeRegistration {
                 credential: credential.into(),
             },

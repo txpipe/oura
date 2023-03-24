@@ -7,18 +7,13 @@ use gasket::{metrics::Reading, runtime::Tether};
 use lazy_static::{__Deref, lazy_static};
 use log::Log;
 
-#[derive(clap::ValueEnum, Clone)]
+#[derive(clap::ValueEnum, Clone, Default)]
 pub enum Mode {
     /// shows progress as a plain sequence of logs
+    #[default]
     Plain,
     /// shows aggregated progress and metrics
-    TUI,
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Mode::Plain
-    }
+    Tui,
 }
 
 struct TuiConsole {
@@ -39,8 +34,7 @@ impl TuiConsole {
             indicatif::ProgressBar::new_spinner().with_style(
                 indicatif::ProgressStyle::default_spinner()
                     .template(&format!(
-                        "{{spinner}} {:<20} {{msg:<20}} {{pos:>8}} | {{per_sec}}",
-                        name
+                        "{{spinner}} {name:<20} {{msg:<20}} {{pos:>8}} | {{per_sec}}"
                     ))
                     .unwrap(),
             ),
@@ -195,7 +189,7 @@ lazy_static! {
 
 pub fn initialize(mode: &Option<Mode>) {
     match mode {
-        Some(Mode::TUI) => log::set_logger(TUI_CONSOLE.deref())
+        Some(Mode::Tui) => log::set_logger(TUI_CONSOLE.deref())
             .map(|_| log::set_max_level(log::LevelFilter::Info))
             .unwrap(),
         _ => tracing::subscriber::set_global_default(
@@ -209,7 +203,7 @@ pub fn initialize(mode: &Option<Mode>) {
 
 pub fn refresh<'a>(mode: &Option<Mode>, tethers: impl Iterator<Item = &'a Tether>) {
     match mode {
-        Some(Mode::TUI) => TUI_CONSOLE.refresh(tethers),
+        Some(Mode::Tui) => TUI_CONSOLE.refresh(tethers),
         _ => PLAIN_CONSOLE.refresh(tethers),
     }
 }
