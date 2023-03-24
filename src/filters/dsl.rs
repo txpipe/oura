@@ -214,9 +214,9 @@ impl Predicate {
     }
 }
 
-#[derive(Default)]
 struct Worker {
     msg_count: gasket::metrics::Counter,
+    predicate: Predicate,
     input: FilterInputPort,
     output: FilterOutputPort,
 }
@@ -231,9 +231,14 @@ impl gasket::runtime::Worker for Worker {
     fn work(&mut self) -> gasket::runtime::WorkResult {
         let msg = self.input.recv_or_idle()?;
 
-        todo!();
-
-        self.output.send(msg)?;
+        match &msg.payload {
+            ChainEvent::Apply(_, Record::OuraV1Event(x)) => {
+                if self.predicate.event_matches(x) {
+                    self.output.send(msg)?;
+                }
+            }
+            _ => todo!(),
+        }
 
         Ok(gasket::runtime::WorkOutcome::Partial)
     }
@@ -263,12 +268,17 @@ impl Bootstrapper {
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub check: Predicate,
+    pub predicate: Predicate,
 }
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
-        let worker = Worker::default();
+    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
+        let worker = Worker {
+            predicate: self.predicate,
+            msg_count: Default::default(),
+            input: Default::default(),
+            output: Default::default(),
+        };
 
         Ok(Bootstrapper(worker))
     }

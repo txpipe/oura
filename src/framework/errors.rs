@@ -27,17 +27,12 @@ impl Error {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, PartialOrd, Default)]
 pub enum ErrorAction {
     Skip,
     Warn,
+    #[default]
     Default,
-}
-
-impl Default for ErrorAction {
-    fn default() -> Self {
-        ErrorAction::Default
-    }
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]

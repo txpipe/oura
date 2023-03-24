@@ -54,7 +54,7 @@ impl Bootstrapper {
 pub struct Config {}
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
+    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
         let worker = Worker::default();
 
         Ok(Bootstrapper(worker))

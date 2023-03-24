@@ -1,7 +1,4 @@
-use std::{
-    fmt::{Display, Write},
-    ops::Deref,
-};
+use std::fmt::{Display, Write};
 
 use crossterm::style::{Attribute, Color, Stylize};
 use pallas::network::miniprotocols::Point;
@@ -366,7 +363,7 @@ impl LogLine {
         }
     }
 
-    pub fn new_reset(point: Point) -> LogLine {
+    pub fn new_reset(_point: Point) -> LogLine {
         todo!()
     }
 }

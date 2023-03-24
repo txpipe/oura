@@ -4012,7 +4012,7 @@ checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
 
 [[package]]
 name = "oura"
-version = "1.8.1"
+version = "2.0.0-alpha.1"
 dependencies = [
  "aws-config",
  "aws-sdk-lambda",
@@ -4110,6 +4110,7 @@ dependencies = [
 [[package]]
 name = "pallas"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "pallas-addresses",
  "pallas-codec",
@@ -4124,6 +4125,7 @@ dependencies = [
 [[package]]
 name = "pallas-addresses"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "base58",
  "bech32",
@@ -4136,6 +4138,7 @@ dependencies = [
 [[package]]
 name = "pallas-codec"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "hex",
  "minicbor",
@@ -4145,6 +4148,7 @@ dependencies = [
 [[package]]
 name = "pallas-crypto"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -4157,6 +4161,7 @@ dependencies = [
 [[package]]
 name = "pallas-miniprotocols"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "hex",
  "itertools",
@@ -4169,6 +4174,7 @@ dependencies = [
 [[package]]
 name = "pallas-multiplexer"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -4182,6 +4188,7 @@ dependencies = [
 [[package]]
 name = "pallas-primitives"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "base58",
  "bech32",
@@ -4196,6 +4203,7 @@ dependencies = [
 [[package]]
 name = "pallas-traverse"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "hex",
  "pallas-addresses",
@@ -4209,6 +4217,7 @@ dependencies = [
 [[package]]
 name = "pallas-upstream"
 version = "0.18.0"
+source = "git+https://github.com/txpipe/pallas#381a46f2cff0ee67189aaf2d6456521728ac6ea1"
 dependencies = [
  "gasket",
  "pallas-codec",

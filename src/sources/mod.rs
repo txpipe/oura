@@ -21,7 +21,7 @@ impl StageBootstrapper for Bootstrapper {
         }
     }
 
-    fn connect_input(&mut self, adapter: InputAdapter) {
+    fn connect_input(&mut self, _: InputAdapter) {
         panic!("attempted to use source stage as receiver");
     }
 

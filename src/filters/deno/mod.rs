@@ -1,17 +1,15 @@
 //! A mapper with custom logic from using the Deno runtime
 
-use deno_core::{op, Extension, ModuleSpecifier, OpState, Snapshot};
+use deno_core::{op, Extension, ModuleSpecifier, OpState};
 use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use deno_runtime::BootstrapOptions;
 use gasket::{messaging::*, runtime::Tether};
 use serde::Deserialize;
 use serde_json::json;
-use std::ops::Deref;
-use std::ops::DerefMut;
 use std::path::PathBuf;
 use tokio::runtime::Runtime as TokioRuntime;
-use tracing::{debug, trace};
+use tracing::trace;
 
 use crate::framework::*;
 
@@ -151,7 +149,7 @@ impl gasket::runtime::Worker for Worker {
                     }
                 }
             }
-            ChainEvent::Undo(p, r) => todo!(),
+            ChainEvent::Undo(..) => todo!(),
             ChainEvent::Reset(p) => {
                 self.output.send(ChainEvent::reset(p))?;
             }
@@ -189,7 +187,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
+    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
         // let main_module =
         //    deno_core::resolve_path(&self.main_module,
         // &ctx.current_dir).map_err(Error::config)?;
