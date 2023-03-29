@@ -1,5 +1,4 @@
-import * as oura from "./ouraTypes.ts";
-import { PlutusMap, plutusMapToPlainJson } from "./plutusData.ts";
+import * as oura from "https://raw.githubusercontent.com/txpipe/oura/v2/assets/denopkgs/v2AlphaOuraUtils/mod.ts";
 
 interface RefNFT {
   txHash: string;
@@ -18,7 +17,7 @@ function parseDatum(raw: oura.PlutusDatumRecord): Partial<RefNFT> | null {
     ];
 
     return {
-      metadata: plutusMapToPlainJson(metaField.map as PlutusMap),
+      metadata: oura.plutusMapToPlainJson(metaField.map as oura.PlutusMap),
       version: versionField.int as number,
     };
   } catch (err) {

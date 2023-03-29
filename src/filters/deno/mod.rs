@@ -48,9 +48,13 @@ struct Worker {
     ops_count: gasket::metrics::Counter,
     runtime: Option<WrappedRuntime>,
     main_module: PathBuf,
+    call_snippet: &'static str,
     input: MapperInputPort,
     output: MapperOutputPort,
 }
+
+const SYNC_CALL_SNIPPET: &'static str = r#"Deno[Deno.internal].core.ops.op_put_record(mapEvent(Deno[Deno.internal].core.ops.op_pop_record()));"#;
+const ASYNC_CALL_SNIPPET: &'static str = r#"mapEvent(Deno[Deno.internal].core.ops.op_pop_record()).then(x => Deno[Deno.internal].core.ops.op_put_record(x));"#;
 
 impl Worker {
     fn eval_apply(&mut self, record: Record) -> Result<Option<serde_json::Value>, String> {
@@ -59,10 +63,7 @@ impl Worker {
         deno.js_runtime.op_state().borrow_mut().put(record);
 
         tokio.block_on(async {
-            let res = deno.execute_script(
-                "<anon>",
-                r#"Deno[Deno.internal].core.ops.op_put_record(mapEvent(Deno[Deno.internal].core.ops.op_pop_record()));"#,
-            );
+            let res = deno.execute_script("<anon>", self.call_snippet);
 
             deno.run_event_loop(false).await.unwrap();
 
@@ -184,6 +185,7 @@ impl Bootstrapper {
 #[derive(Deserialize)]
 pub struct Config {
     main_module: String,
+    use_async: bool,
 }
 
 impl Config {
@@ -195,6 +197,11 @@ impl Config {
         let worker = Worker {
             //main_module,
             main_module: PathBuf::from(self.main_module),
+            call_snippet: if self.use_async {
+                ASYNC_CALL_SNIPPET
+            } else {
+                SYNC_CALL_SNIPPET
+            },
             ops_count: Default::default(),
             runtime: Default::default(),
             input: Default::default(),
