@@ -18,8 +18,5 @@ type = "Deno"
 main_module = "./filter.js"
 use_async = true
 
-[[filters]]
-type = "Noop"
-
 [sink]
 type = "Noop"

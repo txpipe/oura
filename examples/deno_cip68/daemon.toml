@@ -18,8 +18,5 @@ type = "Deno"
 main_module = "./parser.js"
 use_async = false
 
-[[filters]]
-type = "Noop"
-
 [sink]
 type = "Noop"
