@@ -83,6 +83,7 @@ Oura is in its essence just a pipeline for processing events. Each stage of the 
   - [ ] Azure Sinks
   - [x] webhook (http post)
   - [x] terminal (append-only, tail-like)
+  - [x] RabbitMQ
 - Events / Parsers
   - [x] block events (start, end)
   - [x] transaction events (inputs, outputs, assets)
