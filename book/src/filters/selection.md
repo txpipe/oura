@@ -1,4 +1,9 @@
-# Selection Filter
+### Table of contents
+- [Selection filter](#selection-filter)
+- [General predicates](#general-predicates)
+- [Variant-restricted predicates](#variant-restricted-predicates)
+- [Real world example](#real-world-example)
+# Selection filter
 
 A filter that evaluates a set of configurable predicates against each event in the pipeline to decide which records should be sent to the following stage.
 
@@ -28,21 +33,38 @@ argument = <predicate argument>
 - `predicate`: the key of the predicate to use for the evaluation. See the list of available predicates for possible values.
 - `argument`: a polimorphic argument that specializes the behavior of the predicate in some way.
 
-## Available Predicates
+## General predicates
+Predicates available for events of any type.
 
-- `variant_in (string[])`: This predicate will yield true when the variant of the event matches any of the items in the argument array.
-- `variant_not_in (string[])`: This predicate will yield true when the variant of the event doesn't match any of the items in the argument array.
-- `policy_equals (string)`: This predicate will yield true when the policy of a mint or output asset matches the value in the argument.
-- `asset_equals (string)`: This predicate will yield true when the policy of a mint or output asset matches the value in the argument.
-- `metadata_label_equals (string)`: This predicate will yield true when the root label of a metadata entry matches the value in the argument.
-- `metadata_any_sub_label_equals (string)`: This predicate will yield true when _at least one_ of the sub labels in a metadata entry matches the value in the argument.
-- `not (predicate)`: This predicate will yield true when the predicate in the arguments yields false.
-- `any_of (predicate[])`: This predicate will yield true when _any_ of the predicates in the argument yields true.
-- `all_of (predicate[])`: This predicate will yield true when _all_ of the predicates in the argument yields true.
+### `variant_in (string[])`
+ This predicate will yield true when the variant of the event matches any of the items in the argument array. Available variants:
+- [Block](../reference/data_dictionary.md#block-event)
+- [CIP15Asset](../reference/data_dictionary.md#cip15asset-event)
+- [CIP25Asset](../reference/data_dictionary.md#cip25asset-event)
+- [Collateral](../reference/data_dictionary.md#collateral-event)
+- [GenesisKeyDelegation](../reference/data_dictionary.md#genesiskeydelegation-event)
+- [Metadata](../reference/data_dictionary.md#metadata-event)
+- [Mint](../reference/data_dictionary.md#mint-event)
+- [MoveInstantaneousRewardsCert](../reference/data_dictionary.md#moveinstantaneousrewardscert-event)
+- [NativeScript](../reference/data_dictionary.md#nativescript-event)
+- [NativeWitness](../reference/data_dictionary.md#nativewitness-event)
+- [OutputAsset](../reference/data_dictionary.md#outputasset-event)
+- [PlutusDatum](../reference/data_dictionary.md#plutusdatum-event)
+- [PlutusRedeemer](../reference/data_dictionary.md#plutusredeemer-event)
+- [PlutusScript](../reference/data_dictionary.md#plutusscript-event)
+- [PlutusWitness](../reference/data_dictionary.md#plutuswitness-event)
+- [PoolRegistration](../reference/data_dictionary.md#poolregistration-event)
+- [PoolRetirement](../reference/data_dictionary.md#poolretirement-event)
+- [RollBack](../reference/data_dictionary.md#rollback-event)
+- [StakeDelegation](../reference/data_dictionary.md#stakedelegation-event)
+- [StakeDeregistration](../reference/data_dictionary.md#stakederegistration-event)
+- [StakeRegistration](../reference/data_dictionary.md#stakeregistration-event)
+- [Transaction](../reference/data_dictionary.md#transaction-event)
+- [TxInput](../reference/data_dictionary.md#txinput-event)
+- [TxOutput](../reference/data_dictionary.md#txoutput-event)
+- [VKeyWitness](../reference/data_dictionary.md#vkeywitness-event)
 
-## Examples
-
-Allowing only block and transaction events to pass:
+**Example** - Allowing only block and transaction events to pass:
 
 ```toml
 [[filters]]
@@ -53,7 +75,24 @@ predicate = "variant_in"
 argument = ["Block", "Transaction"]
 ```
 
-Using the `not` predicate to allow all events except the variant `Transaction`:
+### `variant_not_in (string[])`
+ This predicate will yield true when the variant of the event doesn't match any of the items in the argument array.
+
+**Example** - Allowing all events except transaction to pass:
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "variant_not_in"
+argument = ["Transaction"]
+```
+
+### `not (predicate)`
+ This predicate will yield true when the predicate in the arguments yields false.
+
+
+**Example** - Using the `not` predicate to allow all events except the variant `Transaction`:
 
 ```toml
 [[filters]]
@@ -67,7 +106,11 @@ predicate = "variant_in"
 argument = ["Transaction"]
 ```
 
-Using the `any_of` predicate to filter events presenting any of two different policies (Boolean "or"):
+### `any_of (predicate[])`
+ This predicate will yield true when _any_ of the predicates in the argument yields true.
+
+
+**Example** - Using the `any_of` predicate to filter events presenting any of two different policies (Boolean "or"):
 
 ```toml
 [filters.check]
@@ -82,7 +125,10 @@ predicate = "policy_equals"
 argument = "a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559"
 ```
 
-Using the `all_of` predicate to filter only "asset" events presenting a particular policy (Boolean "and") :
+### `all_of (predicate[])`
+ This predicate will yield true when _all_ of the predicates in the argument yields true.
+
+**Example** - Using the `all_of` predicate to filter only "asset" events presenting a particular policy (Boolean "and") :
 
 ```toml
 [filters.check]
@@ -95,4 +141,134 @@ argument = ["OutputAsset"]
 [[filters.check.argument]]
 predicate = "policy_equals"
 argument = "a5bb0e5bb275a573d744a021f9b3bff73595468e002755b447e01559"
+```
+
+## Variant-restricted predicates
+Predicates operating on a subset of event variants.
+
+
+### `policy_equals (string)`
+ This predicate will yield true when the policy of a mint or output asset matches the value in the argument.
+
+
+**Variants:** `Transaction`, `Mint`, `CIP25Asset`, `OutputAsset`
+
+**Example**
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "policy_equals"
+argument = "<policy_id>"
+```
+
+### `asset_equals (string)`
+ This predicate will yield true when the asset (token name) of a mint or output asset matches the value in the argument.
+
+**Variants:** `CIP25Asset`, `Transaction`, `OutputAsset`, `Mint`
+
+**Example**
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "asset_equals"
+argument = "<asset>"
+```
+
+### `metadata_label_equals (string)`
+ This predicate will yield true when the root label of a metadata entry matches the value in the argument.
+
+**Variants:** `Metadata`, `Transaction`
+
+**Example**
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "metadata_label_equals"
+argument = "<label>"
+```
+
+### `metadata_any_sub_label_equals (string)`
+ This predicate will yield true when _at least one_ of the sub labels (keys in the json map) of a metadata entry matches the value in the argument.
+
+**Variants:** `Metadata`
+
+**Example**
+
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "metadata_any_sub_label_equals"
+argument = "<label>"
+```
+
+### `v_key_witnesses_includes (string)`
+This predicate will yield true when at least one of the vkeys matches the value in the argument. This filter needs `include_transaction_details = true` to work.
+
+
+**Variants:** `VKeyWitness`, `Transaction`
+
+**Example**
+``` toml
+[source.mapper]
+include_transaction_details = true
+
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "v_key_witnesses_includes"
+argument = "<vkey>"
+```
+
+## Real world example
+
+Example using nested filters. Use `toml2json ./oura.toml | jq` to visualize the structure as json.
+
+```toml
+[[filters]]
+type = "Selection"
+
+[filters.check]
+predicate = "any_of"
+
+[[filters.check.argument]]
+predicate = "variant_in"
+argument = ["RollBack"]
+
+[[filters.check.argument]]
+predicate = "all_of"
+
+[[filters.check.argument.argument]]
+predicate = "variant_in"
+argument = ["CIP25Asset"]
+
+[[filters.check.argument.argument]]
+predicate = "any_of"
+
+[[filters.check.argument.argument.argument]]
+predicate = "policy_equals"
+argument = "<policy_a>"
+
+[[filters.check.argument.argument.argument]]
+predicate = "policy_equals"
+argument = "<policy_b>"
+
+[[filters.check.argument]]
+predicate = "all_of"
+
+[[filters.check.argument.argument]]
+predicate = "variant_in"
+argument = ["Transaction"]
+
+[[filters.check.argument.argument]]
+predicate = "v_key_witnesses_includes"
+argument = "<vkey>"
 ```
