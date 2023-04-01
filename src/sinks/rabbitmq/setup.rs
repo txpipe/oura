@@ -29,6 +29,11 @@ impl SinkProvider for WithUtils<Config> {
             ))
             .expect("error to connect");
 
+        connection.on_error(|err| {
+            log::error!("{}", err);
+            std::process::exit(1);
+        });
+
         let exchange = self.inner.exchange.to_owned();
         let routing_key = self.inner.routing_key.to_owned().unwrap_or("".to_string());
 
