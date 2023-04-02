@@ -1,7 +1,6 @@
 use crossterm::style::{Color, Print, Stylize};
 use crossterm::ExecutableCommand;
 use gasket::error::AsWorkError;
-use pallas::network::upstream::cursor::Cursor;
 use std::io::Stdout;
 
 use crate::framework::*;
@@ -10,7 +9,8 @@ use super::format::*;
 use super::throttle::Throttle;
 
 pub struct Worker {
-    pub(crate) msg_count: gasket::metrics::Counter,
+    pub(crate) ops_count: gasket::metrics::Counter,
+    pub(crate) latest_block: gasket::metrics::Gauge,
     pub(crate) stdout: Stdout,
     pub(crate) throttle: Throttle,
     pub(crate) wrap: bool,
@@ -36,7 +36,8 @@ impl Worker {
 impl gasket::runtime::Worker for Worker {
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
-            .with_counter("msg_count", &self.msg_count)
+            .with_counter("ops_count", &self.ops_count)
+            .with_gauge("latest_block", &self.latest_block)
             .build()
     }
 
@@ -55,23 +56,21 @@ impl gasket::runtime::Worker for Worker {
 
         let width = self.compute_terminal_width();
 
-        let (point, line) = match msg.payload {
-            ChainEvent::Apply(point, record) => {
-                let line = LogLine::new_apply(&record, width, &self.adahandle_policy);
-                (point, line)
+        let point = msg.payload.point().clone();
+
+        let line = match msg.payload {
+            ChainEvent::Apply(_, record) => {
+                LogLine::new_apply(&record, width, &self.adahandle_policy)
             }
-            ChainEvent::Undo(point, record) => {
-                let line = LogLine::new_undo(&record, width, &self.adahandle_policy);
-                (point, line)
+            ChainEvent::Undo(_, record) => {
+                LogLine::new_undo(&record, width, &self.adahandle_policy)
             }
-            ChainEvent::Reset(point) => {
-                let line = LogLine::new_reset(point.clone());
-                (point, line)
-            }
+            ChainEvent::Reset(point) => LogLine::new_reset(point.clone()),
         };
 
         self.stdout.execute(Print(line)).or_panic()?;
 
+        self.latest_block.set(point.slot_or_default() as i64);
         self.cursor.add_breadcrumb(point);
 
         self.throttle.wait_turn();

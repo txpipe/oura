@@ -6,9 +6,10 @@ use tracing::debug;
 
 use crate::framework::*;
 
-#[derive(Default)]
 struct Worker {
     ops_count: gasket::metrics::Counter,
+    latest_block: gasket::metrics::Gauge,
+    cursor: Cursor,
     input: FilterInputPort,
 }
 
@@ -16,13 +17,20 @@ impl gasket::runtime::Worker for Worker {
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
             .with_counter("ops_count", &self.ops_count)
+            .with_gauge("latest_block", &self.latest_block)
             .build()
     }
 
     fn work(&mut self) -> gasket::runtime::WorkResult {
         let msg = self.input.recv_or_idle()?;
         debug!(?msg, "message received");
+
+        let point = msg.payload.point();
+
         self.ops_count.inc(1);
+
+        self.latest_block.set(point.slot_or_default() as i64);
+        self.cursor.add_breadcrumb(point.clone());
 
         Ok(gasket::runtime::WorkOutcome::Partial)
     }
@@ -47,8 +55,13 @@ impl Bootstrapper {
 pub struct Config {}
 
 impl Config {
-    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
-        let worker = Worker::default();
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
+        let worker = Worker {
+            cursor: ctx.cursor.clone(),
+            ops_count: Default::default(),
+            latest_block: Default::default(),
+            input: Default::default(),
+        };
 
         Ok(Bootstrapper(worker))
     }
