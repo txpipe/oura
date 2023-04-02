@@ -75,6 +75,7 @@ impl Config {
             writer,
             cursor: ctx.cursor.clone(),
             ops_count: Default::default(),
+            latest_block: Default::default(),
             input: Default::default(),
         };
 
