@@ -50,7 +50,7 @@ pub struct Context {
     pub current_dir: PathBuf,
 }
 
-use serde_json::Value as JsonValue;
+use serde_json::{json, Value as JsonValue};
 
 #[derive(Debug, Clone)]
 pub enum Record {
@@ -60,9 +60,14 @@ pub enum Record {
     OuraV1Event(legacy_v1::Event),
 }
 
-impl From<Vec<u8>> for Record {
-    fn from(value: Vec<u8>) -> Self {
-        Record::CborBlock(value)
+impl From<Record> for JsonValue {
+    fn from(value: Record) -> Self {
+        match value {
+            Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
+            Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
+            Record::OuraV1Event(x) => json!(x),
+            Record::GenericJson(x) => x,
+        }
     }
 }
 
