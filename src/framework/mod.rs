@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 use pallas::network::miniprotocols::Point;
-use pallas::network::upstream::cursor::{Cursor, Intersection};
+use pallas::network::upstream::cursor::Intersection;
 
 pub mod errors;
 pub mod legacy_v1;
@@ -41,6 +41,8 @@ impl From<ChainConfig> for GenesisValues {
         }
     }
 }
+
+pub type Cursor = pallas::network::upstream::cursor::Cursor;
 
 pub struct Context {
     pub chain: GenesisValues,
@@ -94,6 +96,14 @@ impl ChainEvent {
     pub fn reset(point: Point) -> gasket::messaging::Message<Self> {
         gasket::messaging::Message {
             payload: Self::Reset(point),
+        }
+    }
+
+    pub fn point(&self) -> &Point {
+        match self {
+            ChainEvent::Apply(x, _) => x,
+            ChainEvent::Undo(x, _) => x,
+            ChainEvent::Reset(x) => x,
         }
     }
 }
