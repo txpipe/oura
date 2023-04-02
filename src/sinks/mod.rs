@@ -5,11 +5,9 @@ use crate::framework::*;
 
 //pub mod assert;
 //pub mod stdout;
+pub mod filerotate;
 pub mod noop;
 pub mod terminal;
-
-// #[cfg(feature = "logs")]
-// pub mod logs;
 
 // #[cfg(feature = "webhook")]
 // pub mod webhook;
@@ -43,6 +41,7 @@ pub mod terminal;
 
 pub enum Bootstrapper {
     Terminal(terminal::Bootstrapper),
+    FileRotate(filerotate::Bootstrapper),
     Noop(noop::Bootstrapper),
 }
 
@@ -54,6 +53,7 @@ impl StageBootstrapper for Bootstrapper {
     fn connect_input(&mut self, adapter: InputAdapter) {
         match self {
             Bootstrapper::Terminal(p) => p.connect_input(adapter),
+            Bootstrapper::FileRotate(p) => p.connect_input(adapter),
             Bootstrapper::Noop(p) => p.connect_input(adapter),
         }
     }
@@ -61,6 +61,7 @@ impl StageBootstrapper for Bootstrapper {
     fn spawn(self) -> Result<Vec<Tether>, Error> {
         match self {
             Bootstrapper::Terminal(x) => x.spawn(),
+            Bootstrapper::FileRotate(x) => x.spawn(),
             Bootstrapper::Noop(x) => x.spawn(),
         }
     }
@@ -70,6 +71,7 @@ impl StageBootstrapper for Bootstrapper {
 #[serde(tag = "type")]
 pub enum Config {
     Terminal(terminal::Config),
+    FileRotate(filerotate::Config),
     Noop(noop::Config),
 }
 
@@ -77,6 +79,7 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
         match self {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
+            Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
         }
     }

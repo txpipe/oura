@@ -6,7 +6,6 @@ use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use deno_runtime::BootstrapOptions;
 use gasket::{messaging::*, runtime::Tether};
 use serde::Deserialize;
-use serde_json::json;
 use std::path::PathBuf;
 use tokio::runtime::Runtime as TokioRuntime;
 use tracing::trace;
@@ -20,13 +19,7 @@ unsafe impl Send for WrappedRuntime {}
 #[op]
 fn op_pop_record(state: &mut OpState) -> Result<serde_json::Value, deno_core::error::AnyError> {
     let r: Record = state.take();
-
-    let j = match r {
-        Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
-        Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
-        Record::OuraV1Event(x) => json!(x),
-        Record::GenericJson(x) => x,
-    };
+    let j = serde_json::Value::from(r);
 
     Ok(j)
 }
