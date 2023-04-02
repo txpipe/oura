@@ -81,7 +81,7 @@ impl TuiConsole {
                             (_, "chain_tip", Reading::Gauge(x)) => {
                                 self.chainsync_progress.set_length(x as u64);
                             }
-                            (_, "last_block", Reading::Gauge(x)) => {
+                            (_, "latest_block", Reading::Gauge(x)) => {
                                 self.chainsync_progress.set_position(x as u64);
                             }
                             (_, "fetched_blocks", Reading::Count(x)) => {
@@ -194,7 +194,7 @@ pub fn initialize(mode: &Option<Mode>) {
             .unwrap(),
         _ => tracing::subscriber::set_global_default(
             tracing_subscriber::FmtSubscriber::builder()
-                .with_max_level(tracing::Level::DEBUG)
+                .with_max_level(tracing::Level::INFO)
                 .finish(),
         )
         .unwrap(),

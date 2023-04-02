@@ -35,7 +35,8 @@ impl Config {
             throttle: self.throttle_min_span_millis.into(),
             wrap: self.wrap.unwrap_or(false),
             adahandle_policy: self.adahandle_policy,
-            msg_count: Default::default(),
+            ops_count: Default::default(),
+            latest_block: Default::default(),
             input: Default::default(),
             cursor: ctx.cursor.clone(),
         };
