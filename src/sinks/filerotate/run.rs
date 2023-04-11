@@ -16,7 +16,10 @@ pub struct Worker {
     pub(crate) input: MapperInputPort,
 }
 
+#[async_trait::async_trait(?Send)]
 impl gasket::runtime::Worker for Worker {
+    type WorkUnit = ChainEvent;
+
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
             .with_counter("ops_count", &self.ops_count)
@@ -24,16 +27,19 @@ impl gasket::runtime::Worker for Worker {
             .build()
     }
 
-    fn work(&mut self) -> gasket::runtime::WorkResult {
-        let msg = self.input.recv_or_idle()?;
+    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
+        let msg = self.input.recv().await?;
+        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
+    }
 
-        let (point, json) = match msg.payload {
+    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+        let (point, json) = match unit {
             ChainEvent::Apply(point, record) => {
-                let json = json!({ "event": "apply", "record": JsonValue::from(record) });
+                let json = json!({ "event": "apply", "record": JsonValue::from(record.clone()) });
                 (point, json)
             }
             ChainEvent::Undo(point, record) => {
-                let json = json!({ "event": "undo", "record": JsonValue::from(record) });
+                let json = json!({ "event": "undo", "record": JsonValue::from(record.clone()) });
                 (point, json)
             }
             ChainEvent::Reset(point) => {
@@ -57,8 +63,8 @@ impl gasket::runtime::Worker for Worker {
         self.ops_count.inc(1);
 
         self.latest_block.set(point.slot_or_default() as i64);
-        self.cursor.add_breadcrumb(point);
+        self.cursor.add_breadcrumb(point.clone());
 
-        Ok(gasket::runtime::WorkOutcome::Partial)
+        Ok(())
     }
 }

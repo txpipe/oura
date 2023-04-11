@@ -23,24 +23,34 @@ struct Worker {
     output: MapperOutputPort,
 }
 
+#[async_trait::async_trait(?Send)]
 impl gasket::runtime::Worker for Worker {
+    type WorkUnit = ChainEvent;
+
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
             .with_counter("ops_count", &self.ops_count)
             .build()
     }
 
-    fn work(&mut self) -> gasket::runtime::WorkResult {
-        let msg = self.input.recv_or_idle()?;
+    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
+        let msg = self.input.recv().await?;
 
-        match msg.payload {
+        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
+    }
+
+    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+        let mut buffer = Vec::new();
+
+        match unit {
             ChainEvent::Apply(point, Record::CborBlock(cbor)) => {
                 let mut writer = EventWriter::new(
-                    point,
+                    point.clone(),
                     self.output.clone(),
                     &self.config,
                     &self.genesis,
                     &self.error_policy,
+                    &mut buffer,
                 );
 
                 writer.crawl_cbor(&cbor)?;
@@ -52,16 +62,21 @@ impl gasket::runtime::Worker for Worker {
                     &self.config,
                     &self.genesis,
                     &self.error_policy,
+                    &mut buffer,
                 );
 
-                writer.crawl_rollback(point)?;
+                writer.crawl_rollback(point.clone())?;
             }
-            x => self.output.send(x.into())?,
+            x => buffer.push(x.clone()),
         };
+
+        for evt in buffer {
+            self.output.send(evt.into()).await?;
+        }
 
         self.ops_count.inc(1);
 
-        Ok(gasket::runtime::WorkOutcome::Partial)
+        Ok(())
     }
 }
 

@@ -1,43 +1,50 @@
-use gasket::runtime::Tether;
-use pallas::network::upstream::n2n::{
-    Bootstrapper as PallasBootstrapper, Runtime as PallasRuntime,
+use std::time::Duration;
+
+use gasket::{
+    messaging::SendPort,
+    runtime::{Policy, Tether},
 };
+use pallas::upstream::{n2n::Worker, UpstreamEvent};
 use serde::Deserialize;
 
 use crate::framework::*;
 
-pub struct Runtime(PallasRuntime);
+pub type Adapter = gasket::messaging::tokio::MapSendAdapter<UpstreamEvent, ChainEvent>;
 
-pub type Adapter = gasket::messaging::crossbeam::MapSendAdapter<
-    pallas::network::upstream::BlockFetchEvent,
-    ChainEvent,
->;
-
-pub struct Bootstrapper(PallasBootstrapper<Adapter>);
+pub struct Bootstrapper(Worker<Cursor, Adapter>);
 
 impl Bootstrapper {
     pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        let adapter = gasket::messaging::MapSendAdapter::new(adapter, |x| match x {
-            pallas::network::upstream::BlockFetchEvent::RollForward(slot, hash, body) => {
-                Some(ChainEvent::Apply(
-                    pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
-                    Record::CborBlock(body),
-                ))
-            }
-            pallas::network::upstream::BlockFetchEvent::Rollback(x) => Some(ChainEvent::Reset(x)),
+        let adapter = gasket::messaging::tokio::MapSendAdapter::new(adapter, |x| match x {
+            UpstreamEvent::RollForward(slot, hash, body) => Some(ChainEvent::Apply(
+                pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
+                Record::CborBlock(body),
+            )),
+            UpstreamEvent::Rollback(x) => Some(ChainEvent::Reset(x)),
         });
 
-        self.0.connect_output(adapter);
+        self.0.downstream_port().connect(adapter);
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let upstream = self.0.spawn().map_err(Error::custom)?;
+        let retry_policy = gasket::retries::Policy {
+            max_retries: 10,
+            backoff_unit: Duration::from_secs(2),
+            backoff_factor: 2,
+            max_backoff: Duration::from_secs(30),
+        };
 
-        Ok(vec![
-            upstream.plexer_tether,
-            upstream.chainsync_tether,
-            upstream.blockfetch_tether,
-        ])
+        let tether = gasket::runtime::spawn_stage(
+            self.0,
+            Policy {
+                work_retry: retry_policy.clone(),
+                bootstrap_retry: retry_policy,
+                ..Default::default()
+            },
+            Some("source"),
+        );
+
+        Ok(vec![tether])
     }
 }
 
@@ -48,15 +55,15 @@ pub struct Config {
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
-        let inner = PallasBootstrapper::new(
-            ctx.cursor.clone(),
+        let worker = Worker::<_, Adapter>::new(
             self.peers
                 .first()
                 .cloned()
                 .ok_or_else(|| Error::config("at least one upstream peer is required"))?,
             ctx.chain.magic,
+            ctx.cursor.clone(),
         );
 
-        Ok(Bootstrapper(inner))
+        Ok(Bootstrapper(worker))
     }
 }

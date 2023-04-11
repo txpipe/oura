@@ -1,6 +1,7 @@
 //! A noop filter used as example and placeholder for other filters
 
 use gasket::{messaging::*, runtime::Tether};
+use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use tracing::debug;
 
@@ -13,7 +14,10 @@ struct Worker {
     input: FilterInputPort,
 }
 
+#[async_trait::async_trait(?Send)]
 impl gasket::runtime::Worker for Worker {
+    type WorkUnit = Point;
+
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
             .with_counter("ops_count", &self.ops_count)
@@ -21,18 +25,21 @@ impl gasket::runtime::Worker for Worker {
             .build()
     }
 
-    fn work(&mut self) -> gasket::runtime::WorkResult {
-        let msg = self.input.recv_or_idle()?;
-        debug!(?msg, "message received");
+    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
+        let msg = self.input.recv().await?;
 
-        let point = msg.payload.point();
+        let point = msg.payload.point().clone();
+        Ok(gasket::runtime::WorkSchedule::Unit(point))
+    }
 
+    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+        debug!(?unit, "message received");
         self.ops_count.inc(1);
 
-        self.latest_block.set(point.slot_or_default() as i64);
-        self.cursor.add_breadcrumb(point.clone());
+        self.latest_block.set(unit.slot_or_default() as i64);
+        self.cursor.add_breadcrumb(unit.clone());
 
-        Ok(gasket::runtime::WorkOutcome::Partial)
+        Ok(())
     }
 }
 

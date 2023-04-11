@@ -12,18 +12,26 @@ struct Worker {
     output: MapperOutputPort,
 }
 
+#[async_trait::async_trait(?Send)]
 impl gasket::runtime::Worker for Worker {
+    type WorkUnit = ChainEvent;
+
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
             .with_counter("msg_count", &self.msg_count)
             .build()
     }
 
-    fn work(&mut self) -> gasket::runtime::WorkResult {
-        let msg = self.input.recv_or_idle()?;
-        self.output.send(msg)?;
+    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
+        let msg = self.input.recv().await?;
 
-        Ok(gasket::runtime::WorkOutcome::Partial)
+        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
+    }
+
+    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+        self.output.send(unit.clone().into()).await?;
+
+        Ok(())
     }
 }
 

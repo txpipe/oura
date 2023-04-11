@@ -7,11 +7,12 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 use pallas::network::miniprotocols::Point;
-use pallas::network::upstream::cursor::Intersection;
 
+pub mod cursor;
 pub mod errors;
 pub mod legacy_v1;
 
+pub use cursor::*;
 pub use errors::*;
 
 #[derive(Deserialize)]
@@ -41,8 +42,6 @@ impl From<ChainConfig> for GenesisValues {
         }
     }
 }
-
-pub type Cursor = pallas::network::upstream::cursor::Cursor;
 
 pub struct Context {
     pub chain: GenesisValues,
@@ -108,15 +107,15 @@ impl ChainEvent {
     }
 }
 
-pub type SourceOutputPort = gasket::messaging::crossbeam::OutputPort<ChainEvent>;
-pub type FilterInputPort = gasket::messaging::crossbeam::InputPort<ChainEvent>;
-pub type FilterOutputPort = gasket::messaging::crossbeam::OutputPort<ChainEvent>;
-pub type MapperInputPort = gasket::messaging::crossbeam::InputPort<ChainEvent>;
-pub type MapperOutputPort = gasket::messaging::crossbeam::OutputPort<ChainEvent>;
-pub type SinkInputPort = gasket::messaging::crossbeam::InputPort<ChainEvent>;
+pub type SourceOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
+pub type FilterInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
+pub type FilterOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
+pub type MapperInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
+pub type MapperOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
+pub type SinkInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
 
-pub type OutputAdapter = gasket::messaging::crossbeam::ChannelSendAdapter<ChainEvent>;
-pub type InputAdapter = gasket::messaging::crossbeam::ChannelRecvAdapter<ChainEvent>;
+pub type OutputAdapter = gasket::messaging::tokio::ChannelSendAdapter<ChainEvent>;
+pub type InputAdapter = gasket::messaging::tokio::ChannelRecvAdapter<ChainEvent>;
 
 pub trait StageBootstrapper {
     fn connect_output(&mut self, adapter: OutputAdapter);
