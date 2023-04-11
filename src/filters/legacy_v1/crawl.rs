@@ -66,11 +66,11 @@ impl EventWriter<'_> {
         });
 
         for asset in output.assets() {
-            child.append_from(self.to_transaction_output_asset_record(&asset))?;
+            child.append_from(OutputAssetRecord::from(&asset))?;
         }
 
         if let Some(MintedDatumOption::Data(datum)) = &output.datum() {
-            child.append_from(self.to_plutus_datum_record(datum))?;
+            child.append_from(PlutusDatumRecord::from(&datum.0))?;
         }
 
         Ok(())
@@ -94,7 +94,7 @@ impl EventWriter<'_> {
         }
 
         for datum in tx.plutus_data() {
-            self.append_from(self.to_plutus_datum_record(datum))?;
+            self.append_from(PlutusDatumRecord::from(datum))?;
         }
 
         Ok(())
@@ -111,7 +111,7 @@ impl EventWriter<'_> {
                 ..EventContext::default()
             });
 
-            child.append_from(self.to_transaction_input_record(input))?;
+            child.append_from(TxInputRecord::from(input))?;
         }
 
         for (idx, output) in tx.outputs().iter().enumerate() {

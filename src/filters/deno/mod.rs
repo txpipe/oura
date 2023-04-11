@@ -5,14 +5,14 @@ use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use deno_runtime::BootstrapOptions;
 use gasket::{messaging::*, runtime::Tether};
+use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use std::path::PathBuf;
-use tokio::runtime::Runtime as TokioRuntime;
 use tracing::trace;
 
 use crate::framework::*;
 
-struct WrappedRuntime(DenoWorker, TokioRuntime);
+pub struct WrappedRuntime(DenoWorker);
 
 unsafe impl Send for WrappedRuntime {}
 
@@ -37,6 +37,39 @@ fn op_put_record(
     Ok(())
 }
 
+async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
+    let ext = Extension::builder("oura")
+        .ops(vec![op_pop_record::decl(), op_put_record::decl()])
+        .build();
+
+    let empty_module = deno_core::ModuleSpecifier::parse("data:text/javascript;base64,").unwrap();
+
+    let mut deno = DenoWorker::bootstrap_from_options(
+        empty_module,
+        PermissionsContainer::allow_all(),
+        WorkerOptions {
+            extensions: vec![ext],
+            bootstrap: BootstrapOptions {
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+    );
+
+    let code = std::fs::read_to_string(main_module).unwrap();
+
+    deno.js_runtime
+        .load_side_module(&ModuleSpecifier::parse("oura:mapper").unwrap(), Some(code))
+        .await
+        .unwrap();
+
+    let res = deno.execute_script("[oura:runtime.js]", include_str!("./runtime.js"));
+    deno.run_event_loop(false).await.unwrap();
+    res.unwrap();
+
+    deno
+}
+
 struct Worker {
     ops_count: gasket::metrics::Counter,
     runtime: Option<WrappedRuntime>,
@@ -50,106 +83,89 @@ const SYNC_CALL_SNIPPET: &'static str = r#"Deno[Deno.internal].core.ops.op_put_r
 const ASYNC_CALL_SNIPPET: &'static str = r#"mapEvent(Deno[Deno.internal].core.ops.op_pop_record()).then(x => Deno[Deno.internal].core.ops.op_put_record(x));"#;
 
 impl Worker {
-    fn eval_apply(&mut self, record: Record) -> Result<Option<serde_json::Value>, String> {
-        let WrappedRuntime(deno, tokio) = self.runtime.as_mut().unwrap();
+    async fn map_record(&mut self, record: Record) -> Result<Option<serde_json::Value>, String> {
+        let deno = &mut self.runtime.as_mut().unwrap().0;
 
         deno.js_runtime.op_state().borrow_mut().put(record);
 
-        tokio.block_on(async {
-            let res = deno.execute_script("<anon>", self.call_snippet);
+        let res = deno.execute_script("<anon>", self.call_snippet);
 
-            deno.run_event_loop(false).await.unwrap();
+        deno.run_event_loop(false).await.unwrap();
 
-            res.unwrap();
-        });
+        res.unwrap();
 
         let out = deno.js_runtime.op_state().borrow_mut().try_take();
         trace!(?out, "deno mapping finished");
 
         Ok(out)
     }
+
+    async fn fanout(
+        &mut self,
+        point: Point,
+        mapped: Option<serde_json::Value>,
+    ) -> Result<(), gasket::error::Error> {
+        if let Some(mapped) = mapped {
+            self.ops_count.inc(1);
+
+            match mapped {
+                serde_json::Value::Array(items) => {
+                    for item in items {
+                        self.output
+                            .send(
+                                ChainEvent::Apply(point.clone(), Record::GenericJson(item)).into(),
+                            )
+                            .await?;
+                    }
+                }
+                _ => {
+                    self.output
+                        .send(ChainEvent::Apply(point, Record::GenericJson(mapped)).into())
+                        .await?;
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
+#[async_trait::async_trait(?Send)]
 impl gasket::runtime::Worker for Worker {
+    type WorkUnit = ChainEvent;
+
     fn metrics(&self) -> gasket::metrics::Registry {
         gasket::metrics::Builder::new()
             .with_counter("ops_count", &self.ops_count)
             .build()
     }
 
-    fn bootstrap(&mut self) -> Result<(), gasket::error::Error> {
-        let ext = Extension::builder("oura")
-            .ops(vec![op_pop_record::decl(), op_put_record::decl()])
-            .build();
-
-        let empty_module =
-            deno_core::ModuleSpecifier::parse("data:text/javascript;base64,").unwrap();
-
-        let mut worker = DenoWorker::bootstrap_from_options(
-            empty_module,
-            PermissionsContainer::allow_all(),
-            WorkerOptions {
-                extensions: vec![ext],
-                bootstrap: BootstrapOptions {
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-        );
-
-        let reactor = deno_runtime::tokio_util::create_basic_runtime();
-
-        reactor.block_on(async {
-            let code = std::fs::read_to_string(&self.main_module).unwrap();
-
-            worker
-                .js_runtime
-                .load_side_module(&ModuleSpecifier::parse("oura:mapper").unwrap(), Some(code))
-                .await
-                .unwrap();
-
-            let res = worker.execute_script("[oura:runtime.js]", include_str!("./runtime.js"));
-            worker.run_event_loop(false).await.unwrap();
-            res.unwrap();
-        });
-
-        self.runtime = Some(WrappedRuntime(worker, reactor));
+    async fn bootstrap(&mut self) -> Result<(), gasket::error::Error> {
+        let deno = setup_deno(&self.main_module).await;
+        self.runtime = Some(WrappedRuntime(deno));
 
         Ok(())
     }
 
-    fn work(&mut self) -> gasket::runtime::WorkResult {
-        let msg = self.input.recv_or_idle()?;
+    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
+        let msg = self.input.recv().await?;
 
-        match msg.payload {
+        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
+    }
+
+    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+        match unit {
             ChainEvent::Apply(p, r) => {
-                let mapped = self.eval_apply(r).unwrap();
-
-                if let Some(mapped) = mapped {
-                    self.ops_count.inc(1);
-
-                    match mapped {
-                        serde_json::Value::Array(items) => {
-                            for item in items {
-                                self.output.send(
-                                    ChainEvent::Apply(p.clone(), Record::GenericJson(item)).into(),
-                                )?;
-                            }
-                        }
-                        _ => {
-                            self.output
-                                .send(ChainEvent::Apply(p, Record::GenericJson(mapped)).into())?;
-                        }
-                    }
-                }
+                let mapped = self.map_record(r.clone()).await.unwrap();
+                self.fanout(p.clone(), mapped).await?
             }
             ChainEvent::Undo(..) => todo!(),
             ChainEvent::Reset(p) => {
-                self.output.send(ChainEvent::reset(p))?;
+                self.output.send(ChainEvent::reset(p.clone())).await?;
             }
-        }
+        };
 
-        Ok(gasket::runtime::WorkOutcome::Partial)
+        Ok(())
     }
 }
 
@@ -195,10 +211,10 @@ impl Config {
             } else {
                 SYNC_CALL_SNIPPET
             },
-            ops_count: Default::default(),
-            runtime: Default::default(),
+            runtime: None,
             input: Default::default(),
             output: Default::default(),
+            ops_count: Default::default(),
         };
 
         Ok(Bootstrapper(worker))

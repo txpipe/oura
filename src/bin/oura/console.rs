@@ -66,11 +66,10 @@ impl TuiConsole {
                 gasket::runtime::TetherState::Dropped => "dropped!",
                 gasket::runtime::TetherState::Blocked(_) => "blocked!",
                 gasket::runtime::TetherState::Alive(x) => match x {
-                    gasket::runtime::StageState::Bootstrap => "bootstrapping...",
-                    gasket::runtime::StageState::Working => "working...",
-                    gasket::runtime::StageState::Idle => "idle...",
-                    gasket::runtime::StageState::StandBy => "stand-by...",
-                    gasket::runtime::StageState::Teardown => "tearing down...",
+                    gasket::runtime::StagePhase::Bootstrap => "bootstrapping...",
+                    gasket::runtime::StagePhase::Working => "working...",
+                    gasket::runtime::StagePhase::Teardown => "tearing down...",
+                    gasket::runtime::StagePhase::Ended => "ended",
                 },
             };
 
@@ -194,7 +193,7 @@ pub fn initialize(mode: &Option<Mode>) {
             .unwrap(),
         _ => tracing::subscriber::set_global_default(
             tracing_subscriber::FmtSubscriber::builder()
-                .with_max_level(tracing::Level::INFO)
+                .with_max_level(tracing::Level::TRACE)
                 .finish(),
         )
         .unwrap(),
