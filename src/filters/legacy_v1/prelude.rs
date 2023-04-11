@@ -8,7 +8,6 @@ use pallas::network::miniprotocols::Point;
 
 use super::Config;
 
-#[derive(Clone)]
 pub struct EventWriter<'a> {
     context: EventContext,
     point: Point,
@@ -16,6 +15,7 @@ pub struct EventWriter<'a> {
     pub(crate) config: &'a Config,
     pub(crate) genesis: &'a GenesisValues,
     pub(crate) error_policy: &'a RuntimePolicy,
+    buffer: &'a mut Vec<ChainEvent>,
 }
 
 impl<'a> EventWriter<'a> {
@@ -25,6 +25,7 @@ impl<'a> EventWriter<'a> {
         config: &'a Config,
         genesis: &'a GenesisValues,
         error_policy: &'a RuntimePolicy,
+        buffer: &'a mut Vec<ChainEvent>,
     ) -> Self {
         EventWriter {
             context: EventContext::default(),
@@ -33,6 +34,7 @@ impl<'a> EventWriter<'a> {
             config,
             genesis,
             error_policy,
+            buffer,
         }
     }
 
@@ -43,8 +45,8 @@ impl<'a> EventWriter<'a> {
             fingerprint: None,
         };
 
-        let msg = ChainEvent::Apply(self.point.clone(), Record::OuraV1Event(evt)).into();
-        self.output.send(msg)?;
+        let msg = ChainEvent::Apply(self.point.clone(), Record::OuraV1Event(evt));
+        self.buffer.push(msg);
 
         Ok(())
     }
@@ -56,7 +58,7 @@ impl<'a> EventWriter<'a> {
         self.append(source.into())
     }
 
-    pub fn child_writer(&self, mut extra_context: EventContext) -> EventWriter {
+    pub fn child_writer(&mut self, mut extra_context: EventContext) -> EventWriter {
         extra_context.merge(self.context.clone());
 
         EventWriter {
@@ -66,6 +68,7 @@ impl<'a> EventWriter<'a> {
             config: self.config,
             genesis: self.genesis,
             error_policy: self.error_policy,
+            buffer: self.buffer,
         }
     }
 }

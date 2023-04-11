@@ -1,3 +1,4 @@
+use lazy_static::__Deref;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
 
@@ -72,6 +73,35 @@ impl From<Point> for EventData {
     }
 }
 
+impl From<&MultiEraInput<'_>> for TxInputRecord {
+    fn from(value: &MultiEraInput) -> Self {
+        Self {
+            tx_id: value.hash().to_string(),
+            index: value.index(),
+        }
+    }
+}
+
+impl From<&MultiEraAsset<'_>> for OutputAssetRecord {
+    fn from(value: &MultiEraAsset<'_>) -> Self {
+        Self {
+            policy: value.policy().map(ToString::to_string).unwrap_or_default(),
+            asset: value.name().map(|x| x.to_hex()).unwrap_or_default(),
+            asset_ascii: value.to_ascii_name(),
+            amount: value.coin() as u64,
+        }
+    }
+}
+
+impl From<&KeepRaw<'_, alonzo::PlutusData>> for PlutusDatumRecord {
+    fn from(value: &KeepRaw<'_, alonzo::PlutusData>) -> Self {
+        Self {
+            datum_hash: value.original_hash().to_hex(),
+            plutus_data: value.to_json(),
+        }
+    }
+}
+
 fn relay_to_string(relay: &Relay) -> String {
     match relay {
         Relay::SingleHostAddr(port, ipv4, ipv6) => {
@@ -107,22 +137,6 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
 }
 
 impl EventWriter<'_> {
-    pub fn to_transaction_input_record(&self, input: &MultiEraInput) -> TxInputRecord {
-        TxInputRecord {
-            tx_id: input.hash().to_string(),
-            index: input.index(),
-        }
-    }
-
-    pub fn to_transaction_output_asset_record(&self, asset: &MultiEraAsset) -> OutputAssetRecord {
-        OutputAssetRecord {
-            policy: asset.policy().map(ToString::to_string).unwrap_or_default(),
-            asset: asset.name().map(|x| x.to_hex()).unwrap_or_default(),
-            asset_ascii: asset.to_ascii_name(),
-            amount: asset.coin() as u64,
-        }
-    }
-
     pub fn to_transaction_output_record(&self, output: &MultiEraOutput) -> TxOutputRecord {
         let address = output
             .address()
@@ -136,7 +150,7 @@ impl EventWriter<'_> {
             assets: output
                 .non_ada_assets()
                 .iter()
-                .map(|x| self.to_transaction_output_asset_record(x))
+                .map(|x| OutputAssetRecord::from(x))
                 .collect::<Vec<_>>()
                 .into(),
             datum_hash: match &output.datum() {
@@ -145,7 +159,7 @@ impl EventWriter<'_> {
                 None => None,
             },
             inline_datum: match &output.datum() {
-                Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)),
+                Some(MintedDatumOption::Data(x)) => Some(PlutusDatumRecord::from(x.deref())),
                 _ => None,
             },
         }
@@ -183,11 +197,7 @@ impl EventWriter<'_> {
         record.output_count = outputs.len();
         record.total_output = outputs.iter().map(|o| o.amount).sum();
 
-        let inputs: Vec<_> = tx
-            .inputs()
-            .iter()
-            .map(|x| self.to_transaction_input_record(x))
-            .collect();
+        let inputs: Vec<_> = tx.inputs().iter().map(|x| TxInputRecord::from(x)).collect();
 
         record.input_count = inputs.len();
 
@@ -198,7 +208,7 @@ impl EventWriter<'_> {
         let collateral_inputs: Vec<_> = tx
             .collateral()
             .iter()
-            .map(|x| self.to_transaction_input_record(x))
+            .map(|x| TxInputRecord::from(x))
             .collect();
 
         record.collateral_input_count = collateral_inputs.len();
@@ -268,7 +278,7 @@ impl EventWriter<'_> {
             record.plutus_data = tx
                 .plutus_data()
                 .iter()
-                .map(|x| self.to_plutus_datum_record(x))
+                .map(|x| PlutusDatumRecord::from(x))
                 .collect::<Vec<_>>()
                 .into();
 
@@ -400,16 +410,6 @@ impl EventWriter<'_> {
             ex_units_steps: redeemer.ex_units.steps,
             input_idx: redeemer.index,
             plutus_data: redeemer.data.to_json(),
-        }
-    }
-
-    pub fn to_plutus_datum_record(
-        &self,
-        datum: &KeepRaw<'_, alonzo::PlutusData>,
-    ) -> PlutusDatumRecord {
-        PlutusDatumRecord {
-            datum_hash: datum.original_hash().to_hex(),
-            plutus_data: datum.to_json(),
         }
     }
 

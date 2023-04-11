@@ -13,10 +13,12 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 [dependencies]
 # pallas = "0.18.0"
-pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
+pallas = { git = "https://github.com/txpipe/pallas" }
+
 # gasket = { path = "../../construkts/gasket-rs" }
 gasket = { git = "https://github.com/construkts/gasket-rs.git" }
+
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.9.1"
@@ -42,6 +44,7 @@ lazy_static = "1.4.0"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 file-rotate = "0.7.1"
+tokio = { version = "1", features = ["rt"] }
 
 # feature: webhook
 reqwest = { version = "0.11", optional = true, features = ["blocking", "json"] }
@@ -61,9 +64,6 @@ aws-sdk-sqs = { version = "0.14.0", optional = true }
 aws-sdk-lambda = { version = "0.14.0", optional = true }
 aws-sdk-s3 = { version = "0.14.0", optional = true }
 
-# features: elasticsearch || aws || deno
-tokio = { version = "1.24.2", optional = true, features = ["rt"] }
-
 # required for CI to complete successfully
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 
@@ -81,7 +81,8 @@ lapin = { version = "2.1.1", optional = true }
 deno_core = { version = "0.175.0", optional = true }
 serde_v8 = { version = "0.86.0", optional = true }
 deno_runtime = { version = "0.101.0", optional = true }
+async-trait = "0.1.68"
 
 [features]
 default = ["deno"]
-deno = ["deno_core", "deno_runtime", "serde_v8", "tokio"]
+deno = ["deno_core", "deno_runtime", "serde_v8"]
