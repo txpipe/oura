@@ -1,6 +1,6 @@
 use gasket::runtime::Tether;
 use oura::{filters, framework::*, sinks, sources};
-use pallas::{ledger::traverse::wellknown::GenesisValues, network::upstream::cursor::Cursor};
+use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 use std::time::Duration;
 
@@ -56,7 +56,7 @@ impl Runtime {
     fn should_stop(&self) -> bool {
         self.all_tethers().any(|tether| match tether.check_state() {
             gasket::runtime::TetherState::Alive(x) => {
-                matches!(x, gasket::runtime::StageState::StandBy)
+                matches!(x, gasket::runtime::StagePhase::Ended)
             }
             _ => true,
         })
@@ -89,13 +89,13 @@ fn chain_stages<'a>(
     let mut prev = source;
 
     for filter in filters {
-        let (to_next, from_prev) = gasket::messaging::crossbeam::channel(100);
+        let (to_next, from_prev) = gasket::messaging::tokio::channel(100);
         prev.connect_output(to_next);
         filter.connect_input(from_prev);
         prev = filter;
     }
 
-    let (to_next, from_prev) = gasket::messaging::crossbeam::channel(100);
+    let (to_next, from_prev) = gasket::messaging::tokio::channel(100);
     prev.connect_output(to_next);
     sink.connect_input(from_prev);
 }
