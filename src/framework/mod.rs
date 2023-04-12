@@ -1,12 +1,14 @@
 //! Internal pipeline framework
 
 use pallas::ledger::traverse::wellknown::GenesisValues;
+use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
-use pallas::network::miniprotocols::Point;
+// we use UtxoRpc as our canonical representation of a parsed Tx
+use utxorpc_ledger::v1::Tx as ParsedTx;
 
 pub mod cursor;
 pub mod errors;
@@ -59,6 +61,7 @@ pub enum Record {
     CborTx(Vec<u8>),
     GenericJson(JsonValue),
     OuraV1Event(legacy_v1::Event),
+    ParsedTx(ParsedTx),
 }
 
 impl From<Record> for JsonValue {
@@ -66,6 +69,7 @@ impl From<Record> for JsonValue {
         match value {
             Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
             Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
+            Record::ParsedTx(x) => json!(x),
             Record::OuraV1Event(x) => json!(x),
             Record::GenericJson(x) => x,
         }
@@ -100,10 +104,47 @@ impl ChainEvent {
 
     pub fn point(&self) -> &Point {
         match self {
-            ChainEvent::Apply(x, _) => x,
-            ChainEvent::Undo(x, _) => x,
-            ChainEvent::Reset(x) => x,
+            Self::Apply(x, _) => x,
+            Self::Undo(x, _) => x,
+            Self::Reset(x) => x,
         }
+    }
+
+    pub fn map_record(self, f: fn(Record) -> Record) -> Self {
+        match self {
+            Self::Apply(p, x) => Self::Apply(p, f(x)),
+            Self::Undo(p, x) => Self::Undo(p, f(x)),
+            Self::Reset(x) => Self::Reset(x),
+        }
+    }
+
+    pub fn try_map_record<E>(self, f: fn(Record) -> Result<Record, E>) -> Result<Self, E> {
+        let out = match self {
+            Self::Apply(p, x) => Self::Apply(p, f(x)?),
+            Self::Undo(p, x) => Self::Undo(p, f(x)?),
+            Self::Reset(x) => Self::Reset(x),
+        };
+
+        Ok(out)
+    }
+
+    pub fn try_map_record_to_many<E>(
+        self,
+        f: fn(Record) -> Result<Vec<Record>, E>,
+    ) -> Result<Vec<Self>, E> {
+        let out = match self {
+            Self::Apply(p, x) => f(x)?
+                .into_iter()
+                .map(|i| Self::Apply(p.clone(), i))
+                .collect(),
+            Self::Undo(p, x) => f(x)?
+                .into_iter()
+                .map(|i| Self::Undo(p.clone(), i))
+                .collect(),
+            Self::Reset(x) => vec![Self::Reset(x)],
+        };
+
+        Ok(out)
     }
 }
 
