@@ -32,6 +32,7 @@ impl Bootstrapper {
             backoff_unit: Duration::from_secs(2),
             backoff_factor: 2,
             max_backoff: Duration::from_secs(30),
+            dismissible: false,
         };
 
         let tether = gasket::runtime::spawn_stage(
