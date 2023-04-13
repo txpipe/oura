@@ -8,6 +8,9 @@
     <hr/>
 </div>
 
+> **Warning**
+> `main` branch is now tracking **V2**. This new version is a complete overhaul of the processing pipeline, multiple breaking changes. If you're looking for **V1**, you can switch to the long-term support branch named `lts/v1`
+
 ## Introduction
 
 We have tools to "explore" the Cardano blockchain, which are useful when you know what you're looking for. We argue that there's a different, complementary use-case which is to "observe" the blockchain and react to particular event patterns.
@@ -32,7 +35,7 @@ In this terminal recording we get to see a few mins of live output from a testne
 
 All the heavy lifting required to communicate with the Cardano node is done by the [Pallas](https://github.com/txpipe/pallas) library, which provides an implementation of the Ouroboros multiplexer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).
 
-The data pipeline makes heavy use (maybe a bit too much) of multi-threading and mpsc channels provided by Rust's `std::sync` library.
+The data pipeline is implemented by the [Gasket](https://github.com/construkts/gasket-rs) library which provides a framework for building staged, event-driven applications. Under this abstraction, each component of the pipeline (aka: _Stage_) runs in its own thread and communicates with other stages by sending messages (very similar to the _Actor pattern_).
 
 ## Use Cases
 
@@ -46,7 +49,7 @@ Similar to the well-known db-sync tool provided by IOHK, _Oura_ can be used as a
 
 Given its small memory / cpu footprint, _Oura_ can be deployed side-by-side with your Cardano node even in resource-constrained environments, such as Raspberry PIs.
 
-### As a Trigger of Custom Actions
+### As A Trigger Of Custom Actions
 
 _Oura_ running in `daemon` mode can be configured to use custom filters to pinpoint particular transaction patterns and trigger actions whenever it finds a match. For example: send an email when a particular policy / asset combination appears in a transaction; call an AWS Lambda function when a wallet delegates to a particular pool; send a http-call to a webhook each time a metadata key appears in the TX payload;
 
@@ -66,53 +69,46 @@ Oura is in its essence just a pipeline for processing events. Each stage of the 
 
 ## Feature Status
 
+- Data Types
+  - CBOR blocks
+  - CBOR txs
+  - Oura v1 model (for backward-compatibility)
+  - Parsed Txs (structured objects with all tx data)
+  - Generic JSON (any kind of JSON values)
 - Sources
-  - [x] chain-sync full-block (node-to-client)
-  - [x] chain-sync + block-fetch (node-to-node)
-  - [x] Parsing of Shelley-compatible blocks (Shelley, Allegra, Mary, Alonzo)
-  - [x] Parsing of Byron blocks
+  - chain-sync from local node
+  - chain-sync + block-fetch from remote relay node
+  - S3 bucket with block data
+  - Kafka topic with block data 
 - Sinks
-  - [x] Kafka topic
-  - [x] Elasticsearch index / data stream
-  - [x] Rotating log files with compression
-  - [x] Redis streams
-  - [x] AWS SQS queue
-  - [x] AWS Lambda call
-  - [x] AWS S3 objects
-  - [ ] GCP Sinks
-  - [ ] Azure Sinks
-  - [x] webhook (http post)
-  - [x] terminal (append-only, tail-like)
-  - [x] RabbitMQ
-- Events / Parsers
-  - [x] block events (start, end)
-  - [x] transaction events (inputs, outputs, assets)
-  - [x] metadata events (labels, content)
-  - [x] mint events (policy, asset, quantity)
-  - [x] pool registrations events
-  - [x] delegation events
-  - [x] CIP-25 metadata parser (image, files)
-  - [ ] CIP-15 metadata parser
+  - Kafka topic
+  - Elasticsearch index / data stream
+  - Rotating log files with compression
+  - Redis streams
+  - AWS SQS queue
+  - AWS Lambda call
+  - AWS S3 objects
+  - GCP PubSub
+  - GCP Cloud Function
+  - Azure Sinks
+  - webhook (http post)
+  - terminal (append-only, tail-like)
 - Filters
-  - [x] cherry pick by event type (block, tx, mint, cert, etc)
-  - [x] cherry pick by asset subject (policy, name, etc)
-  - [x] cherry pick by metadata keys
-  - [ ] cherry pick by block property (size, tx count)
-  - [ ] cherry pick by tx property (fee, has native script, has plutus script, etc)
-  - [ ] cherry pick by utxo property (address, asset, amount range)
-  - [ ] enrich events with policy info from external metadata service
-  - [ ] enrich input tx info from Blockfrost API
-  - [ ] enrich addresses descriptions using ADAHandle
+  - Parse block / tx CBOR 
+  - Split block into txs
+  - Select Txs by matching rules (address, metadata, policies, etc)
+  - Enrich tx data with related inputs
+  - Custom Typescript code (uses Deno)
+  - Custom WASM plugin
+  - Rollback buffer with compensating actions
 - Other
-  - [x] stateful chain cursor to recover from restarts
-  - [x] buffer stage to hold blocks until they reach a certain depth
-  - [x] pipeline metrics to track the progress and performance
+  - stateful chain cursor to recover from restarts
+  - buffer stage to hold blocks until they reach a certain depth
+  - pipeline metrics to track the progress and performance
 
 ## Known Limitations
 
-- ~~Oura only knows how to process blocks from the Shelley era. We are working on adding support for Byron in a future release.~~ (available since v1.2)
-- Oura reads events from minted blocks / transactions. Support for querying the mempool is planned for a future release.
-- ~~Oura will notify about chain rollbacks as a new event. The business logic for "undoing" the already processed events is a responsability of the consumer. We're working on adding support for a "buffer" filter stage which can hold blocks until they reach a configurable depth (number of confirmations).~~ (rollback buffer available since v1.2)
+- Oura reads events from minted blocks / transactions. Support for querying the mempool is not yet implemented.
 
 ## Contributing
 
