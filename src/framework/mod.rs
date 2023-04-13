@@ -110,6 +110,14 @@ impl ChainEvent {
         }
     }
 
+    pub fn record(&self) -> Option<&Record> {
+        match self {
+            Self::Apply(_, x) => Some(x),
+            Self::Undo(_, x) => Some(x),
+            _ => None,
+        }
+    }
+
     pub fn map_record(self, f: fn(Record) -> Record) -> Self {
         match self {
             Self::Apply(p, x) => Self::Apply(p, f(x)),
