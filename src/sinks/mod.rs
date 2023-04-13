@@ -8,9 +8,7 @@ use crate::framework::*;
 pub mod filerotate;
 pub mod noop;
 pub mod terminal;
-
-// #[cfg(feature = "webhook")]
-// pub mod webhook;
+pub mod webhook;
 
 // #[cfg(feature = "kafkasink")]
 // pub mod kafka;
@@ -42,6 +40,7 @@ pub mod terminal;
 pub enum Bootstrapper {
     Terminal(terminal::Bootstrapper),
     FileRotate(filerotate::Bootstrapper),
+    WebHook(webhook::Bootstrapper),
     Noop(noop::Bootstrapper),
 }
 
@@ -54,6 +53,7 @@ impl StageBootstrapper for Bootstrapper {
         match self {
             Bootstrapper::Terminal(p) => p.connect_input(adapter),
             Bootstrapper::FileRotate(p) => p.connect_input(adapter),
+            Bootstrapper::WebHook(p) => p.connect_input(adapter),
             Bootstrapper::Noop(p) => p.connect_input(adapter),
         }
     }
@@ -62,6 +62,7 @@ impl StageBootstrapper for Bootstrapper {
         match self {
             Bootstrapper::Terminal(x) => x.spawn(),
             Bootstrapper::FileRotate(x) => x.spawn(),
+            Bootstrapper::WebHook(x) => x.spawn(),
             Bootstrapper::Noop(x) => x.spawn(),
         }
     }
@@ -72,6 +73,7 @@ impl StageBootstrapper for Bootstrapper {
 pub enum Config {
     Terminal(terminal::Config),
     FileRotate(filerotate::Config),
+    WebHook(webhook::Config),
     Noop(noop::Config),
 }
 
@@ -80,6 +82,7 @@ impl Config {
         match self {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
             Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
+            Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
         }
     }
