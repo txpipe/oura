@@ -12,12 +12,13 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-# pallas = "0.18.0"
+pallas = "0.19.0-alpha.0"
 # pallas = { path = "../pallas/pallas" }
-pallas = { git = "https://github.com/txpipe/pallas" }
+# pallas = { git = "https://github.com/txpipe/pallas" }
 
+gasket = "0.2.0"
 # gasket = { path = "../../construkts/gasket-rs" }
-gasket = { git = "https://github.com/construkts/gasket-rs.git" }
+# gasket = { git = "https://github.com/construkts/gasket-rs.git" }
 
 utxorpc-ledger = { git = "https://github.com/scarmuega/utxorpc.git" }
 
