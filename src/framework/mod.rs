@@ -8,7 +8,7 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
-use utxorpc_ledger::v1::Tx as ParsedTx;
+use utxorpc_spec_ledger::v1::Tx as ParsedTx;
 
 pub mod cursor;
 pub mod errors;

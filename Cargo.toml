@@ -1,7 +1,7 @@
 [package]
 name = "oura"
 description = "The tail of Cardano"
-version = "2.0.0-alpha.2"
+version = "2.0.0-alpha.1"
 edition = "2021"
 repository = "https://github.com/txpipe/oura"
 homepage = "https://github.com/txpipe/oura"
@@ -20,7 +20,9 @@ gasket = "0.2.0"
 # gasket = { path = "../../construkts/gasket-rs" }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git" }
 
-utxorpc-ledger = { git = "https://github.com/scarmuega/utxorpc.git", version = "0.1.0" }
+utxorpc-spec-ledger = "1.0.0-alpha.0"
+# utxorpc-spec-ledger = { path = "../../utxorpc/spec/ledger/gen/rust" }
+# utxorpc-spec-ledger = { git = "https://github.com/utxorpc/spec.git" }
 
 hex = "0.4.3"
 net2 = "0.2.37"
