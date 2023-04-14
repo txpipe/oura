@@ -20,7 +20,9 @@ gasket = "0.2.0"
 # gasket = { path = "../../construkts/gasket-rs" }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git" }
 
-utxorpc-ledger = { git = "https://github.com/scarmuega/utxorpc.git" }
+utxorpc-spec-ledger = "1.0.0-alpha.0"
+# utxorpc-spec-ledger = { path = "../../utxorpc/spec/ledger/gen/rust" }
+# utxorpc-spec-ledger = { git = "https://github.com/utxorpc/spec.git" }
 
 hex = "0.4.3"
 net2 = "0.2.37"

@@ -4,7 +4,7 @@ use gasket::{error::AsWorkError, messaging::*, runtime::Tether};
 use serde::Deserialize;
 
 use pallas::ledger::traverse as trv;
-use utxorpc_ledger::v1 as u5c;
+use utxorpc_spec_ledger::v1 as u5c;
 
 use crate::framework::*;
 

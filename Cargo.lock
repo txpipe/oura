@@ -4085,7 +4085,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "unicode-truncate",
- "utxorpc-ledger",
+ "utxorpc-spec-ledger",
 ]
 
 [[package]]
@@ -6765,9 +6765,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
-name = "utxorpc-ledger"
-version = "0.1.0"
-source = "git+https://github.com/scarmuega/utxorpc.git#69340ebb92794f8ea3c148015809beb0542fa226"
+name = "utxorpc-spec-ledger"
+version = "1.0.0-alpha.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "494b750c5662eee40c31f6634941266353a67fd2474f994e9c00d4f5c5070ac9"
 dependencies = [
  "bytes",
  "pbjson",
