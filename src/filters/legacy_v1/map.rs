@@ -1,3 +1,4 @@
+use gasket::framework::AsWorkError;
 use lazy_static::__Deref;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
@@ -18,7 +19,6 @@ use pallas::network::miniprotocols::Point;
 use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
 
 use crate::framework::legacy_v1::*;
-use crate::framework::AppliesPolicy;
 use crate::framework::Error as OuraError;
 
 use super::EventWriter;
@@ -138,11 +138,7 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
 
 impl EventWriter<'_> {
     pub fn to_transaction_output_record(&self, output: &MultiEraOutput) -> TxOutputRecord {
-        let address = output
-            .address()
-            .map_err(OuraError::parse)
-            .apply_policy(self.error_policy)
-            .unwrap();
+        let address = output.address().or_panic();
 
         TxOutputRecord {
             address: address.map(|x| x.to_string()).unwrap_or_default(),

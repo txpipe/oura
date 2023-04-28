@@ -4,7 +4,9 @@ use deno_core::{op, Extension, ModuleSpecifier, OpState};
 use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use deno_runtime::BootstrapOptions;
-use gasket::{messaging::*, runtime::Tether};
+use gasket::framework::*;
+use gasket::messaging::*;
+use gasket::runtime::Tether;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -12,9 +14,10 @@ use tracing::trace;
 
 use crate::framework::*;
 
-pub struct WrappedRuntime(DenoWorker);
+//pub struct WrappedRuntime(DenoWorker);
+//unsafe impl Send for WrappedRuntime {}
 
-unsafe impl Send for WrappedRuntime {}
+pub type WrappedRuntime = DenoWorker;
 
 #[op]
 fn op_pop_record(state: &mut OpState) -> Result<serde_json::Value, deno_core::error::AnyError> {
@@ -71,24 +74,23 @@ async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
 }
 
 struct Worker {
-    ops_count: gasket::metrics::Counter,
-    runtime: Option<WrappedRuntime>,
-    main_module: PathBuf,
-    call_snippet: &'static str,
-    input: MapperInputPort,
-    output: MapperOutputPort,
+    runtime: WrappedRuntime,
 }
 
 const SYNC_CALL_SNIPPET: &'static str = r#"Deno[Deno.internal].core.ops.op_put_record(mapEvent(Deno[Deno.internal].core.ops.op_pop_record()));"#;
 const ASYNC_CALL_SNIPPET: &'static str = r#"mapEvent(Deno[Deno.internal].core.ops.op_pop_record()).then(x => Deno[Deno.internal].core.ops.op_put_record(x));"#;
 
 impl Worker {
-    async fn map_record(&mut self, record: Record) -> Result<Option<serde_json::Value>, String> {
-        let deno = &mut self.runtime.as_mut().unwrap().0;
+    async fn map_record(
+        &mut self,
+        script: &str,
+        record: Record,
+    ) -> Result<Option<serde_json::Value>, String> {
+        let deno = &mut self.runtime;
 
         deno.js_runtime.op_state().borrow_mut().put(record);
 
-        let res = deno.execute_script("<anon>", self.call_snippet);
+        let res = deno.execute_script("<anon>", script);
 
         deno.run_event_loop(false).await.unwrap();
 
@@ -98,6 +100,92 @@ impl Worker {
         trace!(?out, "deno mapping finished");
 
         Ok(out)
+    }
+}
+
+#[async_trait::async_trait(?Send)]
+impl gasket::framework::Worker for Worker {
+    type Unit = ChainEvent;
+    type Stage = Stage;
+
+    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
+        let runtime = setup_deno(&stage.main_module).await;
+
+        Ok(Self { runtime })
+    }
+
+    async fn schedule(
+        &mut self,
+        stage: &mut Self::Stage,
+    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
+        let msg = stage.input.recv().await.or_panic()?;
+
+        Ok(WorkSchedule::Unit(msg.payload))
+    }
+
+    async fn execute(
+        &mut self,
+        unit: &Self::Unit,
+        stage: &mut Self::Stage,
+    ) -> Result<(), WorkerError> {
+        match unit {
+            ChainEvent::Apply(p, r) => {
+                let mapped = self
+                    .map_record(stage.call_snippet, r.clone())
+                    .await
+                    .unwrap();
+
+                stage.fanout(p.clone(), mapped).await.or_panic()?
+            }
+            ChainEvent::Undo(..) => todo!(),
+            ChainEvent::Reset(p) => {
+                stage
+                    .output
+                    .send(ChainEvent::reset(p.clone()))
+                    .await
+                    .or_panic()?;
+            }
+        };
+
+        Ok(())
+    }
+}
+
+pub struct Stage {
+    ops_count: gasket::metrics::Counter,
+    main_module: PathBuf,
+    call_snippet: &'static str,
+    input: MapperInputPort,
+    output: MapperOutputPort,
+}
+
+impl gasket::framework::Stage for Stage {
+    fn name(&self) -> &str {
+        "mapper"
+    }
+
+    fn policy(&self) -> gasket::runtime::Policy {
+        gasket::runtime::Policy::default()
+    }
+
+    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
+        registry.track_counter("ops_count", &self.ops_count);
+    }
+}
+
+impl Stage {
+    pub fn connect_input(&mut self, adapter: InputAdapter) {
+        self.input.connect(adapter);
+    }
+
+    pub fn connect_output(&mut self, adapter: OutputAdapter) {
+        self.output.connect(adapter);
+    }
+
+    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
+        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
+
+        Ok(vec![worker_tether])
     }
 
     async fn fanout(
@@ -130,67 +218,6 @@ impl Worker {
     }
 }
 
-#[async_trait::async_trait(?Send)]
-impl gasket::runtime::Worker for Worker {
-    type WorkUnit = ChainEvent;
-
-    fn metrics(&self) -> gasket::metrics::Registry {
-        gasket::metrics::Builder::new()
-            .with_counter("ops_count", &self.ops_count)
-            .build()
-    }
-
-    async fn bootstrap(&mut self) -> Result<(), gasket::error::Error> {
-        let deno = setup_deno(&self.main_module).await;
-        self.runtime = Some(WrappedRuntime(deno));
-
-        Ok(())
-    }
-
-    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
-        let msg = self.input.recv().await?;
-
-        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
-    }
-
-    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
-        match unit {
-            ChainEvent::Apply(p, r) => {
-                let mapped = self.map_record(r.clone()).await.unwrap();
-                self.fanout(p.clone(), mapped).await?
-            }
-            ChainEvent::Undo(..) => todo!(),
-            ChainEvent::Reset(p) => {
-                self.output.send(ChainEvent::reset(p.clone())).await?;
-            }
-        };
-
-        Ok(())
-    }
-}
-
-pub struct Bootstrapper(Worker);
-
-impl Bootstrapper {
-    pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.0.input.connect(adapter);
-    }
-
-    pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.0.output.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage(
-            self.0,
-            gasket::runtime::Policy::default(),
-            Some("mapper"),
-        );
-
-        Ok(vec![worker_tether])
-    }
-}
-
 #[derive(Deserialize)]
 pub struct Config {
     main_module: String,
@@ -198,12 +225,12 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
+    pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
         // let main_module =
         //    deno_core::resolve_path(&self.main_module,
         // &ctx.current_dir).map_err(Error::config)?;
 
-        let worker = Worker {
+        let stage = Stage {
             //main_module,
             main_module: PathBuf::from(self.main_module),
             call_snippet: if self.use_async {
@@ -211,12 +238,11 @@ impl Config {
             } else {
                 SYNC_CALL_SNIPPET
             },
-            runtime: None,
             input: Default::default(),
             output: Default::default(),
             ops_count: Default::default(),
         };
 
-        Ok(Bootstrapper(worker))
+        Ok(stage)
     }
 }

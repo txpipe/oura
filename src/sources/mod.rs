@@ -7,12 +7,16 @@ use crate::framework::*;
 //pub mod n2c;
 
 pub mod n2n;
+
+#[cfg(feature = "aws")]
 pub mod s3;
 
 pub enum Bootstrapper {
-    N2N(n2n::Bootstrapper),
+    N2N(n2n::Stage),
     N2C(),
-    S3(s3::Bootstrapper),
+
+    #[cfg(feature = "aws")]
+    S3(s3::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -20,6 +24,8 @@ impl StageBootstrapper for Bootstrapper {
         match self {
             Bootstrapper::N2N(p) => p.connect_output(adapter),
             Bootstrapper::N2C() => todo!(),
+
+            #[cfg(feature = "aws")]
             Bootstrapper::S3(p) => p.connect_output(adapter),
         }
     }
@@ -32,6 +38,8 @@ impl StageBootstrapper for Bootstrapper {
         match self {
             Bootstrapper::N2N(x) => x.spawn(),
             Bootstrapper::N2C() => todo!(),
+
+            #[cfg(feature = "aws")]
             Bootstrapper::S3(x) => x.spawn(),
         }
     }
@@ -41,8 +49,11 @@ impl StageBootstrapper for Bootstrapper {
 #[serde(tag = "type")]
 pub enum Config {
     N2N(n2n::Config),
+
     #[cfg(target_family = "unix")]
     N2C,
+
+    #[cfg(feature = "aws")]
     S3(s3::Config),
 }
 
@@ -51,6 +62,8 @@ impl Config {
         match self {
             Config::N2N(c) => Ok(Bootstrapper::N2N(c.bootstrapper(ctx)?)),
             Config::N2C => todo!(),
+
+            #[cfg(feature = "aws")]
             Config::S3(c) => Ok(Bootstrapper::S3(c.bootstrapper(ctx)?)),
         }
     }

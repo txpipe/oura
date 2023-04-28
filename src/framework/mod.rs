@@ -48,7 +48,7 @@ impl From<ChainConfig> for GenesisValues {
 pub struct Context {
     pub chain: GenesisValues,
     pub cursor: Cursor,
-    pub error_policy: RuntimePolicy,
+    pub retries: gasket::retries::Policy,
     pub finalize: Option<FinalizeConfig>,
     pub current_dir: PathBuf,
 }

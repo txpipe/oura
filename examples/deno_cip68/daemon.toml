@@ -19,4 +19,9 @@ main_module = "./parser.js"
 use_async = false
 
 [sink]
-type = "Noop"
+type = "FileRotate"
+max_total_files = 5
+output_format = "JSONL"
+output_path = "./output/logs.jsonl"
+max_bytes_per_file = 5_000_000
+compress_files = true

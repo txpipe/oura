@@ -1,19 +1,18 @@
 use std::time::Duration;
 
-use gasket::{
-    messaging::SendPort,
-    runtime::{Policy, Tether},
-};
-use pallas::upstream::{n2n::Worker, UpstreamEvent};
+use gasket::{messaging::SendPort, runtime::Tether};
+use pallas::upstream::UpstreamEvent;
 use serde::Deserialize;
 
 use crate::framework::*;
 
 pub type Adapter = gasket::messaging::tokio::MapSendAdapter<UpstreamEvent, ChainEvent>;
+pub type PallasStage = pallas::upstream::n2n::Stage<Cursor, Adapter>;
+pub type PallasWorker = pallas::upstream::n2n::Worker<Cursor, Adapter>;
 
-pub struct Bootstrapper(Worker<Cursor, Adapter>);
+pub struct Stage(PallasStage);
 
-impl Bootstrapper {
+impl Stage {
     pub fn connect_output(&mut self, adapter: OutputAdapter) {
         let adapter = gasket::messaging::tokio::MapSendAdapter::new(adapter, |x| match x {
             UpstreamEvent::RollForward(slot, hash, body) => Some(ChainEvent::Apply(
@@ -27,23 +26,7 @@ impl Bootstrapper {
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let retry_policy = gasket::retries::Policy {
-            max_retries: 10,
-            backoff_unit: Duration::from_secs(2),
-            backoff_factor: 2,
-            max_backoff: Duration::from_secs(30),
-            dismissible: false,
-        };
-
-        let tether = gasket::runtime::spawn_stage(
-            self.0,
-            Policy {
-                work_retry: retry_policy.clone(),
-                bootstrap_retry: retry_policy,
-                ..Default::default()
-            },
-            Some("source"),
-        );
+        let tether = gasket::runtime::spawn_stage::<PallasWorker>(self.0);
 
         Ok(vec![tether])
     }
@@ -55,16 +38,21 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
-        let worker = Worker::<_, Adapter>::new(
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let stage = PallasStage::new(
             self.peers
                 .first()
                 .cloned()
                 .ok_or_else(|| Error::config("at least one upstream peer is required"))?,
             ctx.chain.magic,
             ctx.cursor.clone(),
+            gasket::runtime::Policy {
+                bootstrap_retry: ctx.retries.clone(),
+                work_retry: ctx.retries.clone(),
+                ..Default::default()
+            },
         );
 
-        Ok(Bootstrapper(worker))
+        Ok(Stage(stage))
     }
 }

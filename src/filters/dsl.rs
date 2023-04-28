@@ -1,6 +1,8 @@
 //! A filter that can select which events to block and which to let pass
 
-use gasket::{messaging::*, runtime::Tether};
+use gasket::framework::*;
+use gasket::messaging::*;
+use gasket::runtime::Tether;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
@@ -214,59 +216,54 @@ impl Predicate {
     }
 }
 
-struct Worker {
-    msg_count: gasket::metrics::Counter,
+pub struct Stage {
+    ops_count: gasket::metrics::Counter,
     predicate: Predicate,
     input: FilterInputPort,
     output: FilterOutputPort,
 }
 
-#[async_trait::async_trait(?Send)]
-impl gasket::runtime::Worker for Worker {
-    type WorkUnit = ChainEvent;
-
-    fn metrics(&self) -> gasket::metrics::Registry {
-        gasket::metrics::Builder::new()
-            .with_counter("msg_count", &self.msg_count)
-            .build()
+impl gasket::framework::Stage for Stage {
+    fn name(&self) -> &str {
+        "filter"
     }
 
-    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
-        let msg = self.input.recv().await?;
-        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
+    fn policy(&self) -> gasket::runtime::Policy {
+        gasket::runtime::Policy::default()
     }
 
-    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
-        match unit {
-            ChainEvent::Apply(_, Record::OuraV1Event(x)) => {
-                if self.predicate.event_matches(x) {
-                    self.output.send(unit.clone().into()).await?;
-                }
-            }
-            _ => todo!(),
-        };
-
-        Ok(())
+    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
+        registry.track_counter("ops_count", &self.ops_count);
     }
 }
 
-pub struct Bootstrapper(Worker);
+gasket::stateless_flatmapper!(Worker, |stage: Stage, unit: ChainEvent| => {
+    let out = match unit {
+        ChainEvent::Apply(_, Record::OuraV1Event(x)) => {
+            if stage.predicate.event_matches(x) {
+                Some(unit.clone())
+            } else {
+                None
+            }
+        }
+        _ => todo!(),
+    };
 
-impl Bootstrapper {
+    stage.ops_count.inc(1);
+    out
+});
+
+impl Stage {
     pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.0.input.connect(adapter);
+        self.input.connect(adapter);
     }
 
     pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.0.output.connect(adapter);
+        self.output.connect(adapter);
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage(
-            self.0,
-            gasket::runtime::Policy::default(),
-            Some("filter"),
-        );
+        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
 
         Ok(vec![worker_tether])
     }
@@ -278,14 +275,14 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
-        let worker = Worker {
+    pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
+        let stage = Stage {
             predicate: self.predicate,
-            msg_count: Default::default(),
+            ops_count: Default::default(),
             input: Default::default(),
             output: Default::default(),
         };
 
-        Ok(Bootstrapper(worker))
+        Ok(stage)
     }
 }

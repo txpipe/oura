@@ -1,12 +1,10 @@
+use gasket::framework::{AsWorkError, WorkerError};
 use pallas::ledger::primitives::babbage::MintedDatumOption;
 use pallas::ledger::traverse::{MultiEraBlock, MultiEraInput, MultiEraOutput, MultiEraTx};
 use pallas::network::miniprotocols::Point;
 
 use crate::framework::legacy_v1::*;
-use crate::framework::AppliesPolicy;
 use crate::framework::Error as OuraError;
-
-use gasket::error::Error;
 
 use super::EventWriter;
 
@@ -25,14 +23,14 @@ impl From<pallas::ledger::traverse::Era> for Era {
 }
 
 impl EventWriter<'_> {
-    fn crawl_collateral(&mut self, collateral: &MultiEraInput) -> Result<(), Error> {
+    fn crawl_collateral(&mut self, collateral: &MultiEraInput) -> Result<(), WorkerError> {
         self.append(self.to_collateral_event(collateral))
 
         // TODO: should we have a collateral idx in context?
         // more complex event goes here (eg: ???)
     }
 
-    fn crawl_metadata(&mut self, tx: &MultiEraTx) -> Result<(), Error> {
+    fn crawl_metadata(&mut self, tx: &MultiEraTx) -> Result<(), WorkerError> {
         let metadata = tx.metadata();
         let metadata = metadata.collect::<Vec<_>>();
 
@@ -50,18 +48,14 @@ impl EventWriter<'_> {
         Ok(())
     }
 
-    fn crawl_transaction_output(&mut self, output: &MultiEraOutput) -> Result<(), Error> {
+    fn crawl_transaction_output(&mut self, output: &MultiEraOutput) -> Result<(), WorkerError> {
         let record = self.to_transaction_output_record(output);
-        self.append(record.into())?;
+        self.append(record.into()).or_panic()?;
 
-        let address = output
-            .address()
-            .map_err(OuraError::parse)
-            .apply_policy(self.error_policy)
-            .unwrap();
+        let address = output.address().or_panic()?;
 
         let mut child = self.child_writer(EventContext {
-            output_address: address.map(|x| x.to_string()),
+            output_address: Some(address.to_string()),
             ..EventContext::default()
         });
 
@@ -76,7 +70,7 @@ impl EventWriter<'_> {
         Ok(())
     }
 
-    fn crawl_witnesses(&mut self, tx: &MultiEraTx) -> Result<(), Error> {
+    fn crawl_witnesses(&mut self, tx: &MultiEraTx) -> Result<(), WorkerError> {
         for script in tx.native_scripts() {
             self.append_from(self.to_native_witness_record(script))?;
         }
@@ -100,7 +94,7 @@ impl EventWriter<'_> {
         Ok(())
     }
 
-    fn crawl_transaction(&mut self, tx: &MultiEraTx) -> Result<(), Error> {
+    fn crawl_transaction(&mut self, tx: &MultiEraTx) -> Result<(), WorkerError> {
         let record = self.to_transaction_record(tx);
         self.append_from(record.clone())?;
 
@@ -166,7 +160,7 @@ impl EventWriter<'_> {
         Ok(())
     }
 
-    fn crawl_block(&mut self, block: &MultiEraBlock, cbor: &[u8]) -> Result<(), Error> {
+    fn crawl_block(&mut self, block: &MultiEraBlock, cbor: &[u8]) -> Result<(), WorkerError> {
         let record = self.to_block_record(block, cbor);
         self.append(EventData::Block(record.clone()))?;
 
@@ -188,30 +182,25 @@ impl EventWriter<'_> {
     }
 
     /// Mapper entry-point for raw cbor blocks
-    pub fn crawl_cbor(&mut self, cbor: &[u8]) -> Result<(), Error> {
+    pub fn crawl_cbor(&mut self, cbor: &[u8]) -> Result<(), WorkerError> {
         let block = pallas::ledger::traverse::MultiEraBlock::decode(cbor)
             .map_err(OuraError::parse)
-            .apply_policy(self.error_policy)
-            .unwrap();
+            .or_panic()?;
 
-        if let Some(block) = block {
-            let hash = block.hash();
+        let hash = block.hash();
 
-            let mut child = self.child_writer(EventContext {
-                block_hash: Some(hex::encode(hash)),
-                block_number: Some(block.number()),
-                slot: Some(block.slot()),
-                timestamp: Some(block.wallclock(self.genesis)),
-                ..EventContext::default()
-            });
+        let mut child = self.child_writer(EventContext {
+            block_hash: Some(hex::encode(hash)),
+            block_number: Some(block.number()),
+            slot: Some(block.slot()),
+            timestamp: Some(block.wallclock(self.genesis)),
+            ..EventContext::default()
+        });
 
-            child.crawl_block(&block, cbor)?;
-        }
-
-        Ok(())
+        child.crawl_block(&block, cbor)
     }
 
-    pub fn crawl_rollback(&mut self, point: Point) -> Result<(), Error> {
+    pub fn crawl_rollback(&mut self, point: Point) -> Result<(), WorkerError> {
         self.append(point.into())
     }
 }

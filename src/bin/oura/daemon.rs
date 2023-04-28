@@ -14,7 +14,7 @@ struct ConfigRoot {
     intersect: IntersectConfig,
     finalize: Option<FinalizeConfig>,
     chain: Option<GenesisValues>,
-    policy: Option<RuntimePolicy>,
+    retries: Option<gasket::retries::Policy>,
 }
 
 impl ConfigRoot {
@@ -136,13 +136,13 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let chain = config.chain.unwrap_or_default();
     let cursor = Cursor::new(config.intersect.into());
-    let error_policy = config.policy.unwrap_or_default();
+    let retries = config.retries.unwrap_or_default();
     let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
 
     let ctx = Context {
         chain,
-        error_policy,
+        retries,
         finalize,
         cursor,
         current_dir,
