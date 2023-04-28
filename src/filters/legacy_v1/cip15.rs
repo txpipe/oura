@@ -1,3 +1,4 @@
+use gasket::framework::WorkerError;
 use serde_json::Value as JsonValue;
 
 use pallas::ledger::primitives::alonzo::Metadatum;
@@ -35,7 +36,7 @@ impl EventWriter<'_> {
     pub(crate) fn crawl_metadata_label_61284(
         &mut self,
         content: &Metadatum,
-    ) -> Result<(), gasket::error::Error> {
+    ) -> Result<(), WorkerError> {
         self.append_from(self.to_cip15_asset_record(content))?;
 
         Ok(())

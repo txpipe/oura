@@ -1,15 +1,52 @@
 use aws_sdk_s3::Client as S3Client;
-use gasket::{error::AsWorkError, messaging::SendPort};
+use gasket::framework::*;
+use gasket::messaging::SendPort;
 use serde::Deserialize;
 
 use crate::framework::*;
 
-pub struct Worker {
-    s3_client: Option<S3Client>,
+pub struct Stage {
     bucket: String,
     items_per_batch: u32,
+    cursor: Cursor,
     output_port: SourceOutputPort,
     ops_count: gasket::metrics::Counter,
+    retry_policy: gasket::retries::Policy,
+}
+
+impl gasket::framework::Stage for Stage {
+    fn name(&self) -> &str {
+        "source"
+    }
+
+    fn policy(&self) -> gasket::runtime::Policy {
+        gasket::runtime::Policy {
+            work_retry: self.retry_policy.clone(),
+            bootstrap_retry: self.retry_policy.clone(),
+            ..Default::default()
+        }
+    }
+
+    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
+        registry.track_counter("ops_count", &self.ops_count);
+    }
+}
+
+impl Stage {
+    pub fn connect_output(&mut self, adapter: OutputAdapter) {
+        self.output_port.connect(adapter);
+    }
+
+    pub fn spawn(self) -> Result<Vec<gasket::runtime::Tether>, Error> {
+        let tether = gasket::runtime::spawn_stage::<Worker>(self);
+
+        Ok(vec![tether])
+    }
+}
+
+pub struct Worker {
+    s3_client: S3Client,
+    last_key: String,
 }
 
 pub struct KeyBatch {
@@ -17,30 +54,40 @@ pub struct KeyBatch {
 }
 
 #[async_trait::async_trait(?Send)]
-impl gasket::runtime::Worker for Worker {
-    type WorkUnit = KeyBatch;
+impl gasket::framework::Worker for Worker {
+    type Unit = KeyBatch;
+    type Stage = Stage;
 
-    fn metrics(&self) -> gasket::metrics::Registry {
-        gasket::metrics::Builder::new()
-            .with_counter("ops_count", &self.ops_count)
-            .build()
-    }
-
-    async fn bootstrap(&mut self) -> Result<(), gasket::error::Error> {
+    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
         let sdk_config = aws_config::load_from_env().await;
-        self.s3_client = Some(aws_sdk_s3::Client::new(&sdk_config));
+        let s3_client = aws_sdk_s3::Client::new(&sdk_config);
 
-        Ok(())
+        let p = stage
+            .cursor
+            .latest_known_point()
+            .unwrap_or(pallas::network::miniprotocols::Point::Origin);
+
+        let key = match p {
+            pallas::network::miniprotocols::Point::Origin => "origin".to_owned(),
+            pallas::network::miniprotocols::Point::Specific(slot, _) => format!("{slot}"),
+        };
+
+        Ok(Self {
+            s3_client,
+            last_key: key,
+        })
     }
 
-    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
+    async fn schedule(
+        &mut self,
+        stage: &mut Self::Stage,
+    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
         let result = self
             .s3_client
-            .as_ref()
-            .unwrap()
             .list_objects_v2()
-            .bucket(&self.bucket)
-            .max_keys(self.items_per_batch as i32)
+            .bucket(&stage.bucket)
+            .max_keys(stage.items_per_batch as i32)
+            .start_after(self.last_key.clone())
             .send()
             .await
             .or_retry()?;
@@ -52,17 +99,19 @@ impl gasket::runtime::Worker for Worker {
             .filter_map(|obj| obj.key)
             .collect::<Vec<_>>();
 
-        Ok(gasket::runtime::WorkSchedule::Unit(KeyBatch { keys }))
+        Ok(WorkSchedule::Unit(KeyBatch { keys }))
     }
 
-    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+    async fn execute(
+        &mut self,
+        unit: &Self::Unit,
+        stage: &mut Self::Stage,
+    ) -> Result<(), WorkerError> {
         for key in &unit.keys {
             let object = self
                 .s3_client
-                .as_ref()
-                .unwrap()
                 .get_object()
-                .bucket(&self.bucket)
+                .bucket(&stage.bucket)
                 .key(key)
                 .send()
                 .await
@@ -90,32 +139,10 @@ impl gasket::runtime::Worker for Worker {
 
             let event = ChainEvent::Apply(point, Record::CborBlock(body.into_bytes().to_vec()));
 
-            self.output_port.send(event.into()).await?;
+            stage.output_port.send(event.into()).await.or_panic()?;
         }
 
         Ok(())
-    }
-}
-
-pub struct Bootstrapper(Worker, gasket::retries::Policy);
-
-impl Bootstrapper {
-    pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.0.output_port.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<gasket::runtime::Tether>, Error> {
-        let tether = gasket::runtime::spawn_stage(
-            self.0,
-            gasket::runtime::Policy {
-                work_retry: self.1.clone(),
-                bootstrap_retry: self.1,
-                ..Default::default()
-            },
-            Some("source"),
-        );
-
-        Ok(vec![tether])
     }
 }
 
@@ -127,15 +154,16 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, _ctx: &Context) -> Result<Bootstrapper, Error> {
-        let worker = Worker {
-            s3_client: None,
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let stage = Stage {
             bucket: self.bucket,
             items_per_batch: self.items_per_batch,
+            retry_policy: self.retry_policy,
+            cursor: ctx.cursor.clone(),
             output_port: Default::default(),
             ops_count: Default::default(),
         };
 
-        Ok(Bootstrapper(worker, self.retry_policy))
+        Ok(stage)
     }
 }

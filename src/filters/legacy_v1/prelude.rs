@@ -1,7 +1,7 @@
-use crate::framework::errors::RuntimePolicy;
 use crate::framework::legacy_v1::*;
 use crate::framework::*;
 
+use gasket::framework::WorkerError;
 use merge::Merge;
 use pallas::ledger::traverse::wellknown::GenesisValues;
 use pallas::network::miniprotocols::Point;
@@ -14,7 +14,6 @@ pub struct EventWriter<'a> {
     output: MapperOutputPort,
     pub(crate) config: &'a Config,
     pub(crate) genesis: &'a GenesisValues,
-    pub(crate) error_policy: &'a RuntimePolicy,
     buffer: &'a mut Vec<ChainEvent>,
 }
 
@@ -24,7 +23,6 @@ impl<'a> EventWriter<'a> {
         output: MapperOutputPort,
         config: &'a Config,
         genesis: &'a GenesisValues,
-        error_policy: &'a RuntimePolicy,
         buffer: &'a mut Vec<ChainEvent>,
     ) -> Self {
         EventWriter {
@@ -33,12 +31,11 @@ impl<'a> EventWriter<'a> {
             output,
             config,
             genesis,
-            error_policy,
             buffer,
         }
     }
 
-    pub fn append(&mut self, data: EventData) -> Result<(), gasket::error::Error> {
+    pub fn append(&mut self, data: EventData) -> Result<(), WorkerError> {
         let evt = Event {
             context: self.context.clone(),
             data,
@@ -51,7 +48,7 @@ impl<'a> EventWriter<'a> {
         Ok(())
     }
 
-    pub fn append_from<T>(&mut self, source: T) -> Result<(), gasket::error::Error>
+    pub fn append_from<T>(&mut self, source: T) -> Result<(), WorkerError>
     where
         T: Into<EventData>,
     {
@@ -67,7 +64,6 @@ impl<'a> EventWriter<'a> {
             output: self.output.clone(),
             config: self.config,
             genesis: self.genesis,
-            error_policy: self.error_policy,
             buffer: self.buffer,
         }
     }

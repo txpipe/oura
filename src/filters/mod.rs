@@ -13,14 +13,14 @@ pub mod split_block;
 pub mod wasm;
 
 pub enum Bootstrapper {
-    Noop(noop::Bootstrapper),
-    SplitBlock(split_block::Bootstrapper),
-    Dsl(dsl::Bootstrapper),
-    Json(json::Bootstrapper),
-    LegacyV1(legacy_v1::Bootstrapper),
-    Wasm(wasm::Bootstrapper),
-    Deno(deno::Bootstrapper),
-    ParseCbor(parse_cbor::Bootstrapper),
+    Noop(noop::Stage),
+    SplitBlock(split_block::Stage),
+    Dsl(dsl::Stage),
+    Json(json::Stage),
+    LegacyV1(legacy_v1::Stage),
+    Wasm(wasm::Stage),
+    Deno(deno::Stage),
+    ParseCbor(parse_cbor::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {

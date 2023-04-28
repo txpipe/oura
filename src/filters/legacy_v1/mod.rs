@@ -6,7 +6,9 @@ mod crawl;
 mod map;
 mod prelude;
 
-use gasket::{messaging::*, runtime::Tether};
+use gasket::framework::*;
+use gasket::messaging::*;
+use gasket::runtime::Tether;
 use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 
@@ -14,42 +16,40 @@ use crate::framework::*;
 pub use prelude::*;
 
 #[derive(Default)]
-struct Worker {
-    ops_count: gasket::metrics::Counter,
-    config: Config,
-    genesis: GenesisValues,
-    error_policy: RuntimePolicy,
-    input: MapperInputPort,
-    output: MapperOutputPort,
-}
+struct Worker;
 
 #[async_trait::async_trait(?Send)]
-impl gasket::runtime::Worker for Worker {
-    type WorkUnit = ChainEvent;
+impl gasket::framework::Worker for Worker {
+    type Unit = ChainEvent;
+    type Stage = Stage;
 
-    fn metrics(&self) -> gasket::metrics::Registry {
-        gasket::metrics::Builder::new()
-            .with_counter("ops_count", &self.ops_count)
-            .build()
+    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
+        Ok(Self)
     }
 
-    async fn schedule(&mut self) -> gasket::runtime::ScheduleResult<Self::WorkUnit> {
-        let msg = self.input.recv().await?;
+    async fn schedule(
+        &mut self,
+        stage: &mut Self::Stage,
+    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
+        let msg = stage.input.recv().await.or_panic()?;
 
-        Ok(gasket::runtime::WorkSchedule::Unit(msg.payload))
+        Ok(WorkSchedule::Unit(msg.payload))
     }
 
-    async fn execute(&mut self, unit: &Self::WorkUnit) -> Result<(), gasket::error::Error> {
+    async fn execute(
+        &mut self,
+        unit: &Self::Unit,
+        stage: &mut Self::Stage,
+    ) -> Result<(), WorkerError> {
         let mut buffer = Vec::new();
 
         match unit {
             ChainEvent::Apply(point, Record::CborBlock(cbor)) => {
                 let mut writer = EventWriter::new(
                     point.clone(),
-                    self.output.clone(),
-                    &self.config,
-                    &self.genesis,
-                    &self.error_policy,
+                    stage.output.clone(),
+                    &stage.config,
+                    &stage.genesis,
                     &mut buffer,
                 );
 
@@ -58,10 +58,9 @@ impl gasket::runtime::Worker for Worker {
             ChainEvent::Reset(point) => {
                 let mut writer = EventWriter::new(
                     point.clone(),
-                    self.output.clone(),
-                    &self.config,
-                    &self.genesis,
-                    &self.error_policy,
+                    stage.output.clone(),
+                    &stage.config,
+                    &stage.genesis,
                     &mut buffer,
                 );
 
@@ -71,32 +70,49 @@ impl gasket::runtime::Worker for Worker {
         };
 
         for evt in buffer {
-            self.output.send(evt.into()).await?;
+            stage.output.send(evt.into()).await.or_panic()?;
         }
 
-        self.ops_count.inc(1);
+        stage.ops_count.inc(1);
 
         Ok(())
     }
 }
 
-pub struct Bootstrapper(Worker);
+pub struct Stage {
+    ops_count: gasket::metrics::Counter,
+    config: Config,
+    genesis: GenesisValues,
+    retries: gasket::retries::Policy,
+    input: MapperInputPort,
+    output: MapperOutputPort,
+}
 
-impl Bootstrapper {
+impl gasket::framework::Stage for Stage {
+    fn name(&self) -> &str {
+        "filter"
+    }
+
+    fn policy(&self) -> gasket::runtime::Policy {
+        gasket::runtime::Policy::default()
+    }
+
+    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
+        registry.track_counter("ops_count", &self.ops_count);
+    }
+}
+
+impl Stage {
     pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.0.input.connect(adapter);
+        self.input.connect(adapter);
     }
 
     pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.0.output.connect(adapter);
+        self.output.connect(adapter);
     }
 
     pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage(
-            self.0,
-            gasket::runtime::Policy::default(),
-            Some("mapper"),
-        );
+        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
 
         Ok(vec![worker_tether])
     }
@@ -124,13 +140,16 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
-        let worker = Worker {
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let stage = Stage {
             config: self,
             genesis: ctx.chain.clone(),
-            ..Default::default()
+            retries: ctx.retries.clone(),
+            ops_count: Default::default(),
+            input: Default::default(),
+            output: Default::default(),
         };
 
-        Ok(Bootstrapper(worker))
+        Ok(stage)
     }
 }

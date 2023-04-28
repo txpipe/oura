@@ -38,10 +38,10 @@ pub mod webhook;
 // pub mod rabbitmq;
 
 pub enum Bootstrapper {
-    Terminal(terminal::Bootstrapper),
-    FileRotate(filerotate::Bootstrapper),
-    WebHook(webhook::Bootstrapper),
-    Noop(noop::Bootstrapper),
+    Terminal(terminal::Stage),
+    FileRotate(filerotate::Stage),
+    WebHook(webhook::Stage),
+    Noop(noop::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {

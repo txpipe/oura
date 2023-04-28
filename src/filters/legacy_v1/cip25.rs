@@ -1,4 +1,4 @@
-use gasket::error::Error;
+use gasket::framework::WorkerError;
 use pallas::ledger::primitives::alonzo::Metadatum;
 use serde_json::Value as JsonValue;
 
@@ -74,7 +74,7 @@ impl EventWriter<'_> {
         version: &str,
         policy: &str,
         content: &Metadatum,
-    ) -> Result<(), Error> {
+    ) -> Result<(), WorkerError> {
         if let Metadatum::Map(entries) = content {
             for (key, sub_content) in entries.iter() {
                 if let Some(asset) = is_asset_key(key) {
@@ -89,7 +89,10 @@ impl EventWriter<'_> {
         Ok(())
     }
 
-    pub(crate) fn crawl_metadata_label_721(&mut self, content: &Metadatum) -> Result<(), Error> {
+    pub(crate) fn crawl_metadata_label_721(
+        &mut self,
+        content: &Metadatum,
+    ) -> Result<(), WorkerError> {
         let version = self
             .search_cip25_version(content)
             .unwrap_or_else(|| "1.0".to_string());
