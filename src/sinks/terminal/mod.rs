@@ -1,8 +1,6 @@
 use crossterm::style::{Color, Print, Stylize};
 use crossterm::ExecutableCommand;
 use gasket::framework::*;
-use gasket::messaging::*;
-use gasket::runtime::Tether;
 use serde::Deserialize;
 use std::io::{stdout, Stdout};
 
@@ -34,11 +32,8 @@ impl Worker {
 }
 
 #[async_trait::async_trait(?Send)]
-impl gasket::framework::Worker for Worker {
-    type Unit = ChainEvent;
-    type Stage = Stage;
-
-    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
+impl gasket::framework::Worker<Stage> for Worker {
+    async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         let mut stdout = stdout();
 
         stdout
@@ -57,17 +52,13 @@ impl gasket::framework::Worker for Worker {
 
     async fn schedule(
         &mut self,
-        stage: &mut Self::Stage,
-    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
+        stage: &mut Stage,
+    ) -> Result<WorkSchedule<ChainEvent>, WorkerError> {
         let msg = stage.input.recv().await.or_panic()?;
         Ok(WorkSchedule::Unit(msg.payload))
     }
 
-    async fn execute(
-        &mut self,
-        unit: &Self::Unit,
-        stage: &mut Self::Stage,
-    ) -> Result<(), WorkerError> {
+    async fn execute(&mut self, unit: &ChainEvent, stage: &mut Stage) -> Result<(), WorkerError> {
         let width = self.compute_terminal_width(stage.config.wrap.unwrap_or_default());
 
         let point = unit.point().clone();
@@ -92,39 +83,19 @@ impl gasket::framework::Worker for Worker {
     }
 }
 
+#[derive(Stage)]
+#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
-    latest_block: gasket::metrics::Gauge,
-    ops_count: gasket::metrics::Counter,
     cursor: Cursor,
-    input: MapperInputPort,
-}
 
-impl gasket::framework::Stage for Stage {
-    fn name(&self) -> &str {
-        "sink"
-    }
+    pub input: MapperInputPort,
 
-    fn policy(&self) -> gasket::runtime::Policy {
-        gasket::runtime::Policy::default()
-    }
+    #[metric]
+    latest_block: gasket::metrics::Gauge,
 
-    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
-        registry.track_counter("ops_count", &self.ops_count);
-        registry.track_gauge("latest_block", &self.latest_block);
-    }
-}
-
-impl Stage {
-    pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.input.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
-
-        Ok(vec![worker_tether])
-    }
+    #[metric]
+    ops_count: gasket::metrics::Counter,
 }
 
 #[derive(Default, Debug, Deserialize)]

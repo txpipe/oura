@@ -1,4 +1,7 @@
-use gasket::runtime::Tether;
+use gasket::{
+    messaging::{RecvPort, SendPort},
+    runtime::Tether,
+};
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -26,40 +29,40 @@ pub enum Bootstrapper {
 impl StageBootstrapper for Bootstrapper {
     fn connect_input(&mut self, adapter: InputAdapter) {
         match self {
-            Bootstrapper::Noop(p) => p.connect_input(adapter),
-            Bootstrapper::SplitBlock(p) => p.connect_input(adapter),
-            Bootstrapper::Dsl(p) => p.connect_input(adapter),
-            Bootstrapper::Json(p) => p.connect_input(adapter),
-            Bootstrapper::LegacyV1(p) => p.connect_input(adapter),
-            Bootstrapper::Wasm(p) => p.connect_input(adapter),
-            Bootstrapper::Deno(p) => p.connect_input(adapter),
-            Bootstrapper::ParseCbor(p) => p.connect_input(adapter),
+            Bootstrapper::Noop(p) => p.input.connect(adapter),
+            Bootstrapper::SplitBlock(p) => p.input.connect(adapter),
+            Bootstrapper::Dsl(p) => p.input.connect(adapter),
+            Bootstrapper::Json(p) => p.input.connect(adapter),
+            Bootstrapper::LegacyV1(p) => p.input.connect(adapter),
+            Bootstrapper::Wasm(p) => p.input.connect(adapter),
+            Bootstrapper::Deno(p) => p.input.connect(adapter),
+            Bootstrapper::ParseCbor(p) => p.input.connect(adapter),
         }
     }
 
     fn connect_output(&mut self, adapter: OutputAdapter) {
         match self {
-            Bootstrapper::Noop(p) => p.connect_output(adapter),
-            Bootstrapper::SplitBlock(p) => p.connect_output(adapter),
-            Bootstrapper::Dsl(p) => p.connect_output(adapter),
-            Bootstrapper::Json(p) => p.connect_output(adapter),
-            Bootstrapper::LegacyV1(p) => p.connect_output(adapter),
-            Bootstrapper::Wasm(p) => p.connect_output(adapter),
-            Bootstrapper::Deno(p) => p.connect_output(adapter),
-            Bootstrapper::ParseCbor(p) => p.connect_output(adapter),
+            Bootstrapper::Noop(p) => p.output.connect(adapter),
+            Bootstrapper::SplitBlock(p) => p.output.connect(adapter),
+            Bootstrapper::Dsl(p) => p.output.connect(adapter),
+            Bootstrapper::Json(p) => p.output.connect(adapter),
+            Bootstrapper::LegacyV1(p) => p.output.connect(adapter),
+            Bootstrapper::Wasm(p) => p.output.connect(adapter),
+            Bootstrapper::Deno(p) => p.output.connect(adapter),
+            Bootstrapper::ParseCbor(p) => p.output.connect(adapter),
         }
     }
 
-    fn spawn(self) -> Result<Vec<Tether>, Error> {
+    fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
-            Bootstrapper::Noop(x) => x.spawn(),
-            Bootstrapper::SplitBlock(x) => x.spawn(),
-            Bootstrapper::Dsl(x) => x.spawn(),
-            Bootstrapper::Json(x) => x.spawn(),
-            Bootstrapper::LegacyV1(x) => x.spawn(),
-            Bootstrapper::Wasm(x) => x.spawn(),
-            Bootstrapper::Deno(x) => x.spawn(),
-            Bootstrapper::ParseCbor(x) => x.spawn(),
+            Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::SplitBlock(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Dsl(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Json(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::LegacyV1(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Wasm(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }

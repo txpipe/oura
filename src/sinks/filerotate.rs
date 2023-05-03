@@ -7,8 +7,6 @@ use file_rotate::suffix::FileLimit;
 use file_rotate::ContentLimit;
 use file_rotate::FileRotate;
 use gasket::framework::*;
-use gasket::messaging::*;
-use gasket::runtime::Tether;
 use serde::Deserialize;
 use serde_json::json;
 use serde_json::Value as JsonValue;
@@ -20,11 +18,8 @@ pub struct Worker {
 }
 
 #[async_trait::async_trait(?Send)]
-impl gasket::framework::Worker for Worker {
-    type Unit = ChainEvent;
-    type Stage = Stage;
-
-    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
+impl gasket::framework::Worker<Stage> for Worker {
+    async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         let output_path = match &stage.config.output_path {
             Some(x) => PathBuf::try_from(x).map_err(Error::config).or_panic()?,
             None => stage.current_dir.clone(),
@@ -61,17 +56,13 @@ impl gasket::framework::Worker for Worker {
 
     async fn schedule(
         &mut self,
-        stage: &mut Self::Stage,
-    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
+        stage: &mut Stage,
+    ) -> Result<WorkSchedule<ChainEvent>, WorkerError> {
         let msg = stage.input.recv().await.or_panic()?;
         Ok(WorkSchedule::Unit(msg.payload))
     }
 
-    async fn execute(
-        &mut self,
-        unit: &Self::Unit,
-        stage: &mut Self::Stage,
-    ) -> Result<(), WorkerError> {
+    async fn execute(&mut self, unit: &ChainEvent, stage: &mut Stage) -> Result<(), WorkerError> {
         let (point, json) = match unit {
             ChainEvent::Apply(point, record) => {
                 let json = json!({ "event": "apply", "record": JsonValue::from(record.clone()) });
@@ -108,40 +99,20 @@ impl gasket::framework::Worker for Worker {
     }
 }
 
+#[derive(Stage)]
+#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
     current_dir: PathBuf,
     cursor: Cursor,
+
+    pub input: MapperInputPort,
+
+    #[metric]
     ops_count: gasket::metrics::Counter,
+
+    #[metric]
     latest_block: gasket::metrics::Gauge,
-    input: MapperInputPort,
-}
-
-impl gasket::framework::Stage for Stage {
-    fn name(&self) -> &str {
-        "sink"
-    }
-
-    fn policy(&self) -> gasket::runtime::Policy {
-        gasket::runtime::Policy::default()
-    }
-
-    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
-        registry.track_counter("ops_count", &self.ops_count);
-        registry.track_gauge("latest_block", &self.latest_block);
-    }
-}
-
-impl Stage {
-    pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.input.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
-
-        Ok(vec![worker_tether])
-    }
 }
 
 #[derive(Debug, Deserialize, Clone)]

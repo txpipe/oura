@@ -40,17 +40,16 @@ impl ConfigRoot {
 }
 
 struct Runtime {
-    source: Vec<Tether>,
+    source: Tether,
     filters: Vec<Tether>,
-    sink: Vec<Tether>,
+    sink: Tether,
 }
 
 impl Runtime {
     fn all_tethers(&self) -> impl Iterator<Item = &Tether> {
-        self.source
-            .iter()
+        std::iter::once(&self.source)
             .chain(self.filters.iter())
-            .chain(self.sink.iter())
+            .chain(std::iter::once(&self.sink))
     }
 
     fn should_stop(&self) -> bool {
@@ -81,6 +80,15 @@ impl Runtime {
     }
 }
 
+fn define_gasket_policy(config: Option<&gasket::retries::Policy>) -> gasket::runtime::Policy {
+    gasket::runtime::Policy {
+        tick_timeout: std::time::Duration::from_secs(5).into(),
+        bootstrap_retry: config.cloned().unwrap_or_default(),
+        work_retry: config.cloned().unwrap_or_default(),
+        teardown_retry: config.cloned().unwrap_or_default(),
+    }
+}
+
 fn chain_stages<'a>(
     source: &'a mut dyn StageBootstrapper,
     filters: Vec<&'a mut dyn StageBootstrapper>,
@@ -104,6 +112,7 @@ fn bootstrap(
     mut source: sources::Bootstrapper,
     mut filters: Vec<filters::Bootstrapper>,
     mut sink: sinks::Bootstrapper,
+    policy: gasket::runtime::Policy,
 ) -> Result<Runtime, Error> {
     chain_stages(
         &mut source,
@@ -115,15 +124,12 @@ fn bootstrap(
     );
 
     let runtime = Runtime {
-        source: source.spawn()?,
+        source: source.spawn(policy.clone()),
         filters: filters
             .into_iter()
-            .map(|x| x.spawn())
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .flatten()
+            .map(|x| x.spawn(policy.clone()))
             .collect(),
-        sink: sink.spawn()?,
+        sink: sink.spawn(policy),
     };
 
     Ok(runtime)
@@ -136,13 +142,11 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let chain = config.chain.unwrap_or_default();
     let cursor = Cursor::new(config.intersect.into());
-    let retries = config.retries.unwrap_or_default();
     let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
 
     let ctx = Context {
         chain,
-        retries,
         finalize,
         cursor,
         current_dir,
@@ -159,7 +163,8 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let sink = config.sink.bootstrapper(&ctx)?;
 
-    let runtime = bootstrap(source, filters, sink)?;
+    let retries = define_gasket_policy(config.retries.as_ref());
+    let runtime = bootstrap(source, filters, sink, retries)?;
 
     log::info!("oura is running...");
 

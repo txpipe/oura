@@ -48,7 +48,6 @@ impl From<ChainConfig> for GenesisValues {
 pub struct Context {
     pub chain: GenesisValues,
     pub cursor: Cursor,
-    pub retries: gasket::retries::Policy,
     pub finalize: Option<FinalizeConfig>,
     pub current_dir: PathBuf,
 }
@@ -169,7 +168,7 @@ pub type InputAdapter = gasket::messaging::tokio::ChannelRecvAdapter<ChainEvent>
 pub trait StageBootstrapper {
     fn connect_output(&mut self, adapter: OutputAdapter);
     fn connect_input(&mut self, adapter: InputAdapter);
-    fn spawn(self) -> Result<Vec<gasket::runtime::Tether>, Error>;
+    fn spawn(self, policy: gasket::runtime::Policy) -> gasket::runtime::Tether;
 }
 
 #[derive(Debug, Deserialize, Clone)]

@@ -5,20 +5,22 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
+#[derive(Stage)]
+#[stage(name = "source")]
 pub struct Stage {
     bucket: String,
     items_per_batch: u32,
     cursor: Cursor,
-    output_port: SourceOutputPort,
-    ops_count: gasket::metrics::Counter,
+
     retry_policy: gasket::retries::Policy,
+
+    pub output: SourceOutputPort,
+
+    #[metric]
+    ops_count: gasket::metrics::Counter,
 }
 
 impl gasket::framework::Stage for Stage {
-    fn name(&self) -> &str {
-        "source"
-    }
-
     fn policy(&self) -> gasket::runtime::Policy {
         gasket::runtime::Policy {
             work_retry: self.retry_policy.clone(),
@@ -26,17 +28,9 @@ impl gasket::framework::Stage for Stage {
             ..Default::default()
         }
     }
-
-    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
-        registry.track_counter("ops_count", &self.ops_count);
-    }
 }
 
 impl Stage {
-    pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.output_port.connect(adapter);
-    }
-
     pub fn spawn(self) -> Result<Vec<gasket::runtime::Tether>, Error> {
         let tether = gasket::runtime::spawn_stage::<Worker>(self);
 

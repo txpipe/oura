@@ -1,4 +1,4 @@
-use gasket::runtime::Tether;
+use gasket::{messaging::RecvPort, runtime::Tether};
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -51,19 +51,19 @@ impl StageBootstrapper for Bootstrapper {
 
     fn connect_input(&mut self, adapter: InputAdapter) {
         match self {
-            Bootstrapper::Terminal(p) => p.connect_input(adapter),
-            Bootstrapper::FileRotate(p) => p.connect_input(adapter),
-            Bootstrapper::WebHook(p) => p.connect_input(adapter),
-            Bootstrapper::Noop(p) => p.connect_input(adapter),
+            Bootstrapper::Terminal(p) => p.input.connect(adapter),
+            Bootstrapper::FileRotate(p) => p.input.connect(adapter),
+            Bootstrapper::WebHook(p) => p.input.connect(adapter),
+            Bootstrapper::Noop(p) => p.input.connect(adapter),
         }
     }
 
-    fn spawn(self) -> Result<Vec<Tether>, Error> {
+    fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
-            Bootstrapper::Terminal(x) => x.spawn(),
-            Bootstrapper::FileRotate(x) => x.spawn(),
-            Bootstrapper::WebHook(x) => x.spawn(),
-            Bootstrapper::Noop(x) => x.spawn(),
+            Bootstrapper::Terminal(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }

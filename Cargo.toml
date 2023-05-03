@@ -16,9 +16,9 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 # pallas = { path = "../pallas/pallas" }
 pallas = { git = "https://github.com/txpipe/pallas" }
 
-gasket = "0.3.0"
-# gasket = { path = "../../construkts/gasket-rs" }
-# gasket = { git = "https://github.com/construkts/gasket-rs.git" }
+gasket = { version = "^0.4", features = ["derive"] }
+# gasket = { path = "../../construkts/gasket-rs/gasket", features = ["derive"] }
+# gasket = { git = "https://github.com/construkts/gasket-rs.git", features = ["derive"]  }
 
 utxorpc-spec-ledger = "1.0.0-alpha.0"
 # utxorpc-spec-ledger = { path = "../../utxorpc/spec/ledger/gen/rust" }
