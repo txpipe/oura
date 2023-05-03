@@ -1,8 +1,6 @@
 //! A filter that turns raw cbor Tx into the corresponding parsed representation
 
 use gasket::framework::*;
-use gasket::messaging::*;
-use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use pallas::ledger::traverse as trv;
@@ -87,28 +85,26 @@ fn map_cbor_to_u5c(cbor: &[u8]) -> Result<u5c::Tx, WorkerError> {
     Ok(from_traverse_tx(&tx))
 }
 
-#[derive(Default)]
+#[derive(Default, Stage)]
+#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
+    pub input: FilterInputPort,
+    pub output: FilterOutputPort,
+
+    #[metric]
     ops_count: gasket::metrics::Counter,
-    input: FilterInputPort,
-    output: FilterOutputPort,
 }
 
-impl gasket::framework::Stage for Stage {
-    fn name(&self) -> &str {
-        "filter"
-    }
+#[derive(Default)]
+pub struct Worker;
 
-    fn policy(&self) -> gasket::runtime::Policy {
-        gasket::runtime::Policy::default()
-    }
-
-    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
-        registry.track_counter("ops_count", &self.ops_count);
+impl From<&Stage> for Worker {
+    fn from(_: &Stage) -> Self {
+        Worker::default()
     }
 }
 
-gasket::stateless_mapper!(Worker, |stage: Stage, unit: ChainEvent| => {
+gasket::impl_mapper!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let output = unit.clone().try_map_record(|r| match r {
         Record::CborTx(cbor) => {
             let tx = map_cbor_to_u5c(&cbor)?;
@@ -121,22 +117,6 @@ gasket::stateless_mapper!(Worker, |stage: Stage, unit: ChainEvent| => {
 
     output
 });
-
-impl Stage {
-    pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.input.connect(adapter);
-    }
-
-    pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.output.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
-
-        Ok(vec![worker_tether])
-    }
-}
 
 #[derive(Default, Deserialize)]
 pub struct Config {}

@@ -22,11 +22,11 @@ pub enum Bootstrapper {
 impl StageBootstrapper for Bootstrapper {
     fn connect_output(&mut self, adapter: OutputAdapter) {
         match self {
-            Bootstrapper::N2N(p) => p.connect_output(adapter),
+            Bootstrapper::N2N(p) => n2n::connect_output(p, adapter),
             Bootstrapper::N2C() => todo!(),
 
             #[cfg(feature = "aws")]
-            Bootstrapper::S3(p) => p.connect_output(adapter),
+            Bootstrapper::S3(p) => p.output.connect(adapter),
         }
     }
 
@@ -34,13 +34,13 @@ impl StageBootstrapper for Bootstrapper {
         panic!("attempted to use source stage as receiver");
     }
 
-    fn spawn(self) -> Result<Vec<Tether>, Error> {
+    fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
-            Bootstrapper::N2N(x) => x.spawn(),
+            Bootstrapper::N2N(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::N2C() => todo!(),
 
             #[cfg(feature = "aws")]
-            Bootstrapper::S3(x) => x.spawn(),
+            Bootstrapper::S3(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }

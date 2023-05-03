@@ -2568,16 +2568,28 @@ dependencies = [
 
 [[package]]
 name = "gasket"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de68ed2afa580d4994acd5a22bb410db06350c3fd9fc6ec98c56eca7aac12a21"
+checksum = "cf74bee250a2b5a1a8d65186643ae771fb59f4d5f8d28ff07ec22a10ff3014d3"
 dependencies = [
  "async-trait",
  "crossbeam",
+ "gasket-derive",
  "serde",
  "thiserror",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "gasket-derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64839c204f4402daf2a6726ef1470f263d474ade061fbc3dcf7142a386fe39b6"
+dependencies = [
+ "proc-macro2 1.0.56",
+ "quote 1.0.26",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -4152,7 +4164,7 @@ dependencies = [
 [[package]]
 name = "pallas"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "pallas-addresses",
  "pallas-codec",
@@ -4166,7 +4178,7 @@ dependencies = [
 [[package]]
 name = "pallas-addresses"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "base58",
  "bech32",
@@ -4179,7 +4191,7 @@ dependencies = [
 [[package]]
 name = "pallas-codec"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "hex",
  "minicbor",
@@ -4189,7 +4201,7 @@ dependencies = [
 [[package]]
 name = "pallas-crypto"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -4202,7 +4214,7 @@ dependencies = [
 [[package]]
 name = "pallas-network"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "byteorder 1.4.3",
  "hex",
@@ -4217,7 +4229,7 @@ dependencies = [
 [[package]]
 name = "pallas-primitives"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "base58",
  "bech32",
@@ -4232,7 +4244,7 @@ dependencies = [
 [[package]]
 name = "pallas-traverse"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "hex",
  "pallas-addresses",
@@ -4246,7 +4258,7 @@ dependencies = [
 [[package]]
 name = "pallas-upstream"
 version = "0.19.0-alpha.0"
-source = "git+https://github.com/txpipe/pallas#6dc7f069646361e7eb63b5898b23aadc6ebe7852"
+source = "git+https://github.com/txpipe/pallas#ef9dbfad648548e31029131f0bcac7a009dcc25d"
 dependencies = [
  "async-trait",
  "byteorder 1.4.3",

@@ -1,8 +1,6 @@
 //! A filter that can select which events to block and which to let pass
 
 use gasket::framework::*;
-use gasket::messaging::*;
-use gasket::runtime::Tether;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 
@@ -216,28 +214,28 @@ impl Predicate {
     }
 }
 
+#[derive(Stage)]
+#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
-    ops_count: gasket::metrics::Counter,
     predicate: Predicate,
-    input: FilterInputPort,
-    output: FilterOutputPort,
+
+    pub input: FilterInputPort,
+    pub output: FilterOutputPort,
+
+    #[metric]
+    ops_count: gasket::metrics::Counter,
 }
 
-impl gasket::framework::Stage for Stage {
-    fn name(&self) -> &str {
-        "filter"
-    }
+#[derive(Default)]
+pub struct Worker;
 
-    fn policy(&self) -> gasket::runtime::Policy {
-        gasket::runtime::Policy::default()
-    }
-
-    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
-        registry.track_counter("ops_count", &self.ops_count);
+impl From<&Stage> for Worker {
+    fn from(_: &Stage) -> Self {
+        Worker::default()
     }
 }
 
-gasket::stateless_flatmapper!(Worker, |stage: Stage, unit: ChainEvent| => {
+gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let out = match unit {
         ChainEvent::Apply(_, Record::OuraV1Event(x)) => {
             if stage.predicate.event_matches(x) {
@@ -252,22 +250,6 @@ gasket::stateless_flatmapper!(Worker, |stage: Stage, unit: ChainEvent| => {
     stage.ops_count.inc(1);
     out
 });
-
-impl Stage {
-    pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.input.connect(adapter);
-    }
-
-    pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.output.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
-
-        Ok(vec![worker_tether])
-    }
-}
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

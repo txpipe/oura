@@ -5,8 +5,6 @@ use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use deno_runtime::BootstrapOptions;
 use gasket::framework::*;
-use gasket::messaging::*;
-use gasket::runtime::Tether;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -73,7 +71,7 @@ async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
     deno
 }
 
-struct Worker {
+pub struct Worker {
     runtime: WrappedRuntime,
 }
 
@@ -104,11 +102,8 @@ impl Worker {
 }
 
 #[async_trait::async_trait(?Send)]
-impl gasket::framework::Worker for Worker {
-    type Unit = ChainEvent;
-    type Stage = Stage;
-
-    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
+impl gasket::framework::Worker<Stage> for Worker {
+    async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         let runtime = setup_deno(&stage.main_module).await;
 
         Ok(Self { runtime })
@@ -116,18 +111,14 @@ impl gasket::framework::Worker for Worker {
 
     async fn schedule(
         &mut self,
-        stage: &mut Self::Stage,
-    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
+        stage: &mut Stage,
+    ) -> Result<WorkSchedule<ChainEvent>, WorkerError> {
         let msg = stage.input.recv().await.or_panic()?;
 
         Ok(WorkSchedule::Unit(msg.payload))
     }
 
-    async fn execute(
-        &mut self,
-        unit: &Self::Unit,
-        stage: &mut Self::Stage,
-    ) -> Result<(), WorkerError> {
+    async fn execute(&mut self, unit: &ChainEvent, stage: &mut Stage) -> Result<(), WorkerError> {
         match unit {
             ChainEvent::Apply(p, r) => {
                 let mapped = self
@@ -151,43 +142,20 @@ impl gasket::framework::Worker for Worker {
     }
 }
 
+#[derive(Stage)]
+#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
-    ops_count: gasket::metrics::Counter,
     main_module: PathBuf,
     call_snippet: &'static str,
-    input: MapperInputPort,
-    output: MapperOutputPort,
-}
 
-impl gasket::framework::Stage for Stage {
-    fn name(&self) -> &str {
-        "mapper"
-    }
+    pub input: MapperInputPort,
+    pub output: MapperOutputPort,
 
-    fn policy(&self) -> gasket::runtime::Policy {
-        gasket::runtime::Policy::default()
-    }
-
-    fn register_metrics(&self, registry: &mut gasket::metrics::Registry) {
-        registry.track_counter("ops_count", &self.ops_count);
-    }
+    #[metric]
+    ops_count: gasket::metrics::Counter,
 }
 
 impl Stage {
-    pub fn connect_input(&mut self, adapter: InputAdapter) {
-        self.input.connect(adapter);
-    }
-
-    pub fn connect_output(&mut self, adapter: OutputAdapter) {
-        self.output.connect(adapter);
-    }
-
-    pub fn spawn(self) -> Result<Vec<Tether>, Error> {
-        let worker_tether = gasket::runtime::spawn_stage::<Worker>(self);
-
-        Ok(vec![worker_tether])
-    }
-
     async fn fanout(
         &mut self,
         point: Point,
