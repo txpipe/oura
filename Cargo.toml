@@ -27,7 +27,7 @@ utxorpc-spec-ledger = "1.0.0-alpha.0"
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.9.1"
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4.2.7", features = ["derive"] }
 log = "0.4.17"
 env_logger = "0.10.0"
 crossterm = "0.25"
