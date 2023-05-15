@@ -47,7 +47,7 @@ thiserror = "1.0.39"
 indicatif = "0.17.3"
 lazy_static = "1.4.0"
 tracing = "0.1.37"
-tracing-subscriber = "0.3.16"
+tracing-subscriber = "0.3.17"
 file-rotate = "0.7.1"
 tokio = { version = "1", features = ["rt"] }
 async-trait = "0.1.68"
