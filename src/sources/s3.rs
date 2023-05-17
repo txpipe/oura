@@ -30,14 +30,6 @@ impl gasket::framework::Stage for Stage {
     }
 }
 
-impl Stage {
-    pub fn spawn(self) -> Result<Vec<gasket::runtime::Tether>, Error> {
-        let tether = gasket::runtime::spawn_stage::<Worker>(self);
-
-        Ok(vec![tether])
-    }
-}
-
 pub struct Worker {
     s3_client: S3Client,
     last_key: String,

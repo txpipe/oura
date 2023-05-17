@@ -2,7 +2,7 @@ use gasket::runtime::Tether;
 use oura::{filters, framework::*, sinks, sources};
 use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
-use std::time::Duration;
+use std::{collections::VecDeque, time::Duration};
 
 use crate::console;
 
@@ -141,12 +141,16 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let config = ConfigRoot::new(&args.config).map_err(Error::config)?;
 
     let chain = config.chain.unwrap_or_default();
-    let cursor = Cursor::new(config.intersect.into());
+    let intersect = config.intersect;
     let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
 
+    // TODO: load from persistence mechanism
+    let cursor = Cursor::new(VecDeque::new());
+
     let ctx = Context {
         chain,
+        intersect,
         finalize,
         cursor,
         current_dir,
