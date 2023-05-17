@@ -1,14 +1,15 @@
 //! Internal pipeline framework
 
-use pallas::ledger::traverse::wellknown::GenesisValues;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
-use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
-use utxorpc_spec_ledger::v1::Tx as ParsedTx;
+pub use utxorpc_spec_ledger::v1::Tx as ParsedTx;
+
+// we use GenesisValues from Pallas as our ChainConfig
+pub use pallas::ledger::traverse::wellknown::GenesisValues;
 
 pub mod cursor;
 pub mod errors;
@@ -47,6 +48,7 @@ impl From<ChainConfig> for GenesisValues {
 
 pub struct Context {
     pub chain: GenesisValues,
+    pub intersect: IntersectConfig,
     pub cursor: Cursor,
     pub finalize: Option<FinalizeConfig>,
     pub current_dir: PathBuf,
@@ -177,23 +179,13 @@ pub enum IntersectConfig {
     Tip,
     Origin,
     Point(u64, String),
-    Fallbacks(Vec<(u64, String)>),
+    Breadcrumbs(Vec<(u64, String)>),
 }
 
 impl IntersectConfig {
-    pub fn get_point(&self) -> Option<Point> {
+    pub fn points(&self) -> Option<Vec<Point>> {
         match self {
-            IntersectConfig::Point(slot, hash) => {
-                let hash = hex::decode(hash).expect("valid hex hash");
-                Some(Point::Specific(*slot, hash))
-            }
-            _ => None,
-        }
-    }
-
-    pub fn get_fallbacks(&self) -> Option<Vec<Point>> {
-        match self {
-            IntersectConfig::Fallbacks(all) => {
+            IntersectConfig::Breadcrumbs(all) => {
                 let mapped = all
                     .iter()
                     .map(|(slot, hash)| {
@@ -204,29 +196,11 @@ impl IntersectConfig {
 
                 Some(mapped)
             }
+            IntersectConfig::Point(slot, hash) => {
+                let hash = hex::decode(hash).expect("valid hex hash");
+                Some(vec![Point::Specific(*slot, hash)])
+            }
             _ => None,
-        }
-    }
-}
-
-impl From<IntersectConfig> for Intersection {
-    fn from(value: IntersectConfig) -> Self {
-        match value {
-            IntersectConfig::Tip => Intersection::Tip,
-            IntersectConfig::Origin => Intersection::Origin,
-            IntersectConfig::Point(x, y) => {
-                let point = Point::Specific(x, hex::decode(y).unwrap());
-
-                Intersection::Breadcrumbs(VecDeque::from(vec![point]))
-            }
-            IntersectConfig::Fallbacks(x) => {
-                let points: Vec<_> = x
-                    .iter()
-                    .map(|(x, y)| Point::Specific(*x, hex::decode(y).unwrap()))
-                    .collect();
-
-                Intersection::Breadcrumbs(VecDeque::from(points))
-            }
         }
     }
 }

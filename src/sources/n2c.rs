@@ -1,10 +1,12 @@
+use std::path::PathBuf;
+
 use gasket::framework::*;
 use serde::Deserialize;
 use tracing::{debug, info};
 
-use pallas::ledger::traverse::MultiEraHeader;
-use pallas::network::facades::PeerClient;
-use pallas::network::miniprotocols::chainsync::{self, HeaderContent, NextResponse};
+use pallas::ledger::traverse::MultiEraBlock;
+use pallas::network::facades::NodeClient;
+use pallas::network::miniprotocols::chainsync::{BlockContent, NextResponse};
 use pallas::network::miniprotocols::Point;
 
 use crate::framework::*;
@@ -12,7 +14,7 @@ use crate::framework::*;
 #[derive(Stage)]
 #[stage(
     name = "source",
-    unit = "NextResponse<HeaderContent>",
+    unit = "NextResponse<BlockContent>",
     worker = "Worker"
 )]
 pub struct Stage {
@@ -33,17 +35,8 @@ pub struct Stage {
     chain_tip: gasket::metrics::Gauge,
 }
 
-fn to_traverse(header: &HeaderContent) -> Result<MultiEraHeader<'_>, WorkerError> {
-    let out = match header.byron_prefix {
-        Some((subtag, _)) => MultiEraHeader::decode(header.variant, Some(subtag), &header.cbor),
-        None => MultiEraHeader::decode(header.variant, None, &header.cbor),
-    };
-
-    out.or_panic()
-}
-
 async fn intersect_from_config(
-    peer: &mut PeerClient,
+    peer: &mut NodeClient,
     intersect: &IntersectConfig,
 ) -> Result<(), WorkerError> {
     let chainsync = peer.chainsync();
@@ -70,7 +63,7 @@ async fn intersect_from_config(
     Ok(())
 }
 
-async fn intersect_from_cursor(peer: &mut PeerClient, cursor: &Cursor) -> Result<(), WorkerError> {
+async fn intersect_from_cursor(peer: &mut NodeClient, cursor: &Cursor) -> Result<(), WorkerError> {
     let points = cursor.clone_state();
 
     let (intersect, _) = peer
@@ -85,33 +78,26 @@ async fn intersect_from_cursor(peer: &mut PeerClient, cursor: &Cursor) -> Result
 }
 
 pub struct Worker {
-    peer_session: PeerClient,
+    peer_session: NodeClient,
 }
 
 impl Worker {
     async fn process_next(
         &mut self,
         stage: &mut Stage,
-        next: &NextResponse<HeaderContent>,
+        next: &NextResponse<BlockContent>,
     ) -> Result<(), WorkerError> {
         match next {
-            NextResponse::RollForward(header, tip) => {
-                let header = to_traverse(header).or_panic()?;
-                let slot = header.slot();
-                let hash = header.hash();
+            NextResponse::RollForward(cbor, tip) => {
+                let block = MultiEraBlock::decode(&cbor).or_panic()?;
+                let slot = block.slot();
+                let hash = block.hash();
 
                 debug!(slot, %hash, "chain sync roll forward");
 
-                let block = self
-                    .peer_session
-                    .blockfetch()
-                    .fetch_single(Point::Specific(slot, hash.to_vec()))
-                    .await
-                    .or_retry()?;
-
                 let evt = ChainEvent::Apply(
                     pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
-                    Record::CborBlock(block),
+                    Record::CborBlock(cbor.to_vec()),
                 );
 
                 stage.output.send(evt.into()).await.or_panic()?;
@@ -120,7 +106,7 @@ impl Worker {
 
                 Ok(())
             }
-            chainsync::NextResponse::RollBackward(point, tip) => {
+            NextResponse::RollBackward(point, tip) => {
                 match &point {
                     Point::Origin => debug!("rollback to origin"),
                     Point::Specific(slot, _) => debug!(slot, "rollback"),
@@ -136,7 +122,7 @@ impl Worker {
 
                 Ok(())
             }
-            chainsync::NextResponse::Await => {
+            NextResponse::Await => {
                 info!("chain-sync reached the tip of the chain");
                 Ok(())
             }
@@ -149,15 +135,7 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         debug!("connecting");
 
-        let peer_address = stage
-            .config
-            .peers
-            .first()
-            .cloned()
-            .ok_or_else(|| Error::config("at least one upstream peer is required"))
-            .or_panic()?;
-
-        let mut peer_session = PeerClient::connect(&peer_address, stage.chain.magic)
+        let mut peer_session = NodeClient::connect(&stage.config.socket_path, stage.chain.magic)
             .await
             .or_retry()?;
 
@@ -175,7 +153,7 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn schedule(
         &mut self,
         _stage: &mut Stage,
-    ) -> Result<WorkSchedule<NextResponse<HeaderContent>>, WorkerError> {
+    ) -> Result<WorkSchedule<NextResponse<BlockContent>>, WorkerError> {
         let client = self.peer_session.chainsync();
 
         let next = match client.has_agency() {
@@ -194,7 +172,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
     async fn execute(
         &mut self,
-        unit: &NextResponse<HeaderContent>,
+        unit: &NextResponse<BlockContent>,
         stage: &mut Stage,
     ) -> Result<(), WorkerError> {
         self.process_next(stage, unit).await
@@ -209,7 +187,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    peers: Vec<String>,
+    socket_path: PathBuf,
 }
 
 impl Config {
