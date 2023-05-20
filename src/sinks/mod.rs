@@ -4,9 +4,9 @@ use serde::Deserialize;
 use crate::framework::*;
 
 //pub mod assert;
-//pub mod stdout;
 pub mod filerotate;
 pub mod noop;
+pub mod stdout;
 pub mod terminal;
 pub mod webhook;
 
@@ -40,6 +40,7 @@ pub mod webhook;
 pub enum Bootstrapper {
     Terminal(terminal::Stage),
     FileRotate(filerotate::Stage),
+    Stdout(stdout::Stage),
     WebHook(webhook::Stage),
     Noop(noop::Stage),
 }
@@ -53,6 +54,7 @@ impl StageBootstrapper for Bootstrapper {
         match self {
             Bootstrapper::Terminal(p) => p.input.connect(adapter),
             Bootstrapper::FileRotate(p) => p.input.connect(adapter),
+            Bootstrapper::Stdout(p) => p.input.connect(adapter),
             Bootstrapper::WebHook(p) => p.input.connect(adapter),
             Bootstrapper::Noop(p) => p.input.connect(adapter),
         }
@@ -62,6 +64,7 @@ impl StageBootstrapper for Bootstrapper {
         match self {
             Bootstrapper::Terminal(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
         }
@@ -73,6 +76,7 @@ impl StageBootstrapper for Bootstrapper {
 pub enum Config {
     Terminal(terminal::Config),
     FileRotate(filerotate::Config),
+    Stdout(stdout::Config),
     WebHook(webhook::Config),
     Noop(noop::Config),
 }
@@ -82,6 +86,7 @@ impl Config {
         match self {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
             Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
+            Config::Stdout(c) => Ok(Bootstrapper::Stdout(c.bootstrapper(ctx)?)),
             Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
         }

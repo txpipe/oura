@@ -8,7 +8,6 @@ use file_rotate::ContentLimit;
 use file_rotate::FileRotate;
 use gasket::framework::*;
 use serde::Deserialize;
-use serde_json::json;
 use serde_json::Value as JsonValue;
 
 use crate::framework::*;
@@ -63,27 +62,8 @@ impl gasket::framework::Worker<Stage> for Worker {
     }
 
     async fn execute(&mut self, unit: &ChainEvent, stage: &mut Stage) -> Result<(), WorkerError> {
-        let (point, json) = match unit {
-            ChainEvent::Apply(point, record) => {
-                let json = json!({ "event": "apply", "record": JsonValue::from(record.clone()) });
-                (point, json)
-            }
-            ChainEvent::Undo(point, record) => {
-                let json = json!({ "event": "undo", "record": JsonValue::from(record.clone()) });
-                (point, json)
-            }
-            ChainEvent::Reset(point) => {
-                let json_point = match &point {
-                    pallas::network::miniprotocols::Point::Origin => JsonValue::from("origin"),
-                    pallas::network::miniprotocols::Point::Specific(slot, hash) => {
-                        json!({ "slot": slot, "hash": hex::encode(hash)})
-                    }
-                };
-
-                let json = json!({ "event": "reset", "point": json_point });
-                (point, json)
-            }
-        };
+        let point = unit.point();
+        let json = JsonValue::from(unit.clone());
 
         self.writer
             .write_all(json.to_string().as_bytes())

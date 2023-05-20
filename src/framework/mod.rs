@@ -157,6 +157,42 @@ impl ChainEvent {
     }
 }
 
+fn point_to_json(point: Point) -> JsonValue {
+    match &point {
+        pallas::network::miniprotocols::Point::Origin => JsonValue::from("origin"),
+        pallas::network::miniprotocols::Point::Specific(slot, hash) => {
+            json!({ "slot": slot, "hash": hex::encode(hash)})
+        }
+    }
+}
+
+impl From<ChainEvent> for JsonValue {
+    fn from(value: ChainEvent) -> Self {
+        match value {
+            ChainEvent::Apply(point, record) => {
+                json!({
+                    "event": "apply",
+                    "point": point_to_json(point),
+                    "record": JsonValue::from(record.clone())
+                })
+            }
+            ChainEvent::Undo(point, record) => {
+                json!({
+                    "event": "undo",
+                    "point": point_to_json(point),
+                    "record": JsonValue::from(record.clone())
+                })
+            }
+            ChainEvent::Reset(point) => {
+                json!({
+                    "event": "reset",
+                    "point": point_to_json(point)
+                })
+            }
+        }
+    }
+}
+
 pub type SourceOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
 pub type FilterInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
 pub type FilterOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
