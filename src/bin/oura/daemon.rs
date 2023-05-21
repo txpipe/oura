@@ -3,6 +3,7 @@ use oura::{filters, framework::*, sinks, sources};
 use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 use std::{collections::VecDeque, time::Duration};
+use tracing::{info, warn};
 
 use crate::console;
 
@@ -64,7 +65,7 @@ impl Runtime {
     fn shutdown(&self) {
         for tether in self.all_tethers() {
             let state = tether.check_state();
-            log::warn!("dismissing stage: {} with state {:?}", tether.name(), state);
+            warn!("dismissing stage: {} with state {:?}", tether.name(), state);
             tether.dismiss_stage().expect("stage stops");
 
             // Can't join the stage because there's a risk of deadlock, usually
@@ -170,14 +171,14 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let retries = define_gasket_policy(config.retries.as_ref());
     let runtime = bootstrap(source, filters, sink, retries)?;
 
-    log::info!("oura is running...");
+    info!("oura is running...");
 
     while !runtime.should_stop() {
         console::refresh(&args.console, runtime.all_tethers());
         std::thread::sleep(Duration::from_millis(1500));
     }
 
-    log::info!("Oura is stopping...");
+    info!("Oura is stopping...");
     runtime.shutdown();
 
     Ok(())

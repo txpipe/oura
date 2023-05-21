@@ -4130,7 +4130,6 @@ dependencies = [
  "kafka",
  "lapin",
  "lazy_static",
- "log 0.4.17",
  "merge",
  "murmur3",
  "net2",
