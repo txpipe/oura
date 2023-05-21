@@ -4,8 +4,8 @@ use std::{
 };
 
 use gasket::{metrics::Reading, runtime::Tether};
-use lazy_static::{__Deref, lazy_static};
-use log::Log;
+use lazy_static::lazy_static;
+use tracing::{debug, error, warn};
 
 #[derive(clap::ValueEnum, Clone, Default)]
 pub enum Mode {
@@ -116,19 +116,6 @@ impl TuiConsole {
     }
 }
 
-impl Log for TuiConsole {
-    fn enabled(&self, metadata: &log::Metadata) -> bool {
-        metadata.level() >= log::Level::Info
-    }
-
-    fn log(&self, record: &log::Record) {
-        self.chainsync_progress
-            .set_message(format!("{}", record.args()))
-    }
-
-    fn flush(&self) {}
-}
-
 struct PlainConsole {
     last_report: Mutex<Instant>,
 }
@@ -150,24 +137,24 @@ impl PlainConsole {
         for tether in tethers {
             match tether.check_state() {
                 gasket::runtime::TetherState::Dropped => {
-                    log::error!("[{}] stage tether has been dropped", tether.name());
+                    error!("[{}] stage tether has been dropped", tether.name());
                 }
                 gasket::runtime::TetherState::Blocked(_) => {
-                    log::warn!(
+                    warn!(
                         "[{}] stage tehter is blocked or not reporting state",
                         tether.name()
                     );
                 }
                 gasket::runtime::TetherState::Alive(state) => {
-                    log::debug!("[{}] stage is alive with state: {:?}", tether.name(), state);
+                    debug!("[{}] stage is alive with state: {:?}", tether.name(), state);
                     match tether.read_metrics() {
                         Ok(readings) => {
                             for (key, value) in readings {
-                                log::debug!("[{}] metric `{}` = {:?}", tether.name(), key, value);
+                                debug!("[{}] metric `{}` = {:?}", tether.name(), key, value);
                             }
                         }
                         Err(err) => {
-                            log::error!("[{}] error reading metrics: {}", tether.name(), err)
+                            error!("[{}] error reading metrics: {}", tether.name(), err)
                         }
                     }
                 }
@@ -187,16 +174,13 @@ lazy_static! {
 }
 
 pub fn initialize(mode: &Option<Mode>) {
-    match mode {
-        Some(Mode::Tui) => log::set_logger(TUI_CONSOLE.deref())
-            .map(|_| log::set_max_level(log::LevelFilter::Info))
-            .unwrap(),
-        _ => tracing::subscriber::set_global_default(
+    if !matches!(mode, Some(Mode::Tui)) {
+        tracing::subscriber::set_global_default(
             tracing_subscriber::FmtSubscriber::builder()
                 .with_max_level(tracing::Level::TRACE)
                 .finish(),
         )
-        .unwrap(),
+        .unwrap();
     }
 }
 

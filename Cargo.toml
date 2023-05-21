@@ -28,7 +28,6 @@ hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.9.1"
 clap = { version = "4.2.7", features = ["derive"] }
-log = "0.4.17"
 env_logger = "0.10.0"
 crossterm = "0.25"
 merge = "0.1.0"

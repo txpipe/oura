@@ -1,6 +1,7 @@
 use gasket::framework::WorkerError;
 use pallas::ledger::primitives::alonzo::Metadatum;
 use serde_json::Value as JsonValue;
+use tracing::warn;
 
 use crate::framework::legacy_v1::CIP25AssetRecord;
 
@@ -83,7 +84,7 @@ impl EventWriter<'_> {
                 }
             }
         } else {
-            log::warn!("invalid metadatum type for policy inside 721 label");
+            warn!("invalid metadatum type for policy inside 721 label");
         }
 
         Ok(())
@@ -104,7 +105,7 @@ impl EventWriter<'_> {
                 }
             }
         } else {
-            log::warn!("invalid metadatum type for 721 label");
+            warn!("invalid metadatum type for 721 label");
         }
 
         Ok(())

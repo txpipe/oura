@@ -2,6 +2,7 @@ use gasket::framework::AsWorkError;
 use lazy_static::__Deref;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
+use tracing::warn;
 
 use pallas::ledger::primitives::babbage::{MintedDatumOption, NetworkId};
 use pallas::ledger::primitives::{
@@ -129,7 +130,7 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
         Metadatum::Bytes(x) => hex::encode(x.as_slice()),
         Metadatum::Text(x) => x.to_owned(),
         x => {
-            log::warn!("unexpected metadatum type for label: {:?}", x);
+            warn!("unexpected metadatum type for label: {:?}", x);
             Default::default()
         }
     }
