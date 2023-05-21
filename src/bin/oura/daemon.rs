@@ -82,11 +82,19 @@ impl Runtime {
 }
 
 fn define_gasket_policy(config: Option<&gasket::retries::Policy>) -> gasket::runtime::Policy {
+    let default_policy = gasket::retries::Policy {
+        max_retries: 20,
+        backoff_unit: Duration::from_secs(1),
+        backoff_factor: 2,
+        max_backoff: Duration::from_secs(60),
+        dismissible: false,
+    };
+
     gasket::runtime::Policy {
-        tick_timeout: std::time::Duration::from_secs(5).into(),
-        bootstrap_retry: config.cloned().unwrap_or_default(),
-        work_retry: config.cloned().unwrap_or_default(),
-        teardown_retry: config.cloned().unwrap_or_default(),
+        tick_timeout: std::time::Duration::from_secs(120).into(),
+        bootstrap_retry: config.cloned().unwrap_or(default_policy.clone()),
+        work_retry: config.cloned().unwrap_or(default_policy.clone()),
+        teardown_retry: config.cloned().unwrap_or(default_policy.clone()),
     }
 }
 
