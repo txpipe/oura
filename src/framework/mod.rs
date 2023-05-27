@@ -19,7 +19,7 @@ pub use cursor::*;
 pub use errors::*;
 
 #[derive(Deserialize, Clone)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum ChainConfig {
     Mainnet,
     Testnet,
