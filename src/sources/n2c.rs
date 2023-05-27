@@ -194,7 +194,7 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
-            chain: ctx.chain.clone(),
+            chain: ctx.chain.clone().into(),
             intersect: ctx.intersect.clone(),
             cursor: ctx.cursor.clone(),
             output: Default::default(),

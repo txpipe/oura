@@ -18,8 +18,8 @@ pub mod legacy_v1;
 pub use cursor::*;
 pub use errors::*;
 
-#[derive(Deserialize)]
-#[serde(tag = "type")]
+#[derive(Deserialize, Clone)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub enum ChainConfig {
     Mainnet,
     Testnet,
@@ -47,7 +47,7 @@ impl From<ChainConfig> for GenesisValues {
 }
 
 pub struct Context {
-    pub chain: GenesisValues,
+    pub chain: ChainConfig,
     pub intersect: IntersectConfig,
     pub cursor: Cursor,
     pub finalize: Option<FinalizeConfig>,
