@@ -2872,6 +2872,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "google-cloud-googleapis"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "629f516672e1d057d76070f8ae59469a9a88ed5bfbe7076883da216f2d14a491"
+dependencies = [
+ "prost",
+ "prost-types",
+ "tonic",
+]
+
+[[package]]
 name = "google-cloud-metadata"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2892,7 +2903,7 @@ dependencies = [
  "async-stream",
  "google-cloud-auth",
  "google-cloud-gax",
- "google-cloud-googleapis",
+ "google-cloud-googleapis 0.7.0",
  "prost-types",
  "thiserror",
  "tokio",
@@ -4154,7 +4165,7 @@ dependencies = [
  "env_logger",
  "file-rotate",
  "gasket",
- "google-cloud-googleapis",
+ "google-cloud-googleapis 0.8.0",
  "google-cloud-pubsub",
  "hex",
  "indicatif",
