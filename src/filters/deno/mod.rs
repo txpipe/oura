@@ -41,6 +41,7 @@ fn op_put_record(
 async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
     let ext = Extension::builder("oura")
         .ops(vec![op_pop_record::decl(), op_put_record::decl()])
+        .force_op_registration()
         .build();
 
     let empty_module = deno_core::ModuleSpecifier::parse("data:text/javascript;base64,").unwrap();
@@ -57,14 +58,16 @@ async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
         },
     );
 
-    let code = std::fs::read_to_string(main_module).unwrap();
+    let code = deno_core::FastString::from(std::fs::read_to_string(main_module).unwrap());
 
     deno.js_runtime
         .load_side_module(&ModuleSpecifier::parse("oura:mapper").unwrap(), Some(code))
         .await
         .unwrap();
 
-    let res = deno.execute_script("[oura:runtime.js]", include_str!("./runtime.js"));
+    let runtime_code = deno_core::FastString::from_static(include_str!("./runtime.js"));
+
+    let res = deno.execute_script("[oura:runtime.js]", runtime_code);
     deno.run_event_loop(false).await.unwrap();
     res.unwrap();
 
@@ -76,18 +79,21 @@ pub struct Worker {
 }
 
 const SYNC_CALL_SNIPPET: &'static str = r#"Deno[Deno.internal].core.ops.op_put_record(mapEvent(Deno[Deno.internal].core.ops.op_pop_record()));"#;
+
 const ASYNC_CALL_SNIPPET: &'static str = r#"mapEvent(Deno[Deno.internal].core.ops.op_pop_record()).then(x => Deno[Deno.internal].core.ops.op_put_record(x));"#;
 
 impl Worker {
     async fn map_record(
         &mut self,
-        script: &str,
+        script: &'static str,
         record: Record,
     ) -> Result<Option<serde_json::Value>, String> {
         let deno = &mut self.runtime;
 
+        trace!(?record, "sending record to js runtime");
         deno.js_runtime.op_state().borrow_mut().put(record);
 
+        let script = deno_core::FastString::from_static(script);
         let res = deno.execute_script("<anon>", script);
 
         deno.run_event_loop(false).await.unwrap();
@@ -95,7 +101,7 @@ impl Worker {
         res.unwrap();
 
         let out = deno.js_runtime.op_state().borrow_mut().try_take();
-        trace!(?out, "deno mapping finished");
+        trace!(?out, "received record from js runtime");
 
         Ok(out)
     }
@@ -122,7 +128,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         match unit {
             ChainEvent::Apply(p, r) => {
                 let mapped = self
-                    .map_record(stage.call_snippet, r.clone())
+                    .map_record(stage.call_snippet.clone(), r.clone())
                     .await
                     .unwrap();
 
