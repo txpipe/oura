@@ -1,6 +1,5 @@
 use gasket::runtime::Tether;
 use oura::{filters, framework::*, sinks, sources};
-use pallas::ledger::traverse::wellknown::GenesisValues;
 use serde::Deserialize;
 use std::{collections::VecDeque, time::Duration};
 use tracing::{info, warn};
@@ -14,7 +13,7 @@ struct ConfigRoot {
     sink: sinks::Config,
     intersect: IntersectConfig,
     finalize: Option<FinalizeConfig>,
-    chain: Option<GenesisValues>,
+    chain: Option<ChainConfig>,
     retries: Option<gasket::retries::Policy>,
 }
 

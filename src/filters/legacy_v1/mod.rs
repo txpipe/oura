@@ -94,7 +94,7 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
-            genesis: ctx.chain.clone(),
+            genesis: ctx.chain.clone().into(),
             ops_count: Default::default(),
             input: Default::default(),
             output: Default::default(),

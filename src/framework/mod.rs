@@ -18,7 +18,7 @@ pub mod legacy_v1;
 pub use cursor::*;
 pub use errors::*;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum ChainConfig {
     Mainnet,
@@ -47,7 +47,7 @@ impl From<ChainConfig> for GenesisValues {
 }
 
 pub struct Context {
-    pub chain: GenesisValues,
+    pub chain: ChainConfig,
     pub intersect: IntersectConfig,
     pub cursor: Cursor,
     pub finalize: Option<FinalizeConfig>,
