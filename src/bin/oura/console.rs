@@ -177,7 +177,7 @@ pub fn initialize(mode: &Option<Mode>) {
     if !matches!(mode, Some(Mode::Tui)) {
         tracing::subscriber::set_global_default(
             tracing_subscriber::FmtSubscriber::builder()
-                .with_max_level(tracing::Level::TRACE)
+                .with_max_level(tracing::Level::DEBUG)
                 .finish(),
         )
         .unwrap();

@@ -85,10 +85,10 @@ impl From<&MultiEraInput<'_>> for TxInputRecord {
 impl From<&MultiEraAsset<'_>> for OutputAssetRecord {
     fn from(value: &MultiEraAsset<'_>) -> Self {
         Self {
-            policy: value.policy().map(ToString::to_string).unwrap_or_default(),
-            asset: value.name().map(|x| x.to_hex()).unwrap_or_default(),
+            policy: value.policy().to_string(),
+            asset: value.name().to_hex(),
             asset_ascii: value.to_ascii_name(),
-            amount: value.coin() as u64,
+            amount: value.output_coin().unwrap_or_default(),
         }
     }
 }
@@ -146,7 +146,8 @@ impl EventWriter<'_> {
             assets: output
                 .non_ada_assets()
                 .iter()
-                .map(|x| OutputAssetRecord::from(x))
+                .flat_map(|x| x.assets())
+                .map(|x| OutputAssetRecord::from(&x))
                 .collect::<Vec<_>>()
                 .into(),
             datum_hash: match &output.datum() {
@@ -197,7 +198,12 @@ impl EventWriter<'_> {
 
         record.input_count = inputs.len();
 
-        let mints: Vec<_> = tx.mints().iter().map(|x| self.to_mint_record(x)).collect();
+        let mints: Vec<_> = tx
+            .mints()
+            .iter()
+            .flat_map(|x| x.assets())
+            .map(|x| self.to_mint_record(&x))
+            .collect();
 
         record.mint_count = mints.len();
 
@@ -331,9 +337,9 @@ impl EventWriter<'_> {
 
     pub fn to_mint_record(&self, asset: &MultiEraAsset) -> MintRecord {
         MintRecord {
-            policy: asset.policy().map(|x| x.to_string()).unwrap_or_default(),
-            asset: asset.name().map(hex::encode).unwrap_or_default(),
-            quantity: asset.coin(),
+            policy: asset.policy().to_string(),
+            asset: hex::encode(asset.name()),
+            quantity: asset.mint_coin().unwrap_or_default(),
         }
     }
 
