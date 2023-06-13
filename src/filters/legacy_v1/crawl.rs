@@ -59,8 +59,10 @@ impl EventWriter<'_> {
             ..EventContext::default()
         });
 
-        for asset in output.assets() {
-            child.append_from(OutputAssetRecord::from(&asset))?;
+        for policy in output.non_ada_assets() {
+            for asset in policy.assets() {
+                child.append_from(OutputAssetRecord::from(&asset))?;
+            }
         }
 
         if let Some(MintedDatumOption::Data(datum)) = &output.datum() {
@@ -135,8 +137,10 @@ impl EventWriter<'_> {
         }
 
         // crawl mints
-        for asset in tx.mints() {
-            self.append_from(self.to_mint_record(&asset))?;
+        for policy in tx.mints() {
+            for asset in policy.assets() {
+                self.append_from(self.to_mint_record(&asset))?;
+            }
         }
 
         self.crawl_metadata(tx)?;

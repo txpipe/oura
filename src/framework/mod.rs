@@ -6,7 +6,7 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
-pub use utxorpc_spec_ledger::v1::Tx as ParsedTx;
+pub use utxorpc::proto::cardano::v1::Tx as ParsedTx;
 
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;
