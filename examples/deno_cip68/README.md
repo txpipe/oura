@@ -10,6 +10,7 @@ The relevant section of the daemon.toml is the following:
 [[filters]]
 type = "Deno"
 main_module = "./parser.js"
+use_async = false
 ```
 
 The above configuration fragment instructs _Oura_ to introduce a _Deno_ filter that uses the logic specified in the file `parser.js`, which holds your custom filter logic.
@@ -92,7 +93,7 @@ Assuming there aren't any errors in the code, a new `parser.js` should be genera
 We're now ready to run our Oura pipeline to get CIP68 reference NFT records. Assuming you have _Oura_ `v2` installed on your system, run the following shell script from the `examples/deno_cip68` folder to start the pipeline process:
 
 ```sh
-oura daemon --config ./daemon.toml
+cargo run --bin oura -- daemon --config ./daemon.toml
 ```
 
 After a while, you should start seeing JSON objects printed out through stdout.
