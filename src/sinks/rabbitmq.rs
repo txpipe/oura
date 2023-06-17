@@ -1,11 +1,13 @@
 use gasket::framework::*;
-use lapin::{options::BasicPublishOptions, BasicProperties, Connection, ConnectionProperties};
+use lapin::{
+    options::BasicPublishOptions, BasicProperties, Channel, Connection, ConnectionProperties,
+};
 use serde::Deserialize;
 
 use crate::framework::*;
 
 pub struct Worker {
-    connection: Connection,
+    channel: Channel,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -14,8 +16,18 @@ impl gasket::framework::Worker<Stage> for Worker {
         let connection = Connection::connect(&stage.config.url, ConnectionProperties::default())
             .await
             .or_panic()?;
+        connection.on_error(|_| {
+            // TODO: validate if restart is possible using gasket-rs
+            std::process::exit(1);
+        });
 
-        Ok(Self { connection })
+        let channel = connection.create_channel().await.or_panic()?;
+        channel.on_error(|_| {
+            // TODO: validate if restart is possible using gasket-rs
+            std::process::exit(1);
+        });
+
+        Ok(Self { channel })
     }
 
     async fn schedule(
@@ -34,10 +46,9 @@ impl gasket::framework::Worker<Stage> for Worker {
             return Ok(());
         }
 
-        let channel = self.connection.create_channel().await.or_panic()?;
         let payload = serde_json::to_vec(&serde_json::Value::from(record.unwrap())).or_panic()?;
 
-        channel
+        self.channel
             .basic_publish(
                 &stage.config.exchange,
                 &stage.config.routing_key.clone().unwrap_or(String::new()),
