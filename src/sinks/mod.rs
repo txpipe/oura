@@ -6,10 +6,12 @@ use crate::framework::*;
 //pub mod assert;
 pub mod filerotate;
 pub mod noop;
-pub mod rabbitmq;
 pub mod stdout;
 pub mod terminal;
 pub mod webhook;
+
+#[cfg(feature = "rabbitmq")]
+mod rabbitmq;
 
 // #[cfg(feature = "kafkasink")]
 // pub mod kafka;
@@ -41,6 +43,8 @@ pub enum Bootstrapper {
     Stdout(stdout::Stage),
     WebHook(webhook::Stage),
     Noop(noop::Stage),
+
+    #[cfg(feature = "rabbitmq")]
     Rabbitmq(rabbitmq::Stage),
 }
 
@@ -56,6 +60,8 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Stdout(p) => p.input.connect(adapter),
             Bootstrapper::WebHook(p) => p.input.connect(adapter),
             Bootstrapper::Noop(p) => p.input.connect(adapter),
+
+            #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(p) => p.input.connect(adapter),
         }
     }
@@ -67,6 +73,8 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
@@ -80,6 +88,8 @@ pub enum Config {
     Stdout(stdout::Config),
     WebHook(webhook::Config),
     Noop(noop::Config),
+
+    #[cfg(feature = "rabbitmq")]
     Rabbitmq(rabbitmq::Config),
 }
 
@@ -91,6 +101,8 @@ impl Config {
             Config::Stdout(c) => Ok(Bootstrapper::Stdout(c.bootstrapper(ctx)?)),
             Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "rabbitmq")]
             Config::Rabbitmq(c) => Ok(Bootstrapper::Rabbitmq(c.bootstrapper(ctx)?)),
         }
     }
