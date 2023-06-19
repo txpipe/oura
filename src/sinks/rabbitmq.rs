@@ -16,16 +16,8 @@ impl gasket::framework::Worker<Stage> for Worker {
         let connection = Connection::connect(&stage.config.url, ConnectionProperties::default())
             .await
             .or_panic()?;
-        connection.on_error(|_| {
-            // TODO: validate if restart is possible using gasket-rs
-            std::process::exit(1);
-        });
 
         let channel = connection.create_channel().await.or_panic()?;
-        channel.on_error(|_| {
-            // TODO: validate if restart is possible using gasket-rs
-            std::process::exit(1);
-        });
 
         Ok(Self { channel })
     }
