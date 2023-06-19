@@ -8,6 +8,43 @@ _ALL_ contributions are welcome:
 - if you want request a feature, please create a github issue following some [basic guidelines](#feature-request).
 - if you want to submit a bugfix or new feature, please create a [pull request](#pull-requests).
 
+## Getting started
+
+- `git clone git@github.com:txpipe/oura.git`
+- `cd oura`
+
+Create a daemon.toml config file to run
+**daemon.toml**
+
+```
+[source]
+type = "N2N"
+peers = ["preprod-node.world.dev.cardano.org:30000"]
+
+[chain]
+type = "preprod"
+
+[intersect]
+type = "Tip"
+
+[sink]
+type = "Stdout"
+```
+
+chain peers
+
+**Mainnet** `relays-new.cardano-mainnet.iohk.io:3001`
+**Preprod** `preprod-node.world.dev.cardano.org:30000`
+**Preview** `preview-node.world.dev.cardano.org:30002`
+
+after config execute cargo command to run
+
+`cargo run -- daemon --config daemon.toml`
+
+with features flags
+
+`cargo run --features=rabbitmq -- daemon --config daemon.toml`
+
 ## License
 
 This project is licensed under the Apache-2.0 license.
