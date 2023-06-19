@@ -12,6 +12,9 @@ pub mod terminal;
 #[cfg(feature = "webhook")]
 pub mod webhook;
 
+#[cfg(feature = "rabbitmq")]
+mod rabbitmq;
+
 // #[cfg(feature = "kafkasink")]
 // pub mod kafka;
 
@@ -36,9 +39,6 @@ pub mod webhook;
 // #[cfg(feature = "gcp")]
 // pub mod gcp_cloudfunction;
 
-// #[cfg(feature = "rabbitmqsink")]
-// pub mod rabbitmq;
-
 pub enum Bootstrapper {
     Terminal(terminal::Stage),
     FileRotate(filerotate::Stage),
@@ -46,6 +46,9 @@ pub enum Bootstrapper {
     #[cfg(feature = "webhook")]
     WebHook(webhook::Stage),
     Noop(noop::Stage),
+
+    #[cfg(feature = "rabbitmq")]
+    Rabbitmq(rabbitmq::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -61,6 +64,9 @@ impl StageBootstrapper for Bootstrapper {
             #[cfg(feature = "webhook")]
             Bootstrapper::WebHook(p) => p.input.connect(adapter),
             Bootstrapper::Noop(p) => p.input.connect(adapter),
+
+            #[cfg(feature = "rabbitmq")]
+            Bootstrapper::Rabbitmq(p) => p.input.connect(adapter),
         }
     }
 
@@ -72,6 +78,9 @@ impl StageBootstrapper for Bootstrapper {
             #[cfg(feature = "webhook")]
             Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "rabbitmq")]
+            Bootstrapper::Rabbitmq(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -85,6 +94,9 @@ pub enum Config {
     #[cfg(feature = "webhook")]
     WebHook(webhook::Config),
     Noop(noop::Config),
+
+    #[cfg(feature = "rabbitmq")]
+    Rabbitmq(rabbitmq::Config),
 }
 
 impl Config {
@@ -96,6 +108,9 @@ impl Config {
             #[cfg(feature = "webhook")]
             Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "rabbitmq")]
+            Config::Rabbitmq(c) => Ok(Bootstrapper::Rabbitmq(c.bootstrapper(ctx)?)),
         }
     }
 }

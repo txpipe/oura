@@ -1,0 +1,16 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[sink]
+type = "Rabbitmq"
+url = "amqp://rabbitmq:rabbitmq@localhost:5672"
+exchange = "amq.direct"
+
+

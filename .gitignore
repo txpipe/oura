@@ -15,3 +15,5 @@ testdrive/assert
 
 # Nix build results
 result
+
+.vscode
