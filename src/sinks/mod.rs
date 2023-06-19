@@ -15,6 +15,9 @@ pub mod webhook;
 #[cfg(feature = "sink-rabbitmq")]
 mod rabbitmq;
 
+#[cfg(feature = "sink-kafka")]
+mod kafka;
+
 // #[cfg(feature = "kafkasink")]
 // pub mod kafka;
 
@@ -50,6 +53,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "sink-rabbitmq")]
     Rabbitmq(rabbitmq::Stage),
+
+    #[cfg(feature = "sink-kafka")]
+    Kafka(kafka::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -69,6 +75,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "sink-rabbitmq")]
             Bootstrapper::Rabbitmq(p) => p.input.connect(adapter),
+
+            #[cfg(feature = "sink-kafka")]
+            Bootstrapper::Kafka(p) => p.input.connect(adapter),
         }
     }
 
@@ -84,6 +93,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "sink-rabbitmq")]
             Bootstrapper::Rabbitmq(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "sink-kafka")]
+            Bootstrapper::Kafka(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -101,6 +113,9 @@ pub enum Config {
 
     #[cfg(feature = "sink-rabbitmq")]
     Rabbitmq(rabbitmq::Config),
+
+    #[cfg(feature = "sink-kafka")]
+    Kafka(kafka::Config),
 }
 
 impl Config {
@@ -116,6 +131,9 @@ impl Config {
 
             #[cfg(feature = "sink-rabbitmq")]
             Config::Rabbitmq(c) => Ok(Bootstrapper::Rabbitmq(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "sink-kafka")]
+            Config::Kafka(c) => Ok(Bootstrapper::Kafka(c.bootstrapper(ctx)?)),
         }
     }
 }
