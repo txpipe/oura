@@ -8,6 +8,8 @@ pub mod filerotate;
 pub mod noop;
 pub mod stdout;
 pub mod terminal;
+
+#[cfg(feature = "webhook")]
 pub mod webhook;
 
 #[cfg(feature = "rabbitmq")]
@@ -41,6 +43,7 @@ pub enum Bootstrapper {
     Terminal(terminal::Stage),
     FileRotate(filerotate::Stage),
     Stdout(stdout::Stage),
+    #[cfg(feature = "webhook")]
     WebHook(webhook::Stage),
     Noop(noop::Stage),
 
@@ -58,6 +61,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Terminal(p) => p.input.connect(adapter),
             Bootstrapper::FileRotate(p) => p.input.connect(adapter),
             Bootstrapper::Stdout(p) => p.input.connect(adapter),
+            #[cfg(feature = "webhook")]
             Bootstrapper::WebHook(p) => p.input.connect(adapter),
             Bootstrapper::Noop(p) => p.input.connect(adapter),
 
@@ -71,6 +75,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Terminal(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),
+            #[cfg(feature = "webhook")]
             Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
 
@@ -86,6 +91,7 @@ pub enum Config {
     Terminal(terminal::Config),
     FileRotate(filerotate::Config),
     Stdout(stdout::Config),
+    #[cfg(feature = "webhook")]
     WebHook(webhook::Config),
     Noop(noop::Config),
 
@@ -99,6 +105,7 @@ impl Config {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
             Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
             Config::Stdout(c) => Ok(Bootstrapper::Stdout(c.bootstrapper(ctx)?)),
+            #[cfg(feature = "webhook")]
             Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
 
