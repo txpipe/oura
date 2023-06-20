@@ -1,0 +1,21 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "Kafka"
+brokers = ["localhost:9092"]
+topic = "my-topic"
+paritioning = "ByBlock"
