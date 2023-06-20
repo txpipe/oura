@@ -16,6 +16,6 @@ type = "ParseCbor"
 
 [sink]
 type = "Kafka"
-brokers = ["localhost:9092"]
+brokers = ["localhost:19092"]
 topic = "my-topic"
 paritioning = "ByBlock"
