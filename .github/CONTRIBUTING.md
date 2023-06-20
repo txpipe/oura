@@ -43,7 +43,7 @@ after config execute cargo command to run
 
 with features flags
 
-`cargo run --features=rabbitmq -- daemon --config daemon.toml`
+`cargo run --features=sink-rabbitmq -- daemon --config daemon.toml`
 
 ## License
 
