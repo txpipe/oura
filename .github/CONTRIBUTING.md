@@ -45,6 +45,10 @@ with features flags
 
 `cargo run --features=sink-rabbitmq -- daemon --config daemon.toml`
 
+run sink dependencies
+
+`docker compose -f examples/rabbitmq/docker-compose.yaml up -d`
+
 ## License
 
 This project is licensed under the Apache-2.0 license.
