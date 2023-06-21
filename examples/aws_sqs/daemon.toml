@@ -1,0 +1,21 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "AwsSqs"
+region = "us-east-1"
+queue_url = "https://sqs.us-east-1.amazonaws.com/*****/my-queue"
+group_id = "my_group"
