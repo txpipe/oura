@@ -1,14 +1,39 @@
+use aws_sdk_sqs::Client;
+use aws_types::region::Region;
 use gasket::framework::*;
 use serde::Deserialize;
 
 use crate::framework::*;
 
-pub struct Worker {}
+pub struct Worker {
+    client: Client,
+    group_id: Option<String>,
+}
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        Ok(Self {})
+        let aws_config = aws_config::from_env()
+            .region(Region::new(stage.config.region.clone()))
+            .load()
+            .await;
+
+        let mut worker = Self {
+            client: Client::new(&aws_config),
+            group_id: None,
+        };
+
+        if stage.config.queue_url.clone().ends_with(".fifo") {
+            worker.group_id = Some(
+                stage
+                    .config
+                    .group_id
+                    .clone()
+                    .unwrap_or(String::from("oura-sink")),
+            )
+        }
+
+        Ok(worker)
     }
 
     async fn schedule(
@@ -27,7 +52,19 @@ impl gasket::framework::Worker<Stage> for Worker {
             return Ok(());
         }
 
-        let payload = serde_json::to_vec(&serde_json::Value::from(record.unwrap())).or_panic()?;
+        let payload = serde_json::Value::from(record.unwrap()).to_string();
+
+        let mut req = self
+            .client
+            .send_message()
+            .queue_url(stage.config.queue_url.clone())
+            .message_body(payload);
+
+        if self.group_id.is_some() {
+            req = req.set_message_group_id(self.group_id.clone())
+        }
+
+        req.send().await.or_retry()?;
 
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
@@ -53,7 +90,11 @@ pub struct Stage {
 }
 
 #[derive(Default, Debug, Deserialize)]
-pub struct Config {}
+pub struct Config {
+    pub region: String,
+    pub queue_url: String,
+    pub group_id: Option<String>,
+}
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {

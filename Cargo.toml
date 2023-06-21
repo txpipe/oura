@@ -60,6 +60,7 @@ murmur3 = { version = "0.5.2", optional = true }
 
 # features: aws
 aws-config = { version = "0.55.3", optional = true }
+aws-types = { version = "0.55.3", optional = true }
 aws-sdk-s3 = { version = "0.28.0", optional = true }
 
 # required for CI to complete successfully
@@ -90,4 +91,4 @@ default = ["deno"]
 deno = ["deno_core", "deno_runtime"]
 sink-rabbitmq = ["lapin"]
 sink-webhook = ["reqwest"]
-sink-aws-sqs = ["aws-config", "aws-sdk-sqs"]
+sink-aws-sqs = ["aws-config", "aws-types", "aws-sdk-sqs"]
