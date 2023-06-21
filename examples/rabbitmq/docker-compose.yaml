@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3"
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -7,7 +7,7 @@ services:
       - 5672:5672
       - 15672:15672
     networks:
-      - development-network
+      - rabbitmq-network
     environment:
       - RABBITMQ_DEFAULT_USER=rabbitmq
       - RABBITMQ_DEFAULT_PASS=rabbitmq
@@ -17,5 +17,5 @@ services:
       timeout: 5s
       retries: 5
 networks:
-  development-network:
+  rabbitmq-network:
     driver: bridge
