@@ -1,14 +1,25 @@
+use aws_sdk_lambda::{primitives::Blob, Client};
+use aws_types::region::Region;
 use gasket::framework::*;
 use serde::Deserialize;
 
 use crate::framework::*;
 
-pub struct Worker {}
+pub struct Worker {
+    client: Client,
+}
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        Ok(Self {})
+        let aws_config = aws_config::from_env()
+            .region(Region::new(stage.config.region.clone()))
+            .load()
+            .await;
+
+        let client = Client::new(&aws_config);
+
+        Ok(Self { client })
     }
 
     async fn schedule(
@@ -28,6 +39,14 @@ impl gasket::framework::Worker<Stage> for Worker {
         }
 
         let payload = serde_json::Value::from(record.unwrap()).to_string();
+
+        let req = self
+            .client
+            .invoke()
+            .function_name(stage.config.function_name.clone())
+            .payload(Blob::new(payload));
+
+        req.send().await.or_retry()?;
 
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
@@ -53,7 +72,10 @@ pub struct Stage {
 }
 
 #[derive(Default, Debug, Deserialize)]
-pub struct Config {}
+pub struct Config {
+    pub region: String,
+    pub function_name: String,
+}
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
