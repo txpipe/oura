@@ -4,7 +4,7 @@ A sink that sends each event as a message to an AWS SQS queue. Each event is jso
 
 The sink will process each incoming event in sequence and submit the corresponding `SendMessage` request to the SQS API. Once the queue acknowledges reception of the message, the sink will advance and continue with the following event.
 
-The sink support both FIFO and Standard queues. The sink configuration will determine which logic to apply. In case of FIFO, the group id is determined by an explicit configuration value and the message id is defined by the fingerprint value of the event (Fingerprint filter needs to be enabled). 
+The sink support both FIFO and Standard queues. The sink configuration will determine which logic to apply. In case of FIFO, it is necessary to enable `content-based deduplication` and the group id is determined by an explicit configuration value or `oura-sink` by default. 
 
 The sink uses AWS SDK's built-in retry logic which can be configured at the sink level. Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
 
@@ -14,10 +14,8 @@ The sink uses AWS SDK's built-in retry logic which can be configured at the sink
 [sink]
 type = "AwsSqs"
 region = "us-west-2"
-queue_url = "https://sqs.us-west-2.amazonaws.com/xxxxxx/my-queue"
-fifo = true
+queue_url = "https://sqs.us-west-2.amazonaws.com/xxxxxx/my-queue.fifo"
 group_id = "my_group"
-max_retries = 5
 ```
 
 ### Section: `sink`
@@ -25,9 +23,7 @@ max_retries = 5
 - `type`: the literal value `AwsSqs`.
 - `region`: The AWS region where the queue is located.
 - `queue_url`: The SQS queue URL provided by AWS (not to be confused with the ARN).
-- `fifo`: A flag to determine if the queue is of type FIFO.
 - `group_id`: A fixed group id to be used when sending messages to a FIFO queue.
-- `max_retries`: The max number of send retries before exiting the pipeline with an error.
 
 ## AWS Credentials
 
