@@ -4,18 +4,17 @@ A sink that invokes an AWS Lambda function for each received event. Each event i
 
 The sink will process each incoming event in sequence, invoke the specified function and wait for the response.
 
-A retry mechanism is available for failures to dispatch the call, but not for failures within the execution of the function. Regardless of the success or not of the function, the sink will advance and continue with the following event. 
+A retry mechanism is available for failures to dispatch the call, but not for failures within the execution of the function. Regardless of the success or not of the function, the sink will advance and continue with the following event.
 
-Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
+Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc).
 
 ## Configuration
 
 ```toml
 [sink]
 type = "AwsLambda"
-region = "us-west-2"
-function_name = "arn:aws:lambda:us-west-2:xxxxx:function:my-func"
-max_retries = 5
+region = "us-east-1"
+function_name = "my-lambda"
 ```
 
 ### Section: `sink`
@@ -23,7 +22,6 @@ max_retries = 5
 - `type`: the literal value `AwsLambda`.
 - `region`: The AWS region where the function is located.
 - `function_name`: The ARN of the function we wish to invoke.
-- `max_retries`: The max number of send retries before exiting the pipeline with an error.
 
 ## AWS Credentials
 
