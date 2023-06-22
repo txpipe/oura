@@ -21,14 +21,14 @@ mod kafka;
 #[cfg(feature = "sink-aws-sqs")]
 mod aws_sqs;
 
+#[cfg(feature = "sink-aws-lambda")]
+mod aws_lambda;
+
 #[cfg(feature = "sink-gcp-pubsub")]
 mod gcp_pubsub;
 
 // #[cfg(feature = "elasticsink")]
 // pub mod elastic;
-
-// #[cfg(feature = "aws")]
-// pub mod aws_lambda;
 
 // #[cfg(feature = "aws")]
 // pub mod aws_s3;
@@ -56,6 +56,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "sink-aws-sqs")]
     AwsSqs(aws_sqs::Stage),
+
+    #[cfg(feature = "sink-aws-lambda")]
+    AwsLambda(aws_lambda::Stage),
 
     #[cfg(feature = "sink-gcp-pubsub")]
     GcpPubSub(gcp_pubsub::Stage),
@@ -85,6 +88,9 @@ impl StageBootstrapper for Bootstrapper {
             #[cfg(feature = "sink-aws-sqs")]
             Bootstrapper::AwsSqs(p) => p.input.connect(adapter),
 
+            #[cfg(feature = "sink-aws-lambda")]
+            Bootstrapper::AwsLambda(p) => p.input.connect(adapter),
+
             #[cfg(feature = "sink-gcp-pubsub")]
             Bootstrapper::GcpPubSub(p) => p.input.connect(adapter),
         }
@@ -109,6 +115,9 @@ impl StageBootstrapper for Bootstrapper {
             #[cfg(feature = "sink-aws-sqs")]
             Bootstrapper::AwsSqs(x) => gasket::runtime::spawn_stage(x, policy),
 
+            #[cfg(feature = "sink-aws-lambda")]
+            Bootstrapper::AwsLambda(x) => gasket::runtime::spawn_stage(x, policy),
+          
             #[cfg(feature = "sink-gcp-pubsub")]
             Bootstrapper::GcpPubSub(x) => gasket::runtime::spawn_stage(x, policy),
         }
@@ -135,6 +144,9 @@ pub enum Config {
     #[cfg(feature = "sink-aws-sqs")]
     AwsSqs(aws_sqs::Config),
 
+    #[cfg(feature = "sink-aws-lambda")]
+    AwsLambda(aws_lambda::Config),
+
     #[cfg(feature = "sink-gcp-pubsub")]
     GcpPubSub(gcp_pubsub::Config),
 }
@@ -159,6 +171,9 @@ impl Config {
             #[cfg(feature = "sink-aws-sqs")]
             Config::AwsSqs(c) => Ok(Bootstrapper::AwsSqs(c.bootstrapper(ctx)?)),
 
+            #[cfg(feature = "sink-aws-lambda")]
+            Config::AwsLambda(c) => Ok(Bootstrapper::AwsLambda(c.bootstrapper(ctx)?)),
+          
             #[cfg(feature = "sink-gcp-pubsub")]
             Config::GcpPubSub(c) => Ok(Bootstrapper::GcpPubSub(c.bootstrapper(ctx)?)),
         }
