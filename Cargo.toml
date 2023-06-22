@@ -27,7 +27,7 @@ net2 = "0.2.37"
 bech32 = "0.9.1"
 clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
-crossterm = "0.25"
+crossterm = "0.26"
 merge = "0.1.0"
 config = { version = "0.13.2", default-features = false, features = [
     "toml",
