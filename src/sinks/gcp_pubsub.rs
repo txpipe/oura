@@ -1,14 +1,23 @@
 use gasket::framework::*;
+use google_cloud_default::WithAuthExt;
+use google_cloud_googleapis::pubsub::v1::PubsubMessage;
+use google_cloud_pubsub::client::{Client, ClientConfig};
+
 use serde::Deserialize;
 
 use crate::framework::*;
 
-pub struct Worker {}
+pub struct Worker {
+    client: Client,
+}
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
-    async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        Ok(Self {})
+    async fn bootstrap(_: &Stage) -> Result<Self, WorkerError> {
+        let config = ClientConfig::default().with_auth().await.or_panic()?;
+        let client = Client::new(config).await.or_panic()?;
+
+        Ok(Self { client })
     }
 
     async fn schedule(
@@ -28,6 +37,18 @@ impl gasket::framework::Worker<Stage> for Worker {
         }
 
         let payload = serde_json::Value::from(record.unwrap()).to_string();
+
+        let message = PubsubMessage {
+            data: payload.into(),
+            ..Default::default()
+        };
+
+        self.client
+            .topic(&stage.config.topic)
+            .new_publisher(None)
+            .publish_immediately(vec![message], None)
+            .await
+            .or_retry()?;
 
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
@@ -53,7 +74,9 @@ pub struct Stage {
 }
 
 #[derive(Default, Debug, Deserialize)]
-pub struct Config {}
+pub struct Config {
+    pub topic: String,
+}
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
