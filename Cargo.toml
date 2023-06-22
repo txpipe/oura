@@ -82,6 +82,9 @@ kafka = { version = "0.9.0", optional = true }
 # features: sink-aws-sqs
 aws-sdk-sqs = { version = "0.28.0", optional = true }
 
+# features: sink-aws-lambda
+aws-sdk-lambda = { version = "0.28.0", optional = true }
+
 # features: deno
 deno_core = { version = "0.188.0", optional = true }
 deno_runtime = { version = "0.114.0", optional = true }
@@ -93,3 +96,4 @@ sink-rabbitmq = ["lapin"]
 sink-webhook = ["reqwest"]
 sink-kafka = ["kafka"]
 sink-aws-sqs = ["aws-config", "aws-types", "aws-sdk-sqs"]
+sink-aws-lambda = ["aws-config", "aws-types", "aws-sdk-lambda"]
