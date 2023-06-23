@@ -13,29 +13,19 @@ Example configuration that sends all events into a single stream named `mystream
 ```toml
 [sink]
 type = "Redis"
-redis_server = "redis://localhost:6379"
+url = "redis://localhost:6379"
 stream_name = "mystream"
-```
-
-Example configuration that sends events into different streams (named by the type of event) of a Redis instance running in port 6379 of the localhost.
-
-```toml
-[sink]
-type = "Redis"
-redis_server = "redis://localhost:6379"
-stream_strategy = "ByEventType"
 ```
 
 ### Section: `sink`
 
 - `type`: the literal value `Redis`.
-- `redis_server`: the redis server in the format `redis://[<username>][:<password>]@<hostname>[:port][/<db>]`
+- `url`: the redis server in the format `redis://[<username>][:<password>]@<hostname>[:port][/<db>]`
 - `stream_name` : the name of the redis stream for StreamStrategy `None`, default is "oura" if not specified
-- `stream_strategy` : `None` or `ByEventType`
 
 ## Conventions
 
-It is possible to send all Event to a single stream or create multiple streams, one for each event type. By appling the [selection](/filters/selection) filter it is possible to define the streams which should be created. 
+It is possible to send all Event to a single stream or create multiple streams, one for each event type. By appling the [selection](/filters/selection) filter it is possible to define the streams which should be created.
 
 The sink uses the default Redis convention to define the unique entry ID for each message sent to the stream ( `<millisecondsTime>-<sequenceNumber>`).
 
