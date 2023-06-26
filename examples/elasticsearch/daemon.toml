@@ -17,4 +17,5 @@ type = "ParseCbor"
 [sink]
 type = "ElasticSearch"
 url = "http://localhost:9200"
-index = "oura.sink.v2"
+index = "oura.sink.v6"
+idempotency = true

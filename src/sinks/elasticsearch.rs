@@ -66,10 +66,14 @@ impl gasket::framework::Worker<Stage> for Worker {
             return Ok(());
         }
 
+        let slot = point.slot_or_default().to_string();
+        let mut parts = IndexParts::Index(&stage.config.index);
+        if stage.config.idempotency {
+            parts = IndexParts::IndexId(&stage.config.index, &slot);
+        }
+
         let timestamp = stage.genesis.slot_to_wallclock(point.slot_or_default());
         let payload = ESRecord::new(record.unwrap(), timestamp);
-
-        let parts = IndexParts::Index(&stage.config.index);
 
         self.client
             .index(parts)
@@ -124,6 +128,8 @@ pub struct Config {
     pub url: String,
     pub index: String,
     pub credentials: Option<CredentialsConfig>,
+    #[serde(default)]
+    pub idempotency: bool,
 }
 
 impl Config {
