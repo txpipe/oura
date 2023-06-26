@@ -66,13 +66,15 @@ impl gasket::framework::Worker<Stage> for Worker {
             return Ok(());
         }
 
-        let slot = point.slot_or_default().to_string();
+        let slot = point.slot_or_default();
+        let slot_str = slot.to_string();
+
         let mut parts = IndexParts::Index(&stage.config.index);
         if stage.config.idempotency {
-            parts = IndexParts::IndexId(&stage.config.index, &slot);
+            parts = IndexParts::IndexId(&stage.config.index, &slot_str);
         }
 
-        let timestamp = stage.genesis.slot_to_wallclock(point.slot_or_default());
+        let timestamp = stage.genesis.slot_to_wallclock(slot);
         let payload = ESRecord::new(record.unwrap(), timestamp);
 
         self.client
