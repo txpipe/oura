@@ -86,8 +86,8 @@ impl gasket::framework::Worker<Stage> for Worker {
             .or_retry()?;
 
         stage.ops_count.inc(1);
-        stage.latest_block.set(point.slot_or_default() as i64);
-        stage.cursor.add_breadcrumb(point.clone());
+        stage.latest_block.set(slot as i64);
+        stage.cursor.add_breadcrumb(point);
 
         Ok(())
     }
