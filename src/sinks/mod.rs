@@ -10,7 +10,7 @@ pub mod stdout;
 pub mod terminal;
 
 #[cfg(feature = "sink-webhook")]
-pub mod webhook;
+mod webhook;
 
 #[cfg(feature = "sink-rabbitmq")]
 mod rabbitmq;
@@ -24,6 +24,9 @@ mod aws_sqs;
 #[cfg(feature = "sink-aws-lambda")]
 mod aws_lambda;
 
+#[cfg(feature = "sink-gcp-pubsub")]
+mod gcp_pubsub;
+
 #[cfg(feature = "sink-redis")]
 mod redis;
 
@@ -32,9 +35,6 @@ mod redis;
 
 // #[cfg(feature = "aws")]
 // pub mod aws_s3;
-
-// #[cfg(feature = "gcp")]
-// pub mod gcp_pubsub;
 
 // #[cfg(feature = "gcp")]
 // pub mod gcp_cloudfunction;
@@ -59,6 +59,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "sink-aws-lambda")]
     AwsLambda(aws_lambda::Stage),
+
+    #[cfg(feature = "sink-gcp-pubsub")]
+    GcpPubSub(gcp_pubsub::Stage),
 
     #[cfg(feature = "sink-redis")]
     Redis(redis::Stage),
@@ -91,6 +94,9 @@ impl StageBootstrapper for Bootstrapper {
             #[cfg(feature = "sink-aws-lambda")]
             Bootstrapper::AwsLambda(p) => p.input.connect(adapter),
 
+            #[cfg(feature = "sink-gcp-pubsub")]
+            Bootstrapper::GcpPubSub(p) => p.input.connect(adapter),
+
             #[cfg(feature = "sink-redis")]
             Bootstrapper::Redis(p) => p.input.connect(adapter),
         }
@@ -117,6 +123,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "sink-aws-lambda")]
             Bootstrapper::AwsLambda(x) => gasket::runtime::spawn_stage(x, policy),
+          
+            #[cfg(feature = "sink-gcp-pubsub")]
+            Bootstrapper::GcpPubSub(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "sink-redis")]
             Bootstrapper::Redis(x) => gasket::runtime::spawn_stage(x, policy),
@@ -147,6 +156,9 @@ pub enum Config {
     #[cfg(feature = "sink-aws-lambda")]
     AwsLambda(aws_lambda::Config),
 
+    #[cfg(feature = "sink-gcp-pubsub")]
+    GcpPubSub(gcp_pubsub::Config),
+
     #[cfg(feature = "sink-redis")]
     Redis(redis::Config),
 }
@@ -173,6 +185,9 @@ impl Config {
 
             #[cfg(feature = "sink-aws-lambda")]
             Config::AwsLambda(c) => Ok(Bootstrapper::AwsLambda(c.bootstrapper(ctx)?)),
+          
+            #[cfg(feature = "sink-gcp-pubsub")]
+            Config::GcpPubSub(c) => Ok(Bootstrapper::GcpPubSub(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "sink-redis")]
             Config::Redis(c) => Ok(Bootstrapper::Redis(c.bootstrapper(ctx)?)),

@@ -2064,7 +2064,7 @@ dependencies = [
  "rustls-pemfile",
  "serde",
  "webpki",
- "webpki-roots",
+ "webpki-roots 0.22.6",
 ]
 
 [[package]]
@@ -2895,13 +2895,14 @@ dependencies = [
 
 [[package]]
 name = "google-cloud-auth"
-version = "0.8.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08d86a8cc190da6ab0cff095fcbfe95a057496428ff2a0a711ca110f2fcbb231"
+checksum = "644f40175857d0b8d7b6cad6cd9594284da5041387fa2ddff30ab6d8faef65eb"
 dependencies = [
  "async-trait",
  "base64 0.21.0",
  "google-cloud-metadata",
+ "google-cloud-token",
  "home",
  "jsonwebtoken",
  "reqwest",
@@ -2915,49 +2916,49 @@ dependencies = [
 ]
 
 [[package]]
-name = "google-cloud-gax"
-version = "0.12.1"
+name = "google-cloud-default"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "870d9616855e89b37a824f9e35ca670d6bf4f04fab254b2eb01c7818d26f9d0b"
+checksum = "e1fec282ec73c02599c856080d3a0682c2eed9c2816bdf3c2967478e97a0e7ca"
 dependencies = [
+ "async-trait",
  "google-cloud-auth",
+ "google-cloud-gax",
+ "google-cloud-pubsub",
+]
+
+[[package]]
+name = "google-cloud-gax"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8bdaaa4bc036e8318274d1b25f0f2265b3e95418b765fd1ea1c7ef938fd69bd"
+dependencies = [
+ "google-cloud-token",
  "http",
  "thiserror",
  "tokio",
  "tokio-retry",
- "tokio-util",
- "tonic 0.8.3",
+ "tonic",
  "tower",
  "tracing",
 ]
 
 [[package]]
 name = "google-cloud-googleapis"
-version = "0.7.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bccc14a0bfb89f7b6c955da84992774d94d2f16570e5f7b74c7db11e765f791"
+checksum = "2a3b24a3f57be08afc02344e693afb55e48172c9c2ab86ff3fdb8efff550e4b9"
 dependencies = [
  "prost",
  "prost-types",
- "tonic 0.8.3",
-]
-
-[[package]]
-name = "google-cloud-googleapis"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "629f516672e1d057d76070f8ae59469a9a88ed5bfbe7076883da216f2d14a491"
-dependencies = [
- "prost",
- "prost-types",
- "tonic 0.8.3",
+ "tonic",
 ]
 
 [[package]]
 name = "google-cloud-metadata"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d2c3b00f0a07a1a9efffc1bdd0603ef853d8a6d4ee9de8d73039cd92fdc8f26"
+checksum = "96e4ad0802d3f416f62e7ce01ac1460898ee0efc98f8b45cd4aab7611607012f"
 dependencies = [
  "reqwest",
  "thiserror",
@@ -2966,19 +2967,29 @@ dependencies = [
 
 [[package]]
 name = "google-cloud-pubsub"
-version = "0.12.1"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb0f24ed765ac6da045ea846ffb2f38ede5aae28645a4fa4025b38c070a82d76"
+checksum = "2f3d6691ae02d47c3a3094a23425d10a6da2b3f892412dc82b4464f93e0e1f90"
 dependencies = [
  "async-channel",
  "async-stream",
- "google-cloud-auth",
  "google-cloud-gax",
- "google-cloud-googleapis 0.7.0",
+ "google-cloud-googleapis",
+ "google-cloud-token",
  "prost-types",
  "thiserror",
  "tokio",
+ "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "google-cloud-token"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fcd62eb34e3de2f085bcc33a09c3e17c4f65650f36d53eb328b00d63bcb536a"
+dependencies = [
+ "async-trait",
 ]
 
 [[package]]
@@ -3102,11 +3113,11 @@ dependencies = [
 
 [[package]]
 name = "home"
-version = "0.5.4"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "747309b4b440c06d57b0b25f2aee03ee9b5e5397d288c60e21fc709bb98a7408"
+checksum = "5444c27eef6923071f7ebcc33e3444508466a76f7a2b93da00ed6e19f30c1ddb"
 dependencies = [
- "winapi",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -4235,7 +4246,8 @@ dependencies = [
  "env_logger",
  "file-rotate",
  "gasket",
- "google-cloud-googleapis 0.8.0",
+ "google-cloud-default",
+ "google-cloud-googleapis",
  "google-cloud-pubsub",
  "hex",
  "indicatif",
@@ -5171,7 +5183,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
- "webpki-roots",
+ "webpki-roots 0.22.6",
  "winreg",
 ]
 
@@ -6665,14 +6677,14 @@ dependencies = [
 
 [[package]]
 name = "tonic"
-version = "0.8.3"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f219fad3b929bef19b1f86fbc0358d35daed8f2cac972037ac0dc10bbb8d5fb"
+checksum = "3082666a3a6433f7f511c7192923fa1fe07c69332d3c6a2e6bb040b569199d5a"
 dependencies = [
  "async-stream",
  "async-trait",
  "axum",
- "base64 0.13.1",
+ "base64 0.21.0",
  "bytes",
  "flate2",
  "futures-core",
@@ -6685,46 +6697,15 @@ dependencies = [
  "percent-encoding",
  "pin-project",
  "prost",
- "prost-derive",
  "rustls-pemfile",
  "tokio",
- "tokio-rustls 0.23.4",
- "tokio-stream",
- "tokio-util",
- "tower",
- "tower-layer",
- "tower-service",
- "tracing",
- "tracing-futures",
- "webpki-roots",
-]
-
-[[package]]
-name = "tonic"
-version = "0.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3082666a3a6433f7f511c7192923fa1fe07c69332d3c6a2e6bb040b569199d5a"
-dependencies = [
- "async-trait",
- "axum",
- "base64 0.21.0",
- "bytes",
- "futures-core",
- "futures-util",
- "h2",
- "http",
- "http-body 0.4.5",
- "hyper 0.14.26",
- "hyper-timeout",
- "percent-encoding",
- "pin-project",
- "prost",
- "tokio",
+ "tokio-rustls 0.24.0",
  "tokio-stream",
  "tower",
  "tower-layer",
  "tower-service",
  "tracing",
+ "webpki-roots 0.23.1",
 ]
 
 [[package]]
@@ -6791,16 +6772,6 @@ checksum = "24eb03ba0eab1fd845050058ce5e616558e8f8d8fca633e6b163fe25c797213a"
 dependencies = [
  "once_cell",
  "valuable",
-]
-
-[[package]]
-name = "tracing-futures"
-version = "0.2.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
-dependencies = [
- "pin-project",
- "tracing",
 ]
 
 [[package]]
@@ -7102,7 +7073,7 @@ dependencies = [
  "pbjson-types",
  "prost",
  "serde",
- "tonic 0.9.2",
+ "tonic",
  "utxorpc-spec-cardano",
 ]
 
@@ -7323,6 +7294,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c71e40d7d2c34a5106301fb632274ca37242cd0c9d3e64dbece371a40a2d87"
 dependencies = [
  "webpki",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b03058f88386e5ff5310d9111d53f48b17d732b401aeb83a8d5190f2ac459338"
+dependencies = [
+ "rustls-webpki",
 ]
 
 [[package]]

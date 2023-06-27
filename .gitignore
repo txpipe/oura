@@ -18,3 +18,4 @@ result
 
 .vscode
 .env*
+google_credentials.json
