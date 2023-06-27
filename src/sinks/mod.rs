@@ -30,8 +30,8 @@ mod gcp_pubsub;
 #[cfg(feature = "sink-redis")]
 mod redis;
 
-// #[cfg(feature = "elasticsink")]
-// pub mod elastic;
+#[cfg(feature = "sink-elasticsearch")]
+mod elasticsearch;
 
 // #[cfg(feature = "aws")]
 // pub mod aws_s3;
@@ -65,6 +65,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "sink-redis")]
     Redis(redis::Stage),
+
+    #[cfg(feature = "sink-elasticsearch")]
+    ElasticSearch(elasticsearch::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -99,6 +102,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "sink-redis")]
             Bootstrapper::Redis(p) => p.input.connect(adapter),
+
+            #[cfg(feature = "sink-elasticsearch")]
+            Bootstrapper::ElasticSearch(p) => p.input.connect(adapter),
         }
     }
 
@@ -129,6 +135,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "sink-redis")]
             Bootstrapper::Redis(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "sink-elasticsearch")]
+            Bootstrapper::ElasticSearch(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -161,6 +170,9 @@ pub enum Config {
 
     #[cfg(feature = "sink-redis")]
     Redis(redis::Config),
+
+    #[cfg(feature = "sink-elasticsearch")]
+    ElasticSearch(elasticsearch::Config),
 }
 
 impl Config {
@@ -191,6 +203,9 @@ impl Config {
 
             #[cfg(feature = "sink-redis")]
             Config::Redis(c) => Ok(Bootstrapper::Redis(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "sink-elasticsearch")]
+            Config::ElasticSearch(c) => Ok(Bootstrapper::ElasticSearch(c.bootstrapper(ctx)?)),
         }
     }
 }
