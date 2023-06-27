@@ -8,6 +8,7 @@ pub mod filerotate;
 pub mod noop;
 pub mod stdout;
 pub mod terminal;
+mod common;
 
 #[cfg(feature = "sink-webhook")]
 mod webhook;

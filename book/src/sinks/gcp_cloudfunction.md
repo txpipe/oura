@@ -7,9 +7,7 @@ A sink that sends each event to a cloud function. Each event is json-encoded and
 ```toml
 [sink]
 type = "GcpCloudFunction"
-name = "oura"
-project_id = "XXX"
-region = "us-west-2"
+url = "https://REGION-PROJECT_ID.cloudfunctions.net/FUNCTION_NAME"
 timeout = 30000
 error_policy = "Continue"
 authorization = "user:pass"
@@ -28,9 +26,7 @@ max_backoff = 100000
 ### Section: `sink`
 
 - `type`: the literal value `GcpCloudFunction`
-- `name`: the name of the cloud function
-- `project_id`: the google cloud project id that the function exists in
-- `region`: the region that the function was created in
+- `url`: Your function url
 - `timeout` (optional): the timeout value for the HTTP response in milliseconds. Default value is `30000`.
 - `authorization` (optional): value to add as the 'Authorization' HTTP header
 - `headers` (optional): key-value map of extra headers to pass in each HTTP call

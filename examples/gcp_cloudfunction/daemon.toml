@@ -1,0 +1,16 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "GcpCloudFunction"
+url = "https://REGION-PROJECT_ID.cloudfunctions.net/FUNCTION_NAME"
