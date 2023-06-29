@@ -14,3 +14,4 @@ type = "ParseCbor"
 [sink]
 type = "GcpCloudFunction"
 url = "https://REGION-PROJECT_ID.cloudfunctions.net/FUNCTION_NAME"
+authentication = true
