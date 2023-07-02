@@ -12,6 +12,7 @@ use crate::framework::*;
 pub struct Worker {
     pool: Pool<RedisConnectionManager>,
     stream: String,
+    maxlen: Option<usize>,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -26,7 +27,13 @@ impl gasket::framework::Worker<Stage> for Worker {
             .clone()
             .unwrap_or(String::from("oura-sink"));
 
-        Ok(Self { pool, stream })
+        let maxlen = stage.config.stream_max_length;
+
+        Ok(Self {
+            pool,
+            stream,
+            maxlen,
+        })
     }
 
     async fn schedule(
@@ -49,8 +56,15 @@ impl gasket::framework::Worker<Stage> for Worker {
 
         let mut conn = self.pool.get().or_restart()?;
 
-        redis::cmd("XADD")
-            .arg(self.stream.clone())
+        let mut command = redis::cmd("XADD");
+        command.arg(self.stream.clone());
+
+        if let Some(maxlen) = self.maxlen {
+            command.arg("MAXLEN");
+            command.arg(maxlen);
+        }
+
+        command
             .arg("*")
             .arg(&[point.slot_or_default().to_string(), payload])
             .query(conn.deref_mut())
@@ -88,6 +102,7 @@ pub enum StreamStrategy {
 pub struct Config {
     pub url: String,
     pub stream_name: Option<String>,
+    pub stream_max_length: Option<usize>,
 }
 
 impl Config {
