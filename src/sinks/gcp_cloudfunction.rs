@@ -141,8 +141,8 @@ impl GCPAuth {
 
         let key = DecodingKey::from_secret(&[]);
         let mut validation = Validation::new(Algorithm::RS256);
+        validation.leeway = 0;
         validation.insecure_disable_signature_validation();
-
         jsonwebtoken::decode::<serde_json::Value>(self.token.as_ref().unwrap(), &key, &validation)
             .is_ok()
     }
@@ -221,7 +221,11 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(
+    name = "sink-gcp-cloudfunction",
+    unit = "ChainEvent",
+    worker = "Worker"
+)]
 pub struct Stage {
     config: Config,
     cursor: Cursor,

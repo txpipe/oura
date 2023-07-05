@@ -10,7 +10,7 @@ type = "GcpCloudFunction"
 url = "https://REGION-PROJECT_ID.cloudfunctions.net/FUNCTION_NAME"
 timeout = 30000
 error_policy = "Continue"
-authorization = "user:pass"
+authorization = true
 
 [sink.headers]
 extra_header_1 = "abc"
@@ -32,3 +32,9 @@ max_backoff = 100000
 - `headers` (optional): key-value map of extra headers to pass in each HTTP call
 - `error_policy` (optional): either `Continue` or `Exit`. Default value is `Exit`.
 - [retry_policy](../advanced/retry_policy.md)
+
+### GCP Authentication
+
+The GCP authentication process relies on the following conventions:
+
+- If the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable is specified, the value will be used as the file path to retrieve the JSON file with the credentials.
