@@ -13,7 +13,7 @@ use crate::framework::*;
 
 #[derive(Stage)]
 #[stage(
-    name = "source",
+    name = "source-n2c",
     unit = "NextResponse<BlockContent>",
     worker = "Worker"
 )]
