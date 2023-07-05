@@ -14,7 +14,7 @@ use crate::framework::*;
 pub use prelude::*;
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "filter-legacy", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
     genesis: GenesisValues,

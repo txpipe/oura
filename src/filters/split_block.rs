@@ -25,7 +25,7 @@ fn map_block_to_tx(cbor: CborBlock) -> Result<Vec<CborTx>, WorkerError> {
 }
 
 #[derive(Default, Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "filter-split-block", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     pub input: FilterInputPort,
     pub output: FilterOutputPort,

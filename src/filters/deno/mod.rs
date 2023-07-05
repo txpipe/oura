@@ -149,7 +149,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "filter-deno", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     main_module: PathBuf,
     call_snippet: &'static str,
