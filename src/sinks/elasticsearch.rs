@@ -94,7 +94,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "sink-elasticsearch", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
     genesis: GenesisValues,

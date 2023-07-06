@@ -19,7 +19,7 @@ fn map_cbor_to_u5c(cbor: &[u8]) -> Result<u5c::Tx, WorkerError> {
 }
 
 #[derive(Default, Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "filter-parse-cbor", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     pub input: FilterInputPort,
     pub output: FilterOutputPort,

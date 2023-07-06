@@ -215,7 +215,7 @@ impl Predicate {
 }
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "filter-dsl", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     predicate: Predicate,
 

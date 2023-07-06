@@ -57,7 +57,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "sink-aws-lambda", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
     cursor: Cursor,

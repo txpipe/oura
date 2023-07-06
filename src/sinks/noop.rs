@@ -35,7 +35,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "filter", unit = "Point", worker = "Worker")]
+#[stage(name = "sink-noop", unit = "Point", worker = "Worker")]
 pub struct Stage {
     cursor: Cursor,
 

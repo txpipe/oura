@@ -11,7 +11,7 @@ use crate::framework::*;
 
 #[derive(Stage)]
 #[stage(
-    name = "source",
+    name = "source-n2n",
     unit = "NextResponse<HeaderContent>",
     worker = "Worker"
 )]

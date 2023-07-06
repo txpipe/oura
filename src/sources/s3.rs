@@ -6,7 +6,7 @@ use serde::Deserialize;
 use crate::framework::*;
 
 #[derive(Stage)]
-#[stage(name = "source")]
+#[stage(name = "source-s3")]
 pub struct Stage {
     bucket: String,
     items_per_batch: u32,
