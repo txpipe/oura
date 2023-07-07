@@ -1,6 +1,6 @@
 use gasket::runtime::Tether;
 use oura::{filters, framework::*, sinks, sources};
-use serde::Deserialize;
+use serde::{de::Visitor, Deserialize, Deserializer};
 use std::{collections::VecDeque, time::Duration};
 use tracing::{info, warn};
 
@@ -14,7 +14,56 @@ struct ConfigRoot {
     intersect: IntersectConfig,
     finalize: Option<FinalizeConfig>,
     chain: Option<ChainConfig>,
+    #[serde(deserialize_with = "deserialize_retries")]
     retries: Option<gasket::retries::Policy>,
+}
+
+fn deserialize_retries<'de, D>(deserializer: D) -> Result<Option<gasket::retries::Policy>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(deserializer.deserialize_map(PolicyVisitor)?)
+}
+
+struct PolicyVisitor;
+impl<'de> Visitor<'de> for PolicyVisitor {
+    type Value = Option<gasket::retries::Policy>;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("gasket retry policy")
+    }
+
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::MapAccess<'de>,
+    {
+        let mut policy = gasket::retries::Policy::default();
+
+        while let Some(key) = map.next_key::<String>()? {
+            match key.as_str() {
+                "max_retries" => {
+                    policy.max_retries = map.next_value()?;
+                }
+                "backoff_unit" => {
+                    policy.backoff_unit = Duration::from_secs(map.next_value()?);
+                }
+                "backoff_factor" => {
+                    policy.backoff_factor = map.next_value()?;
+                }
+                "max_backoff" => {
+                    policy.max_backoff = Duration::from_secs(map.next_value()?);
+                }
+                "dismissible" => {
+                    policy.dismissible = map.next_value()?;
+                }
+                _ => {
+                    map.next_value::<serde::de::IgnoredAny>()?;
+                }
+            }
+        }
+
+        Ok(Some(policy))
+    }
 }
 
 impl ConfigRoot {
