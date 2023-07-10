@@ -6,7 +6,7 @@ The sink will process each incoming event in sequence and submit the correspondi
 
 The sink support both FIFO and Standard queues. The sink configuration will determine which logic to apply. In case of FIFO, it is necessary to enable `content-based deduplication` and the group id is determined by an explicit configuration value or `oura-sink` by default. 
 
-The sink uses AWS SDK's built-in retry logic which can be configured at the sink level. Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
+Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
 
 ## Configuration
 

@@ -28,6 +28,7 @@
     - [AWS S3](./sinks/aws_s3.md)
     - [GCP PubSub](./sinks/gcp_pubsub.md)
     - [Redis Streams](./sinks/redis_streams.md)
+    - [RabbitMQ](./sinks/rabbitmq.md)
 - [Reference](reference/README.md)
     - [Data Dictionary](./reference/data_dictionary.md)
 - [Advanced Features](./advanced/README.md)
