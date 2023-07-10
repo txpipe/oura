@@ -4,11 +4,11 @@ use serde::Deserialize;
 use crate::framework::*;
 
 //pub mod assert;
-pub mod filerotate;
-pub mod noop;
-pub mod stdout;
-pub mod terminal;
 mod common;
+mod filerotate;
+mod noop;
+mod stdout;
+mod terminal;
 
 #[cfg(feature = "sink-webhook")]
 mod webhook;
@@ -25,6 +25,9 @@ mod aws_sqs;
 #[cfg(feature = "sink-aws-lambda")]
 mod aws_lambda;
 
+#[cfg(feature = "sink-aws-s3")]
+mod aws_s3;
+
 #[cfg(feature = "sink-gcp-pubsub")]
 mod gcp_pubsub;
 
@@ -36,9 +39,6 @@ mod redis;
 
 #[cfg(feature = "sink-elasticsearch")]
 mod elasticsearch;
-
-// #[cfg(feature = "aws")]
-// pub mod aws_s3;
 
 pub enum Bootstrapper {
     Terminal(terminal::Stage),
@@ -60,6 +60,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "sink-aws-lambda")]
     AwsLambda(aws_lambda::Stage),
+
+    #[cfg(feature = "sink-aws-s3")]
+    AwsS3(aws_s3::Stage),
 
     #[cfg(feature = "sink-gcp-pubsub")]
     GcpPubSub(gcp_pubsub::Stage),
@@ -101,6 +104,9 @@ impl StageBootstrapper for Bootstrapper {
             #[cfg(feature = "sink-aws-lambda")]
             Bootstrapper::AwsLambda(p) => p.input.connect(adapter),
 
+            #[cfg(feature = "sink-aws-s3")]
+            Bootstrapper::AwsS3(p) => p.input.connect(adapter),
+
             #[cfg(feature = "sink-gcp-pubsub")]
             Bootstrapper::GcpPubSub(p) => p.input.connect(adapter),
 
@@ -136,6 +142,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "sink-aws-lambda")]
             Bootstrapper::AwsLambda(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "sink-aws-s3")]
+            Bootstrapper::AwsS3(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "sink-gcp-pubsub")]
             Bootstrapper::GcpPubSub(x) => gasket::runtime::spawn_stage(x, policy),
@@ -175,6 +184,9 @@ pub enum Config {
     #[cfg(feature = "sink-aws-lambda")]
     AwsLambda(aws_lambda::Config),
 
+    #[cfg(feature = "sink-aws-s3")]
+    AwsS3(aws_s3::Config),
+
     #[cfg(feature = "sink-gcp-pubsub")]
     GcpPubSub(gcp_pubsub::Config),
 
@@ -210,6 +222,9 @@ impl Config {
 
             #[cfg(feature = "sink-aws-lambda")]
             Config::AwsLambda(c) => Ok(Bootstrapper::AwsLambda(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "sink-aws-s3")]
+            Config::AwsS3(c) => Ok(Bootstrapper::AwsS3(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "sink-gcp-pubsub")]
             Config::GcpPubSub(c) => Ok(Bootstrapper::GcpPubSub(c.bootstrapper(ctx)?)),
