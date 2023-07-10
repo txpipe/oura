@@ -2823,9 +2823,9 @@ dependencies = [
 
 [[package]]
 name = "gasket"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf74bee250a2b5a1a8d65186643ae771fb59f4d5f8d28ff07ec22a10ff3014d3"
+checksum = "7babee760992462c2a8376424a7ddd8c13c4b38b31790b5077059c51e596aefe"
 dependencies = [
  "async-trait",
  "crossbeam",
@@ -2838,9 +2838,9 @@ dependencies = [
 
 [[package]]
 name = "gasket-derive"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64839c204f4402daf2a6726ef1470f263d474ade061fbc3dcf7142a386fe39b6"
+checksum = "d114a9d0572b1b505ac26bdcd669218b2ab5861d1b36ff72da4011dcc8725169"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",

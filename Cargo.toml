@@ -16,7 +16,7 @@ pallas = "0.19.0-alpha.1"
 # pallas = { path = "../pallas/pallas" }
 # pallas = { git = "https://github.com/txpipe/pallas" }
 
-gasket = { version = "^0.4", features = ["derive"] }
+gasket = { version = "^0.5", features = ["derive"] }
 # gasket = { path = "../../construkts/gasket-rs/gasket", features = ["derive"] }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git", features = ["derive"]  }
 
