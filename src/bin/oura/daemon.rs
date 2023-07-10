@@ -14,7 +14,7 @@ struct ConfigRoot {
     intersect: IntersectConfig,
     finalize: Option<FinalizeConfig>,
     chain: Option<ChainConfig>,
-    #[serde(deserialize_with = "deserialize_retries")]
+    #[serde(default, deserialize_with = "deserialize_retries")]
     retries: Option<gasket::retries::Policy>,
 }
 
