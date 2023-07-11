@@ -1,0 +1,18 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "AwsS3"
+region = "us-east-1"
+bucket = "my-bucket"
+prefix = "mainnet"

@@ -1,14 +1,33 @@
+use aws_sdk_s3::{primitives::ByteStream, Client};
+use aws_types::region::Region;
 use gasket::framework::*;
 use serde::Deserialize;
+use serde_json::json;
 
 use crate::framework::*;
 
-pub struct Worker {}
+pub struct Worker {
+    client: Client,
+    prefix: String,
+}
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        Ok(Self {})
+        let aws_config = aws_config::from_env()
+            .region(Region::new(stage.config.region.clone()))
+            .load()
+            .await;
+
+        let client = Client::new(&aws_config);
+        let prefix = stage
+            .config
+            .prefix
+            .clone()
+            .and_then(|p| Some(format!("{p}/")))
+            .unwrap_or_default();
+
+        Ok(Self { client, prefix })
     }
 
     async fn schedule(
@@ -27,7 +46,24 @@ impl gasket::framework::Worker<Stage> for Worker {
             return Ok(());
         }
 
-        let payload = serde_json::Value::from(record.unwrap()).to_string();
+        let (payload, content_type) = match record.clone().unwrap() {
+            Record::CborBlock(cbor) | Record::CborTx(cbor) => (cbor, "application/cbor"),
+            Record::OuraV1Event(event) => (json!(event).to_string().into(), "application/json"),
+            Record::ParsedTx(tx) => (json!(tx).to_string().into(), "application/json"),
+            Record::GenericJson(value) => (value.to_string().into(), "application/json"),
+        };
+
+        let key = format!("{}{}", self.prefix, point.slot_or_default());
+
+        self.client
+            .put_object()
+            .bucket(&stage.config.bucket)
+            .key(key)
+            .body(ByteStream::from(payload))
+            .content_type(content_type)
+            .send()
+            .await
+            .or_retry()?;
 
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
@@ -53,7 +89,11 @@ pub struct Stage {
 }
 
 #[derive(Default, Debug, Deserialize)]
-pub struct Config {}
+pub struct Config {
+    pub region: String,
+    pub bucket: String,
+    pub prefix: Option<String>,
+}
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
