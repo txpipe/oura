@@ -8,7 +8,6 @@ use crate::framework::*;
 
 pub struct Worker {
     client: Client,
-    prefix: String,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -20,14 +19,8 @@ impl gasket::framework::Worker<Stage> for Worker {
             .await;
 
         let client = Client::new(&aws_config);
-        let prefix = stage
-            .config
-            .prefix
-            .clone()
-            .and_then(|p| Some(format!("{p}/")))
-            .unwrap_or_default();
 
-        Ok(Self { client, prefix })
+        Ok(Self { client })
     }
 
     async fn schedule(
@@ -53,13 +46,14 @@ impl gasket::framework::Worker<Stage> for Worker {
             Record::GenericJson(value) => (value.to_string().into(), "application/json"),
         };
 
-        let key = format!("{}{}", self.prefix, point.slot_or_default());
+        let key = format!("{}{}", stage.config.prefix, point.slot_or_default());
 
         self.client
             .put_object()
             .bucket(&stage.config.bucket)
             .key(key)
             .body(ByteStream::from(payload))
+            .metadata("slot", point.slot_or_default().to_string())
             .content_type(content_type)
             .send()
             .await
@@ -92,7 +86,8 @@ pub struct Stage {
 pub struct Config {
     pub region: String,
     pub bucket: String,
-    pub prefix: Option<String>,
+    #[serde(default)]
+    pub prefix: String,
 }
 
 impl Config {
