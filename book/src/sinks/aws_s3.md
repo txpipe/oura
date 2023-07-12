@@ -1,12 +1,12 @@
 # AWS S3
 
-A sink that saves the CBOR content of the blocks as S3 object.
+A sink that saves the CBOR/JSON content of the blocks as S3 object.
 
-The sink will process each incoming event in sequence and select only the events of type `Block`. The CBOR content of the block will be extracted and saves as an S3 object in a configurable bucket in either hex or binary encoding. 
+The sink will process each input event in sequence and according to the configuration in daemon.toml it will save in S3 the block in JSON or CBOR format. It is not recommended to use the SplitBlock filter setting.
 
-A configurable option allows the user to decide how to name the object using values from the block header (such as epoch, slot, hash, etc). The properties of the block will be saved as metadata of the S3 Object for later identification (eg: block number, hash, slot, etc).
+The location where the object will be saved can be configured by adding value in the prefix field, for example `mainnet/`
 
-The sink uses AWS SDK's built-in retry logic which can be configured at the sink level. Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
+Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc).
 
 ## Configuration
 
@@ -16,57 +16,27 @@ type = "AwsS3"
 region = "us-west-2"
 bucket = "my-bucket"
 prefix = "mainnet/"
-naming = "SlotHash"
-content = "Cbor"
-max_retries = 5
 ```
 
 ### Section: `sink`
 
 - `type`: the literal value `AwsS3`.
-- `function_name`: The ARN of the function we wish to invoke.
 - `region`: The AWS region where the bucket is located.
 - `bucket`: The name of the bucket to store the blocks.
 - `prefix`: A prefix to prepend on each object's key.
-- `naming`: One of the available naming conventions (see section below)
-- `content`: Either `Cbor` for binary encoding or `CborHex` for plain text hex representation of the CBOR
-- `max_retries`: The max number of send retries before exiting the pipeline with an error.
 
-IMPORTANT: For this sink to work correctly, the `include_block_cbor` option should be enabled in the source sink configuration (see [mapper options](../advanced/mapper_options.md)).
+IMPORTANT: The SplitBlock filter must not be enabled for this sink to work correctly.
 
 ## Naming Convention
 
-S3 Buckets allow the user to query by object prefix. It's important to use a naming convention that is compatible with the types of filters that the consumer intends to use. This sink provides the following options:
-
-
-- `Hash`: formats the key using `"{hash}"`
-- `SlotHash`: formats the key using `"{slot}.{hash}"`
-- `BlockHash`: formats the key using `"{block_num}.{hash}"`
-- `EpochHash`: formats the key using `"{epoch}.{hash}"`
-- `EpochSlotHash`: formats the key using `"{epoch}.{slot}.{hash}"`
-- `EpochBlockHash`: formats the key using `"{epoch}.{block_num}.{hash}"`
+The name of the object and the slot number in which it was processed.
 
 ## Content Encoding
 
-The sink provides two options for encoding the content of the object:
+The Content Encoding depends on the configuration made in the daemon file, it can be cbor or json.
 
-- `Cbor`: the S3 object will contain the raw, unmodified CBOR value in binary format. The content type of the object in this case will be "application/cbor". 
-- `CborHex`: the S3 object will contain the CBOR payload of the block encoded as a hex string. The content type of the object in this case will be "text/plain". 
-
-
-## Metadata
-
-The sink uses the data from the block event to populate metadata fields of the S3 object for easier identification of the block once persisted:
-
-- `era`
-- `issuer_vkey`
-- `tx_count`
-- `slot`
-- `hash`
-- `number`
-- `previous_hash`
-
-Please note that S3 doesn't allow filtering by metadata. For efficient filter, the only option available is to use the prefix of the key.
+- `application/cbor`
+- `application/json`
 
 ## AWS Credentials
 
