@@ -44,7 +44,6 @@ indicatif = "0.17.3"
 lazy_static = "1.4.0"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
-file-rotate = "0.7.4"
 tokio = { version = "1", features = ["rt"] }
 async-trait = "0.1.68"
 elasticsearch = { version = "8.5.0-alpha.1", optional = true }
@@ -65,12 +64,14 @@ r2d2_redis = { version = "0.14.0", optional = true }
 deno_core = { version = "0.188.0", optional = true }
 deno_runtime = { version = "0.114.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
+file-rotate = { version = "0.7.5", optional = true }
 
 [features]
 default = ["deno"]
 deno = ["deno_core", "deno_runtime"]
-sink-rabbitmq = ["lapin"]
+sink-file-rotate = ["file-rotate"]
 sink-webhook = ["reqwest"]
+sink-rabbitmq = ["lapin"]
 sink-kafka = ["kafka"]
 sink-aws-sqs = ["aws-config", "aws-types", "aws-sdk-sqs"]
 sink-aws-lambda = ["aws-config", "aws-types", "aws-sdk-lambda"]
