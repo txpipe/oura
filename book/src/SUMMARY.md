@@ -22,7 +22,7 @@
     - [Kafka](./sinks/kafka.md)
     - [Elasticsearch](./sinks/elastic.md)
     - [Webhook](./sinks/webhook.md)
-    - [Logs](./sinks/logs.md)
+    - [File rotate](./sinks/file_rotate.md)
     - [AWS SQS](./sinks/aws_sqs.md)
     - [AWS Lambda](./sinks/aws_lambda.md)
     - [AWS S3](./sinks/aws_s3.md)
