@@ -1,8 +1,8 @@
 # AWS S3
 
-A sink that saves the CBOR/JSON content of the blocks as S3 object.
+A sink that saves the CBOR content of the blocks as S3 object.
 
-The sink will process each input event in sequence and according to the configuration in daemon.toml it will save in S3 the block in JSON or CBOR format. It is not recommended to use the SplitBlock filter setting.
+The sink will process each input event in sequence and according to the configuration in daemon.toml it will save in S3 the block in CBOR format.
 
 The location where the object will be saved can be configured by adding value in the prefix field, for example `mainnet/`
 
@@ -25,7 +25,7 @@ prefix = "mainnet/"
 - `bucket`: The name of the bucket to store the blocks.
 - `prefix`: A prefix to prepend on each object's key.
 
-IMPORTANT: The SplitBlock filter must not be enabled for this sink to work correctly.
+IMPORTANT: Only the cbor block format is supported.
 
 ## Naming Convention
 
@@ -33,10 +33,7 @@ The name of the object and the slot number in which it was processed.
 
 ## Content Encoding
 
-The Content Encoding depends on the configuration made in the daemon file, it can be cbor or json.
-
 - `application/cbor`
-- `application/json`
 
 ## AWS Credentials
 

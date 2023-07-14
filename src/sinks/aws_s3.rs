@@ -1,8 +1,8 @@
 use aws_sdk_s3::{primitives::ByteStream, Client};
 use aws_types::region::Region;
 use gasket::framework::*;
+use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
-use serde_json::json;
 
 use crate::framework::*;
 
@@ -39,22 +39,30 @@ impl gasket::framework::Worker<Stage> for Worker {
             return Ok(());
         }
 
-        let (payload, content_type) = match record.clone().unwrap() {
-            Record::CborBlock(cbor) | Record::CborTx(cbor) => (cbor, "application/cbor"),
-            Record::OuraV1Event(event) => (json!(event).to_string().into(), "application/json"),
-            Record::ParsedTx(tx) => (json!(tx).to_string().into(), "application/json"),
-            Record::GenericJson(value) => (value.to_string().into(), "application/json"),
-        };
+        let cbor = match record.unwrap() {
+            Record::CborBlock(cbor) => Ok(cbor),
+            _ => Err(Error::config(String::from("Invalid configuration daemon"))),
+        }
+        .or_panic()?;
 
-        let key = format!("{}{}", stage.config.prefix, point.slot_or_default());
+        let key = match &point {
+            Point::Specific(slot, hash) => Ok(format!(
+                "{}{}.{}",
+                stage.config.prefix,
+                slot,
+                hex::encode(hash)
+            )),
+            Point::Origin => Err(Error::Config(String::from("Invalid chain point"))),
+        }
+        .or_panic()?;
 
         self.client
             .put_object()
             .bucket(&stage.config.bucket)
             .key(key)
-            .body(ByteStream::from(payload))
+            .body(ByteStream::from(cbor))
             .metadata("slot", point.slot_or_default().to_string())
-            .content_type(content_type)
+            .content_type("application/cbor")
             .send()
             .await
             .or_retry()?;
