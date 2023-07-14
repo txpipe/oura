@@ -106,8 +106,6 @@ pub struct Config {
     /// use-case for this flag is to allow self-signed certificates. Beware that
     /// other invalid properties will be omitted too, such as expiration date.
     pub allow_invalid_certs: Option<bool>,
-
-    pub retries: Option<gasket::retries::Policy>,
 }
 
 impl Config {

@@ -14,12 +14,6 @@ authorization = "user:pass"
 timeout = 30000
 error_policy = "Continue"
 
-[sink.retry_policy]
-max_retries = 30
-backoff_unit =  5000
-backoff_factor = 2
-max_backoff = 100000
-
 [sink.headers]
 extra_header_1 = "abc"
 extra_header_2 = "123"
@@ -33,5 +27,4 @@ extra_header_2 = "123"
 - `headers` (optional): key-value map of extra headers to pass in each HTTP call
 - `allow_invalid_certs` (optional): a flag to skip TLS cert validation (usually for self-signed certs).
 - `timeout` (optional): the timeout value for the HTTP response in milliseconds. Default value is `30000`.
-- `error_policy` (optional): either `Continue` or `Exit`. Default value is `Exit`.
-- `retry_policy` (optional): controls the policy to retry failed requests (see [retry policy](../advanced/retry_policy.md))
+

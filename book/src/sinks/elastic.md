@@ -22,7 +22,6 @@ password = "my very secret stuff"
 - `url`: the location of the Elasticsearch's API
 - `index`: the name of the index (or data stream) to store the event documents
 - `idempotency` (optional): flag that if enabled will force idempotent calls to ES (to avoid duplicates)
-- `retry_policy` (optional): controls the policy to retry failed requests (see [retry policy](../advanced/retry_policy.md))
 
 ### Section: `sink.credentials`
 
