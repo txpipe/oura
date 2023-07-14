@@ -16,4 +16,3 @@ routing_key = ""
 - `uri`: uri to connect on rabbitmq server.
 - `exchange` field with the name of the exchange where the cardano event will be published.
 - `routing_key` field with cardano event routing key configuration.
-- [retry_policy](../advanced/retry_policy.md)

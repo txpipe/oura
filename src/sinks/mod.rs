@@ -5,10 +5,12 @@ use crate::framework::*;
 
 //pub mod assert;
 mod common;
-mod filerotate;
 mod noop;
 mod stdout;
 mod terminal;
+
+#[cfg(feature = "sink-file-rotate")]
+mod file_rotate;
 
 #[cfg(feature = "sink-webhook")]
 mod webhook;
@@ -42,9 +44,11 @@ mod elasticsearch;
 
 pub enum Bootstrapper {
     Terminal(terminal::Stage),
-    FileRotate(filerotate::Stage),
     Stdout(stdout::Stage),
     Noop(noop::Stage),
+
+    #[cfg(feature = "sink-file-rotate")]
+    FileRotate(file_rotate::Stage),
 
     #[cfg(feature = "sink-webhook")]
     WebHook(webhook::Stage),
@@ -85,9 +89,11 @@ impl StageBootstrapper for Bootstrapper {
     fn connect_input(&mut self, adapter: InputAdapter) {
         match self {
             Bootstrapper::Terminal(p) => p.input.connect(adapter),
-            Bootstrapper::FileRotate(p) => p.input.connect(adapter),
             Bootstrapper::Stdout(p) => p.input.connect(adapter),
             Bootstrapper::Noop(p) => p.input.connect(adapter),
+
+            #[cfg(feature = "sink-file-rotate")]
+            Bootstrapper::FileRotate(p) => p.input.connect(adapter),
 
             #[cfg(feature = "sink-webhook")]
             Bootstrapper::WebHook(p) => p.input.connect(adapter),
@@ -124,9 +130,11 @@ impl StageBootstrapper for Bootstrapper {
     fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
             Bootstrapper::Terminal(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "sink-file-rotate")]
+            Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "sink-webhook")]
             Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
@@ -165,9 +173,11 @@ impl StageBootstrapper for Bootstrapper {
 #[serde(tag = "type")]
 pub enum Config {
     Terminal(terminal::Config),
-    FileRotate(filerotate::Config),
     Stdout(stdout::Config),
     Noop(noop::Config),
+
+    #[cfg(feature = "sink-file-rotate")]
+    FileRotate(file_rotate::Config),
 
     #[cfg(feature = "sink-webhook")]
     WebHook(webhook::Config),
@@ -204,9 +214,11 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
         match self {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
-            Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
             Config::Stdout(c) => Ok(Bootstrapper::Stdout(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "sink-file-rotate")]
+            Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "sink-webhook")]
             Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
