@@ -8,6 +8,7 @@ mod common;
 mod noop;
 mod stdout;
 mod terminal;
+mod assert;
 
 #[cfg(feature = "sink-file-rotate")]
 mod file_rotate;
@@ -46,6 +47,7 @@ pub enum Bootstrapper {
     Terminal(terminal::Stage),
     Stdout(stdout::Stage),
     Noop(noop::Stage),
+    Assert(assert::Stage),
 
     #[cfg(feature = "sink-file-rotate")]
     FileRotate(file_rotate::Stage),
@@ -91,6 +93,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Terminal(p) => p.input.connect(adapter),
             Bootstrapper::Stdout(p) => p.input.connect(adapter),
             Bootstrapper::Noop(p) => p.input.connect(adapter),
+            Bootstrapper::Assert(p) => p.input.connect(adapter),
 
             #[cfg(feature = "sink-file-rotate")]
             Bootstrapper::FileRotate(p) => p.input.connect(adapter),
@@ -132,6 +135,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Terminal(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Assert(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "sink-file-rotate")]
             Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
@@ -175,6 +179,7 @@ pub enum Config {
     Terminal(terminal::Config),
     Stdout(stdout::Config),
     Noop(noop::Config),
+    Assert(assert::Config),
 
     #[cfg(feature = "sink-file-rotate")]
     FileRotate(file_rotate::Config),
@@ -216,6 +221,7 @@ impl Config {
             Config::Terminal(c) => Ok(Bootstrapper::Terminal(c.bootstrapper(ctx)?)),
             Config::Stdout(c) => Ok(Bootstrapper::Stdout(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
+            Config::Assert(c) => Ok(Bootstrapper::Assert(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "sink-file-rotate")]
             Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
