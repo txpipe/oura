@@ -103,11 +103,6 @@ impl gasket::framework::Worker<Stage> for Worker {
         run_check!(&stage.config, &self.state, tx_records_matches_block_count);
         run_check!(&stage.config, &self.state, tx_has_input_and_output);
 
-        if let Some(event) = &self.state.current_event {
-            // notify pipeline about the progress
-            // utils.track_sink_progress(event);
-        }
-
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
         stage.cursor.add_breadcrumb(point.clone());
@@ -117,7 +112,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "sink-aws-sqs", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "sink-assert", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
     cursor: Cursor,
