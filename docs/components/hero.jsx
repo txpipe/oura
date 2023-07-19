@@ -1,6 +1,6 @@
 export function Hero() {
   return (
-    <div className="md:p-20">
+    <div className="py-10 md:p-20">
       <div className="mb-5 text-center">
         <h1 className="flex flex-col flex-wrap font-bold text-4xl md:text-6xl lg:text-7xl dark:text-gray-200">
           <img src="/logo.svg" alt="Oura" className="mb-4" />
@@ -9,7 +9,7 @@ export function Hero() {
       </div>
 
       <div className="mb-8 max-w-3xl text-center mx-auto">
-        <p className="text-lg text-gray-600 dark:text-gray-400">
+        <p className="md:text-lg text-gray-600 dark:text-gray-400">
           Oura is a rust-native implementation of a pipeline that connects to
           the tip of a Cardano node through a combination of Ouroboros
           mini-protocol (using either a unix socket or tcp bearer), filters the
