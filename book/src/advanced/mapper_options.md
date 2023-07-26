@@ -27,10 +27,12 @@ include_transaction_details = <bool>
 include_transaction_end_events = <bool>
 include_block_cbor = <bool>
 include_byron_ebb = <bool>
+include_block_details = <bool>
 ```
 
 - `include_block_end_events`: if enabled, the source will output an event signaling the end of a block, duplicating all of the data already sent in the corresponding block start event. Default value is `false`.
 - `include_transaction_details`: if enabled, each transaction event payload will contain an nested version of all of the details of the transaction (inputs, outputs, mint, assets, metadata, etc). Useful when the pipeline needs to process the tx as a unit, instead of handling each sub-object as an independent event. Default value is `false`.
-- `include_transaction_end_events`: if enabled, the source will output an event signaling the end of a transaction, duplicating all of the data already sent in the corresponding transaction start event. Defaul value is `false`.
+- `include_transaction_end_events`: if enabled, the source will output an event signaling the end of a transaction, duplicating all of the data already sent in the corresponding transaction start event. Default value is `false`.
 - `include_block_cbor`: if enabled, the block event will include the raw, unaltered cbor content received from the node, formatted as an hex string. Useful when some custom cbor decoding is required. Default value is `false`.
 - `include_byron_ebb`: if enabled, a block event will be emmitted for legacy epoch boundary block of the Byron era (deprecated in newer eras). Useful when performing validation on previous block hashes. Default value is `false`.
+- `include_block_details`: If enabled, all transactions in the block will be mapped. Default value is `false`.

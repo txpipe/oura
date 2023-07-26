@@ -506,7 +506,7 @@ impl EventWriter {
             transactions: None,
         };
 
-        if self.config.include_block_details {
+        if self.config.include_block_details || self.config.include_transaction_details {
             record.transactions = Some(self.collect_shelley_tx_records(source)?);
         }
 
