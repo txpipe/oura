@@ -12,12 +12,18 @@ pub mod n2n;
 #[cfg(feature = "aws")]
 pub mod s3;
 
+#[cfg(feature = "source-utxorpc")]
+pub mod utxorpc;
+
 pub enum Bootstrapper {
     N2N(n2n::Stage),
     N2C(n2c::Stage),
 
     #[cfg(feature = "aws")]
     S3(s3::Stage),
+
+    #[cfg(feature = "source-utxorpc")]
+    UtxoRPC(utxorpc::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -28,6 +34,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "aws")]
             Bootstrapper::S3(p) => p.output.connect(adapter),
+
+            #[cfg(feature = "source-utxorpc")]
+            Bootstrapper::UtxoRPC(p) => p.output.connect(adapter),
         }
     }
 
@@ -42,6 +51,9 @@ impl StageBootstrapper for Bootstrapper {
 
             #[cfg(feature = "aws")]
             Bootstrapper::S3(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "source-utxorpc")]
+            Bootstrapper::UtxoRPC(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -56,6 +68,9 @@ pub enum Config {
 
     #[cfg(feature = "aws")]
     S3(s3::Config),
+
+    #[cfg(feature = "source-utxorpc")]
+    UtxoRPC(utxorpc::Config),
 }
 
 impl Config {
@@ -66,6 +81,9 @@ impl Config {
 
             #[cfg(feature = "aws")]
             Config::S3(c) => Ok(Bootstrapper::S3(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "source-utxorpc")]
+            Config::UtxoRPC(c) => Ok(Bootstrapper::UtxoRPC(c.bootstrapper(ctx)?)),
         }
     }
 }
