@@ -19,7 +19,7 @@ pub struct Worker {
     client: ChainSyncServiceClient<Channel>,
     stream: Option<Streaming<FollowTipResponse>>,
     block_ref: Option<BlockRef>,
-    max_items: u32,
+    max_items_per_page: u32,
 }
 
 impl Worker {
@@ -144,7 +144,7 @@ impl Worker {
     async fn next_dump_history(&mut self) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
         let mut dump_history_request = DumpHistoryRequest::default();
         dump_history_request.start_token = self.block_ref.clone();
-        dump_history_request.max_items = self.max_items;
+        dump_history_request.max_items = self.max_items_per_page;
 
         let result = self
             .client
@@ -194,12 +194,12 @@ impl gasket::framework::Worker<Stage> for Worker {
             None
         };
 
-        let max_items = stage.config.max_items.unwrap_or(20);
+        let max_items_per_page = stage.config.max_items_per_page.unwrap_or(20);
 
         Ok(Self {
             client,
             stream: None,
-            max_items,
+            max_items_per_page,
             block_ref,
         })
     }
@@ -237,7 +237,7 @@ pub struct Stage {
 #[derive(Deserialize)]
 pub struct Config {
     url: String,
-    max_items: Option<u32>,
+    max_items_per_page: Option<u32>,
 }
 
 impl Config {

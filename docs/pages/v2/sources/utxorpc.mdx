@@ -10,14 +10,14 @@ The following snippet shows an example of how to set up a typical UtxoRPC source
 [source]
 type = "UtxoRPC"
 url = ["https://<hostname>"]
-max_items = 20
+max_items_per_page = 20
 ```
 
 ### Section `source`:
 
 - `type`: this field must be set to the literal value `UtxoRPC`
 - `url`: A string contains Dolos gRPC url
-- `max_items`: Number of blocks that will be requested from Dolos when using a chain distance point. Default value is `20`
+- `max_items_per_page`: Number of blocks that will be requested from Dolos when using a chain distance point. Default value is `20`
 
 ## Examples
 
@@ -27,5 +27,5 @@ Connecting to a remote Dolos node in preprod through gRPC:
 [source]
 type = "UtxoRPC"
 url = ["https://50051-romantic-calmness-b55bqg.us1.demeter.run"]
-max_items = 20
+max_items_per_page = 20
 ```
