@@ -7,6 +7,7 @@ _Filters_ are intermediate steps in the pipeline that process events as they tra
 These are the existing filters that are included as part the main _Oura_ codebase:
 
 - [ParseCbor](filters/parse_cbor.mdx): a filter that maps cbor transactions to a data structure.
+- [SplitBlock](filters/split_block.mdx): a filter that will decode the cbor block and extract all transactions in an event in the format CborTx.
 
 ### Legacy V1
 - [Fingerprint](filters/fingerprint.mdx): a filter that adds a (probably) unique identifier (fingerprint) to each event.
