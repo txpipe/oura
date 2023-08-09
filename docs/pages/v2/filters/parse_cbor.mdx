@@ -1,0 +1,60 @@
+# Parse CBOR filter
+
+The `parse_cbor` filter aims to map cbor transactions to a structured transaction.
+
+However, the filter will only work when the record received in the stage is CborTx in other words a transaction in Cbor format that was previously extracted from a block by another stage, otherwise, parse_cbor will ignore and pass the record to the next stage. When the record is CborTx, parse_cbor will decode and map the Cbor to a structure, so the next stage will receive the ParsedTx record. If no filter is enabled, the stages will receive the record in CborBlock format, and if only the parse_cbor filter is enabled in `daemon.toml`, it will be necessary to enable the [split_cbor](split_block.mdx) filter for the stage to receive the CborTx format.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "ParseCbor"
+```
+
+The next pipeline will receive a record ParsedTx with the block transactions structured, for example:
+
+```json
+{
+  "inputs": [
+    {
+      "txHash": "RJxOGh8tYw2zJEM4IOe1UyJLgmLzirUeNJyD3WXw0Fs="
+    },
+    {
+      "txHash": "D5zaREMo+A23Fd6mEHYxnf5VwWi1x7AyRZi8rMKyOqQ=",
+      "outputIndex": 1
+    }
+  ],
+  "outputs": [
+    {
+      "address": "AR3DnbkA7SpK3ebbYyrOhMQuofbn5bSErXkHS+Rg1t2/czYqcTheAgzPiEIF5fA/z5vj3ZBY3WuF",
+      "coin": "1717921431"
+    },
+    {
+      "address": "AbUagvWOR+HK85VJqlYyfWgevTEW57nBukEYOPjlTVqn9KaKp7fM4lwUjem4RcV4wgsyFpDgkdlU",
+      "coin": "7195641470"
+    }
+  ],
+  "witnesses": {
+    "vkeywitness": [
+      {
+        "vkey": "gEV61C5PJwtPKv5U+Ha2f1n4cU/axSaa2EXYCQoa71w=",
+        "signature": "ogVM0RwQZklGjquCWeZdNv5DZDAAHqRxpjKNcaRLv79hDDdyA4+4YQ2f2Mu+svY/BwnIxS65iuhapiITHtvBDg=="
+      },
+      {
+        "vkey": "z+mF66iNeVqtMqfiC7H1F95lvz/JOO00Jmhg+91t3Gs=",
+        "signature": "ogVM0RwQZklGjquCWeZdNv5DZDAAHqRxpjKNcaRLv78+MW9TxnabFVGgbBO/lttg8NvNAra4VAzUUrhfYcIvBQ=="
+      }
+    ]
+  },
+  "collateral": {},
+  "fee": "176061",
+  "validity": {
+    "start": "52365819",
+    "ttl": "100045133"
+  },
+  "successful": true,
+  "auxiliary": {}
+}
+```
