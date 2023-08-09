@@ -1,0 +1,26 @@
+# Deno filter
+
+The `deno` filter will allow JS code to be implemented as a stage within the pipeline.
+
+Therefore it will be possible to manipulate the block data dynamically and according to the specific rules of your business.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "Deno"
+main_module = "JS file Path"
+use_async = true
+```
+
+The file should export a function that takes the event data as a parameter, for example
+
+```js
+export async function mapEvent(event) {
+    const event2 = { ...event, extraProp: "123abc" };
+    return event2;
+}
+```
+
