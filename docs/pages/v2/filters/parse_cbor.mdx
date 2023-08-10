@@ -13,48 +13,21 @@ Adding the following section to the daemon config file will enable the filter as
 type = "ParseCbor"
 ```
 
-The next pipeline will receive a record ParsedTx with the block transactions structured, for example:
+## Examples
+
+Below is an example of the data that will be sent to the sink. A block can contain many transactions, so the sink will receive an event for each transaction in json format.
 
 ```json
 {
-  "inputs": [
-    {
-      "txHash": "RJxOGh8tYw2zJEM4IOe1UyJLgmLzirUeNJyD3WXw0Fs="
-    },
-    {
-      "txHash": "D5zaREMo+A23Fd6mEHYxnf5VwWi1x7AyRZi8rMKyOqQ=",
-      "outputIndex": 1
-    }
-  ],
-  "outputs": [
-    {
-      "address": "AR3DnbkA7SpK3ebbYyrOhMQuofbn5bSErXkHS+Rg1t2/czYqcTheAgzPiEIF5fA/z5vj3ZBY3WuF",
-      "coin": "1717921431"
-    },
-    {
-      "address": "AbUagvWOR+HK85VJqlYyfWgevTEW57nBukEYOPjlTVqn9KaKp7fM4lwUjem4RcV4wgsyFpDgkdlU",
-      "coin": "7195641470"
-    }
-  ],
-  "witnesses": {
-    "vkeywitness": [
-      {
-        "vkey": "gEV61C5PJwtPKv5U+Ha2f1n4cU/axSaa2EXYCQoa71w=",
-        "signature": "ogVM0RwQZklGjquCWeZdNv5DZDAAHqRxpjKNcaRLv79hDDdyA4+4YQ2f2Mu+svY/BwnIxS65iuhapiITHtvBDg=="
-      },
-      {
-        "vkey": "z+mF66iNeVqtMqfiC7H1F95lvz/JOO00Jmhg+91t3Gs=",
-        "signature": "ogVM0RwQZklGjquCWeZdNv5DZDAAHqRxpjKNcaRLv78+MW9TxnabFVGgbBO/lttg8NvNAra4VAzUUrhfYcIvBQ=="
-      }
-    ]
+  "event": "apply",
+  "point": {
+    "slot": 0,
+    "hash": ""
   },
-  "collateral": {},
-  "fee": "176061",
-  "validity": {
-    "start": "52365819",
-    "ttl": "100045133"
-  },
-  "successful": true,
-  "auxiliary": {}
+  "record": {
+    "inputs": [],
+    "outputs": [],
+    ...
+  }
 }
 ```
