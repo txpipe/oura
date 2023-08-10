@@ -10,6 +10,21 @@ license = "Apache-2.0"
 readme = "README.md"
 authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
+[features]
+default = ["deno"]
+deno = ["deno_core", "deno_runtime"]
+sink-file-rotate = ["file-rotate"]
+sink-webhook = ["reqwest"]
+sink-rabbitmq = ["lapin"]
+sink-kafka = ["kafka"]
+sink-aws-sqs = ["aws-config", "aws-types", "aws-sdk-sqs"]
+sink-aws-lambda = ["aws-config", "aws-types", "aws-sdk-lambda"]
+sink-aws-s3 = ["aws-config", "aws-types", "aws-sdk-s3"]
+sink-gcp-pubsub = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default"]
+sink-gcp-cloudfunction = ["reqwest", "jsonwebtoken"]
+sink-redis = ["r2d2_redis"]
+sink-elasticsearch = ["elasticsearch"]
+source-utxorpc = ["tonic","futures"]
 
 [dependencies]
 pallas = "0.19.0-alpha.1"
@@ -28,11 +43,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
 crossterm = "0.26"
 merge = "0.1.0"
-config = { version = "0.13.2", default-features = false, features = [
-    "toml",
-    "yaml",
-    "json",
-] }
+config = { version = "0.13.2", default-features = false, features = ["toml","yaml","json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
 strum = "0.24"
@@ -65,18 +76,6 @@ deno_core = { version = "0.188.0", optional = true }
 deno_runtime = { version = "0.114.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
 file-rotate = { version = "0.7.5", optional = true }
+tonic = { version = "0.9.2", features = ["tls", "tls-roots"], optional = true}
+futures = { version = "0.3.28", optional = true }
 
-[features]
-default = ["deno"]
-deno = ["deno_core", "deno_runtime"]
-sink-file-rotate = ["file-rotate"]
-sink-webhook = ["reqwest"]
-sink-rabbitmq = ["lapin"]
-sink-kafka = ["kafka"]
-sink-aws-sqs = ["aws-config", "aws-types", "aws-sdk-sqs"]
-sink-aws-lambda = ["aws-config", "aws-types", "aws-sdk-lambda"]
-sink-aws-s3 = ["aws-config", "aws-types", "aws-sdk-s3"]
-sink-gcp-pubsub = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default"]
-sink-gcp-cloudfunction = ["reqwest", "jsonwebtoken"]
-sink-redis = ["r2d2_redis"]
-sink-elasticsearch = ["elasticsearch"]
