@@ -9,9 +9,6 @@ These are the existing filters that are included as part the main _Oura_ codebas
 - [ParseCbor](filters/parse_cbor.mdx): a filter that maps cbor transactions to a data structure.
 - [SplitBlock](filters/split_block.mdx): a filter that will decode the cbor block and extract all transactions in an event in the format CborTx.
 - [Deno](filters/deno.mdx): a filter that allows JS code to be implemented as a stage within the pipeline.
-
-### Legacy V1
-- [Fingerprint](filters/fingerprint.mdx): a filter that adds a (probably) unique identifier (fingerprint) to each event.
-- [Selection](filters/selection.mdx): a filter that evaluates different built-in predicates to decide which events should go through the pipeline.
+- [Legacy V1](filters/legacy_v1.mdx): a filter that transforms the block data to the Oura V1 data structure.
 
 New filters are being developed, information will be added in this documentation to reflect the updated list. Contributions and feature request are welcome in our [Github Repo](https://github.com/txpipe/oura).
