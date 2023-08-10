@@ -12,3 +12,20 @@ Adding the following section to the daemon config file will enable the filter as
 [[filters]]
 type = "SplitBlock"
 ```
+
+## Examples
+
+Below is an example of the data that will be sent to the sink. A block can contain many transactions, so the sink will receive an event for each transaction.
+
+```json
+{
+  "event": "apply",
+  "point": {
+    "slot": 0,
+    "hash": ""
+  },
+  "record": {
+    "hex": ""
+  }
+}
+```
