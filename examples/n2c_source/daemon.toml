@@ -1,0 +1,9 @@
+[source]
+type = "N2C"
+socket_path = "examples/n2c_source/node/node.socket"
+
+[intersect]
+type = "Tip"
+
+[sink]
+type = "Stdout"

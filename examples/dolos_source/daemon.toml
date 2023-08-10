@@ -1,0 +1,9 @@
+[source]
+type = "UtxoRPC"
+url = "https://50051-romantic-calmness-b55bqg.us1.demeter.run"
+
+[intersect]
+type = "Tip"
+
+[sink]
+type = "Stdout"
