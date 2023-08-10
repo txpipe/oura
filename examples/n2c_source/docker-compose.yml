@@ -1,0 +1,20 @@
+version: "3"
+services:
+  node:
+    image: inputoutput/cardano-node
+    container_name: node
+    ports:
+      - 3001:3001
+    volumes:
+      - ./node:/data:rw
+      - ./node:/ipc:rw
+    environment:
+      - NETWORK=preprod
+      - CARDANO_BIND_ADDR=0.0.0.0
+      - CARDANO_PORT=3001
+    networks:
+      - dolos-network
+
+networks:
+  dolos-network:
+    driver: bridge
