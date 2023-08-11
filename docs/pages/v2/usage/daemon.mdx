@@ -29,7 +29,7 @@ oura daemon --config my_config.toml
 
 ## Configuration
 
-The configuration file needs to specify the source, filters and sink to use in a particular pipeline. The following toml represent the typical skeleton of an _Oura_ config file:
+The configuration file needs to specify the source, intersect, filters and sink to use in a particular pipeline. The following toml represent the typical skeleton of an _Oura_ config file:
 
 ```toml
 [source]
@@ -38,6 +38,9 @@ type = "X" # the type of source to use
 # custom config fields for this source type
 foo = "abc"
 bar = "xyz"
+
+[intersect]
+type = "W" # the type of source intersect chain
 
 [[filters]]
 type = "Y" # the type of filter to use
@@ -58,6 +61,10 @@ bar = "789"
 ### The `source` section
 
 This section specifies the origin of the data. The special `type` field must always be present and containing a value matching any of the available built-in sources. The rest of the fields in the section will depend on the selected `type`. See the [sources](../sources) section for a list of available options and their corresponding config values.
+
+### The `intersect` section
+
+Advanced options for instructing Oura from which point in the chain to start reading from. You can read more in [intersect advanced](../advanced/intersect_options.mdx)
 
 ### The `filters` section
 
