@@ -15,11 +15,10 @@ The entry-point of the image points to _Oura_ executable. You can pass the same 
 
 ```
 docker run -it ghcr.io/txpipe/oura:latest \
-    watch relays-new.cardano-mainnet.iohk.io:3001 \
-    --bearer tcp
+    daemon --help
 ```
 
-For more information on available command-line arguments, check the [usage](../usage/index.md) section.
+For more information on available command-line arguments, check the [usage](../usage) section.
 
 
 ## Using a Configuration File
@@ -33,10 +32,10 @@ docker run -d -v $(pwd)/daemon.toml:/etc/oura/daemon.toml \
 
 ## Versioned Images
 
-Images are also tagged with the corresponding version number. It is highly recommended to use a fixed image version in production environments to avoid the effects of new features being included in each release (please remember Oura hasn't reached v1 stability guarantees).
+Images are also tagged with the corresponding version number. It is highly recommended to use a fixed image version in production environments to avoid the effects of new features being included in each release (please remember Oura hasn't reached v2 stability guarantees).
 
-To use a versioned image, replace the `latest` tag by the desired version with the `v` prefix. For example, to use version `1.0.0`, use the following image:
+To use a versioned image, replace the `latest` tag by the desired version with the `v` prefix. For example, to use version `v2.0.0-alpha.1`, use the following image:
 
 ```
-ghcr.io/txpipe/oura:v1.0.0
+ghcr.io/txpipe/oura:v2.0.0-alpha.1
 ```

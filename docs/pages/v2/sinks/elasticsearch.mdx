@@ -37,6 +37,6 @@ We currently only implement _basic_ auth, other mechanisms will be implemented a
 
 In services and API calls, _idempotency_ refers to a property of the system where the execution of multiple "equivalent" requests have the same effect as a single request. In other words, "idempotent" calls can be triggered multiple times without problem.
 
-In our Elasticsearch sink, when the `idempotency` flag is enabled, each document sent to the index will specify a particular content-based ID: the [fingerprint](../filters/fingerprint.md) of the event. If Oura restarts without having a cursor or if the same block is processed for any reason, repeated events will present the same ID and Elasticsearch will reject them and Oura will continue with the following event. This mechanism provides a strong guarantee that our index won't contain duplicate data.
+In our Elasticsearch sink, when the `idempotency` flag is enabled, each document sent to the index will specify a particular content-based ID: the [fingerprint](../filters/fingerprint) of the event. If Oura restarts without having a cursor or if the same block is processed for any reason, repeated events will present the same ID and Elasticsearch will reject them and Oura will continue with the following event. This mechanism provides a strong guarantee that our index won't contain duplicate data.
 
 If the flag is disabled, each document will be generated using a random ID, ensuring that it will be indexed regardless.
