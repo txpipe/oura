@@ -4,9 +4,9 @@ A sink that sends each event as a message to an AWS SQS queue. Each event is jso
 
 The sink will process each incoming event in sequence and submit the corresponding `SendMessage` request to the SQS API. Once the queue acknowledges reception of the message, the sink will advance and continue with the following event.
 
-The sink support both FIFO and Standard queues. The sink configuration will determine which logic to apply. In case of FIFO, it is necessary to enable `content-based deduplication` and the group id is determined by an explicit configuration value or `oura-sink` by default. 
+The sink support both FIFO and Standard queues. The sink configuration will determine which logic to apply. In case of FIFO, it is necessary to enable `content-based deduplication` and the group id is determined by an explicit configuration value or `oura-sink` by default.
 
-Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc). 
+Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc).
 
 ## Configuration
 
@@ -43,10 +43,10 @@ Oura processes messages maintaining the sequence of the blocks and respecting th
 
 Connecting Oura with a FIFO queue would provide the consumer with the guarantee that the events received follow the same order as they appeared in the blockchain. This might be useful, for example, in scenarios where the processing of an event requires a reference of a previous state of the chain.
 
-Please note that rollback events might happen upstream, at the blockchain level, which need to be handled by the consumer to unwind any side-effects of the processing of the newly orphaned blocks. This problem can be mitigated by using Oura's [rollback buffer](../advanced/rollback_buffer.md) feature.
+Please note that rollback events might happen upstream, at the blockchain level, which need to be handled by the consumer to unwind any side-effects of the processing of the newly orphaned blocks. This problem can be mitigated by using Oura's [rollback buffer](../advanced/rollback_buffer) feature.
 
 If each event can be processed in isolation, if the process is idempotent or if the order doesn't affect the outcome, the recommended approach is to use a Standard queue which provides "at least once" processing guarantees, relaxing the constraints and improving the overall performance.
 
 ## Payload Size Limitation
 
-AWS SQS service has a 256kb payload size limit. This is more than enough for individual events, but it might be too little for pipelines where the `include_cbor_hex` option is enabled. If your goal of your pipeline is to access the raw CBOR content, we recommend taking a look at the [AWS S3 Sink](./aws_s3.md) that provides a direct way for storing CBOR block in an S3 bucket.
+AWS SQS service has a 256kb payload size limit. This is more than enough for individual events, but it might be too little for pipelines where the `include_cbor_hex` option is enabled. If your goal of your pipeline is to access the raw CBOR content, we recommend taking a look at the [AWS S3 Sink](./aws_s3) that provides a direct way for storing CBOR block in an S3 bucket.

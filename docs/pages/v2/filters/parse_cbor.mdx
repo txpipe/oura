@@ -1,0 +1,33 @@
+# Parse CBOR filter
+
+The `parse_cbor` filter aims to map cbor transactions to a structured transaction.
+
+However, the filter will only work when the record received in the stage is CborTx in other words a transaction in Cbor format that was previously extracted from a block by another stage, otherwise, parse_cbor will ignore and pass the record to the next stage. When the record is CborTx, parse_cbor will decode and map the Cbor to a structure, so the next stage will receive the ParsedTx record. If no filter is enabled, the stages will receive the record in CborBlock format, and if only the parse_cbor filter is enabled in `daemon.toml`, it will be necessary to enable the [split_cbor](split_block) filter for the stage to receive the CborTx format.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "ParseCbor"
+```
+
+## Examples
+
+Below is an example of the data that will be sent to the sink. A block can contain many transactions, so the sink will receive an event for each transaction in json format.
+
+```json
+{
+  "event": "apply",
+  "point": {
+    "slot": 0,
+    "hash": ""
+  },
+  "record": {
+    "inputs": [],
+    "outputs": [],
+    ...
+  }
+}
+```

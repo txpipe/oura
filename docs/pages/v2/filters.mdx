@@ -6,7 +6,10 @@ _Filters_ are intermediate steps in the pipeline that process events as they tra
 
 These are the existing filters that are included as part the main _Oura_ codebase:
 
-- [Fingerprint](filters/fingerprint.md): a filter that adds a (probably) unique identifier (fingerprint) to each event.
-- [Selection](filters/selection.md): a filter that evaluates different built-in predicates to decide which events should go through the pipeline.
+- [ParseCbor](filters/parse_cbor): a filter that maps cbor transactions to a data structure.
+- [SplitBlock](filters/split_block): a filter that will decode the cbor block and extract all transactions in an event in the format CborTx.
+- [Deno](filters/deno): a filter that allows JS code to be implemented as a stage within the pipeline.
+- [DSL](filters/dsl): a filter that can select which events to block and which to let pass.
+- [Legacy V1](filters/legacy_v1): a filter that transforms the block data to the Oura V1 data structure.
 
 New filters are being developed, information will be added in this documentation to reflect the updated list. Contributions and feature request are welcome in our [Github Repo](https://github.com/txpipe/oura).
