@@ -322,7 +322,7 @@ impl EventWriter<'_> {
             transactions: None,
         };
 
-        if self.config.include_block_details {
+        if self.config.include_block_details || self.config.include_transaction_details {
             let txs = source
                 .txs()
                 .iter()
