@@ -16,7 +16,23 @@ export default {
   useNextSeoProps() {
     return {
       titleTemplate: "%s – Oura",
+      description: "The tail of Cardano",
+      canonical: "https://oura.txpipe.io",
       siteName: "Oura",
+      openGraph: {
+        url: "https://oura.txpipe.io",
+        title: "Oura",
+        description: "The tail of Cardano",
+        images: [
+          {
+            url: "https://oura.txpipe.io/logo.svg",
+            width: 732,
+            height: 287,
+            alt: "Oura",
+            type: "image/svg",
+          },
+        ],
+      },
     };
   },
 };
