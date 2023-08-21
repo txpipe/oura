@@ -1,6 +1,6 @@
 use gasket::framework::*;
 use pallas::network::miniprotocols::Point;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use tracing::error;
 
 use crate::framework::*;
@@ -30,7 +30,7 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let out = match unit {
         ChainEvent::Apply(point, record) => match record {
             Record::ParsedTx(tx) => {
-                if stage.predicate.tx_match(point, tx) {
+                if stage.predicate.tx_match(point, tx)? {
                     Ok(Some(unit.to_owned()))
                 } else {
                     Ok(None)
@@ -49,33 +49,59 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     out
 });
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AddressPattern {
-    pub exact_hex: Option<String>,
-    pub exact_bech32: Option<String>,
-    pub payment_hex: Option<String>,
-    pub payment_bech32: Option<String>,
-    pub stake_hex: Option<String>,
-    pub stake_bech32: Option<String>,
+    pub exact: Option<AddressValue>,
+    pub payment: Option<AddressValue>,
+    pub stake: Option<AddressValue>,
     pub is_script: Option<bool>,
 }
+#[derive(Clone, Debug)]
+pub struct AddressValue {
+    value: String,
+    kind: AddressKind,
+}
+#[derive(Clone, Debug)]
+pub enum AddressKind {
+    Hex,
+    Bech32,
+}
 
-#[derive(Deserialize, Clone)]
+impl<'de> Deserialize<'de> for AddressValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        let mut address_value = AddressValue {
+            value: value.clone(),
+            kind: AddressKind::Hex,
+        };
+
+        if bech32::decode(&value).is_ok() {
+            address_value.kind = AddressKind::Bech32;
+        }
+
+        Ok(address_value)
+    }
+}
+
+#[derive(Deserialize, Clone, Debug)]
 pub struct BlockPattern {
     pub slot_before: Option<u64>,
     pub slot_after: Option<u64>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Predicate {
     Block(BlockPattern),
 }
 
 impl Predicate {
-    fn tx_match(&self, point: &Point, _: &ParsedTx) -> bool {
+    fn tx_match(&self, point: &Point, parsed_tx: &ParsedTx) -> Result<bool, WorkerError> {
         match self {
-            Predicate::Block(block_pattern) => self.slot_match(point, block_pattern),
+            Predicate::Block(block_pattern) => Ok(self.slot_match(point, block_pattern)),
         }
     }
 
