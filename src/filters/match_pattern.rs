@@ -1,6 +1,9 @@
 use gasket::framework::*;
-use pallas::network::miniprotocols::Point;
-use serde::{Deserialize, Deserializer};
+use pallas::{
+    ledger::addresses::{Address, StakeAddress},
+    network::miniprotocols::Point,
+};
+use serde::Deserialize;
 use tracing::error;
 
 use crate::framework::*;
@@ -50,39 +53,59 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
 });
 
 #[derive(Deserialize, Clone, Debug)]
+pub enum AddressPatternValue {
+    ExactHex(String),
+    ExactBech32(String),
+    PaymentHex(String),
+    PaymentBech32(String),
+    StakeHex(String),
+    StakeBech32(String),
+}
+
+#[derive(Deserialize, Clone, Debug)]
 pub struct AddressPattern {
-    pub exact: Option<AddressValue>,
-    pub payment: Option<AddressValue>,
-    pub stake: Option<AddressValue>,
+    pub value: AddressPatternValue,
     pub is_script: Option<bool>,
 }
-#[derive(Clone, Debug)]
-pub struct AddressValue {
-    value: String,
-    kind: AddressKind,
-}
-#[derive(Clone, Debug)]
-pub enum AddressKind {
-    Hex,
-    Bech32,
-}
 
-impl<'de> Deserialize<'de> for AddressValue {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = String::deserialize(deserializer)?;
-        let mut address_value = AddressValue {
-            value: value.clone(),
-            kind: AddressKind::Hex,
-        };
+impl AddressPattern {
+    fn address_match(&self, address: &Address) -> Result<bool, WorkerError> {
+        match address {
+            Address::Byron(addr) => match &self.value {
+                AddressPatternValue::ExactHex(exact_hex) => Ok(addr.to_hex().eq(exact_hex)),
+                AddressPatternValue::PaymentHex(payment_hex) => Ok(addr.to_hex().eq(payment_hex)),
+                _ => Ok(false),
+            },
+            Address::Shelley(addr) => match &self.value {
+                AddressPatternValue::ExactHex(exact_hex) => Ok(addr.to_hex().eq(exact_hex)),
+                AddressPatternValue::ExactBech32(exact_bech32) => {
+                    Ok(addr.to_bech32().or_panic()?.eq(exact_bech32))
+                }
+                AddressPatternValue::PaymentHex(payment_hex) => {
+                    Ok(addr.payment().to_hex().eq(payment_hex))
+                }
+                AddressPatternValue::PaymentBech32(payment_bech32) => {
+                    Ok(addr.payment().to_bech32().or_panic()?.eq(payment_bech32))
+                }
+                AddressPatternValue::StakeHex(stake_hex) => {
+                    if addr.delegation().as_hash().is_none() {
+                        return Ok(false);
+                    }
 
-        if bech32::decode(&value).is_ok() {
-            address_value.kind = AddressKind::Bech32;
+                    let stake_address: StakeAddress = addr.clone().try_into().or_panic()?;
+                    Ok(stake_address.to_hex().eq(stake_hex))
+                }
+                AddressPatternValue::StakeBech32(stake_bech32) => {
+                    if addr.delegation().as_hash().is_none() {
+                        return Ok(false);
+                    }
+
+                    let stake_address: StakeAddress = addr.clone().try_into().or_panic()?;
+                    Ok(stake_address.to_bech32().or_panic()?.eq(stake_bech32))
+                }
+            },
+            _ => Err(WorkerError::Panic),
         }
-
-        Ok(address_value)
     }
 }
 
@@ -96,12 +119,16 @@ pub struct BlockPattern {
 #[serde(rename_all = "snake_case")]
 pub enum Predicate {
     Block(BlockPattern),
+    OutputAddress(AddressPattern),
 }
 
 impl Predicate {
     fn tx_match(&self, point: &Point, parsed_tx: &ParsedTx) -> Result<bool, WorkerError> {
         match self {
             Predicate::Block(block_pattern) => Ok(self.slot_match(point, block_pattern)),
+            Predicate::OutputAddress(address_pattern) => {
+                Ok(self.output_match(parsed_tx, address_pattern)?)
+            }
         }
     }
 
@@ -119,6 +146,26 @@ impl Predicate {
         }
 
         true
+    }
+
+    fn output_match(
+        &self,
+        tx: &ParsedTx,
+        address_pattern: &AddressPattern,
+    ) -> Result<bool, WorkerError> {
+        if address_pattern.is_script.unwrap_or_default() {
+            // TODO: validate inside script
+            return Ok(false);
+        }
+
+        for output in tx.outputs.iter() {
+            let address = Address::from_bytes(&output.address.to_vec()).or_panic()?;
+            if !address.has_script() && address_pattern.address_match(&address)? {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 }
 

@@ -1,12 +1,14 @@
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["127.0.0.1:3001"]
+
+[chain]
+type = "preprod"
 
 [intersect]
 type = "Point"
 value = [
-    4493860,
-    "ce7f821d2140419fea1a7900cf71b0c0a0e94afbb1f814a6717cff071c3b6afc",
+    37225013, "65b3d40e6114e05b662ddde737da63bbab05b86d476148614e82cde98462a6f5"
 ]
 
 [[filters]]
@@ -18,9 +20,8 @@ type = "ParseCbor"
 [[filters]]
 type = "MatchPattern"
 
-[filters.predicate.block]
-slot_after = 4493920
-slot_before = 4494020
+[filters.predicate.output_address.value]
+StakeBech32 = "stake_test1upgs54cnpf6m9g36qhrtf4d222urz94x5f09ju9cew4xkxqd0ad6t"
 
 [sink]
 type = "Redis"
