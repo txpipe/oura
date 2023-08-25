@@ -67,7 +67,6 @@ pub struct AddressPattern {
     pub value: AddressPatternValue,
     pub is_script: Option<bool>,
 }
-
 impl AddressPattern {
     fn address_match(&self, address: &Address) -> Result<bool, WorkerError> {
         match address {
@@ -104,7 +103,15 @@ impl AddressPattern {
                     Ok(stake_address.to_bech32().or_panic()?.eq(stake_bech32))
                 }
             },
-            _ => Err(WorkerError::Panic),
+            Address::Stake(stake_address) => match &self.value {
+                AddressPatternValue::StakeHex(stake_hex) => {
+                    Ok(stake_address.to_hex().eq(stake_hex))
+                }
+                AddressPatternValue::StakeBech32(stake_bech32) => {
+                    Ok(stake_address.to_bech32().or_panic()?.eq(stake_bech32))
+                }
+                _ => Ok(false),
+            },
         }
     }
 }
@@ -120,53 +127,70 @@ pub struct BlockPattern {
 pub enum Predicate {
     Block(BlockPattern),
     OutputAddress(AddressPattern),
+    WithdrawalAddress(AddressPattern),
+    CollateralAddress(AddressPattern),
 }
 
 impl Predicate {
-    fn tx_match(&self, point: &Point, parsed_tx: &ParsedTx) -> Result<bool, WorkerError> {
+    fn tx_match(&self, point: &Point, tx: &ParsedTx) -> Result<bool, WorkerError> {
         match self {
-            Predicate::Block(block_pattern) => Ok(self.slot_match(point, block_pattern)),
-            Predicate::OutputAddress(address_pattern) => {
-                Ok(self.output_match(parsed_tx, address_pattern)?)
+            Predicate::Block(block_pattern) => Ok(block_match(point, block_pattern)),
+            Predicate::OutputAddress(address_pattern) => Ok(output_match(tx, address_pattern)?),
+            Predicate::WithdrawalAddress(address_pattern) => {
+                Ok(withdrawal_match(tx, address_pattern)?)
+            }
+            Predicate::CollateralAddress(address_pattern) => {
+                Ok(collateral_match(tx, address_pattern)?)
             }
         }
     }
+}
 
-    fn slot_match(&self, point: &Point, block_pattern: &BlockPattern) -> bool {
-        if let Some(slot_after) = block_pattern.slot_after {
-            if point.slot_or_default() <= slot_after {
-                return false;
-            }
+fn block_match(point: &Point, block_pattern: &BlockPattern) -> bool {
+    if let Some(slot_after) = block_pattern.slot_after {
+        if point.slot_or_default() <= slot_after {
+            return false;
         }
-
-        if let Some(slot_before) = block_pattern.slot_before {
-            if point.slot_or_default() >= slot_before {
-                return false;
-            }
-        }
-
-        true
     }
 
-    fn output_match(
-        &self,
-        tx: &ParsedTx,
-        address_pattern: &AddressPattern,
-    ) -> Result<bool, WorkerError> {
-        if address_pattern.is_script.unwrap_or_default() {
-            // TODO: validate inside script
-            return Ok(false);
+    if let Some(slot_before) = block_pattern.slot_before {
+        if point.slot_or_default() >= slot_before {
+            return false;
         }
-
-        for output in tx.outputs.iter() {
-            let address = Address::from_bytes(&output.address.to_vec()).or_panic()?;
-            if !address.has_script() && address_pattern.address_match(&address)? {
-                return Ok(true);
-            }
-        }
-
-        Ok(false)
     }
+
+    true
+}
+
+fn output_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
+    if address_pattern.is_script.unwrap_or_default() {
+        // TODO: validate inside script
+        return Ok(false);
+    }
+
+    for output in tx.outputs.iter() {
+        let address = Address::from_bytes(&output.address.to_vec()).or_panic()?;
+        if !address.has_script() && address_pattern.address_match(&address)? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn withdrawal_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
+    for withdrawal in tx.withdrawals.iter() {
+        let address = Address::from_bytes(&withdrawal.reward_account.to_vec()).or_panic()?;
+        if address_pattern.address_match(&address)? {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn collateral_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
+    todo!();
 }
 
 #[derive(Deserialize)]
