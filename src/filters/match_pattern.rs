@@ -20,12 +20,11 @@ pub struct Stage {
     ops_count: gasket::metrics::Counter,
 }
 
-#[derive(Default)]
 pub struct Worker;
 
 impl From<&Stage> for Worker {
     fn from(_: &Stage) -> Self {
-        Worker::default()
+        Worker {}
     }
 }
 
@@ -169,7 +168,7 @@ fn output_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool,
     }
 
     for output in tx.outputs.iter() {
-        let address = Address::from_bytes(&output.address.to_vec()).or_panic()?;
+        let address = Address::from_bytes(&output.address).or_panic()?;
         if !address.has_script() && address_pattern.address_match(&address)? {
             return Ok(true);
         }
@@ -180,7 +179,7 @@ fn output_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool,
 
 fn withdrawal_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
     for withdrawal in tx.withdrawals.iter() {
-        let address = Address::from_bytes(&withdrawal.reward_account.to_vec()).or_panic()?;
+        let address = Address::from_bytes(&withdrawal.reward_account).or_panic()?;
         if address_pattern.address_match(&address)? {
             return Ok(true);
         }
@@ -190,7 +189,14 @@ fn withdrawal_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<b
 }
 
 fn collateral_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
-    todo!();
+    if tx.collateral.is_some() {
+        if let Some(collateral_return) = &tx.collateral.as_ref().unwrap().collateral_return {
+            let address = Address::from_bytes(&collateral_return.address).or_panic()?;
+            return address_pattern.address_match(&address);
+        }
+    }
+
+    Ok(false)
 }
 
 #[derive(Deserialize)]
