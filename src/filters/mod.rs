@@ -10,6 +10,7 @@ pub mod deno;
 pub mod dsl;
 pub mod json;
 pub mod legacy_v1;
+pub mod match_pattern;
 pub mod noop;
 pub mod parse_cbor;
 pub mod split_block;
@@ -24,6 +25,7 @@ pub enum Bootstrapper {
     Wasm(wasm::Stage),
     Deno(deno::Stage),
     ParseCbor(parse_cbor::Stage),
+    MatchPattern(match_pattern::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -37,6 +39,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Wasm(p) => p.input.connect(adapter),
             Bootstrapper::Deno(p) => p.input.connect(adapter),
             Bootstrapper::ParseCbor(p) => p.input.connect(adapter),
+            Bootstrapper::MatchPattern(p) => p.input.connect(adapter),
         }
     }
 
@@ -50,6 +53,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Wasm(p) => p.output.connect(adapter),
             Bootstrapper::Deno(p) => p.output.connect(adapter),
             Bootstrapper::ParseCbor(p) => p.output.connect(adapter),
+            Bootstrapper::MatchPattern(p) => p.output.connect(adapter),
         }
     }
 
@@ -63,6 +67,7 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Wasm(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::MatchPattern(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -78,6 +83,7 @@ pub enum Config {
     Wasm(wasm::Config),
     Deno(deno::Config),
     ParseCbor(parse_cbor::Config),
+    MatchPattern(match_pattern::Config),
 }
 
 impl Config {
@@ -91,6 +97,7 @@ impl Config {
             Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
             Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
+            Config::MatchPattern(c) => Ok(Bootstrapper::MatchPattern(c.bootstrapper(ctx)?)),
         }
     }
 }
