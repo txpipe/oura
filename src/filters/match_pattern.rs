@@ -128,6 +128,9 @@ pub enum Predicate {
     OutputAddress(AddressPattern),
     WithdrawalAddress(AddressPattern),
     CollateralAddress(AddressPattern),
+    Not(Box<Predicate>),
+    AnyOf(Vec<Predicate>),
+    AllOf(Vec<Predicate>),
 }
 
 impl Predicate {
@@ -140,6 +143,23 @@ impl Predicate {
             }
             Predicate::CollateralAddress(address_pattern) => {
                 Ok(collateral_match(tx, address_pattern)?)
+            }
+            Predicate::Not(x) => Ok(!x.tx_match(point, tx)?),
+            Predicate::AnyOf(x) => {
+                for p in x {
+                    if p.tx_match(point, tx)? {
+                        return Ok(true);
+                    };
+                }
+                Ok(false)
+            }
+            Predicate::AllOf(x) => {
+                for p in x {
+                    if !p.tx_match(point, tx)? {
+                        return Ok(false);
+                    };
+                }
+                Ok(true)
             }
         }
     }
