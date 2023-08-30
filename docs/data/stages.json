@@ -1,0 +1,74 @@
+{
+    "sources": {
+        "N2N": {
+            "name": "N2N",
+            "fields": [
+                {
+                    "name": "Peers",
+                    "required": true,
+                    "key": "peers"
+                }
+            ]
+        },
+        "N2C": {
+            "name": "N2C",
+            "fields": [
+                {
+                    "name": "Socket Path",
+                    "required": true,
+                    "key": "socket_path"
+                }
+            ]
+        },
+        "UtxoRPC": {
+            "name": "Utxo RPC",
+            "fields": [
+                {
+                    "name": "URL (Dolos Node)",
+                    "required": true,
+                    "key": "url"
+                }
+            ]
+        }
+    },
+    "filters": {
+        "ParseCbor": {
+            "name": "Parse Cbor"
+        },
+        "SplitBlock": {
+            "name": "Split Block"
+        },
+        "Deno": {
+            "name": "Deno",
+            "fields": [
+                {
+                    "name": "Main Module (JS file path)",
+                    "required": true,
+                    "key": "main_module"
+                },
+                {
+                    "name": "Use Async (true/false)",
+                    "required": true,
+                    "key": "use_async"
+                }
+            ]
+        }
+    },
+    "sinks": {
+        "Redis": {
+            "name": "Redis",
+            "fields": [
+                {
+                    "name": "URL",
+                    "required": true,
+                    "key": "url"
+                },
+                {
+                    "name": "Stream Name",
+                    "required": false,
+                    "key": "stream_name"
+                }
+            ]
+        }
+    }
+}
