@@ -92,6 +92,7 @@ export function Configuration() {
     [TYPES.SINKS]: {
       Stdout: <SimpleStage type="Stdout" onAdd={addSinkStage} />,
       FileRotate: <FileRotateStage onAdd={addSinkStage} />,
+      Terminal: <TerminalStage onAdd={addSinkStage} />,
       Redis: <RedisStage onAdd={addSinkStage} />,
       AwsLambda: <AwsLambdaStage onAdd={addSinkStage} />,
       AwsS3: <AwsS3Stage onAdd={addSinkStage} />,
@@ -1721,6 +1722,88 @@ function KafkaStage({ onAdd }) {
 
             if (paritioning) {
               stage.paritioning = paritioning;
+            }
+
+            onAdd(stage);
+          }}
+        >
+          Add stage
+        </button>
+      </div>
+    </>
+  );
+}
+
+function TerminalStage({ onAdd }) {
+  const [throttleMinSpanMillis, setThrottleMinSpanMillis] = useState();
+  const [adahandlePolicy, setAdahandlePolicy] = useState();
+  const [wrap, setWrap] = useState(false);
+
+  return (
+    <>
+      <div className="mb-5">
+        <div className="mb-2">
+          <label
+            htmlFor="throttleMinSpanMillis"
+            className="text-sm font-medium text-gray dark:text-gray-200"
+          >
+            Throttle Min Span Millis
+          </label>
+          <input
+            id="throttleMinSpanMillis"
+            type="number"
+            className="w-full mt-1 px-3 py-2 focus:outline-none rounded-md sm:text-sm border shadow-sm border-slate-300 dark:border-none"
+            onChange={(e) => setThrottleMinSpanMillis(e.target.value)}
+          />
+        </div>
+
+        <div className="mb-2">
+          <label
+            htmlFor="adahandlePolicy"
+            className="text-sm font-medium text-gray dark:text-gray-200"
+          >
+            Ada Handle Policy
+          </label>
+          <input
+            id="adahandlePolicy"
+            type="text"
+            className="w-full mt-1 px-3 py-2 focus:outline-none rounded-md sm:text-sm border shadow-sm border-slate-300 dark:border-none"
+            onChange={(e) => setAdahandlePolicy(e.target.value)}
+          />
+        </div>
+
+        <div className="mb-2">
+          <input
+            type="checkbox"
+            id="wrap"
+            checked={wrap}
+            onChange={(_) => setWrap(!wrap)}
+          />
+          <label
+            htmlFor="wrap"
+            className="text-sm font-medium text-gray dark:text-gray-200 ms-3"
+          >
+            Wrap
+          </label>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end ">
+        <button
+          className="bg-gray-500 text-white dark:text-gray-200 font-bold py-2 px-4 rounded"
+          onClick={() => {
+            const stage = {
+              type: "Terminal",
+            };
+
+            if (throttleMinSpanMillis) {
+              stage.throttle_min_span_millis = throttleMinSpanMillis;
+            }
+            if (adahandlePolicy) {
+              stage.wrap = adahandlePolicy;
+            }
+            if (wrap) {
+              stage.adahandle_policy = wrap;
             }
 
             onAdd(stage);
