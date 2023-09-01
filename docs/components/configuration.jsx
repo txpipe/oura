@@ -19,8 +19,9 @@ export function Configuration() {
     const hasFilterIndex = currentStages.filters?.findIndex(
       (s) => s.type == stage.type
     );
+    console.log(hasFilterIndex)
 
-    if (hasFilterIndex && hasFilterIndex != -1) {
+    if (hasFilterIndex != undefined && hasFilterIndex != -1) {
       currentStages.filters[hasFilterIndex] = stage;
     } else {
       currentStages.filters = currentStages.filters?.concat(stage) || [stage];
@@ -174,7 +175,7 @@ export function Configuration() {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-3 grid-cols-1 gap-3">
           <div>
             <button
               className="w-full bg-gray-500 hover:bg-gray-700 text-white dark:text-gray-200 font-bold py-2 px-4 rounded pointer before:pointer__right dark:before:pointer__right--dark"
