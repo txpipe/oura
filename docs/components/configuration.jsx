@@ -183,12 +183,14 @@ export function Configuration() {
               add source
             </button>
 
-            {currentStages.source
-              ? StageCard({
+            {currentStages.source ? (
+              <StageCard
+                value={{
                   ...currentStages.source,
                   intersect: currentStages.intersect,
-                })
-              : null}
+                }}
+              />
+            ) : null}
           </div>
           <div>
             <button
@@ -197,8 +199,10 @@ export function Configuration() {
             >
               add filter
             </button>
-            {currentStages[TYPES.FILTERS]?.map((filter, index) => (
-              <div key={index}>{StageCard(filter)}</div>
+            {currentStages[TYPES.FILTERS]?.map((value, index) => (
+              <div key={index}>
+                <StageCard value={value} />
+              </div>
             ))}
           </div>
 
@@ -210,7 +214,9 @@ export function Configuration() {
               add sink
             </button>
 
-            {currentStages.sink ? StageCard(currentStages.sink) : null}
+            {currentStages.sink ? (
+              <StageCard value={currentStages.sink} />
+            ) : null}
           </div>
         </div>
       </div>
@@ -1727,9 +1733,9 @@ function KafkaStage({ onAdd }) {
   );
 }
 
-function StageCard(value) {
+function StageCard({ value }) {
   return (
-    <div className="border border-gray-500 rounded mt-2 p-2">
+    <div className="border border-gray-500 rounded mt-2 p-2 relative">
       {Object.keys(value).map((k) => (
         <div key={k} className="text-gray dark:text-gray-200">
           {typeof value[k] == "object" && !Array.isArray(value[k]) ? (
