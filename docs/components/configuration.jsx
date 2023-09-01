@@ -19,7 +19,6 @@ export function Configuration() {
     const hasFilterIndex = currentStages.filters?.findIndex(
       (s) => s.type == stage.type
     );
-    console.log(hasFilterIndex)
 
     if (hasFilterIndex != undefined && hasFilterIndex != -1) {
       currentStages.filters[hasFilterIndex] = stage;
