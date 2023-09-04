@@ -1,14 +1,14 @@
+use std::str::FromStr;
+
 use gasket::framework::*;
 use pallas::{
     crypto::hash::Hash,
-    ledger::addresses::{
-        Address, PaymentKeyHash, ShelleyDelegationPart, ShelleyPaymentPart, StakeAddress,
-        StakeKeyHash,
-    },
+    ledger::addresses::{Address, ShelleyDelegationPart, ShelleyPaymentPart},
     network::miniprotocols::Point,
 };
 use serde::Deserialize;
-use tracing::error;
+use serde_with::DeserializeFromStr;
+use tracing::{error, warn};
 
 mod eval;
 
@@ -17,10 +17,19 @@ use crate::framework::*;
 #[derive(Stage)]
 #[stage(name = "filter-match-pattern", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
-    predicate: Predicate,
+    predicate: TxPredicate,
 
     pub input: FilterInputPort,
     pub output: FilterOutputPort,
+
+    #[metric]
+    pass_count: gasket::metrics::Counter,
+
+    #[metric]
+    drop_count: gasket::metrics::Counter,
+
+    #[metric]
+    inconclusive_count: gasket::metrics::Counter,
 
     #[metric]
     ops_count: gasket::metrics::Counter,
@@ -34,27 +43,36 @@ impl From<&Stage> for Worker {
     }
 }
 
-gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
-    let out = match unit {
-        ChainEvent::Apply(point, record) => match record {
-            Record::ParsedTx(tx) => {
-                if stage.predicate.tx_match(point, tx)? {
-                    Ok(Some(unit.to_owned()))
-                } else {
-                    Ok(None)
-                }
-            },
-            _ => {
-                error!("The MatchPattern filter is valid only with the ParsedTx record");
-                Err(WorkerError::Panic)
+fn eval_record(stage: &Stage, point: &Point, record: &Record) -> Option<Record> {
+    match eval::eval(&stage.predicate, point, record) {
+        Ok(pass) => {
+            if pass {
+                stage.pass_count.inc(1);
+                Some(record.clone())
+            } else {
+                stage.drop_count.inc(1);
+                None
             }
-        },
-        _ => Ok(Some(unit.to_owned()))
-    }?;
+        }
+        Err(eval::Error::Inconclusive(msg)) => {
+            warn!(msg);
+            stage.inconclusive_count.inc(1);
+            None
+        }
+    }
+}
 
+gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     stage.ops_count.inc(1);
 
-    out
+    if let Some(record) = unit.record() {
+        eval_record(stage, unit.point(), record)
+            .map(|x| unit.new_record(x))
+            .map(|x| vec![x])
+            .unwrap_or(vec![])
+    } else {
+        vec![unit.clone()]
+    }
 });
 
 #[derive(Clone, Debug)]
@@ -85,6 +103,12 @@ pub struct UtxoRefPattern {
 #[derive(Clone, Debug)]
 pub struct DatumPattern {
     hash: Option<Hash<32>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct WithdrawalPattern {
+    quantity: Option<QuantityPattern>,
+    // reward account pattern?
 }
 
 #[derive(Clone, Debug)]
@@ -119,12 +143,11 @@ pub struct OutputPattern {
 #[derive(Clone, Debug)]
 pub struct MetadataPattern {
     label: Option<u32>,
-    key: Option<TextPattern>,
-    value: Option<TextPattern>,
+    key: Option<AsciiPattern>,
+    value: Option<AsciiPattern>,
 }
 
-#[derive(Clone, Debug)]
-#[serde(rename_all = "snake_case")]
+#[derive(Clone, Debug, DeserializeFromStr)]
 pub enum TxPredicate {
     HashEquals(Option<Hash<32>>),
     IsValid(Option<bool>),
@@ -145,11 +168,19 @@ pub enum TxPredicate {
     SomeCollateralMatches(InputPattern),
     CollateralReturnMatches(OutputPattern),
     TotalCollateralMatches(QuantityPattern),
-    SomeWithdrawalMatches(OutputPattern),
+    SomeWithdrawalMatches(WithdrawalPattern),
     SomeAddressMatches(AddressPattern),
     Not(Box<TxPredicate>),
     AnyOf(Vec<TxPredicate>),
     AllOf(Vec<TxPredicate>),
+}
+
+impl FromStr for TxPredicate {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        todo!()
+    }
 }
 
 #[derive(Deserialize)]
@@ -162,6 +193,9 @@ impl Config {
         let stage = Stage {
             predicate: self.predicate,
             ops_count: Default::default(),
+            pass_count: Default::default(),
+            drop_count: Default::default(),
+            inconclusive_count: Default::default(),
             input: Default::default(),
             output: Default::default(),
         };

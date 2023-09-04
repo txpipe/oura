@@ -1,12 +1,14 @@
-use pallas::ledger::addresses::Address;
+use pallas::{ledger::addresses::Address, network::miniprotocols::Point};
 use thiserror::Error;
-use utxorpc::proto::cardano::v1::{Asset, Multiasset, PlutusData, Tx, TxInput, TxOutput};
+use utxorpc::proto::cardano::v1::{
+    Asset, Multiasset, PlutusData, Tx, TxInput, TxOutput, Withdrawal,
+};
 
 use crate::framework::Record;
 
 use super::{
-    AddressPattern, AssetPattern, DatumPattern, InputPattern, OutputPattern, QuantityPattern,
-    TxPredicate, UtxoRefPattern,
+    AddressPattern, AssetPattern, BlockPattern, DatumPattern, InputPattern, OutputPattern,
+    QuantityPattern, TxPredicate, UtxoRefPattern, WithdrawalPattern,
 };
 
 fn eval_quantity_matches(value: u64, pattern: &QuantityPattern) -> EvalResult {
@@ -14,7 +16,7 @@ fn eval_quantity_matches(value: u64, pattern: &QuantityPattern) -> EvalResult {
         QuantityPattern::Equals(expected) => value.eq(expected),
         QuantityPattern::RangeInclusive(a, b) => value.ge(a) && value.le(b),
         QuantityPattern::Greater(a) => value.gt(a),
-        QuantityPattern::GreaterOrEqual(_) => value.ge(a),
+        QuantityPattern::GreaterOrEqual(a) => value.ge(a),
         QuantityPattern::Lower(a) => value.lt(a),
         QuantityPattern::LowerOrEqual(b) => value.le(b),
     };
@@ -23,13 +25,13 @@ fn eval_quantity_matches(value: u64, pattern: &QuantityPattern) -> EvalResult {
 }
 
 fn eval_block_matches(point: &Point, pattern: &BlockPattern) -> EvalResult {
-    if let Some(slot_after) = block_pattern.slot_after {
+    if let Some(slot_after) = pattern.slot_after {
         if point.slot_or_default() <= slot_after {
             return Ok(false);
         }
     }
 
-    if let Some(slot_before) = block_pattern.slot_before {
+    if let Some(slot_before) = pattern.slot_before {
         if point.slot_or_default() >= slot_before {
             return Ok(false);
         }
@@ -42,21 +44,23 @@ fn eval_address_matches(addr: &[u8], pattern: &AddressPattern) -> EvalResult {
     let addr =
         Address::from_bytes(addr).map_err(|_| Error::inconclusive("can't parse address bytes"))?;
 
-    match (pattern, addr) {
-        (AddressPattern::Exact(expected), _) => address.eq(expected),
+    let is_match = match (pattern, &addr) {
+        (AddressPattern::Exact(expected), _) => addr.eq(expected),
         (AddressPattern::Payment(expected), Address::Shelley(shelley)) => {
-            Ok(shelley.payment().eq(expected))
+            shelley.payment().eq(expected)
         }
         (AddressPattern::Delegation(expected), Address::Shelley(shelley)) => {
-            Ok(shelley.delegation().eq(expected))
+            shelley.delegation().eq(expected)
         }
-        _ => Ok(false),
-    }
+        _ => false,
+    };
+
+    Ok(is_match)
 }
 
 fn eval_datum_matches(datum_hash: &[u8], pattern: &DatumPattern) -> EvalResult {
     if let Some(expected) = pattern.hash {
-        let eval = datum_hash.eq(&expected);
+        let eval = datum_hash.as_ref().eq(expected.as_ref());
 
         if !eval {
             return Ok(false);
@@ -67,15 +71,15 @@ fn eval_datum_matches(datum_hash: &[u8], pattern: &DatumPattern) -> EvalResult {
 }
 
 fn eval_asset_matches(policy: &[u8], asset: &Asset, pattern: &AssetPattern) -> EvalResult {
-    if Some(pattern) = &pattern.policy {
-        let eval = policy.eq(&pattern);
+    if let Some(pattern) = &pattern.policy {
+        let eval = policy.eq(pattern.as_slice());
 
         if !eval {
             return Ok(false);
         }
     }
 
-    if Some(pattern) = &pattern.quantity {
+    if let Some(pattern) = &pattern.quantity {
         let eval = eval_quantity_matches(asset.output_coin, pattern)?;
 
         if !eval {
@@ -118,7 +122,7 @@ fn eval_output_matches(output: &TxOutput, pattern: &OutputPattern) -> EvalResult
     }
 
     if let Some(pattern) = &pattern.assets {
-        let eval = eval_some_asset_matches(&output.assets, patter)?;
+        let eval = eval_some_asset_matches(&output.assets, pattern)?;
 
         if !eval {
             return Ok(false);
@@ -128,7 +132,7 @@ fn eval_output_matches(output: &TxOutput, pattern: &OutputPattern) -> EvalResult
     Ok(true)
 }
 
-fn eval_some_output_matches(tx: &Tx, pattern: &OutputPattern) -> Result<bool, WorkerError> {
+fn eval_some_output_matches(tx: &Tx, pattern: &OutputPattern) -> EvalResult {
     for output in tx.outputs.iter() {
         let eval = eval_output_matches(output, pattern)?;
 
@@ -140,9 +144,21 @@ fn eval_some_output_matches(tx: &Tx, pattern: &OutputPattern) -> Result<bool, Wo
     Ok(false)
 }
 
-fn eval_some_withdrawal_matches(tx: &Tx, pattern: &OutputPattern) -> EvalResult {
+fn eval_withdrawal_matches(withdrawal: &Withdrawal, pattern: &WithdrawalPattern) -> EvalResult {
+    if let Some(pattern) = &pattern.quantity {
+        let eval = eval_quantity_matches(withdrawal.coin, pattern)?;
+
+        if eval {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+fn eval_some_withdrawal_matches(tx: &Tx, pattern: &WithdrawalPattern) -> EvalResult {
     for withdrawal in tx.withdrawals.iter() {
-        let eval = eval_output_matches(withdrawal, pattern)?;
+        let eval = eval_withdrawal_matches(withdrawal, pattern)?;
 
         if eval {
             return Ok(true);
@@ -168,8 +184,8 @@ fn eval_some_collateral_matches(tx: &Tx, pattern: &InputPattern) -> EvalResult {
 
 fn eval_collateral_return_matches(tx: &Tx, pattern: &OutputPattern) -> EvalResult {
     if let Some(collateral) = &tx.collateral {
-        if let Some(return_) = collateral.collateral_return {
-            let eval = eval_output_matches(&return_, pattern)?;
+        if let Some(return_) = &collateral.collateral_return {
+            let eval = eval_output_matches(return_, pattern)?;
 
             if eval {
                 return Ok(true);
@@ -180,9 +196,21 @@ fn eval_collateral_return_matches(tx: &Tx, pattern: &OutputPattern) -> EvalResul
     Ok(false)
 }
 
+fn eval_total_collateral_matches(tx: &Tx, pattern: &QuantityPattern) -> EvalResult {
+    if let Some(collateral) = &tx.collateral {
+        let eval = eval_quantity_matches(collateral.total_collateral, pattern)?;
+
+        if eval {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
 fn eval_input_utxoref_matches(input: &TxInput, pattern: &UtxoRefPattern) -> EvalResult {
     if let Some(pattern) = &pattern.tx_hash {
-        let eval = input.tx_hash.as_ref().eq(&pattern);
+        let eval = input.tx_hash.as_ref().eq(pattern.as_ref());
 
         if !eval {
             return Ok(false);
@@ -201,7 +229,7 @@ fn eval_input_utxoref_matches(input: &TxInput, pattern: &UtxoRefPattern) -> Eval
 }
 
 fn eval_input_matches(input: &TxInput, pattern: &InputPattern) -> EvalResult {
-    if let Some(pattern) = pattern.utxo {
+    if let Some(pattern) = &pattern.utxo {
         let eval = eval_input_utxoref_matches(input, &pattern)?;
 
         if !eval {
@@ -210,7 +238,7 @@ fn eval_input_matches(input: &TxInput, pattern: &InputPattern) -> EvalResult {
     }
 
     if let Some(pattern) = &pattern.from {
-        let output = input.as_output.ok_or(Error::no_input_ref())?;
+        let output = input.as_output.as_ref().ok_or(Error::no_input_ref())?;
 
         let eval = eval_address_matches(&output.address, &pattern)?;
 
@@ -220,7 +248,7 @@ fn eval_input_matches(input: &TxInput, pattern: &InputPattern) -> EvalResult {
     }
 
     if let Some(pattern) = &pattern.datum {
-        let output = input.as_output.ok_or(Error::no_input_ref())?;
+        let output = input.as_output.as_ref().ok_or(Error::no_input_ref())?;
 
         let eval = eval_datum_matches(&output.datum_hash, &pattern)?;
 
@@ -230,9 +258,9 @@ fn eval_input_matches(input: &TxInput, pattern: &InputPattern) -> EvalResult {
     }
 
     if let Some(pattern) = &pattern.assets {
-        let output = input.as_output.ok_or(Error::no_input_ref())?;
+        let output = input.as_output.as_ref().ok_or(Error::no_input_ref())?;
 
-        let eval = eval_some_asset_matches(&output.assets, patter)?;
+        let eval = eval_some_asset_matches(&output.assets, pattern)?;
 
         if !eval {
             return Ok(false);
@@ -256,7 +284,7 @@ fn eval_some_input_matches(tx: &Tx, pattern: &InputPattern) -> EvalResult {
 
 fn eval_some_input_address_matches(tx: &Tx, pattern: &AddressPattern) -> EvalResult {
     for input in tx.inputs.iter() {
-        let output = input.as_output.ok_or(Error::no_input_ref())?;
+        let output = input.as_output.as_ref().ok_or(Error::no_input_ref())?;
 
         let eval = eval_address_matches(&output.address, pattern)?;
 
@@ -270,13 +298,15 @@ fn eval_some_input_address_matches(tx: &Tx, pattern: &AddressPattern) -> EvalRes
 
 fn eval_some_input_asset_matches(tx: &Tx, pattern: &AssetPattern) -> EvalResult {
     for input in tx.inputs.iter() {
-        let output = input.as_output.ok_or(Error::no_input_ref())?;
+        let output = input.as_output.as_ref().ok_or(Error::no_input_ref())?;
 
-        for multiasset in output.assets {
-            let eval = eval_asset_matches(&multiasset.policy_id, asset, pattern)?;
+        for multiasset in output.assets.iter() {
+            for asset in multiasset.assets.iter() {
+                let eval = eval_asset_matches(&multiasset.policy_id, asset, pattern)?;
 
-            if eval {
-                return Ok(true);
+                if eval {
+                    return Ok(true);
+                }
             }
         }
     }
@@ -297,7 +327,7 @@ fn eval_some_output_address_matches(tx: &Tx, pattern: &AddressPattern) -> EvalRe
 }
 
 fn eval_tx_any_of(predicates: &[TxPredicate], point: &Point, tx: &Tx) -> EvalResult {
-    for p in x {
+    for p in predicates.iter() {
         if eval_tx(p, point, tx)? {
             return Ok(true);
         };
@@ -307,8 +337,8 @@ fn eval_tx_any_of(predicates: &[TxPredicate], point: &Point, tx: &Tx) -> EvalRes
 }
 
 fn eval_tx_all_of(predicates: &[TxPredicate], point: &Point, tx: &Tx) -> EvalResult {
-    for p in x {
-        if !p.tx_match(point, tx)? {
+    for p in predicates.iter() {
+        if !eval_tx(p, point, tx)? {
             return Ok(false);
         };
     }
@@ -354,13 +384,13 @@ fn eval_tx(predicate: &TxPredicate, point: &Point, tx: &Tx) -> EvalResult {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("predicate evaluation is inconclusive {}")]
+    #[error("predicate evaluation is inconclusive {0}")]
     Inconclusive(String),
 }
 
 impl Error {
     pub fn inconclusive(msg: impl Into<String>) -> Self {
-        Self::inconclusive(msg.into())
+        Self::Inconclusive(msg.into())
     }
 
     pub fn no_input_ref() -> Self {
@@ -370,7 +400,7 @@ impl Error {
 
 pub type EvalResult = Result<bool, Error>;
 
-pub fn eval(predicate: &TxPredicate, point: &Point, record: Record) -> EvalResult {
+pub fn eval(predicate: &TxPredicate, point: &Point, record: &Record) -> EvalResult {
     match record {
         Record::ParsedTx(tx) => eval_tx(predicate, point, &tx),
         _ => Err(Error::inconclusive(
