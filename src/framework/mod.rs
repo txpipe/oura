@@ -155,6 +155,14 @@ impl ChainEvent {
 
         Ok(out)
     }
+
+    pub fn new_record(&self, new: Record) -> Self {
+        match self {
+            ChainEvent::Apply(p, _) => ChainEvent::Apply(p.clone(), new),
+            ChainEvent::Undo(p, _) => ChainEvent::Undo(p.clone(), new),
+            ChainEvent::Reset(p) => ChainEvent::Reset(p.clone()),
+        }
+    }
 }
 
 fn point_to_json(point: Point) -> JsonValue {

@@ -4,11 +4,11 @@ use serde::Deserialize;
 use crate::framework::*;
 
 //pub mod assert;
+mod assert;
 mod common;
 mod noop;
 mod stdout;
 mod terminal;
-mod assert;
 
 #[cfg(feature = "sink-file-rotate")]
 mod file_rotate;
