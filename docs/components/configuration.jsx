@@ -26,13 +26,13 @@ function reducer(state, action) {
       const hasFilterIndex = currentStages.filters?.findIndex(
         (s) => s.type == action.stage.type
       );
-  
+
       if (hasFilterIndex != undefined && hasFilterIndex != -1) {
         currentStages.filters[hasFilterIndex] = action.stage;
       } else {
         currentStages.filters = currentStages.filters?.concat(action.stage) || [action.stage];
-      }      
-  
+      }
+
       const _tomlContent = json2toml(currentStages, { newlineAfterSection: true });
       const tomlContent = (_tomlContent || "").trim();
 
@@ -66,43 +66,44 @@ function reducer(state, action) {
         openedModal: true,
         typeModal: action.type,
         optionModal: undefined
-      }
-    }
+      };
+    };
 
     case 'close_modal': {
       return {
         ...state,
         openedModal: false
-      }
-    }
+      };
+    };
 
     case 'set_option_modal': {
       return {
         ...state,
         optionModal: action.value
-      }
-    }
+      };
+    };
 
     case 'reset': {
       return {
         ...state,
         currentStages: {},
         tomlContent: ""
-      }
-      
-    }
+      };
+    };
   }
   throw Error('Unknown action: ' + action.name);
 }
 
 export function Configuration() {
 
-  const [state, dispatch] = useReducer(reducer, 
-    { openedModal: false, 
-      typeModal: null, 
-      optionModal: undefined, 
+  const [state, dispatch] = useReducer(reducer,
+    {
+      openedModal: false,
+      typeModal: null,
+      optionModal: undefined,
       currentStages: {},
-      tomlContent: "" }
+      tomlContent: ""
+    }
   );
 
   const addSourceStage = ({ source, intersect }) => {
@@ -118,25 +119,25 @@ export function Configuration() {
   };
 
   function openModal(type) {
-    dispatch({name: 'open_modal', type});
+    dispatch({ name: 'open_modal', type });
   }
 
   function closeModal() {
-    dispatch({name: 'close_modal'});
+    dispatch({ name: 'close_modal' });
   }
 
-  function setOptionModal(value){
-    dispatch({name: 'set_option_modal', value });
+  function setOptionModal(value) {
+    dispatch({ name: 'set_option_modal', value });
   }
 
-  function reset(){
-    dispatch({name: 'reset'})
+  function reset() {
+    dispatch({ name: 'reset' });
   }
 
   function copyToClipboard(button) {
-    navigator.clipboard.writeText(state.tomlContent).then(res => {      
-      button.classList.remove("hover:bg-gray-300")
-      button.classList.add("bg-emerald-200")
+    navigator.clipboard.writeText(state.tomlContent).then(res => {
+      button.classList.remove("hover:bg-gray-300");
+      button.classList.add("bg-emerald-200");
 
       const buttonContent = button.innerHTML;
       button.innerHTML = "copied to clipboard!";
@@ -298,7 +299,7 @@ export function Configuration() {
           <div className="flex justify-between">
             <small className="mt-4">config.toml</small>
             <small>
-              <button 
+              <button
                 className="bg-gray-200 hover:bg-gray-300 rounded w-36 h-10"
                 onClick={(e) => copyToClipboard(e.target)}>
                 copy to clipboard
