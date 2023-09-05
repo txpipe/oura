@@ -5,6 +5,7 @@ export function Configuration() {
   const [openedModal, setOpenedModal] = useState(false);
   const [typeModal, setTypeModal] = useState();
   const [optionModal, setoOptionModal] = useState(undefined);
+  const [tomlContent, setTomlContent] = useState("");
 
   const [currentStages, setCurrentStages] = useState({});
 
@@ -53,22 +54,13 @@ export function Configuration() {
       return;
     }
 
-    var element = document.createElement("a");
-    element.setAttribute(
-      "href",
-      "data:text/plain;charset=utf-8," +
-        encodeURIComponent(
-          json2toml(currentStages, { newlineAfterSection: true })
-        )
-    );
-    element.setAttribute("download", "daemon.toml");
+    const _tomlContent = json2toml(currentStages, { newlineAfterSection: true });
+    setTomlContent((_tomlContent || "").trim());
+  }
 
-    element.style.display = "none";
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
+  function reset(){
+    setCurrentStages({});
+    setTomlContent("");
   }
 
   const TYPES = {
@@ -162,7 +154,7 @@ export function Configuration() {
         <div className="py-5 flex justify-end">
           <button
             className="px-4 py-2 rounded font-bold me-2 text-red-500"
-            onClick={() => setCurrentStages({})}
+            onClick={reset}
           >
             reset
           </button>
@@ -171,7 +163,7 @@ export function Configuration() {
             className="border border-gray-500 text-gray-500 dark:text-gray-200 hover:bg-gray-500 hover:text-white hover:dark:text-gray-200 px-4 py-2 rounded font-bold "
             onClick={exportConfig}
           >
-            export config
+            generate config
           </button>
         </div>
 
@@ -221,6 +213,15 @@ export function Configuration() {
           </div>
         </div>
       </div>
+
+      {tomlContent && tomlContent.length > 0 && (
+        <div className="p-2">
+          <small>config.toml</small>
+          <div className="py-5 mt-2 bg-slate-100 rounded-md">
+            <pre>{tomlContent}</pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
