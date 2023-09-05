@@ -1,66 +1,151 @@
-import { useState } from "react";
+import { useState, useReducer } from "react";
 import json2toml from "json2toml";
 
-export function Configuration() {
-  const [openedModal, setOpenedModal] = useState(false);
-  const [typeModal, setTypeModal] = useState();
-  const [optionModal, setoOptionModal] = useState(undefined);
-  const [tomlContent, setTomlContent] = useState("");
+function reducer(state, action) {
+  switch (action.name) {
 
-  const [currentStages, setCurrentStages] = useState({});
+    case 'add_source': {
+      const currentStages = state.currentStages;
+      currentStages.source = action.source;
+      currentStages.intersect = action.intersect;
+
+      const _tomlContent = json2toml(currentStages, { newlineAfterSection: true });
+      const tomlContent = (_tomlContent || "").trim();
+
+      return {
+        ...state,
+        currentStages,
+        tomlContent,
+        openedModal: false,
+      };
+    }
+
+    case 'add_filter': {
+      const currentStages = state.currentStages;
+
+      const hasFilterIndex = currentStages.filters?.findIndex(
+        (s) => s.type == action.stage.type
+      );
+  
+      if (hasFilterIndex != undefined && hasFilterIndex != -1) {
+        currentStages.filters[hasFilterIndex] = action.stage;
+      } else {
+        currentStages.filters = currentStages.filters?.concat(action.stage) || [action.stage];
+      }      
+  
+      const _tomlContent = json2toml(currentStages, { newlineAfterSection: true });
+      const tomlContent = (_tomlContent || "").trim();
+
+      return {
+        ...state,
+        currentStages,
+        tomlContent,
+        openedModal: false
+      };
+    }
+
+    case 'add_sink': {
+
+      const currentStages = state.currentStages;
+      currentStages.sink = action.stage;
+
+      const _tomlContent = json2toml(currentStages, { newlineAfterSection: true });
+      const tomlContent = (_tomlContent || "").trim();
+
+      return {
+        ...state,
+        currentStages,
+        openedModal: false,
+        tomlContent
+      };
+    }
+
+    case 'open_modal': {
+      return {
+        ...state,
+        openedModal: true,
+        typeModal: action.type,
+        optionModal: undefined
+      }
+    }
+
+    case 'close_modal': {
+      return {
+        ...state,
+        openedModal: false
+      }
+    }
+
+    case 'set_option_modal': {
+      return {
+        ...state,
+        optionModal: action.value
+      }
+    }
+
+    case 'reset': {
+      return {
+        ...state,
+        currentStages: {},
+        tomlContent: ""
+      }
+      
+    }
+  }
+  throw Error('Unknown action: ' + action.name);
+}
+
+export function Configuration() {
+
+  const [state, dispatch] = useReducer(reducer, 
+    { openedModal: false, 
+      typeModal: null, 
+      optionModal: undefined, 
+      currentStages: {},
+      tomlContent: "" }
+  );
 
   const addSourceStage = ({ source, intersect }) => {
-    currentStages.source = source;
-    currentStages.intersect = intersect;
-    setCurrentStages(currentStages);
-    setOpenedModal(false);
+    dispatch({ name: 'add_source', source, intersect });
   };
 
   const addFilterStage = (stage) => {
-    const hasFilterIndex = currentStages.filters?.findIndex(
-      (s) => s.type == stage.type
-    );
-
-    if (hasFilterIndex != undefined && hasFilterIndex != -1) {
-      currentStages.filters[hasFilterIndex] = stage;
-    } else {
-      currentStages.filters = currentStages.filters?.concat(stage) || [stage];
-    }
-
-    setCurrentStages(currentStages);
-    setOpenedModal(false);
+    dispatch({ name: 'add_filter', stage });
   };
 
   const addSinkStage = (stage) => {
-    currentStages.sink = stage;
-    setCurrentStages(currentStages);
-    setOpenedModal(false);
+    dispatch({ name: 'add_sink', stage });
   };
 
   function openModal(type) {
-    setOpenedModal(true);
-    setTypeModal(type);
-    setoOptionModal(undefined);
+    dispatch({name: 'open_modal', type});
   }
 
-  function exportConfig() {
-    if (!currentStages.source) {
-      alert("Add a source");
-      return;
-    }
+  function closeModal() {
+    dispatch({name: 'close_modal'});
+  }
 
-    if (!currentStages.sink) {
-      alert("Add a sink");
-      return;
-    }
-
-    const _tomlContent = json2toml(currentStages, { newlineAfterSection: true });
-    setTomlContent((_tomlContent || "").trim());
+  function setOptionModal(value){
+    dispatch({name: 'set_option_modal', value });
   }
 
   function reset(){
-    setCurrentStages({});
-    setTomlContent("");
+    dispatch({name: 'reset'})
+  }
+
+  function copyToClipboard(button) {
+    navigator.clipboard.writeText(state.tomlContent).then(res => {      
+      button.classList.remove("hover:bg-gray-300")
+      button.classList.add("bg-emerald-200")
+
+      const buttonContent = button.innerHTML;
+      button.innerHTML = "copied to clipboard!";
+
+      setTimeout(() => {
+        button.classList.remove("bg-emerald-200");
+        button.innerHTML = buttonContent;
+      }, 1000);
+    });
   }
 
   const TYPES = {
@@ -101,18 +186,18 @@ export function Configuration() {
   return (
     <div>
       <div className="absolute">
-        {openedModal ? (
+        {state.openedModal ? (
           <>
             <div className="flex items-center overflow-y-auto fixed inset-0 z-50">
               <div className="my-6 mx-auto max-w-3xl w-full">
                 <div className="rounded-lg shadow-lg bg-white dark:bg-gray-700">
                   <div className="flex justify-between p-5">
                     <h3 className="text-3xl font-semibold capitalize">
-                      {typeModal}
+                      {state.typeModal}
                     </h3>
                     <button
                       className="p-1 float-right text-3xl leading-none"
-                      onClick={() => setOpenedModal(false)}
+                      onClick={closeModal}
                     >
                       <span className="text-gray dark:text-gray-200">×</span>
                     </button>
@@ -123,17 +208,17 @@ export function Configuration() {
                       name="stage"
                       id="stage"
                       className="w-full py-2 px-4 rounded mb-2"
-                      onChange={(e) => setoOptionModal(e.target.value)}
-                      value={optionModal}
+                      onChange={(e) => setOptionModal(e.target.value)}
+                      value={state.optionModal}
                     >
                       <option>-</option>
-                      {Object.keys(stages[typeModal]).map((k) => (
+                      {Object.keys(stages[state.typeModal]).map((k) => (
                         <option value={k} key={k}>
                           {k}
                         </option>
                       ))}
                     </select>
-                    {optionModal ? stages[typeModal][optionModal] : null}
+                    {state.optionModal ? stages[state.typeModal][state.optionModal] : null}
                   </div>
                 </div>
               </div>
@@ -153,18 +238,12 @@ export function Configuration() {
 
         <div className="py-5 flex justify-end">
           <button
-            className="px-4 py-2 rounded font-bold me-2 text-red-500"
+            className="px-4 py-2 rounded font-bold me-2 text-red-500 bg-red-100 hover:bg-red-200"
             onClick={reset}
           >
             reset
           </button>
 
-          <button
-            className="border border-gray-500 text-gray-500 dark:text-gray-200 hover:bg-gray-500 hover:text-white hover:dark:text-gray-200 px-4 py-2 rounded font-bold "
-            onClick={exportConfig}
-          >
-            generate config
-          </button>
         </div>
 
         <div className="grid sm:grid-cols-3 grid-cols-1 gap-3">
@@ -176,11 +255,11 @@ export function Configuration() {
               add source
             </button>
 
-            {currentStages.source ? (
+            {state.currentStages.source ? (
               <StageCard
                 value={{
-                  ...currentStages.source,
-                  intersect: currentStages.intersect,
+                  ...state.currentStages.source,
+                  intersect: state.currentStages.intersect,
                 }}
               />
             ) : null}
@@ -192,7 +271,7 @@ export function Configuration() {
             >
               add filter
             </button>
-            {currentStages[TYPES.FILTERS]?.map((value, index) => (
+            {state.currentStages[TYPES.FILTERS]?.map((value, index) => (
               <div key={index}>
                 <StageCard value={value} />
               </div>
@@ -207,18 +286,27 @@ export function Configuration() {
               add sink
             </button>
 
-            {currentStages.sink ? (
-              <StageCard value={currentStages.sink} />
+            {state.currentStages.sink ? (
+              <StageCard value={state.currentStages.sink} />
             ) : null}
           </div>
         </div>
       </div>
 
-      {tomlContent && tomlContent.length > 0 && (
+      {state.tomlContent && state.tomlContent.length > 0 && (
         <div className="p-2">
-          <small>config.toml</small>
+          <div className="flex justify-between">
+            <small className="mt-4">config.toml</small>
+            <small>
+              <button 
+                className="bg-gray-200 hover:bg-gray-300 rounded w-36 h-10"
+                onClick={(e) => copyToClipboard(e.target)}>
+                copy to clipboard
+              </button>
+            </small>
+          </div>
           <div className="py-5 mt-2 bg-slate-100 rounded-md">
-            <pre>{tomlContent}</pre>
+            <pre>{state.tomlContent}</pre>
           </div>
         </div>
       )}
