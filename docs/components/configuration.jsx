@@ -45,7 +45,6 @@ function reducer(state, action) {
     }
 
     case 'add_sink': {
-
       const currentStages = state.currentStages;
       currentStages.sink = action.stage;
 
@@ -136,6 +135,7 @@ export function Configuration() {
 
   function copyToClipboard(button) {
     navigator.clipboard.writeText(state.tomlContent).then(res => {
+      button.classList.remove("bg-gray-200");
       button.classList.remove("hover:bg-gray-300");
       button.classList.add("bg-emerald-200");
 
@@ -144,6 +144,8 @@ export function Configuration() {
 
       setTimeout(() => {
         button.classList.remove("bg-emerald-200");
+        button.classList.add("bg-gray-200");
+        button.classList.add("hover:bg-gray-300");
         button.innerHTML = buttonContent;
       }, 1000);
     });
