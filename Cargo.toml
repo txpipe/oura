@@ -12,7 +12,7 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 [features]
 default = ["deno"]
-deno = ["deno_core", "deno_runtime"]
+deno = ["deno_runtime"]
 sink-file-rotate = ["file-rotate"]
 sink-webhook = ["reqwest"]
 sink-rabbitmq = ["lapin"]
