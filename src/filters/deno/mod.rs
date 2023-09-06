@@ -1,6 +1,7 @@
 //! A mapper with custom logic from using the Deno runtime
 
-use deno_core::{op, Extension, ModuleSpecifier, OpState};
+use deno_core::{op, ModuleSpecifier, OpState};
+use deno_runtime::deno_core::Extension;
 use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use deno_runtime::BootstrapOptions;
@@ -39,10 +40,12 @@ fn op_put_record(
 }
 
 async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
-    let ext = Extension::builder("oura")
-        .ops(vec![op_pop_record::decl(), op_put_record::decl()])
-        .force_op_registration()
-        .build();
+    let ext = Extension::default();
+
+    // let ext = Extension::builder("oura")
+    //     .ops(vec![op_pop_record::decl(), op_put_record::decl()])
+    //     .force_op_registration()
+    //     .build();
 
     let empty_module = deno_core::ModuleSpecifier::parse("data:text/javascript;base64,").unwrap();
 
@@ -58,14 +61,16 @@ async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
         },
     );
 
-    let code = deno_core::FastString::from(std::fs::read_to_string(main_module).unwrap());
+    let code =
+        deno_runtime::deno_core::FastString::from(std::fs::read_to_string(main_module).unwrap());
 
     deno.js_runtime
         .load_side_module(&ModuleSpecifier::parse("oura:mapper").unwrap(), Some(code))
         .await
         .unwrap();
 
-    let runtime_code = deno_core::FastString::from_static(include_str!("./runtime.js"));
+    let runtime_code =
+        deno_runtime::deno_core::FastString::from_static(include_str!("./runtime.js"));
 
     let res = deno.execute_script("[oura:runtime.js]", runtime_code);
     deno.run_event_loop(false).await.unwrap();
@@ -93,7 +98,7 @@ impl Worker {
         trace!(?record, "sending record to js runtime");
         deno.js_runtime.op_state().borrow_mut().put(record);
 
-        let script = deno_core::FastString::from_static(script);
+        let script = deno_runtime::deno_core::FastString::from_static(script);
         let res = deno.execute_script("<anon>", script);
 
         deno.run_event_loop(false).await.unwrap();
