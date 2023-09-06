@@ -1,21 +1,21 @@
 //! A mapper with custom logic from using the Deno runtime
 
-use deno_core::{op, Extension, ModuleSpecifier, OpState};
+use deno_runtime::deno_core;
+use deno_runtime::deno_core::{op, ModuleSpecifier, OpState};
 use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
-use deno_runtime::BootstrapOptions;
 use gasket::framework::*;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use std::path::PathBuf;
+
 use tracing::trace;
 
 use crate::framework::*;
 
-//pub struct WrappedRuntime(DenoWorker);
-//unsafe impl Send for WrappedRuntime {}
-
 pub type WrappedRuntime = DenoWorker;
+
+deno_core::extension!(deno_filter, ops = [op_pop_record, op_put_record]);
 
 #[op]
 fn op_pop_record(state: &mut OpState) -> Result<serde_json::Value, deno_core::error::AnyError> {
@@ -39,21 +39,13 @@ fn op_put_record(
 }
 
 async fn setup_deno(main_module: &PathBuf) -> DenoWorker {
-    let ext = Extension::builder("oura")
-        .ops(vec![op_pop_record::decl(), op_put_record::decl()])
-        .force_op_registration()
-        .build();
-
     let empty_module = deno_core::ModuleSpecifier::parse("data:text/javascript;base64,").unwrap();
 
     let mut deno = DenoWorker::bootstrap_from_options(
         empty_module,
         PermissionsContainer::allow_all(),
         WorkerOptions {
-            extensions: vec![ext],
-            bootstrap: BootstrapOptions {
-                ..Default::default()
-            },
+            extensions: vec![deno_filter::init_ops()],
             ..Default::default()
         },
     );
