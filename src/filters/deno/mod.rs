@@ -1,7 +1,6 @@
 //! A mapper with custom logic from using the Deno runtime
 
-use deno_runtime::deno_core;
-use deno_runtime::deno_core::{op, ModuleSpecifier, OpState};
+use deno_runtime::deno_core::{self, op2, ModuleSpecifier, OpState};
 use deno_runtime::permissions::PermissionsContainer;
 use deno_runtime::worker::{MainWorker as DenoWorker, WorkerOptions};
 use gasket::framework::*;
@@ -17,18 +16,18 @@ pub type WrappedRuntime = DenoWorker;
 
 deno_core::extension!(deno_filter, ops = [op_pop_record, op_put_record]);
 
-#[op]
-fn op_pop_record(state: &mut OpState) -> Result<serde_json::Value, deno_core::error::AnyError> {
+#[op2]
+#[serde]
+pub fn op_pop_record(state: &mut OpState) -> Result<serde_json::Value, deno_core::error::AnyError> {
     let r: Record = state.take();
     let j = serde_json::Value::from(r);
-
     Ok(j)
 }
 
-#[op]
-fn op_put_record(
+#[op2]
+pub fn op_put_record(
     state: &mut OpState,
-    value: serde_json::Value,
+    #[serde] value: serde_json::Value,
 ) -> Result<(), deno_core::error::AnyError> {
     match value {
         serde_json::Value::Null => (),

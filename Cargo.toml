@@ -11,7 +11,6 @@ readme = "README.md"
 authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 [features]
-default = ["deno"]
 deno = ["deno_runtime"]
 sink-file-rotate = ["file-rotate"]
 sink-webhook = ["reqwest"]
@@ -72,7 +71,6 @@ google-cloud-pubsub = { version = "0.16.0", optional = true }
 google-cloud-googleapis = { version = "0.10.0", optional = true }
 google-cloud-default = { version = "0.4.0", optional = true, features = ["pubsub"] }
 r2d2_redis = { version = "0.14.0", optional = true }
-deno_core = { version = "0.208.0", optional = true }
 deno_runtime = { version = "0.126.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
 file-rotate = { version = "0.7.5", optional = true }
