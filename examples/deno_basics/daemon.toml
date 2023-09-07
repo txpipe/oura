@@ -21,9 +21,4 @@ main_module = "./filter.js"
 use_async = true
 
 [sink]
-type = "FileRotate"
-max_total_files = 5
-output_format = "JSONL"
-output_path = "./output/log.jsonl"
-max_bytes_per_file = 5_000_000
-compress_files = true
+type = "Stdout"
