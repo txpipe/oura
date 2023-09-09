@@ -128,7 +128,7 @@ impl Worker {
 
                 stage
                     .output
-                    .send(ChainEvent::reset(point.clone()).into())
+                    .send(ChainEvent::reset(point.clone()))
                     .await
                     .or_panic()?;
 

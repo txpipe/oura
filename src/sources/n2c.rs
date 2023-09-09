@@ -89,7 +89,7 @@ impl Worker {
     ) -> Result<(), WorkerError> {
         match next {
             NextResponse::RollForward(cbor, tip) => {
-                let block = MultiEraBlock::decode(&cbor).or_panic()?;
+                let block = MultiEraBlock::decode(cbor).or_panic()?;
                 let slot = block.slot();
                 let hash = block.hash();
 
@@ -114,7 +114,7 @@ impl Worker {
 
                 stage
                     .output
-                    .send(ChainEvent::reset(point.clone()).into())
+                    .send(ChainEvent::reset(point.clone()))
                     .await
                     .or_panic()?;
 
