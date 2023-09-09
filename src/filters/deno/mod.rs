@@ -119,7 +119,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         match unit {
             ChainEvent::Apply(p, r) => {
                 let mapped = self
-                    .map_record(stage.call_snippet.clone(), r.clone())
+                    .map_record(stage.call_snippet, r.clone())
                     .await
                     .unwrap();
 
