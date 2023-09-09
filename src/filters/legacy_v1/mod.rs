@@ -31,7 +31,7 @@ pub struct Worker;
 
 impl From<&Stage> for Worker {
     fn from(_: &Stage) -> Self {
-        Worker::default()
+        Self
     }
 }
 
@@ -48,7 +48,7 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
                 &mut buffer,
             );
 
-            writer.crawl_cbor(&cbor)?;
+            writer.crawl_cbor(cbor)?;
         }
         ChainEvent::Reset(point) => {
             let mut writer = EventWriter::new(

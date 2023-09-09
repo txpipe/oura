@@ -48,7 +48,6 @@ impl gasket::framework::Worker<Stage> for Worker {
 #[derive(Stage)]
 #[stage(name = "sink-stdout", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
-    config: Config,
     cursor: Cursor,
 
     pub input: MapperInputPort,
@@ -66,7 +65,6 @@ pub struct Config;
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
-            config: self,
             cursor: ctx.cursor.clone(),
             ops_count: Default::default(),
             latest_block: Default::default(),

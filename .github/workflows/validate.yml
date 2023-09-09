@@ -3,9 +3,9 @@
 on:
   push:
     branches:
-     - '**'
+      - "**"
     tags-ignore:
-     - v*
+      - v*
 
 name: Validate
 
@@ -29,6 +29,9 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -48,6 +51,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
@@ -69,6 +75,9 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1

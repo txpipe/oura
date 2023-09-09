@@ -23,14 +23,16 @@ struct Claims {
     pub iat: u64,
     pub exp: u64,
 }
+
 impl Claims {
-    pub fn new(audience: &String, credentials: &Credentials) -> Self {
+    pub fn new(audience: &str, credentials: &Credentials) -> Self {
         let iat = jsonwebtoken::get_current_timestamp();
         let exp = iat + 60;
+
         Self {
             iss: credentials.client_email.clone(),
             aud: credentials.token_uri.clone(),
-            target_audience: audience.clone(),
+            target_audience: audience.to_owned(),
             iat,
             exp,
         }
@@ -47,6 +49,7 @@ struct Credentials {
     pub token_uri: String,
     pub private_key: String,
 }
+
 impl TryFrom<serde_json::Value> for Credentials {
     type Error = Error;
 
@@ -77,6 +80,7 @@ pub struct GCPAuth {
     audience: String,
     token: Option<String>,
 }
+
 impl GCPAuth {
     pub fn try_new(audience: String) -> Result<Self, Error> {
         let client = reqwest::ClientBuilder::new()
@@ -267,21 +271,25 @@ impl From<std::env::VarError> for Error {
         Error::Config(value.to_string())
     }
 }
+
 impl From<std::io::Error> for Error {
     fn from(value: std::io::Error) -> Self {
         Error::Config(value.to_string())
     }
 }
+
 impl From<serde_json::Error> for Error {
     fn from(value: serde_json::Error) -> Self {
         Error::Config(value.to_string())
     }
 }
+
 impl From<reqwest::Error> for Error {
     fn from(value: reqwest::Error) -> Self {
         Error::Custom(value.to_string())
     }
 }
+
 impl From<jsonwebtoken::errors::Error> for Error {
     fn from(value: jsonwebtoken::errors::Error) -> Self {
         Error::Custom(value.to_string())

@@ -39,7 +39,7 @@ pub struct Worker;
 
 impl From<&Stage> for Worker {
     fn from(_: &Stage) -> Self {
-        Worker::default()
+        Self
     }
 }
 
