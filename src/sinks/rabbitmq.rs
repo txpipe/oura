@@ -43,7 +43,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         self.channel
             .basic_publish(
                 &stage.config.exchange,
-                &stage.config.routing_key.clone().unwrap_or(String::new()),
+                &stage.config.routing_key.clone().unwrap_or_default(),
                 BasicPublishOptions::default(),
                 &payload,
                 BasicProperties::default(),

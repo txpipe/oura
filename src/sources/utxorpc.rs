@@ -142,9 +142,11 @@ impl Worker {
     }
 
     async fn next_dump_history(&mut self) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
-        let mut dump_history_request = DumpHistoryRequest::default();
-        dump_history_request.start_token = self.block_ref.clone();
-        dump_history_request.max_items = self.max_items_per_page;
+        let dump_history_request = DumpHistoryRequest {
+            start_token: self.block_ref.clone(),
+            max_items: self.max_items_per_page,
+            ..Default::default()
+        };
 
         let result = self
             .client
@@ -156,11 +158,11 @@ impl Worker {
         self.block_ref = result.next_token;
 
         if !result.block.is_empty() {
-            let actions: Vec<Action> = result.block.into_iter().map(|b| Action::Apply(b)).collect();
+            let actions: Vec<Action> = result.block.into_iter().map(Action::Apply).collect();
             return Ok(WorkSchedule::Unit(actions));
         }
 
-        return Ok(WorkSchedule::Idle);
+        Ok(WorkSchedule::Idle)
     }
 }
 
@@ -185,14 +187,10 @@ impl gasket::framework::Worker<Stage> for Worker {
             };
         }
 
-        let block_ref = if let Some((slot, hash)) = point {
-            let mut block_ref = BlockRef::default();
-            block_ref.index = slot;
-            block_ref.hash = hash.into();
-            Some(block_ref)
-        } else {
-            None
-        };
+        let block_ref = point.map(|(slot, hash)| BlockRef {
+            index: slot,
+            hash: hash.into(),
+        });
 
         let max_items_per_page = stage.config.max_items_per_page.unwrap_or(20);
 
@@ -206,10 +204,10 @@ impl gasket::framework::Worker<Stage> for Worker {
 
     async fn schedule(&mut self, _: &mut Stage) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
         if self.block_ref.is_some() {
-            return Ok(self.next_dump_history().await?);
+            return self.next_dump_history().await;
         }
 
-        Ok(self.next_stream().await?)
+        self.next_stream().await
     }
 
     async fn execute(&mut self, unit: &Vec<Action>, stage: &mut Stage) -> Result<(), WorkerError> {

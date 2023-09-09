@@ -194,7 +194,7 @@ impl EventWriter<'_> {
         record.output_count = outputs.len();
         record.total_output = outputs.iter().map(|o| o.amount).sum();
 
-        let inputs: Vec<_> = tx.inputs().iter().map(|x| TxInputRecord::from(x)).collect();
+        let inputs: Vec<_> = tx.inputs().iter().map(TxInputRecord::from).collect();
 
         record.input_count = inputs.len();
 
@@ -207,11 +207,7 @@ impl EventWriter<'_> {
 
         record.mint_count = mints.len();
 
-        let collateral_inputs: Vec<_> = tx
-            .collateral()
-            .iter()
-            .map(|x| TxInputRecord::from(x))
-            .collect();
+        let collateral_inputs: Vec<_> = tx.collateral().iter().map(TxInputRecord::from).collect();
 
         record.collateral_input_count = collateral_inputs.len();
 
@@ -280,7 +276,7 @@ impl EventWriter<'_> {
             record.plutus_data = tx
                 .plutus_data()
                 .iter()
-                .map(|x| PlutusDatumRecord::from(x))
+                .map(PlutusDatumRecord::from)
                 .collect::<Vec<_>>()
                 .into();
 

@@ -97,7 +97,8 @@ pub struct Stage {
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum Format {
-    JSONL,
+    #[serde(rename = "JSONL")]
+    Jsonl,
 }
 
 #[derive(Default, Debug, Deserialize)]
