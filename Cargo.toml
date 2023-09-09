@@ -11,7 +11,6 @@ readme = "README.md"
 authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 [features]
-default = ["deno"]
 deno = ["deno_runtime"]
 sink-file-rotate = ["file-rotate"]
 sink-webhook = ["reqwest"]
@@ -24,10 +23,10 @@ sink-gcp-pubsub = ["google-cloud-pubsub", "google-cloud-googleapis", "google-clo
 sink-gcp-cloudfunction = ["reqwest", "jsonwebtoken"]
 sink-redis = ["r2d2_redis"]
 sink-elasticsearch = ["elasticsearch"]
-source-utxorpc = ["tonic","futures"]
+source-utxorpc = ["tonic", "futures"]
 
 [dependencies]
-pallas = "0.19.0-alpha.1"
+pallas = "0.19.0"
 # pallas = { path = "../pallas/pallas" }
 # pallas = { git = "https://github.com/txpipe/pallas" }
 
@@ -43,7 +42,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
 crossterm = "0.26"
 merge = "0.1.0"
-config = { version = "0.13.2", default-features = false, features = ["toml","yaml","json"] }
+config = { version = "0.13.2", default-features = false, features = ["toml", "yaml", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
 strum = "0.24"
@@ -72,10 +71,8 @@ google-cloud-pubsub = { version = "0.16.0", optional = true }
 google-cloud-googleapis = { version = "0.10.0", optional = true }
 google-cloud-default = { version = "0.4.0", optional = true, features = ["pubsub"] }
 r2d2_redis = { version = "0.14.0", optional = true }
-deno_core = { version = "0.208.0", optional = true }
 deno_runtime = { version = "0.126.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
 file-rotate = { version = "0.7.5", optional = true }
-tonic = { version = "0.9.2", features = ["tls", "tls-roots"], optional = true}
+tonic = { version = "0.9.2", features = ["tls", "tls-roots"], optional = true }
 futures = { version = "0.3.28", optional = true }
-
