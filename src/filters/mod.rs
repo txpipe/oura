@@ -6,7 +6,6 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
-pub mod deno;
 pub mod dsl;
 pub mod json;
 pub mod legacy_v1;
@@ -16,6 +15,9 @@ pub mod parse_cbor;
 pub mod split_block;
 pub mod wasm;
 
+#[cfg(feature = "deno")]
+pub mod deno;
+
 pub enum Bootstrapper {
     Noop(noop::Stage),
     SplitBlock(split_block::Stage),
@@ -23,9 +25,11 @@ pub enum Bootstrapper {
     Json(json::Stage),
     LegacyV1(legacy_v1::Stage),
     Wasm(wasm::Stage),
-    Deno(deno::Stage),
     ParseCbor(parse_cbor::Stage),
     MatchPattern(match_pattern::Stage),
+
+    #[cfg(feature = "deno")]
+    Deno(deno::Stage),
 }
 
 impl StageBootstrapper for Bootstrapper {
@@ -37,9 +41,11 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Json(p) => p.input.connect(adapter),
             Bootstrapper::LegacyV1(p) => p.input.connect(adapter),
             Bootstrapper::Wasm(p) => p.input.connect(adapter),
-            Bootstrapper::Deno(p) => p.input.connect(adapter),
             Bootstrapper::ParseCbor(p) => p.input.connect(adapter),
             Bootstrapper::MatchPattern(p) => p.input.connect(adapter),
+
+            #[cfg(feature = "deno")]
+            Bootstrapper::Deno(p) => p.input.connect(adapter),
         }
     }
 
@@ -51,9 +57,11 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Json(p) => p.output.connect(adapter),
             Bootstrapper::LegacyV1(p) => p.output.connect(adapter),
             Bootstrapper::Wasm(p) => p.output.connect(adapter),
-            Bootstrapper::Deno(p) => p.output.connect(adapter),
             Bootstrapper::ParseCbor(p) => p.output.connect(adapter),
             Bootstrapper::MatchPattern(p) => p.output.connect(adapter),
+
+            #[cfg(feature = "deno")]
+            Bootstrapper::Deno(p) => p.output.connect(adapter),
         }
     }
 
@@ -65,9 +73,11 @@ impl StageBootstrapper for Bootstrapper {
             Bootstrapper::Json(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::LegacyV1(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Wasm(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::MatchPattern(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "deno")]
+            Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -81,9 +91,11 @@ pub enum Config {
     Json(json::Config),
     LegacyV1(legacy_v1::Config),
     Wasm(wasm::Config),
-    Deno(deno::Config),
     ParseCbor(parse_cbor::Config),
     MatchPattern(match_pattern::Config),
+
+    #[cfg(feature = "deno")]
+    Deno(deno::Config),
 }
 
 impl Config {
@@ -95,9 +107,11 @@ impl Config {
             Config::Json(c) => Ok(Bootstrapper::Json(c.bootstrapper(ctx)?)),
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
             Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
-            Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
             Config::MatchPattern(c) => Ok(Bootstrapper::MatchPattern(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "deno")]
+            Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
         }
     }
 }
