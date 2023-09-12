@@ -1,5 +1,6 @@
 import { useState, useReducer } from "react";
 import json2toml from "json2toml";
+import { clipBoardIcon } from "./clipboardIcon";
 
 function reducer(state, action) {
   switch (action.name) {
@@ -134,20 +135,15 @@ export function Configuration() {
   }
 
   function copyToClipboard(button) {
+
+    const smallCopy = document.getElementById('small-copy');
+
     navigator.clipboard.writeText(state.tomlContent).then(res => {
-
-      button.classList.remove("bg-gray-500");
-      button.classList.remove("hover:bg-gray-700");
-      button.classList.add("bg-lime-800");
-
-      const buttonContent = button.innerHTML;
-      button.innerHTML = "copied!";
+      const originalSmallCopy = smallCopy.innerHTML;
+      smallCopy.innerHTML = "Copied!";
 
       setTimeout(() => {
-        button.classList.remove("bg-lime-800");
-        button.classList.add("bg-gray-500");
-        button.classList.add("hover:bg-gray-700");
-        button.innerHTML = buttonContent;
+        smallCopy.innerHTML = originalSmallCopy;
       }, 1000);
     });
   }
@@ -301,20 +297,22 @@ export function Configuration() {
         <div className="p-2">
           <div className="flex justify-between">
             <small className="mt-4">config.toml</small>
-            <small>
+            <span className="flex">
+              <small className="mt-2" id="small-copy">Copy to clipboard</small>
               <button
-                className="bg-gray-500 hover:bg-gray-700 dark:text-gray-200 text-white font-bold rounded w-36 h-10"
+                className="group relative"
                 onClick={(e) => copyToClipboard(e.target)}>
-                copy to clipboard
+                {clipBoardIcon()}
               </button>
-            </small>
+            </span>
           </div>
           <div className="py-5 mt-2 bg-slate-100 rounded-md dark:bg-gray-800 dark:text-gray-400">
             <pre>{state.tomlContent}</pre>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 
