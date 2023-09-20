@@ -90,7 +90,7 @@ fn define_gasket_policy(config: Option<&gasket::retries::Policy>) -> gasket::run
     };
 
     gasket::runtime::Policy {
-        tick_timeout: std::time::Duration::from_secs(120).into(),
+        tick_timeout: None,
         bootstrap_retry: config.cloned().unwrap_or(default_policy.clone()),
         work_retry: config.cloned().unwrap_or(default_policy.clone()),
         teardown_retry: config.cloned().unwrap_or(default_policy.clone()),
