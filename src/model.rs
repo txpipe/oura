@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use merge::Merge;
 
-use serde::{Deserialize, Serialize};
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value as JsonValue;
 
 use strum_macros::Display;
@@ -29,6 +29,8 @@ pub enum Era {
 pub enum MetadatumRendition {
     MapJson(JsonValue),
     ArrayJson(JsonValue),
+    #[serde(serialize_with = "serialize_int_scalar")]
+    #[serde(deserialize_with = "deserialize_int_scalar")]
     IntScalar(i128),
     TextScalar(String),
     BytesHex(String),
@@ -373,4 +375,19 @@ pub struct Event {
     pub data: EventData,
 
     pub fingerprint: Option<String>,
+}
+
+fn serialize_int_scalar<S>(value: &i128, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    value.to_string().serialize(serializer)
+}
+
+fn deserialize_int_scalar<'de, D>(deserializer: D) -> Result<i128, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value: String = Deserialize::deserialize(deserializer)?;
+    Ok(value.parse().map_err(DeError::custom)?)
 }
