@@ -10,8 +10,6 @@ use serde_json::Value as JsonValue;
 
 use strum_macros::Display;
 
-const JSON_MAX_SAFE_INTERGER: i128 = 9007199254740991;
-
 // We're duplicating the Era struct from Pallas for two reasons: a) we need it
 // to be serializable and we don't want to impose serde dependency on Pallas and
 // b) we prefer not to add dependencies to Pallas outside of the sources that
@@ -386,7 +384,7 @@ fn serialize_int_scalar<S>(value: &i128, serializer: S) -> Result<S::Ok, S::Erro
 where
     S: Serializer,
 {
-    if *value > JSON_MAX_SAFE_INTERGER || *value < -JSON_MAX_SAFE_INTERGER {
+    if *value > (i64::MAX as i128) || *value < (i64::MIN as i128) {
         return value.to_string().serialize(serializer);
     }
 
