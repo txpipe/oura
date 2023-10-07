@@ -2,7 +2,10 @@ use std::fmt::Display;
 
 use merge::Merge;
 
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{Error as DeError, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::Value as JsonValue;
 
 use strum_macros::Display;
@@ -29,6 +32,8 @@ pub enum Era {
 pub enum MetadatumRendition {
     MapJson(JsonValue),
     ArrayJson(JsonValue),
+    #[serde(serialize_with = "serialize_int_scalar")]
+    #[serde(deserialize_with = "deserialize_int_scalar")]
     IntScalar(i128),
     TextScalar(String),
     BytesHex(String),
@@ -373,4 +378,54 @@ pub struct Event {
     pub data: EventData,
 
     pub fingerprint: Option<String>,
+}
+
+fn serialize_int_scalar<S>(value: &i128, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    if *value > (i64::MAX as i128) || *value < (i64::MIN as i128) {
+        return value.to_string().serialize(serializer);
+    }
+
+    value.serialize(serializer)
+}
+
+fn deserialize_int_scalar<'de, D>(deserializer: D) -> Result<i128, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(IntScalarVisitor)
+}
+
+#[derive(Debug)]
+struct IntScalarVisitor;
+impl<'de> Visitor<'de> for IntScalarVisitor {
+    type Value = i128;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        dbg!(self);
+        formatter.write_str("expect to receive integer")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(v.parse().map_err(DeError::custom)?)
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(v as i128)
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(v as i128)
+    }
 }
