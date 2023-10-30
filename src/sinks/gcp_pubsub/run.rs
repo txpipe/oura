@@ -18,12 +18,12 @@ use crate::{
 async fn send_pubsub_msg(
     publisher: &Publisher,
     event: &Event,
-    ordering_key: String,
+    ordering_key: &str,
 ) -> Result<(), crate::Error> {
     let body = json!(event).to_string();
     let msg = PubsubMessage {
         data: body.into(),
-        ordering_key,
+        ordering_key: ordering_key.into(),
         ..Default::default()
     };
 
@@ -42,7 +42,7 @@ pub fn writer_loop(
     topic_name: &str,
     error_policy: &ErrorPolicy,
     retry_policy: &retry::Policy,
-    ordering_key: &String,
+    ordering_key: &str,
     utils: Arc<Utils>,
 ) -> Result<(), crate::Error> {
     let rt = tokio::runtime::Builder::new_current_thread()
@@ -58,7 +58,7 @@ pub fn writer_loop(
 
     for event in input.iter() {
         let result = retry::retry_operation(
-            || rt.block_on(send_pubsub_msg(&publisher, &event, ordering_key.clone())),
+            || rt.block_on(send_pubsub_msg(&publisher, &event, ordering_key)),
             retry_policy,
         );
 

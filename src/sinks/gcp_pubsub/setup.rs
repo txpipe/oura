@@ -34,8 +34,7 @@ impl SinkProvider for WithUtils<Config> {
         let ordering_key = self
             .inner
             .ordering_key
-            .as_ref()
-            .cloned()
+            .to_owned()
             .unwrap_or_default();
 
         let utils = self.utils.clone();
