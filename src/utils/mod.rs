@@ -114,7 +114,7 @@ impl ChainWellKnownInfo {
             byron_known_slot: 0,
             byron_known_hash: "".to_string(),
             byron_known_time: 1666656000,
-            shelley_epoch_length: 432000,
+            shelley_epoch_length: 86400,
             shelley_slot_length: 1,
             shelley_known_slot: 0,
             shelley_known_hash: "268ae601af8f9214804735910a3301881fbe0eec9936db7d1fb9fc39e93d1e37"
