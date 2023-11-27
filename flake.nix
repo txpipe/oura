@@ -1,6 +1,7 @@
 {
   inputs = {
-    crane.url = "github:ipetkov/crane";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    crane.url = "github:ipetkov/crane/v0.15.0";
     utils.url = "github:numtide/flake-utils";
   };
 
