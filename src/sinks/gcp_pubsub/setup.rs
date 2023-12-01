@@ -1,8 +1,11 @@
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 use crate::{
     pipelining::{BootstrapResult, SinkProvider, StageReceiver},
     sinks::common::web::ErrorPolicy,
+    sinks::gcp_pubsub::run::GenericKV,
     utils::{retry, WithUtils},
 };
 
@@ -14,6 +17,7 @@ pub struct Config {
     pub error_policy: Option<ErrorPolicy>,
     pub retry_policy: Option<retry::Policy>,
     pub ordering_key: Option<String>,
+    pub attributes: Option<GenericKV>,
 
     #[warn(deprecated)]
     pub credentials: Option<String>,
@@ -39,6 +43,8 @@ impl SinkProvider for WithUtils<Config> {
 
         let utils = self.utils.clone();
 
+        let attributes = self.inner.attributes.cloned().unwrap_or_default();
+
         let handle = std::thread::spawn(move || {
             writer_loop(
                 input,
@@ -46,6 +52,7 @@ impl SinkProvider for WithUtils<Config> {
                 &error_policy,
                 &retry_policy,
                 &ordering_key,
+                &attributes,
                 utils,
             )
             .expect("writer loop failed");
