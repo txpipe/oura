@@ -50,12 +50,6 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features
-
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
@@ -67,3 +61,9 @@ jobs:
         with:
           command: clippy
           args: --all-features -- -D warnings
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
