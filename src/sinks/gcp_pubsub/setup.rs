@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::Deserialize;
 
 use crate::{
@@ -35,15 +33,11 @@ impl SinkProvider for WithUtils<Config> {
             .unwrap_or(ErrorPolicy::Exit);
 
         let retry_policy = self.inner.retry_policy.unwrap_or_default();
-        let ordering_key = self
-            .inner
-            .ordering_key
-            .to_owned()
-            .unwrap_or_default();
+        let ordering_key = self.inner.ordering_key.to_owned().unwrap_or_default();
 
         let utils = self.utils.clone();
 
-        let attributes = self.inner.attributes.cloned().unwrap_or_default();
+        let attributes = self.inner.attributes.clone().unwrap_or_default();
 
         let handle = std::thread::spawn(move || {
             writer_loop(
