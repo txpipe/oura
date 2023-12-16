@@ -157,11 +157,12 @@ fn metadata_any_sub_label_matches(event: &Event, sub_label: &str) -> bool {
 fn vkey_witnesses_matches(event: &Event, witness: &str) -> bool {
     match &event.data {
         EventData::VKeyWitness(x) => x.vkey_hex == witness,
-        EventData::Transaction(x) => 
-            x.vkey_witnesses.as_ref()
-                .map(|vs| vs.iter().any(|v| v.vkey_hex == witness))
-                .unwrap_or(false),
-        _ => false 
+        EventData::Transaction(x) => x
+            .vkey_witnesses
+            .as_ref()
+            .map(|vs| vs.iter().any(|v| v.vkey_hex == witness))
+            .unwrap_or(false),
+        _ => false,
     }
 }
 
@@ -169,11 +170,12 @@ fn vkey_witnesses_matches(event: &Event, witness: &str) -> bool {
 fn native_scripts_matches(event: &Event, policy_id: &str) -> bool {
     match &event.data {
         EventData::NativeWitness(x) => x.policy_id == policy_id,
-        EventData::Transaction(x) => 
-            x.native_witnesses.as_ref()
-                .map(|vs| vs.iter().any(|v| v.policy_id == policy_id))
-                .unwrap_or(false),
-        _ => false 
+        EventData::Transaction(x) => x
+            .native_witnesses
+            .as_ref()
+            .map(|vs| vs.iter().any(|v| v.policy_id == policy_id))
+            .unwrap_or(false),
+        _ => false,
     }
 }
 
@@ -181,11 +183,12 @@ fn native_scripts_matches(event: &Event, policy_id: &str) -> bool {
 fn plutus_scripts_matches(event: &Event, script_hash: &str) -> bool {
     match &event.data {
         EventData::PlutusWitness(x) => x.script_hash == script_hash,
-        EventData::Transaction(x) => 
-            x.plutus_witnesses.as_ref()
-                .map(|vs| vs.iter().any(|v| v.script_hash == script_hash))
-                .unwrap_or(false),
-        _ => false 
+        EventData::Transaction(x) => x
+            .plutus_witnesses
+            .as_ref()
+            .map(|vs| vs.iter().any(|v| v.script_hash == script_hash))
+            .unwrap_or(false),
+        _ => false,
     }
 }
 

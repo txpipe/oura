@@ -412,7 +412,7 @@ impl<'de> Visitor<'de> for IntScalarVisitor {
     where
         E: serde::de::Error,
     {
-        Ok(v.parse().map_err(DeError::custom)?)
+        v.parse().map_err(DeError::custom)
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>

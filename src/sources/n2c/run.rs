@@ -205,7 +205,7 @@ fn do_chainsync_attempt(
     };
 
     let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
-        .map_err(|x| AttemptError::Recoverable(x))?;
+        .map_err(AttemptError::Recoverable)?;
 
     let hs_channel = plexer.use_channel(0);
     let cs_channel = plexer.use_channel(5);
@@ -224,7 +224,7 @@ fn do_chainsync_attempt(
         &config.since,
         &utils,
     )
-    .map_err(|err| AttemptError::Recoverable(err))?;
+    .map_err(AttemptError::Recoverable)?;
 
     if intersection.is_none() {
         return Err(AttemptError::Other(

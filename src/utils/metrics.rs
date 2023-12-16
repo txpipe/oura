@@ -1,4 +1,5 @@
-///! An utility to keep track of the progress of the pipeline as a whole
+//! An utility to keep track of the progress of the pipeline as a whole
+
 use prometheus_exporter::prometheus::{register_counter, register_int_gauge, Counter, IntGauge};
 
 use merge::Merge;

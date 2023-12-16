@@ -1,6 +1,6 @@
-use super::*;
+//! A friendly facade to simplify access to common utils procedures
 
-///! A friendly facade to simplify access to common utils procedures
+use super::*;
 
 impl Utils {
     // To be used by source stages to access the cursor, if any
