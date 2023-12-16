@@ -38,7 +38,7 @@ file-rotate = { version = "0.7.1", optional = true }
 reqwest = { version = "0.11", optional = true, features = ["blocking", "json"] }
 
 # feature: kafkasink
-kafka = { version = "0.8.0", optional = true }
+kafka = { version = "0.10.0", optional = true }
 
 # feature: elasticsink
 elasticsearch = { version = "7.14.0-alpha.1", optional = true }
