@@ -11,11 +11,10 @@ fn breadcrumbs_to_data(crumbs: &Breadcrumbs) -> Vec<(u64, String)> {
     crumbs
         .points()
         .into_iter()
-        .map(|p| match p {
+        .filter_map(|p| match p {
             Point::Origin => None,
             Point::Specific(slot, hash) => Some((slot, hex::encode(hash))),
         })
-        .flatten()
         .collect()
 }
 
@@ -124,10 +123,7 @@ impl Config {
     pub fn initial_load(&self) -> Result<Breadcrumbs, Error> {
         let path = self.define_path()?;
 
-        let max_breadcrumbs = self
-            .max_breadcrumbs
-            .clone()
-            .unwrap_or(DEFAULT_MAX_BREADCRUMBS);
+        let max_breadcrumbs = self.max_breadcrumbs.unwrap_or(DEFAULT_MAX_BREADCRUMBS);
 
         if path.is_file() {
             let file = std::fs::File::open(&path).map_err(|err| Error::Custom(err.to_string()))?;
@@ -141,10 +137,7 @@ impl Config {
     }
 
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
-        let flush_interval = self
-            .flush_interval
-            .clone()
-            .unwrap_or(DEFAULT_FLUSH_INTERVAL as u64);
+        let flush_interval = self.flush_interval.unwrap_or(DEFAULT_FLUSH_INTERVAL as u64);
 
         let stage = Stage {
             path: self.define_path()?,

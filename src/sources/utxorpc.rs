@@ -193,8 +193,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
         let intersect = intersect
             .into_iter()
-            .map(point_to_blockref)
-            .flatten()
+            .filter_map(point_to_blockref)
             .collect::<Vec<_>>()
             .pop();
 
