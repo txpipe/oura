@@ -41,7 +41,7 @@ pub struct Worker {}
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
-    async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
+    async fn bootstrap(_: &Stage) -> Result<Self, WorkerError> {
         Ok(Default::default())
     }
 

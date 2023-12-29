@@ -2933,8 +2933,9 @@ dependencies = [
 
 [[package]]
 name = "gasket"
-version = "0.5.0"
-source = "git+https://github.com/construkts/gasket-rs.git#6908f44944402b8d012cc4ae54dd7986bfe854a1"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7541dcf8d4eeaef26146a14eaf2d392c242d3d02c9c3678d4a093fc3bbad34d8"
 dependencies = [
  "async-trait",
  "crossbeam",
@@ -2947,8 +2948,9 @@ dependencies = [
 
 [[package]]
 name = "gasket-derive"
-version = "0.5.0"
-source = "git+https://github.com/construkts/gasket-rs.git#6908f44944402b8d012cc4ae54dd7986bfe854a1"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19c5a116a2bb67b22a0e5cb7f0fb58220c2729715b5c8a6267df320ae3393138"
 dependencies = [
  "proc-macro2 1.0.66",
  "quote 1.0.32",
@@ -7026,7 +7028,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "rand",
  "static_assertions",
 ]
