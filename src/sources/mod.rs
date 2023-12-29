@@ -1,4 +1,4 @@
-use gasket::{messaging::SendPort, runtime::Tether};
+use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -26,25 +26,21 @@ pub enum Bootstrapper {
     UtxoRPC(utxorpc::Stage),
 }
 
-impl StageBootstrapper for Bootstrapper {
-    fn connect_output(&mut self, adapter: OutputAdapter) {
+impl Bootstrapper {
+    pub fn borrow_output(&mut self) -> &mut SourceOutputPort {
         match self {
-            Bootstrapper::N2N(p) => p.output.connect(adapter),
-            Bootstrapper::N2C(p) => p.output.connect(adapter),
+            Bootstrapper::N2N(p) => &mut p.output,
+            Bootstrapper::N2C(p) => &mut p.output,
 
             #[cfg(feature = "aws")]
-            Bootstrapper::S3(p) => p.output.connect(adapter),
+            Bootstrapper::S3(p) => &mut p.output,
 
             #[cfg(feature = "source-utxorpc")]
-            Bootstrapper::UtxoRPC(p) => p.output.connect(adapter),
+            Bootstrapper::UtxoRPC(p) => &mut p.output,
         }
     }
 
-    fn connect_input(&mut self, _: InputAdapter) {
-        panic!("attempted to use source stage as receiver");
-    }
-
-    fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
+    pub fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
             Bootstrapper::N2N(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),

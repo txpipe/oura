@@ -15,10 +15,20 @@ use utxorpc::proto::sync::v1::{BlockRef, DumpHistoryRequest, FollowTipRequest, F
 
 use crate::framework::*;
 
+fn point_to_blockref(point: Point) -> Option<BlockRef> {
+    match point {
+        Point::Origin => None,
+        Point::Specific(slot, hash) => Some(BlockRef {
+            index: slot,
+            hash: hash.into(),
+        }),
+    }
+}
+
 pub struct Worker {
     client: ChainSyncServiceClient<Channel>,
     stream: Option<Streaming<FollowTipResponse>>,
-    block_ref: Option<BlockRef>,
+    intersect: Option<BlockRef>,
     max_items_per_page: u32,
 }
 
@@ -143,7 +153,7 @@ impl Worker {
 
     async fn next_dump_history(&mut self) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
         let dump_history_request = DumpHistoryRequest {
-            start_token: self.block_ref.clone(),
+            start_token: self.intersect.clone(),
             max_items: self.max_items_per_page,
             ..Default::default()
         };
@@ -155,7 +165,7 @@ impl Worker {
             .or_restart()?
             .into_inner();
 
-        self.block_ref = result.next_token;
+        self.intersect = result.next_token;
 
         if !result.block.is_empty() {
             let actions: Vec<Action> = result.block.into_iter().map(Action::Apply).collect();
@@ -175,22 +185,18 @@ impl gasket::framework::Worker<Stage> for Worker {
             .await
             .or_panic()?;
 
-        let mut point: Option<(u64, Vec<u8>)> = match stage.intersect.clone() {
-            IntersectConfig::Point(slot, hash) => Some((slot, hash.into())),
-            _ => None,
+        let intersect: Vec<_> = if stage.breadcrumbs.is_empty() {
+            stage.intersect.points().unwrap_or_default()
+        } else {
+            stage.breadcrumbs.points()
         };
 
-        if let Some(latest_point) = stage.cursor.latest_known_point() {
-            point = match latest_point {
-                Point::Specific(slot, hash) => Some((slot, hash)),
-                _ => None,
-            };
-        }
-
-        let block_ref = point.map(|(slot, hash)| BlockRef {
-            index: slot,
-            hash: hash.into(),
-        });
+        let intersect = intersect
+            .into_iter()
+            .map(point_to_blockref)
+            .flatten()
+            .collect::<Vec<_>>()
+            .pop();
 
         let max_items_per_page = stage.config.max_items_per_page.unwrap_or(20);
 
@@ -198,12 +204,12 @@ impl gasket::framework::Worker<Stage> for Worker {
             client,
             stream: None,
             max_items_per_page,
-            block_ref,
+            intersect,
         })
     }
 
     async fn schedule(&mut self, _: &mut Stage) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
-        if self.block_ref.is_some() {
+        if self.intersect.is_some() {
             return self.next_dump_history().await;
         }
 
@@ -223,7 +229,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 #[stage(name = "source-utxorpc", unit = "Vec<Action>", worker = "Worker")]
 pub struct Stage {
     config: Config,
-    cursor: Cursor,
+    breadcrumbs: Breadcrumbs,
     intersect: IntersectConfig,
     pub output: SourceOutputPort,
     #[metric]
@@ -242,7 +248,7 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
-            cursor: ctx.cursor.clone(),
+            breadcrumbs: ctx.breadcrumbs.clone(),
             intersect: ctx.intersect.clone(),
             output: Default::default(),
             ops_count: Default::default(),

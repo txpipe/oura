@@ -24,7 +24,7 @@ pub struct Stage {
 
     intersect: IntersectConfig,
 
-    cursor: Cursor,
+    breadcrumbs: Breadcrumbs,
 
     pub output: SourceOutputPort,
 
@@ -63,12 +63,13 @@ async fn intersect_from_config(
     Ok(())
 }
 
-async fn intersect_from_cursor(peer: &mut NodeClient, cursor: &Cursor) -> Result<(), WorkerError> {
-    let points = cursor.clone_state();
-
+async fn intersect_from_breadcrumbs(
+    peer: &mut NodeClient,
+    breadcrumbs: &Breadcrumbs,
+) -> Result<(), WorkerError> {
     let (intersect, _) = peer
         .chainsync()
-        .find_intersect(points.into())
+        .find_intersect(breadcrumbs.points())
         .await
         .or_restart()?;
 
@@ -92,15 +93,15 @@ impl Worker {
                 let block = MultiEraBlock::decode(cbor).or_panic()?;
                 let slot = block.slot();
                 let hash = block.hash();
+                let point = Point::Specific(slot, hash.to_vec());
 
                 debug!(slot, %hash, "chain sync roll forward");
 
-                let evt = ChainEvent::Apply(
-                    pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
-                    Record::CborBlock(cbor.to_vec()),
-                );
+                let evt = ChainEvent::Apply(point.clone(), Record::CborBlock(cbor.to_vec()));
 
                 stage.output.send(evt.into()).await.or_panic()?;
+
+                stage.breadcrumbs.track(point.clone());
 
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
 
@@ -117,6 +118,8 @@ impl Worker {
                     .send(ChainEvent::reset(point.clone()))
                     .await
                     .or_panic()?;
+
+                stage.breadcrumbs.track(point.clone());
 
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
 
@@ -139,10 +142,10 @@ impl gasket::framework::Worker<Stage> for Worker {
             .await
             .or_retry()?;
 
-        if stage.cursor.is_empty() {
+        if stage.breadcrumbs.is_empty() {
             intersect_from_config(&mut peer_session, &stage.intersect).await?;
         } else {
-            intersect_from_cursor(&mut peer_session, &stage.cursor).await?;
+            intersect_from_breadcrumbs(&mut peer_session, &stage.breadcrumbs).await?;
         }
 
         let worker = Self { peer_session };
@@ -194,9 +197,9 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
+            breadcrumbs: ctx.breadcrumbs.clone(),
             chain: ctx.chain.clone().into(),
             intersect: ctx.intersect.clone(),
-            cursor: ctx.cursor.clone(),
             output: Default::default(),
             ops_count: Default::default(),
             chain_tip: Default::default(),

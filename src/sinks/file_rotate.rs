@@ -73,7 +73,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         stage.ops_count.inc(1);
 
         stage.latest_block.set(point.slot_or_default() as i64);
-        stage.cursor.add_breadcrumb(point.clone());
+        stage.cursor.send(point.clone().into()).await.or_panic()?;
 
         Ok(())
     }
@@ -84,9 +84,9 @@ impl gasket::framework::Worker<Stage> for Worker {
 pub struct Stage {
     config: Config,
     current_dir: PathBuf,
-    cursor: Cursor,
 
     pub input: MapperInputPort,
+    pub cursor: SinkCursorPort,
 
     #[metric]
     ops_count: gasket::metrics::Counter,
@@ -118,10 +118,10 @@ impl Config {
         let stage = Stage {
             config: self,
             current_dir: ctx.current_dir.clone(),
-            cursor: ctx.cursor.clone(),
             ops_count: Default::default(),
             latest_block: Default::default(),
             input: Default::default(),
+            cursor: Default::default(),
         };
 
         Ok(stage)

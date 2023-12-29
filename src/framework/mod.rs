@@ -2,8 +2,12 @@
 
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
+use serde_json::{json, Value as JsonValue};
+use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::path::PathBuf;
+
+pub use crate::cursor::Config as CursorConfig;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
 pub use utxorpc::proto::cardano::v1::Tx as ParsedTx;
@@ -11,12 +15,54 @@ pub use utxorpc::proto::cardano::v1::Tx as ParsedTx;
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;
 
-pub mod cursor;
 pub mod errors;
 pub mod legacy_v1;
 
-pub use cursor::*;
 pub use errors::*;
+
+#[derive(Clone)]
+pub struct Breadcrumbs {
+    state: VecDeque<Point>,
+    max: usize,
+}
+
+impl Breadcrumbs {
+    pub fn new(max: usize) -> Self {
+        Self {
+            state: Default::default(),
+            max,
+        }
+    }
+
+    pub fn from_points(points: Vec<Point>, max: usize) -> Self {
+        Self {
+            state: VecDeque::from_iter(points),
+            max,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.state.is_empty()
+    }
+
+    pub fn track(&mut self, point: Point) {
+        // if we have a rollback, retain only older points
+        self.state
+            .retain(|p| p.slot_or_default() < point.slot_or_default());
+
+        // add the new point we're tracking
+        self.state.push_front(point);
+
+        // if we have too many points, remove the older ones
+        if self.state.len() > self.max {
+            self.state.pop_back();
+        }
+    }
+
+    pub fn points(&self) -> Vec<Point> {
+        self.state.iter().map(Clone::clone).collect()
+    }
+}
 
 #[derive(Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "lowercase")]
@@ -49,12 +95,10 @@ impl From<ChainConfig> for GenesisValues {
 pub struct Context {
     pub chain: ChainConfig,
     pub intersect: IntersectConfig,
-    pub cursor: Cursor,
     pub finalize: Option<FinalizeConfig>,
     pub current_dir: PathBuf,
+    pub breadcrumbs: Breadcrumbs,
 }
-
-use serde_json::{json, Value as JsonValue};
 
 #[derive(Debug, Clone)]
 pub enum Record {
@@ -193,21 +237,13 @@ impl From<ChainEvent> for JsonValue {
     }
 }
 
-pub type SourceOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
-pub type FilterInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
-pub type FilterOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
-pub type MapperInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
-pub type MapperOutputPort = gasket::messaging::tokio::OutputPort<ChainEvent>;
-pub type SinkInputPort = gasket::messaging::tokio::InputPort<ChainEvent>;
-
-pub type OutputAdapter = gasket::messaging::tokio::ChannelSendAdapter<ChainEvent>;
-pub type InputAdapter = gasket::messaging::tokio::ChannelRecvAdapter<ChainEvent>;
-
-pub trait StageBootstrapper {
-    fn connect_output(&mut self, adapter: OutputAdapter);
-    fn connect_input(&mut self, adapter: InputAdapter);
-    fn spawn(self, policy: gasket::runtime::Policy) -> gasket::runtime::Tether;
-}
+pub type SourceOutputPort = gasket::messaging::OutputPort<ChainEvent>;
+pub type FilterInputPort = gasket::messaging::InputPort<ChainEvent>;
+pub type FilterOutputPort = gasket::messaging::OutputPort<ChainEvent>;
+pub type MapperInputPort = gasket::messaging::InputPort<ChainEvent>;
+pub type MapperOutputPort = gasket::messaging::OutputPort<ChainEvent>;
+pub type SinkInputPort = gasket::messaging::InputPort<ChainEvent>;
+pub type SinkCursorPort = gasket::messaging::OutputPort<Point>;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type", content = "value")]

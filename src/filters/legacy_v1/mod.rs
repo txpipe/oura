@@ -42,7 +42,7 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
         ChainEvent::Apply(point, Record::CborBlock(cbor)) => {
             let mut writer = EventWriter::new(
                 point.clone(),
-                stage.output.clone(),
+                &stage.output,
                 &stage.config,
                 &stage.genesis,
                 &mut buffer,
@@ -53,7 +53,7 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
         ChainEvent::Reset(point) => {
             let mut writer = EventWriter::new(
                 point.clone(),
-                stage.output.clone(),
+                &stage.output,
                 &stage.config,
                 &stage.genesis,
                 &mut buffer,
