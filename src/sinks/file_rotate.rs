@@ -20,7 +20,7 @@ pub struct Worker {
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         let output_path = match &stage.config.output_path {
-            Some(x) => PathBuf::try_from(x).map_err(Error::config).or_panic()?,
+            Some(x) => PathBuf::from(x),
             None => stage.current_dir.clone(),
         };
 
