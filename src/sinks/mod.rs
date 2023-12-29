@@ -1,4 +1,4 @@
-use gasket::{messaging::RecvPort, runtime::Tether};
+use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -82,54 +82,92 @@ pub enum Bootstrapper {
     ElasticSearch(elasticsearch::Stage),
 }
 
-impl StageBootstrapper for Bootstrapper {
-    fn connect_output(&mut self, _: OutputAdapter) {
-        panic!("attempted to use sink stage as sender");
-    }
-
-    fn connect_input(&mut self, adapter: InputAdapter) {
+impl Bootstrapper {
+    pub fn borrow_input(&mut self) -> &mut SinkInputPort {
         match self {
-            Bootstrapper::Terminal(p) => p.input.connect(adapter),
-            Bootstrapper::Stdout(p) => p.input.connect(adapter),
-            Bootstrapper::Noop(p) => p.input.connect(adapter),
-            Bootstrapper::Assert(p) => p.input.connect(adapter),
+            Bootstrapper::Terminal(p) => &mut p.input,
+            Bootstrapper::Stdout(p) => &mut p.input,
+            Bootstrapper::Noop(p) => &mut p.input,
+            Bootstrapper::Assert(p) => &mut p.input,
 
             #[cfg(feature = "sink-file-rotate")]
-            Bootstrapper::FileRotate(p) => p.input.connect(adapter),
+            Bootstrapper::FileRotate(p) => &mut p.input,
 
             #[cfg(feature = "sink-webhook")]
-            Bootstrapper::WebHook(p) => p.input.connect(adapter),
+            Bootstrapper::WebHook(p) => &mut p.input,
 
             #[cfg(feature = "sink-rabbitmq")]
-            Bootstrapper::Rabbitmq(p) => p.input.connect(adapter),
+            Bootstrapper::Rabbitmq(p) => &mut p.input,
 
             #[cfg(feature = "sink-kafka")]
-            Bootstrapper::Kafka(p) => p.input.connect(adapter),
+            Bootstrapper::Kafka(p) => &mut p.input,
 
             #[cfg(feature = "sink-aws-sqs")]
-            Bootstrapper::AwsSqs(p) => p.input.connect(adapter),
+            Bootstrapper::AwsSqs(p) => &mut p.input,
 
             #[cfg(feature = "sink-aws-lambda")]
-            Bootstrapper::AwsLambda(p) => p.input.connect(adapter),
+            Bootstrapper::AwsLambda(p) => &mut p.input,
 
             #[cfg(feature = "sink-aws-s3")]
-            Bootstrapper::AwsS3(p) => p.input.connect(adapter),
+            Bootstrapper::AwsS3(p) => &mut p.input,
 
             #[cfg(feature = "sink-gcp-pubsub")]
-            Bootstrapper::GcpPubSub(p) => p.input.connect(adapter),
+            Bootstrapper::GcpPubSub(p) => &mut p.input,
 
             #[cfg(feature = "sink-gcp-cloudfunction")]
-            Bootstrapper::GcpCloudFunction(p) => p.input.connect(adapter),
+            Bootstrapper::GcpCloudFunction(p) => &mut p.input,
 
             #[cfg(feature = "sink-redis")]
-            Bootstrapper::Redis(p) => p.input.connect(adapter),
+            Bootstrapper::Redis(p) => &mut p.input,
 
             #[cfg(feature = "sink-elasticsearch")]
-            Bootstrapper::ElasticSearch(p) => p.input.connect(adapter),
+            Bootstrapper::ElasticSearch(p) => &mut p.input,
         }
     }
 
-    fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
+    pub fn borrow_cursor(&mut self) -> &mut SinkCursorPort {
+        match self {
+            Bootstrapper::Terminal(p) => &mut p.cursor,
+            Bootstrapper::Stdout(p) => &mut p.cursor,
+            Bootstrapper::Noop(p) => &mut p.cursor,
+            Bootstrapper::Assert(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-file-rotate")]
+            Bootstrapper::FileRotate(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-webhook")]
+            Bootstrapper::WebHook(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-rabbitmq")]
+            Bootstrapper::Rabbitmq(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-kafka")]
+            Bootstrapper::Kafka(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-aws-sqs")]
+            Bootstrapper::AwsSqs(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-aws-lambda")]
+            Bootstrapper::AwsLambda(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-aws-s3")]
+            Bootstrapper::AwsS3(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-gcp-pubsub")]
+            Bootstrapper::GcpPubSub(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-gcp-cloudfunction")]
+            Bootstrapper::GcpCloudFunction(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-redis")]
+            Bootstrapper::Redis(p) => &mut p.cursor,
+
+            #[cfg(feature = "sink-elasticsearch")]
+            Bootstrapper::ElasticSearch(p) => &mut p.cursor,
+        }
+    }
+
+    pub fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
             Bootstrapper::Terminal(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),

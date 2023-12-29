@@ -77,7 +77,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         self.stdout.execute(Print(line)).or_panic()?;
 
         stage.latest_block.set(point.slot_or_default() as i64);
-        stage.cursor.add_breadcrumb(point);
+        stage.cursor.send(point.into()).await.or_panic()?;
 
         Ok(())
     }
@@ -87,8 +87,8 @@ impl gasket::framework::Worker<Stage> for Worker {
 #[stage(name = "filter", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
-    cursor: Cursor,
 
+    pub cursor: SinkCursorPort,
     pub input: MapperInputPort,
 
     #[metric]
@@ -106,13 +106,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+    pub fn bootstrapper(self, _: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
             ops_count: Default::default(),
             latest_block: Default::default(),
             input: Default::default(),
-            cursor: ctx.cursor.clone(),
+            cursor: Default::default(),
         };
 
         Ok(stage)

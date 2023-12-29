@@ -1,7 +1,7 @@
 use gasket::runtime::Tether;
-use oura::{filters, framework::*, sinks, sources};
+use oura::{cursor, filters, framework::*, sinks, sources};
 use serde::Deserialize;
-use std::{collections::VecDeque, time::Duration};
+use std::time::Duration;
 use tracing::{info, warn};
 
 use crate::console;
@@ -15,6 +15,7 @@ struct ConfigRoot {
     finalize: Option<FinalizeConfig>,
     chain: Option<ChainConfig>,
     retries: Option<gasket::retries::Policy>,
+    cursor: Option<cursor::Config>,
 }
 
 impl ConfigRoot {
@@ -43,6 +44,7 @@ struct Runtime {
     source: Tether,
     filters: Vec<Tether>,
     sink: Tether,
+    cursor: Tether,
 }
 
 impl Runtime {
@@ -50,6 +52,7 @@ impl Runtime {
         std::iter::once(&self.source)
             .chain(self.filters.iter())
             .chain(std::iter::once(&self.sink))
+            .chain(std::iter::once(&self.cursor))
     }
 
     fn should_stop(&self) -> bool {
@@ -97,39 +100,24 @@ fn define_gasket_policy(config: Option<&gasket::retries::Policy>) -> gasket::run
     }
 }
 
-fn chain_stages<'a>(
-    source: &'a mut dyn StageBootstrapper,
-    filters: Vec<&'a mut dyn StageBootstrapper>,
-    sink: &'a mut dyn StageBootstrapper,
-) {
-    let mut prev = source;
-
-    for filter in filters {
-        let (to_next, from_prev) = gasket::messaging::tokio::channel(100);
-        prev.connect_output(to_next);
-        filter.connect_input(from_prev);
-        prev = filter;
-    }
-
-    let (to_next, from_prev) = gasket::messaging::tokio::channel(100);
-    prev.connect_output(to_next);
-    sink.connect_input(from_prev);
-}
-
 fn bootstrap(
     mut source: sources::Bootstrapper,
     mut filters: Vec<filters::Bootstrapper>,
     mut sink: sinks::Bootstrapper,
+    mut cursor: cursor::Bootstrapper,
     policy: gasket::runtime::Policy,
 ) -> Result<Runtime, Error> {
-    chain_stages(
-        &mut source,
-        filters
-            .iter_mut()
-            .map(|x| x as &mut dyn StageBootstrapper)
-            .collect::<Vec<_>>(),
-        &mut sink,
-    );
+    let mut prev = source.borrow_output();
+
+    for filter in filters.iter_mut() {
+        gasket::messaging::tokio::connect_ports(prev, filter.borrow_input(), 100);
+        prev = filter.borrow_output();
+    }
+
+    gasket::messaging::tokio::connect_ports(prev, sink.borrow_input(), 100);
+    let prev = sink.borrow_cursor();
+
+    gasket::messaging::tokio::connect_ports(prev, cursor.borrow_track(), 100);
 
     let runtime = Runtime {
         source: source.spawn(policy.clone()),
@@ -137,7 +125,8 @@ fn bootstrap(
             .into_iter()
             .map(|x| x.spawn(policy.clone()))
             .collect(),
-        sink: sink.spawn(policy),
+        sink: sink.spawn(policy.clone()),
+        cursor: cursor.spawn(policy),
     };
 
     Ok(runtime)
@@ -152,16 +141,15 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let intersect = config.intersect;
     let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
-
-    // TODO: load from persistence mechanism
-    let cursor = Cursor::new(VecDeque::new());
+    let cursor = config.cursor.unwrap_or_default();
+    let breadcrumbs = cursor.initial_load()?;
 
     let ctx = Context {
         chain,
         intersect,
         finalize,
-        cursor,
         current_dir,
+        breadcrumbs,
     };
 
     let source = config.source.bootstrapper(&ctx)?;
@@ -175,8 +163,10 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let sink = config.sink.bootstrapper(&ctx)?;
 
+    let cursor = cursor.bootstrapper(&ctx)?;
+
     let retries = define_gasket_policy(config.retries.as_ref());
-    let runtime = bootstrap(source, filters, sink, retries)?;
+    let runtime = bootstrap(source, filters, sink, cursor, retries)?;
 
     info!("oura is running...");
 

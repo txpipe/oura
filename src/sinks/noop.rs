@@ -28,7 +28,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         stage.ops_count.inc(1);
 
         stage.latest_block.set(unit.slot_or_default() as i64);
-        stage.cursor.add_breadcrumb(unit.clone());
+        stage.cursor.send(unit.clone().into()).await.or_panic()?;
 
         Ok(())
     }
@@ -37,9 +37,8 @@ impl gasket::framework::Worker<Stage> for Worker {
 #[derive(Stage)]
 #[stage(name = "sink-noop", unit = "Point", worker = "Worker")]
 pub struct Stage {
-    cursor: Cursor,
-
     pub input: FilterInputPort,
+    pub cursor: SinkCursorPort,
 
     #[metric]
     ops_count: gasket::metrics::Counter,
@@ -52,12 +51,12 @@ pub struct Stage {
 pub struct Config {}
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+    pub fn bootstrapper(self, _: &Context) -> Result<Stage, Error> {
         let stage = Stage {
-            cursor: ctx.cursor.clone(),
             ops_count: Default::default(),
             latest_block: Default::default(),
             input: Default::default(),
+            cursor: Default::default(),
         };
 
         Ok(stage)

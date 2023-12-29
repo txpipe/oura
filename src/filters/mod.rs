@@ -1,7 +1,4 @@
-use gasket::{
-    messaging::{RecvPort, SendPort},
-    runtime::Tether,
-};
+use gasket::runtime::Tether;
 use serde::Deserialize;
 
 use crate::framework::*;
@@ -32,40 +29,40 @@ pub enum Bootstrapper {
     Deno(deno::Stage),
 }
 
-impl StageBootstrapper for Bootstrapper {
-    fn connect_input(&mut self, adapter: InputAdapter) {
+impl Bootstrapper {
+    pub fn borrow_input(&mut self) -> &mut FilterInputPort {
         match self {
-            Bootstrapper::Noop(p) => p.input.connect(adapter),
-            Bootstrapper::SplitBlock(p) => p.input.connect(adapter),
-            Bootstrapper::Dsl(p) => p.input.connect(adapter),
-            Bootstrapper::Json(p) => p.input.connect(adapter),
-            Bootstrapper::LegacyV1(p) => p.input.connect(adapter),
-            Bootstrapper::Wasm(p) => p.input.connect(adapter),
-            Bootstrapper::ParseCbor(p) => p.input.connect(adapter),
-            Bootstrapper::MatchPattern(p) => p.input.connect(adapter),
+            Bootstrapper::Noop(p) => &mut p.input,
+            Bootstrapper::SplitBlock(p) => &mut p.input,
+            Bootstrapper::Dsl(p) => &mut p.input,
+            Bootstrapper::Json(p) => &mut p.input,
+            Bootstrapper::LegacyV1(p) => &mut p.input,
+            Bootstrapper::Wasm(p) => &mut p.input,
+            Bootstrapper::ParseCbor(p) => &mut p.input,
+            Bootstrapper::MatchPattern(p) => &mut p.input,
 
             #[cfg(feature = "deno")]
-            Bootstrapper::Deno(p) => p.input.connect(adapter),
+            Bootstrapper::Deno(p) => &mut p.input,
         }
     }
 
-    fn connect_output(&mut self, adapter: OutputAdapter) {
+    pub fn borrow_output(&mut self) -> &mut FilterOutputPort {
         match self {
-            Bootstrapper::Noop(p) => p.output.connect(adapter),
-            Bootstrapper::SplitBlock(p) => p.output.connect(adapter),
-            Bootstrapper::Dsl(p) => p.output.connect(adapter),
-            Bootstrapper::Json(p) => p.output.connect(adapter),
-            Bootstrapper::LegacyV1(p) => p.output.connect(adapter),
-            Bootstrapper::Wasm(p) => p.output.connect(adapter),
-            Bootstrapper::ParseCbor(p) => p.output.connect(adapter),
-            Bootstrapper::MatchPattern(p) => p.output.connect(adapter),
+            Bootstrapper::Noop(p) => &mut p.output,
+            Bootstrapper::SplitBlock(p) => &mut p.output,
+            Bootstrapper::Dsl(p) => &mut p.output,
+            Bootstrapper::Json(p) => &mut p.output,
+            Bootstrapper::LegacyV1(p) => &mut p.output,
+            Bootstrapper::Wasm(p) => &mut p.output,
+            Bootstrapper::ParseCbor(p) => &mut p.output,
+            Bootstrapper::MatchPattern(p) => &mut p.output,
 
             #[cfg(feature = "deno")]
-            Bootstrapper::Deno(p) => p.output.connect(adapter),
+            Bootstrapper::Deno(p) => &mut p.output,
         }
     }
 
-    fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
+    pub fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::SplitBlock(x) => gasket::runtime::spawn_stage(x, policy),

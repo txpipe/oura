@@ -69,7 +69,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
-        stage.cursor.add_breadcrumb(point.clone());
+        stage.cursor.send(point.clone().into()).await.or_panic()?;
 
         Ok(())
     }
@@ -79,9 +79,9 @@ impl gasket::framework::Worker<Stage> for Worker {
 #[stage(name = "sink-aws-s3", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     config: Config,
-    cursor: Cursor,
 
     pub input: MapperInputPort,
+    pub cursor: SinkCursorPort,
 
     #[metric]
     ops_count: gasket::metrics::Counter,
@@ -99,13 +99,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+    pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
-            cursor: ctx.cursor.clone(),
             ops_count: Default::default(),
             latest_block: Default::default(),
             input: Default::default(),
+            cursor: Default::default(),
         };
 
         Ok(stage)

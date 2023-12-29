@@ -11,7 +11,7 @@ use super::Config;
 pub struct EventWriter<'a> {
     context: EventContext,
     point: Point,
-    output: MapperOutputPort,
+    output: &'a MapperOutputPort,
     pub(crate) config: &'a Config,
     pub(crate) genesis: &'a GenesisValues,
     buffer: &'a mut Vec<ChainEvent>,
@@ -20,7 +20,7 @@ pub struct EventWriter<'a> {
 impl<'a> EventWriter<'a> {
     pub fn new(
         point: Point,
-        output: MapperOutputPort,
+        output: &'a MapperOutputPort,
         config: &'a Config,
         genesis: &'a GenesisValues,
         buffer: &'a mut Vec<ChainEvent>,
@@ -61,7 +61,7 @@ impl<'a> EventWriter<'a> {
         EventWriter {
             context: extra_context,
             point: self.point.clone(),
-            output: self.output.clone(),
+            output: self.output,
             config: self.config,
             genesis: self.genesis,
             buffer: self.buffer,
