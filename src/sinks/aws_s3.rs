@@ -1,3 +1,4 @@
+use aws_config::BehaviorVersion;
 use aws_sdk_s3::{primitives::ByteStream, Client};
 use aws_types::region::Region;
 use gasket::framework::*;
@@ -13,7 +14,7 @@ pub struct Worker {
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        let aws_config = aws_config::from_env()
+        let aws_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
             .region(Region::new(stage.config.region.clone()))
             .load()
             .await;
