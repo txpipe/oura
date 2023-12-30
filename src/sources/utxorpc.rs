@@ -230,11 +230,17 @@ pub struct Stage {
     config: Config,
     breadcrumbs: Breadcrumbs,
     intersect: IntersectConfig,
+
     pub output: SourceOutputPort,
+
     #[metric]
     ops_count: gasket::metrics::Counter,
+
     #[metric]
     chain_tip: gasket::metrics::Gauge,
+
+    #[metric]
+    current_slot: gasket::metrics::Gauge,
 }
 
 #[derive(Deserialize)]
@@ -252,6 +258,7 @@ impl Config {
             output: Default::default(),
             ops_count: Default::default(),
             chain_tip: Default::default(),
+            current_slot: Default::default(),
         };
 
         Ok(stage)

@@ -13,7 +13,7 @@ use crate::framework::*;
 
 #[derive(Stage)]
 #[stage(
-    name = "source-n2c",
+    name = "source",
     unit = "NextResponse<BlockContent>",
     worker = "Worker"
 )]
@@ -33,6 +33,12 @@ pub struct Stage {
 
     #[metric]
     chain_tip: gasket::metrics::Gauge,
+
+    #[metric]
+    current_slot: gasket::metrics::Gauge,
+
+    #[metric]
+    rollback_count: gasket::metrics::Counter,
 }
 
 async fn intersect_from_config(
@@ -104,6 +110,8 @@ impl Worker {
                 stage.breadcrumbs.track(point.clone());
 
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
+                stage.current_slot.set(slot as i64);
+                stage.ops_count.inc(1);
 
                 Ok(())
             }
@@ -122,6 +130,9 @@ impl Worker {
                 stage.breadcrumbs.track(point.clone());
 
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
+                stage.current_slot.set(point.slot_or_default() as i64);
+                stage.rollback_count.inc(1);
+                stage.ops_count.inc(1);
 
                 Ok(())
             }
@@ -203,6 +214,8 @@ impl Config {
             output: Default::default(),
             ops_count: Default::default(),
             chain_tip: Default::default(),
+            current_slot: Default::default(),
+            rollback_count: Default::default(),
         };
 
         Ok(stage)
