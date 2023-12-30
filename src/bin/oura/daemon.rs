@@ -1,10 +1,10 @@
 use gasket::runtime::Tether;
 use oura::{cursor, filters, framework::*, sinks, sources};
 use serde::Deserialize;
-use std::time::Duration;
+use std::{fmt::Debug, sync::Arc, time::Duration};
 use tracing::{info, warn};
 
-use crate::console;
+use crate::{console, prometheus};
 
 #[derive(Deserialize)]
 struct ConfigRoot {
@@ -16,6 +16,7 @@ struct ConfigRoot {
     chain: Option<ChainConfig>,
     retries: Option<gasket::retries::Policy>,
     cursor: Option<cursor::Config>,
+    metrics: Option<prometheus::Config>,
 }
 
 impl ConfigRoot {
@@ -40,15 +41,21 @@ impl ConfigRoot {
     }
 }
 
-struct Runtime {
-    source: Tether,
-    filters: Vec<Tether>,
-    sink: Tether,
-    cursor: Tether,
+pub struct Runtime {
+    pub source: Tether,
+    pub filters: Vec<Tether>,
+    pub sink: Tether,
+    pub cursor: Tether,
+}
+
+impl Debug for Runtime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Runtime").finish()
+    }
 }
 
 impl Runtime {
-    fn all_tethers(&self) -> impl Iterator<Item = &Tether> {
+    pub fn all_tethers(&self) -> impl Iterator<Item = &Tether> {
         std::iter::once(&self.source)
             .chain(self.filters.iter())
             .chain(std::iter::once(&self.sink))
@@ -132,6 +139,24 @@ fn bootstrap(
     Ok(runtime)
 }
 
+async fn monitor_loop(
+    runtime: &Arc<Runtime>,
+    metrics: Option<prometheus::Config>,
+    console: Option<super::console::Mode>,
+) {
+    if let Some(metrics) = metrics {
+        info!("starting metrics exporter");
+        let runtime = runtime.clone();
+        tokio::spawn(async { prometheus::initialize(metrics, runtime).await });
+    }
+
+    while !runtime.should_stop() {
+        // TODO: move console refresh to it's own tokio thread
+        console::refresh(&console, runtime.all_tethers());
+        tokio::time::sleep(Duration::from_millis(1500)).await;
+    }
+}
+
 pub fn run(args: &Args) -> Result<(), Error> {
     console::initialize(&args.console);
 
@@ -167,15 +192,20 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let retries = define_gasket_policy(config.retries.as_ref());
     let runtime = bootstrap(source, filters, sink, cursor, retries)?;
+    let runtime = Arc::new(runtime);
+
+    let tokio_rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_io()
+        .enable_time()
+        .build()
+        .unwrap();
 
     info!("oura is running...");
 
-    while !runtime.should_stop() {
-        console::refresh(&args.console, runtime.all_tethers());
-        std::thread::sleep(Duration::from_millis(1500));
-    }
+    tokio_rt.block_on(async { monitor_loop(&runtime, config.metrics, args.console.clone()).await });
 
     info!("Oura is stopping...");
+
     runtime.shutdown();
 
     Ok(())

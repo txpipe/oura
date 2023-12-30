@@ -11,7 +11,7 @@ use crate::framework::*;
 
 #[derive(Stage)]
 #[stage(
-    name = "source-n2n",
+    name = "source",
     unit = "NextResponse<HeaderContent>",
     worker = "Worker"
 )]
@@ -31,6 +31,12 @@ pub struct Stage {
 
     #[metric]
     chain_tip: gasket::metrics::Gauge,
+
+    #[metric]
+    current_slot: gasket::metrics::Gauge,
+
+    #[metric]
+    rollback_count: gasket::metrics::Counter,
 }
 
 fn to_traverse(header: &HeaderContent) -> Result<MultiEraHeader<'_>, WorkerError> {
@@ -121,6 +127,8 @@ impl Worker {
                 stage.breadcrumbs.track(point);
 
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
+                stage.current_slot.set(slot as i64);
+                stage.ops_count.inc(1);
 
                 Ok(())
             }
@@ -139,6 +147,9 @@ impl Worker {
                 stage.breadcrumbs.track(point.clone());
 
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
+                stage.current_slot.set(point.slot_or_default() as i64);
+                stage.ops_count.inc(1);
+                stage.rollback_count.inc(1);
 
                 Ok(())
             }
@@ -227,7 +238,9 @@ impl Config {
             intersect: ctx.intersect.clone(),
             output: Default::default(),
             ops_count: Default::default(),
+            rollback_count: Default::default(),
             chain_tip: Default::default(),
+            current_slot: Default::default(),
         };
 
         Ok(stage)
