@@ -106,7 +106,6 @@ impl Worker {
                 let header = to_traverse(header).or_panic()?;
                 let slot = header.slot();
                 let hash = header.hash();
-                let num = header.number();
                 let point = Point::Specific(slot, hash.to_vec());
 
                 debug!(slot, %hash, "chain sync roll forward");
