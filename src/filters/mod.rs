@@ -6,7 +6,7 @@ use crate::framework::*;
 pub mod dsl;
 pub mod json;
 pub mod legacy_v1;
-pub mod match_pattern;
+pub mod match_tx;
 pub mod noop;
 pub mod parse_cbor;
 pub mod split_block;
@@ -23,7 +23,7 @@ pub enum Bootstrapper {
     LegacyV1(legacy_v1::Stage),
     Wasm(wasm::Stage),
     ParseCbor(parse_cbor::Stage),
-    MatchPattern(match_pattern::Stage),
+    MatchPattern(match_tx::Stage),
 
     #[cfg(feature = "deno")]
     Deno(deno::Stage),
@@ -89,7 +89,7 @@ pub enum Config {
     LegacyV1(legacy_v1::Config),
     Wasm(wasm::Config),
     ParseCbor(parse_cbor::Config),
-    MatchPattern(match_pattern::Config),
+    MatchPattern(match_tx::Config),
 
     #[cfg(feature = "deno")]
     Deno(deno::Config),

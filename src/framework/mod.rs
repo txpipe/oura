@@ -10,6 +10,7 @@ use std::path::PathBuf;
 pub use crate::cursor::Config as CursorConfig;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
+pub use utxorpc::proto::cardano::v1::Block as ParsedBlock;
 pub use utxorpc::proto::cardano::v1::Tx as ParsedTx;
 
 // we use GenesisValues from Pallas as our ChainConfig
@@ -107,6 +108,7 @@ pub enum Record {
     GenericJson(JsonValue),
     OuraV1Event(legacy_v1::Event),
     ParsedTx(ParsedTx),
+    ParsedBlock(ParsedBlock),
 }
 
 impl From<Record> for JsonValue {
@@ -114,6 +116,7 @@ impl From<Record> for JsonValue {
         match value {
             Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
             Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
+            Record::ParsedBlock(x) => json!(x),
             Record::ParsedTx(x) => json!(x),
             Record::OuraV1Event(x) => json!(x),
             Record::GenericJson(x) => x,
