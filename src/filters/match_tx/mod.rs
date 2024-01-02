@@ -1,27 +1,19 @@
 use gasket::framework::*;
-use pallas::{
-    ledger::addresses::{Address, StakeAddress},
-    network::miniprotocols::Point,
-};
 use serde::Deserialize;
-use thiserror::Error;
 use tracing::error;
 
 use crate::framework::*;
 
+use self::eval::{MatchOutcome, Predicate};
+
 mod address;
 mod eval;
-
-#[derive(Error)]
-pub enum Error {
-    Decoding,
-    MissingData,
-}
 
 #[derive(Stage)]
 #[stage(name = "match_tx", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     predicate: Predicate,
+    skip_uncertain: bool,
 
     pub input: FilterInputPort,
     pub output: FilterOutputPort,
@@ -42,14 +34,25 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let out = match unit {
         ChainEvent::Apply(point, record) => match record {
             Record::ParsedTx(tx) => {
-                if stage.predicate.tx_match(point, tx)? {
-                    Ok(Some(unit.to_owned()))
-                } else {
-                    Ok(None)
+                match eval::eval(record, &stage.predicate) {
+                    MatchOutcome::Positive => {
+                        Ok(Some(unit.to_owned()))
+                    }
+                    MatchOutcome::Negative => {
+                        Ok(None)
+                    }
+                    MatchOutcome::Uncertain => {
+                        if stage.skip_uncertain {
+
+                        Ok(None)
+                        } else {
+                            Err(WorkerError::Panic)
+                        }
+                    }
                 }
             },
             _ => {
-                error!("The MatchPattern filter is valid only with the ParsedTx record");
+                error!("The match_tx filter is valid only with the ParsedTx record");
                 Err(WorkerError::Panic)
             }
         },
@@ -61,88 +64,17 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     out
 });
 
-#[derive(Deserialize, Clone, Debug)]
-pub struct BlockPattern {
-    pub slot_before: Option<u64>,
-    pub slot_after: Option<u64>,
-}
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "snake_case")]
-pub enum Predicate {
-    Block(BlockPattern),
-    AnyOutputMatches(OutputPattern),
-    AnyAddressMatches(AddressPattern),
-    // WithdrawalMatches(AddressPattern),
-    // CollateralMatches(AddressPattern),
-    Not(Box<Predicate>),
-    AnyOf(Vec<Predicate>),
-    AllOf(Vec<Predicate>),
-}
-
-fn block_match(point: &Point, block_pattern: &BlockPattern) -> bool {
-    if let Some(slot_after) = block_pattern.slot_after {
-        if point.slot_or_default() <= slot_after {
-            return false;
-        }
-    }
-
-    if let Some(slot_before) = block_pattern.slot_before {
-        if point.slot_or_default() >= slot_before {
-            return false;
-        }
-    }
-
-    true
-}
-
-fn output_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
-    if address_pattern.is_script.unwrap_or_default() {
-        // TODO: validate inside script
-        return Ok(false);
-    }
-
-    for output in tx.outputs.iter() {
-        let address = Address::from_bytes(&output.address).or_panic()?;
-        if !address.has_script() && address_pattern.address_match(&address)? {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
-}
-
-fn withdrawal_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
-    for withdrawal in tx.withdrawals.iter() {
-        let address = Address::from_bytes(&withdrawal.reward_account).or_panic()?;
-        if address_pattern.address_match(&address)? {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
-}
-
-fn collateral_match(tx: &ParsedTx, address_pattern: &AddressPattern) -> Result<bool, WorkerError> {
-    if tx.collateral.is_some() {
-        if let Some(collateral_return) = &tx.collateral.as_ref().unwrap().collateral_return {
-            let address = Address::from_bytes(&collateral_return.address).or_panic()?;
-            return address_pattern.address_match(&address);
-        }
-    }
-
-    Ok(false)
-}
-
 #[derive(Deserialize)]
 pub struct Config {
     pub predicate: Predicate,
+    pub skip_uncertain: bool,
 }
 
 impl Config {
     pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             predicate: self.predicate,
+            skip_uncertain: self.skip_uncertain,
             ops_count: Default::default(),
             input: Default::default(),
             output: Default::default(),
