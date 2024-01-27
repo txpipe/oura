@@ -71,7 +71,7 @@ r2d2_redis = { version = "0.14.0", optional = true }
 deno_runtime = { version = "0.126.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
 file-rotate = { version = "0.7.5", optional = true }
-tonic = { version = "0.9.2", features = ["tls", "tls-roots"], optional = true }
+tonic = { version = "0.10.2", features = ["tls", "tls-roots"], optional = true }
 futures = { version = "0.3.28", optional = true }
 
 # sql
