@@ -27,7 +27,7 @@ source-utxorpc = ["tonic", "futures"]
 sql = ["sqlx"]
 
 [dependencies]
-pallas = "0.21.0"
+pallas = "0.22.0"
 # pallas = { path = "../pallas/pallas" }
 # pallas = { git = "https://github.com/txpipe/pallas" }
 
