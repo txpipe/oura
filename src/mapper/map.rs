@@ -425,6 +425,11 @@ impl EventWriter {
             }
         }
 
+        // Add Collateral Stuff
+        let collateral_inputs = &body.collateral.as_deref();
+        record.collateral_input_count = collateral_inputs.iter().count();
+        record.has_collateral_output = false;
+
         // TODO
         // TransactionBodyComponent::ScriptDataHash(_)
         // TransactionBodyComponent::RequiredSigners(_)
@@ -433,6 +438,10 @@ impl EventWriter {
         if self.config.include_transaction_details {
             record.outputs = outputs.into();
             record.inputs = inputs.into();
+
+            // transaction_details collateral stuff
+            record.collateral_inputs =
+                collateral_inputs.map(|inputs| self.collect_input_records(inputs));
 
             record.metadata = match aux_data {
                 Some(aux_data) => self.collect_metadata_records(aux_data)?.into(),
