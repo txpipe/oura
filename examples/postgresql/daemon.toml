@@ -1,0 +1,17 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Point"
+value = [114220807, "01822b10afde3d09bd5e72758857b669ddadcdaad6776a3dc8ee902c3ace1d7e"]
+
+[[filters]]
+type = "SplitBlock"
+
+[sink]
+type = "SqlDb"
+connection = "postgres://postgres:example@localhost:5432/postgres"
+apply_template = "INSERT INTO txs (slot, cbor) VALUES ('{{point.slot}}', decode('{{record.hex}}', 'hex'));"
+undo_template = "DELETE FROM txs WHERE slot = {{point.slot}}"
+reset_template = "DELETE FROM txs WHERE slot > {{point.slot}}"
