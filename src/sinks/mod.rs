@@ -4,8 +4,6 @@ pub mod assert;
 pub mod stdout;
 pub mod terminal;
 
-pub use common::*;
-
 #[cfg(feature = "logs")]
 pub mod logs;
 

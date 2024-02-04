@@ -198,7 +198,7 @@ impl EventWriter {
         }
 
         if let Some(collateral) = &tx.collateral {
-            for (_idx, collateral) in collateral.iter().enumerate() {
+            for collateral in collateral.iter() {
                 // TODO: collateral context?
 
                 self.crawl_collateral(collateral)?;
