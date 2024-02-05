@@ -82,7 +82,7 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
 
       - name: Build | Build
         uses: actions-rs/cargo@v1.0.3
