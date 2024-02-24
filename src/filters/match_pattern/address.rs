@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
-use anyhow::bail;
 use pallas::ledger::addresses::{Address, ByronAddress, ShelleyAddress, StakeAddress};
 use serde::Deserialize;
+use std::str::FromStr;
 
 use super::eval::{MatchOutcome, PatternOf};
 
@@ -15,7 +13,7 @@ pub struct AddressPattern {
     pub delegation_is_script: Option<bool>,
 }
 
-impl PatternOf<ByronAddress> for AddressPattern {
+impl PatternOf<&ByronAddress> for AddressPattern {
     fn is_match(&self, subject: &ByronAddress) -> super::eval::MatchOutcome {
         let a = self.byron_address.is_match(&subject.to_vec());
 
@@ -23,15 +21,15 @@ impl PatternOf<ByronAddress> for AddressPattern {
 
         let c = MatchOutcome::if_false(self.delegation_part.is_some());
 
-        let d = self.payment_is_script.is_match(&false);
+        let d = self.payment_is_script.is_match(false);
 
-        let e = self.delegation_is_script.is_match(&false);
+        let e = self.delegation_is_script.is_match(false);
 
         MatchOutcome::fold_all_of([a, b, c, d, e].into_iter())
     }
 }
 
-impl PatternOf<ShelleyAddress> for AddressPattern {
+impl PatternOf<&ShelleyAddress> for AddressPattern {
     fn is_match(&self, subject: &ShelleyAddress) -> MatchOutcome {
         let a = MatchOutcome::if_false(self.byron_address.is_some());
 
@@ -43,17 +41,17 @@ impl PatternOf<ShelleyAddress> for AddressPattern {
 
         let d = self
             .payment_is_script
-            .is_match(&subject.payment().is_script());
+            .is_match(subject.payment().is_script());
 
         let e = self
             .delegation_is_script
-            .is_match(&subject.delegation().is_script());
+            .is_match(subject.delegation().is_script());
 
         MatchOutcome::fold_all_of([a, b, c, d, e].into_iter())
     }
 }
 
-impl PatternOf<StakeAddress> for AddressPattern {
+impl PatternOf<&StakeAddress> for AddressPattern {
     fn is_match(&self, subject: &StakeAddress) -> MatchOutcome {
         let a = MatchOutcome::if_false(self.byron_address.is_some());
 
@@ -63,27 +61,27 @@ impl PatternOf<StakeAddress> for AddressPattern {
 
         let d = MatchOutcome::if_false(self.payment_is_script.is_some());
 
-        let e = self.delegation_is_script.is_match(&subject.is_script());
+        let e = self.delegation_is_script.is_match(subject.is_script());
 
         MatchOutcome::fold_all_of([a, b, c, d, e].into_iter())
     }
 }
 
-impl PatternOf<[u8]> for AddressPattern {
-    fn is_match(&self, subject: &[u8]) -> MatchOutcome {
-        Address::from_bytes(subject)
-            .map(|subject| self.is_match(&subject))
-            .unwrap_or(MatchOutcome::Uncertain)
-    }
-}
-
-impl PatternOf<Address> for AddressPattern {
+impl PatternOf<&Address> for AddressPattern {
     fn is_match(&self, subject: &Address) -> super::eval::MatchOutcome {
         match subject {
             Address::Byron(addr) => self.is_match(addr),
             Address::Shelley(addr) => self.is_match(addr),
             Address::Stake(addr) => self.is_match(addr),
         }
+    }
+}
+
+impl PatternOf<&[u8]> for AddressPattern {
+    fn is_match(&self, subject: &[u8]) -> MatchOutcome {
+        Address::from_bytes(subject)
+            .map(|subject| self.is_match(&subject))
+            .unwrap_or(MatchOutcome::Uncertain)
     }
 }
 
