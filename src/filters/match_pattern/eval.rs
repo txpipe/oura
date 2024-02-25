@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use utxorpc::proto::cardano::v1::{
-    Asset, AuxData, Metadata, Metadatum, Multiasset, TxInput, TxOutput,
+    Asset, AuxData, Metadata, Metadatum, Multiasset, Redeemer, TxInput, TxOutput,
 };
 
 use crate::framework::*;
@@ -179,6 +179,17 @@ impl PatternOf<&str> for TextPattern {
     }
 }
 
+impl PatternOf<&[u8]> for TextPattern {
+    fn is_match(&self, subject: &[u8]) -> MatchOutcome {
+        let subject = match String::from_utf8(subject.to_vec()) {
+            Ok(subject) => subject,
+            Err(_) => return MatchOutcome::Uncertain,
+        };
+
+        self.is_match(subject.as_str())
+    }
+}
+
 impl PatternOf<&Metadatum> for TextPattern {
     fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
         match subject.metadatum.as_ref() {
@@ -201,9 +212,9 @@ impl PatternOf<&Asset> for AssetPattern {
     fn is_match(&self, subject: &Asset) -> MatchOutcome {
         let a = self.name.is_match(subject.name.as_ref());
 
-        let b = todo!();
+        let b = self.ascii_name.is_match(subject.name.as_ref());
 
-        let c = todo!();
+        let c = self.coin.is_match(subject.output_coin);
 
         MatchOutcome::fold_all_of([a, b, c].into_iter())
     }
@@ -283,7 +294,8 @@ pub struct InputPattern {
     assets: Vec<MultiAssetPattern>,
     lovelace: Option<CoinPattern>,
     datum: Option<DatumPattern>,
-    redeemer: Option<DatumPattern>,
+    // u5c redeemer structure is not suitable, is lacks a datum hash (and it also contains a
+    // redundant purpose flag) redeemer: Option<DatumPattern>,
 }
 
 impl PatternOf<&TxInput> for InputPattern {
@@ -313,7 +325,8 @@ impl PatternOf<&TxInput> for InputPattern {
 #[derive(Deserialize, Clone, Debug)]
 pub struct MintPattern {
     assets: Vec<MultiAssetPattern>,
-    redeemer: Option<DatumPattern>,
+    // the u5c struct is not suitable, it lacks the redeemer value
+    // redeemer: Option<DatumPattern>,
 }
 
 impl PatternOf<&Multiasset> for MintPattern {
@@ -322,9 +335,7 @@ impl PatternOf<&Multiasset> for MintPattern {
 
         let a = MatchOutcome::fold_all_of(a);
 
-        let b = todo!();
-
-        MatchOutcome::fold_all_of([a, b].into_iter())
+        MatchOutcome::fold_all_of([a].into_iter())
     }
 }
 
@@ -332,6 +343,7 @@ impl PatternOf<&Multiasset> for MintPattern {
 pub enum MetadatumPattern {
     Text(TextPattern),
     Int(NumericPattern<i64>),
+    // TODO: bytes, array, map
 }
 
 impl PatternOf<&Metadatum> for MetadatumPattern {
@@ -347,7 +359,6 @@ impl PatternOf<&Metadatum> for MetadatumPattern {
 pub struct MetadataPattern {
     label: Option<u64>,
     value: Option<MetadatumPattern>,
-    nested_value: Option<MetadatumPattern>,
 }
 
 impl PatternOf<&Metadata> for MetadataPattern {
@@ -356,9 +367,7 @@ impl PatternOf<&Metadata> for MetadataPattern {
 
         let b = self.value.is_any_match(subject.value.iter());
 
-        let c = todo!();
-
-        MatchOutcome::fold_all_of([a, b, c].into_iter())
+        MatchOutcome::fold_all_of([a, b].into_iter())
     }
 }
 
@@ -368,13 +377,14 @@ impl PatternOf<&AuxData> for MetadataPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
 pub struct TxPattern {
     inputs: Vec<InputPattern>,
     outputs: Vec<OutputPattern>,
     mint: Vec<MintPattern>,
     metadata: Vec<MetadataPattern>,
-    scripts: Vec<ScriptPattern>,
+    // the u5c struct is not suitable, it lacks hash for the scripts
+    // scripts: Vec<ScriptPattern>,
 }
 
 impl PatternOf<&ParsedTx> for TxPattern {
@@ -394,11 +404,14 @@ impl PatternOf<&ParsedTx> for TxPattern {
 
         let c = MatchOutcome::fold_all_of(c);
 
-        let d = todo!();
+        let d = self
+            .metadata
+            .iter()
+            .map(|x| x.is_any_match(tx.auxiliary.iter()));
 
-        let e = todo!();
+        let d = MatchOutcome::fold_all_of(d);
 
-        MatchOutcome::fold_all_of([a, b, c, d, e].into_iter())
+        MatchOutcome::fold_all_of([a, b, c, d].into_iter())
     }
 }
 
@@ -489,5 +502,26 @@ pub fn eval(record: &Record, predicate: &Predicate) -> MatchOutcome {
         Record::ParsedTx(x) => eval_tx(x, predicate),
         Record::ParsedBlock(x) => eval_block(x, predicate),
         _ => MatchOutcome::Uncertain,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utxorpc::proto::cardano::v1::Tx;
+
+    fn assert_tx_matches(subject: &Tx, pattern: TxPattern) {
+        let predicate = Predicate::Match(Pattern::Tx(pattern));
+
+        assert!(matches!(
+            eval_tx(&subject, &predicate),
+            MatchOutcome::Positive
+        ))
+    }
+
+    #[test]
+    fn empty_pattern_should_match() {
+        let subject = Tx::default();
+        assert_tx_matches(&subject, TxPattern::default())
     }
 }
