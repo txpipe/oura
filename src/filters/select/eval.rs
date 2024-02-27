@@ -1,4 +1,5 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use tracing::warn;
 use utxorpc::proto::cardano::v1::{
     Asset, AuxData, Metadata, Metadatum, Multiasset, Redeemer, TxInput, TxOutput,
 };
@@ -144,7 +145,7 @@ impl PatternOf<u64> for u64 {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum NumericPattern<I: Ord + Eq> {
     Exact(I),
     Gte(I),
@@ -165,7 +166,7 @@ impl PatternOf<u64> for CoinPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum TextPattern {
     Exact(String),
     // TODO: Regex
@@ -201,7 +202,7 @@ impl PatternOf<&Metadatum> for TextPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AssetPattern {
     name: Option<Vec<u8>>,
     ascii_name: Option<TextPattern>,
@@ -220,7 +221,7 @@ impl PatternOf<&Asset> for AssetPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DatumPattern {
     hash: Option<Vec<u8>>,
 }
@@ -231,12 +232,12 @@ impl PatternOf<&[u8]> for DatumPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ScriptPattern {
     hash: Option<Vec<u8>>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct MultiAssetPattern {
     policy: Option<Vec<u8>>,
     assets: Vec<AssetPattern>,
@@ -261,7 +262,7 @@ impl PatternOf<&Multiasset> for MultiAssetPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OutputPattern {
     address: Option<AddressPattern>,
     lovelace: Option<CoinPattern>,
@@ -288,7 +289,7 @@ impl PatternOf<&TxOutput> for OutputPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct InputPattern {
     address: Option<AddressPattern>,
     assets: Vec<MultiAssetPattern>,
@@ -322,7 +323,7 @@ impl PatternOf<&TxInput> for InputPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MintPattern {
     assets: Vec<MultiAssetPattern>,
     // the u5c struct is not suitable, it lacks the redeemer value
@@ -339,7 +340,7 @@ impl PatternOf<&Multiasset> for MintPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MetadatumPattern {
     Text(TextPattern),
     Int(NumericPattern<i64>),
@@ -355,7 +356,7 @@ impl PatternOf<&Metadatum> for MetadatumPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MetadataPattern {
     label: Option<u64>,
     value: Option<MetadatumPattern>,
@@ -377,7 +378,7 @@ impl PatternOf<&AuxData> for MetadataPattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct TxPattern {
     inputs: Vec<InputPattern>,
     outputs: Vec<OutputPattern>,
@@ -419,7 +420,7 @@ pub type SlotPattern = NumericPattern<u64>;
 
 pub type EraPattern = NumericPattern<u8>;
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BlockPattern {
     hash: Option<Vec<u8>>,
     slot: Option<SlotPattern>,
@@ -427,7 +428,7 @@ pub struct BlockPattern {
     txs: Vec<TxPattern>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Pattern {
     Block(BlockPattern),
     Tx(TxPattern),
@@ -464,7 +465,7 @@ impl PatternOf<&ParsedTx> for Pattern {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Predicate {
     Match(Pattern),
     Not(Box<Predicate>),
@@ -501,7 +502,10 @@ pub fn eval(record: &Record, predicate: &Predicate) -> MatchOutcome {
     match record {
         Record::ParsedTx(x) => eval_tx(x, predicate),
         Record::ParsedBlock(x) => eval_block(x, predicate),
-        _ => MatchOutcome::Uncertain,
+        _ => {
+            warn!("The select filter is valid only with ParsedTx & ParsedBlock records");
+            MatchOutcome::Uncertain
+        }
     }
 }
 
@@ -510,18 +514,129 @@ mod tests {
     use super::*;
     use utxorpc::proto::cardano::v1::Tx;
 
-    fn assert_tx_matches(subject: &Tx, pattern: TxPattern) {
-        let predicate = Predicate::Match(Pattern::Tx(pattern));
+    fn multiasset_combo(policy_hex: &str, asset_prefix: &str) -> Multiasset {
+        Multiasset {
+            policy_id: hex::decode(policy_hex).unwrap().into(),
+            assets: vec![
+                Asset {
+                    name: format!("{asset_prefix}1").as_bytes().to_vec().into(),
+                    output_coin: 345000000,
+                    mint_coin: 0,
+                },
+                Asset {
+                    name: format!("{asset_prefix}2").as_bytes().to_vec().into(),
+                    output_coin: 345000000,
+                    mint_coin: 0,
+                },
+            ],
+        }
+    }
 
-        assert!(matches!(
-            eval_tx(&subject, &predicate),
-            MatchOutcome::Positive
-        ))
+    fn test_vectors() -> Vec<Tx> {
+        let _0 = Tx::default();
+
+        let _1 = Tx {
+            outputs: vec![TxOutput {
+                address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
+                coin: 123000000,
+                assets: vec![
+                    multiasset_combo("019493315cd92eb5d8c4304e67b7e16ae36d61de", "abc"),
+                    multiasset_combo("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d", "123")
+                ],
+                datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let _2 = Tx {
+            outputs: vec![TxOutput {
+                address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
+                coin: 123000000,
+                assets: vec![
+                    multiasset_combo("019493315cd92eb5d8c4304e67b7e16ae36d61de", "abc"),
+                ],
+                datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let _3 = Tx {
+            outputs: vec![TxOutput {
+                address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
+                coin: 123000000,
+                assets: vec![
+                    multiasset_combo("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d", "123")
+                ],
+                datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        vec![_0, _1, _2, _3]
+    }
+
+    fn find_positive_test_vectors(predicate: Predicate) -> Vec<usize> {
+        let subjects = test_vectors();
+
+        subjects
+            .into_iter()
+            .enumerate()
+            .filter_map(|(idx, subject)| match eval_tx(&subject, &predicate) {
+                MatchOutcome::Positive => Some(idx),
+                _ => None,
+            })
+            .collect()
     }
 
     #[test]
-    fn empty_pattern_should_match() {
-        let subject = Tx::default();
-        assert_tx_matches(&subject, TxPattern::default())
+    fn empty_tx_pattern() {
+        let pattern = Pattern::Tx(TxPattern::default());
+
+        let positives = find_positive_test_vectors(Predicate::Match(pattern));
+        assert_eq!(positives, vec![0]);
+    }
+
+    #[test]
+    fn output_multiasset_asset_name_match() {
+        let pattern = |token: &str| {
+            Pattern::Output(OutputPattern {
+                assets: vec![MultiAssetPattern {
+                    assets: vec![AssetPattern {
+                        name: Some(token.as_bytes().into()),
+                        ..Default::default()
+                    }],
+                    ..Default::default()
+                }],
+                ..Default::default()
+            })
+        };
+
+        let positives = find_positive_test_vectors(Predicate::Match(pattern("abc1")));
+        assert_eq!(positives, vec![1, 2]);
+
+        let positives = find_positive_test_vectors(Predicate::Match(pattern("1231")));
+        assert_eq!(positives, vec![1, 3]);
+
+        let positives = find_positive_test_vectors(Predicate::Match(pattern("doesntexist")));
+        assert_eq!(positives, Vec::<usize>::new());
+    }
+
+    #[test]
+    fn serde() {
+        let predicate = Predicate::Match(Pattern::Output(OutputPattern {
+            assets: vec![MultiAssetPattern {
+                assets: vec![AssetPattern {
+                    name: Some("abc1".as_bytes().into()),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }],
+            ..Default::default()
+        }));
+
+        dbg!(serde_json::to_string(&predicate));
     }
 }

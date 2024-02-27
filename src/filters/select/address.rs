@@ -1,10 +1,10 @@
 use pallas::ledger::addresses::{Address, ByronAddress, ShelleyAddress, StakeAddress};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 use super::eval::{MatchOutcome, PatternOf};
 
-#[derive(Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AddressPattern {
     pub byron_address: Option<Vec<u8>>,
     pub payment_part: Option<Vec<u8>>,

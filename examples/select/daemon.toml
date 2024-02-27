@@ -1,0 +1,25 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Point"
+value = [37225013, "65b3d40e6114e05b662ddde737da63bbab05b86d476148614e82cde98462a6f5"]
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "Select"
+
+[filters.predicate.Match.Output]
+
+[[Match.Output.assets]]
+[[Match.Output.assets.assets]]
+name = [97, 98, 99, 49]
+
+[sink]
+type = "Stdout"

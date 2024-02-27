@@ -6,9 +6,9 @@ use crate::framework::*;
 pub mod dsl;
 pub mod json;
 pub mod legacy_v1;
-pub mod match_pattern;
 pub mod noop;
 pub mod parse_cbor;
+pub mod select;
 pub mod split_block;
 pub mod wasm;
 
@@ -23,7 +23,7 @@ pub enum Bootstrapper {
     LegacyV1(legacy_v1::Stage),
     Wasm(wasm::Stage),
     ParseCbor(parse_cbor::Stage),
-    MatchPattern(match_pattern::Stage),
+    Select(select::Stage),
 
     #[cfg(feature = "deno")]
     Deno(deno::Stage),
@@ -39,7 +39,7 @@ impl Bootstrapper {
             Bootstrapper::LegacyV1(p) => &mut p.input,
             Bootstrapper::Wasm(p) => &mut p.input,
             Bootstrapper::ParseCbor(p) => &mut p.input,
-            Bootstrapper::MatchPattern(p) => &mut p.input,
+            Bootstrapper::Select(p) => &mut p.input,
 
             #[cfg(feature = "deno")]
             Bootstrapper::Deno(p) => &mut p.input,
@@ -55,7 +55,7 @@ impl Bootstrapper {
             Bootstrapper::LegacyV1(p) => &mut p.output,
             Bootstrapper::Wasm(p) => &mut p.output,
             Bootstrapper::ParseCbor(p) => &mut p.output,
-            Bootstrapper::MatchPattern(p) => &mut p.output,
+            Bootstrapper::Select(p) => &mut p.output,
 
             #[cfg(feature = "deno")]
             Bootstrapper::Deno(p) => &mut p.output,
@@ -71,7 +71,7 @@ impl Bootstrapper {
             Bootstrapper::LegacyV1(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Wasm(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::MatchPattern(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Select(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "deno")]
             Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
@@ -89,7 +89,7 @@ pub enum Config {
     LegacyV1(legacy_v1::Config),
     Wasm(wasm::Config),
     ParseCbor(parse_cbor::Config),
-    MatchPattern(match_pattern::Config),
+    Select(select::Config),
 
     #[cfg(feature = "deno")]
     Deno(deno::Config),
@@ -105,7 +105,7 @@ impl Config {
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
             Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
-            Config::MatchPattern(c) => Ok(Bootstrapper::MatchPattern(c.bootstrapper(ctx)?)),
+            Config::Select(c) => Ok(Bootstrapper::Select(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "deno")]
             Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
