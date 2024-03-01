@@ -7,6 +7,9 @@ use self::eval::{MatchOutcome, Predicate};
 
 mod address;
 mod eval;
+mod types;
+
+pub use types::FlexBytes;
 
 #[derive(Stage)]
 #[stage(name = "select", unit = "ChainEvent", worker = "Worker")]

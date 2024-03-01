@@ -2,14 +2,26 @@ use pallas::ledger::addresses::{Address, ByronAddress, ShelleyAddress, StakeAddr
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use super::eval::{MatchOutcome, PatternOf};
+use super::{
+    eval::{MatchOutcome, PatternOf},
+    FlexBytes,
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AddressPattern {
-    pub byron_address: Option<Vec<u8>>,
-    pub payment_part: Option<Vec<u8>>,
-    pub delegation_part: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub byron_address: Option<FlexBytes>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment_part: Option<FlexBytes>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delegation_part: Option<FlexBytes>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_is_script: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub delegation_is_script: Option<bool>,
 }
 
@@ -95,20 +107,20 @@ impl FromStr for AddressPattern {
             match addr {
                 Address::Byron(x) => {
                     return Ok(Self {
-                        byron_address: Some(x.to_vec()),
+                        byron_address: Some(x.to_vec().into()),
                         ..Default::default()
                     });
                 }
                 Address::Stake(x) => {
                     return Ok(Self {
-                        delegation_part: Some(x.to_vec()),
+                        delegation_part: Some(x.to_vec().into()),
                         ..Default::default()
                     });
                 }
                 Address::Shelley(x) => {
                     return Ok(Self {
-                        payment_part: Some(x.payment().to_vec()),
-                        delegation_part: Some(x.delegation().to_vec()),
+                        payment_part: Some(x.payment().to_vec().into()),
+                        delegation_part: Some(x.delegation().to_vec().into()),
                         ..Default::default()
                     });
                 }

@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use utxorpc::proto::cardano::v1::{
@@ -6,7 +8,7 @@ use utxorpc::proto::cardano::v1::{
 
 use crate::framework::*;
 
-use super::address::AddressPattern;
+use super::{address::AddressPattern, FlexBytes};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum MatchOutcome {
@@ -133,6 +135,12 @@ impl PatternOf<&[u8]> for Vec<u8> {
     }
 }
 
+impl PatternOf<&[u8]> for FlexBytes {
+    fn is_match(&self, subject: &[u8]) -> MatchOutcome {
+        MatchOutcome::if_equal(self.deref(), subject)
+    }
+}
+
 impl PatternOf<bool> for bool {
     fn is_match(&self, subject: bool) -> MatchOutcome {
         MatchOutcome::if_equal(self, &subject)
@@ -204,20 +212,42 @@ impl PatternOf<&Metadatum> for TextPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AssetPattern {
-    name: Option<Vec<u8>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    policy: Option<FlexBytes>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<FlexBytes>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     ascii_name: Option<TextPattern>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     coin: Option<CoinPattern>,
 }
 
-impl PatternOf<&Asset> for AssetPattern {
-    fn is_match(&self, subject: &Asset) -> MatchOutcome {
-        let a = self.name.is_match(subject.name.as_ref());
+impl PatternOf<(&[u8], &Asset)> for AssetPattern {
+    fn is_match(&self, subject: (&[u8], &Asset)) -> MatchOutcome {
+        let (subject_policy, subject_asset) = subject;
 
-        let b = self.ascii_name.is_match(subject.name.as_ref());
+        let a = self.policy.is_match(subject_policy);
 
-        let c = self.coin.is_match(subject.output_coin);
+        let b = self.name.is_match(subject_asset.name.as_ref());
 
-        MatchOutcome::fold_all_of([a, b, c].into_iter())
+        let c = self.ascii_name.is_match(subject_asset.name.as_ref());
+
+        let d = self.coin.is_match(subject_asset.output_coin);
+
+        MatchOutcome::fold_all_of([a, b, c, d].into_iter())
+    }
+}
+
+impl PatternOf<&Multiasset> for AssetPattern {
+    fn is_match(&self, subject: &Multiasset) -> MatchOutcome {
+        let policy = subject.policy_id.as_ref();
+
+        let subjects = subject.assets.iter().map(|x| (policy, x));
+
+        self.is_any_match(subjects)
     }
 }
 
@@ -238,35 +268,17 @@ pub struct ScriptPattern {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct MultiAssetPattern {
-    policy: Option<Vec<u8>>,
-    assets: Vec<AssetPattern>,
-}
-
-impl PatternOf<&Multiasset> for MultiAssetPattern {
-    fn is_match(&self, subject: &Multiasset) -> MatchOutcome {
-        let a = self
-            .policy
-            .as_ref()
-            .map(|x| MatchOutcome::if_equal(x.as_slice(), &subject.policy_id))
-            .unwrap_or(MatchOutcome::Positive);
-
-        let b = self
-            .assets
-            .iter()
-            .map(|x| x.is_any_match(subject.assets.iter()));
-
-        let b = MatchOutcome::fold_all_of(b);
-
-        MatchOutcome::fold_all_of([a, b].into_iter())
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OutputPattern {
+    #[serde(skip_serializing_if = "Option::is_none")]
     address: Option<AddressPattern>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     lovelace: Option<CoinPattern>,
-    assets: Vec<MultiAssetPattern>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    assets: Vec<AssetPattern>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     datum: Option<DatumPattern>,
 }
 
@@ -291,9 +303,16 @@ impl PatternOf<&TxOutput> for OutputPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct InputPattern {
+    #[serde(skip_serializing_if = "Option::is_none")]
     address: Option<AddressPattern>,
-    assets: Vec<MultiAssetPattern>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    assets: Vec<AssetPattern>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     lovelace: Option<CoinPattern>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     datum: Option<DatumPattern>,
     // u5c redeemer structure is not suitable, is lacks a datum hash (and it also contains a
     // redundant purpose flag) redeemer: Option<DatumPattern>,
@@ -325,7 +344,8 @@ impl PatternOf<&TxInput> for InputPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MintPattern {
-    assets: Vec<MultiAssetPattern>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    assets: Vec<AssetPattern>,
     // the u5c struct is not suitable, it lacks the redeemer value
     // redeemer: Option<DatumPattern>,
 }
@@ -358,7 +378,10 @@ impl PatternOf<&Metadatum> for MetadatumPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MetadataPattern {
+    #[serde(skip_serializing_if = "Option::is_none")]
     label: Option<u64>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     value: Option<MetadatumPattern>,
 }
 
@@ -380,9 +403,16 @@ impl PatternOf<&AuxData> for MetadataPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct TxPattern {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     inputs: Vec<InputPattern>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     outputs: Vec<OutputPattern>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     mint: Vec<MintPattern>,
+
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     metadata: Vec<MetadataPattern>,
     // the u5c struct is not suitable, it lacks hash for the scripts
     // scripts: Vec<ScriptPattern>,
@@ -429,6 +459,7 @@ pub struct BlockPattern {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum Pattern {
     Block(BlockPattern),
     Tx(TxPattern),
@@ -466,10 +497,18 @@ impl PatternOf<&ParsedTx> for Pattern {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum Predicate {
+    #[serde(rename = "match")]
     Match(Pattern),
+
+    #[serde(rename = "not")]
     Not(Box<Predicate>),
+
+    #[serde(rename = "any")]
     AnyOf(Vec<Predicate>),
+
+    #[serde(rename = "all")]
     AllOf(Vec<Predicate>),
 }
 
@@ -603,11 +642,8 @@ mod tests {
     fn output_multiasset_asset_name_match() {
         let pattern = |token: &str| {
             Pattern::Output(OutputPattern {
-                assets: vec![MultiAssetPattern {
-                    assets: vec![AssetPattern {
-                        name: Some(token.as_bytes().into()),
-                        ..Default::default()
-                    }],
+                assets: vec![AssetPattern {
+                    name: Some(token.into()),
                     ..Default::default()
                 }],
                 ..Default::default()
@@ -626,17 +662,22 @@ mod tests {
 
     #[test]
     fn serde() {
-        let predicate = Predicate::Match(Pattern::Output(OutputPattern {
-            assets: vec![MultiAssetPattern {
-                assets: vec![AssetPattern {
-                    name: Some("abc1".as_bytes().into()),
-                    ..Default::default()
-                }],
+        let predicate1 = Predicate::Match(Pattern::Output(OutputPattern {
+            assets: vec![AssetPattern {
+                policy: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
+                name: Some("abc1".into()),
                 ..Default::default()
             }],
             ..Default::default()
         }));
 
-        dbg!(serde_json::to_string(&predicate));
+        let predicate2 = Predicate::Match(Pattern::Address(AddressPattern {
+            payment_part: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
+            ..Default::default()
+        }));
+
+        let predicate = Predicate::AnyOf(vec![predicate1, predicate2]);
+
+        println!("{}", serde_json::to_string_pretty(&predicate).unwrap());
     }
 }
