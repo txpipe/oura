@@ -16,53 +16,15 @@ type = "ParseCbor"
 type = "Select"
 skip_uncertain = true
 
-[filters.predicate.Match.Output]
-[[filters.predicate.Match.Output.assets]]
-[[filters.predicate.Match.Output.assets.assets]]
-name = [97, 98, 99, 49]
+[[filters.predicate.any]]
+[[filters.predicate.any.match.output.assets]]
+policy = "62326565303462616265643137333230643864316239666639616430383665383666343465633464"
+name = "61626331"
 
-predicate = """
-{
-  "any": [
-    {
-      "match": {
-        "output": {
-          "assets": [
-            {
-              "policy": "62326565303462616265643137333230643864316239666639616430383665383666343465633464",
-              "name": "61626331"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "match": {
-        "address": {
-          "payment_part": "62326565303462616265643137333230643864316239666639616430383665383666343465633464"
-        }
-      }
-    }
-  ]
-}
-"""
+[[filters.predicate.any]]
+[filters.predicate.any.match.address]
+payment_part = "62326565303462616265643137333230643864316239666639616430383665383666343465633464"
 
-[filters.predicate.Match]
-
-predicate = """
-"Match": {
-    "Output": {
-        "assets": [
-            {
-                "name": "pepe"
-            }
-        ]
-    }
-}
-"""
-
-
-predicate = "output(assets=[asset(policy='0xaBACDAFSDFS'), asset(policy='0xaBACDAFSDFS')]) && output(assets=[asset(policy='0xaBACDAFSDFS')])"
 
 [sink]
 type = "Stdout"
