@@ -1,10 +1,17 @@
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
+use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq)]
 pub struct FlexBytes(Vec<u8>);
+
+impl FlexBytes {
+    pub fn from_hex(s: &str) -> anyhow::Result<Self> {
+        let v = hex::decode(s)?;
+        Ok(FlexBytes(v))
+    }
+}
 
 impl Deref for FlexBytes {
     type Target = [u8];
@@ -23,6 +30,18 @@ impl From<Vec<u8>> for FlexBytes {
 impl From<&str> for FlexBytes {
     fn from(value: &str) -> Self {
         FlexBytes(value.as_bytes().to_vec())
+    }
+}
+
+impl Display for FlexBytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&hex::encode(&self.0))
+    }
+}
+
+impl Debug for FlexBytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&hex::encode(&self.0))
     }
 }
 

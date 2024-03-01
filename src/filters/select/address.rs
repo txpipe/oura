@@ -1,5 +1,5 @@
 use pallas::ledger::addresses::{Address, ByronAddress, ShelleyAddress, StakeAddress};
-use serde::{Deserialize, Serialize};
+use serde::{de::Visitor, Deserialize, Serialize};
 use std::str::FromStr;
 
 use super::{
@@ -7,7 +7,7 @@ use super::{
     FlexBytes,
 };
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Clone, Debug, Default, PartialEq)]
 pub struct AddressPattern {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub byron_address: Option<FlexBytes>,
@@ -131,10 +131,64 @@ impl FromStr for AddressPattern {
     }
 }
 
+struct AddressPatternVisitor;
+
+impl<'de> Visitor<'de> for AddressPatternVisitor {
+    type Value = AddressPattern;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("string or map")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        AddressPattern::from_str(value).map_err(serde::de::Error::custom)
+    }
+
+    fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::MapAccess<'de>,
+    {
+        Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(map))
+    }
+}
+
+impl<'de> Deserialize<'de> for AddressPattern {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(AddressPatternVisitor)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::AddressPattern;
+    use super::*;
 
     #[test]
-    fn test_vectors() {}
+    fn test_serde() {
+        let pattern: AddressPattern =
+         serde_json::from_str("\"addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x\"").unwrap();
+
+        let expected = AddressPattern {
+            payment_part: FlexBytes::from_hex(
+                "9493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e",
+            )
+            .unwrap()
+            .into(),
+
+            delegation_part: FlexBytes::from_hex(
+                "337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251",
+            )
+            .unwrap()
+            .into(),
+
+            ..Default::default()
+        };
+
+        assert_eq!(pattern, expected);
+    }
 }

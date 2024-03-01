@@ -464,6 +464,7 @@ pub enum Pattern {
     Block(BlockPattern),
     Tx(TxPattern),
     Address(AddressPattern),
+    Asset(AssetPattern),
     Input(InputPattern),
     Output(OutputPattern),
     Mint(MintPattern),
@@ -482,12 +483,21 @@ fn iter_tx_addresses(tx: &ParsedTx) -> impl Iterator<Item = &[u8]> {
     a.chain(b)
 }
 
+fn iter_tx_assets(tx: &ParsedTx) -> impl Iterator<Item = &Multiasset> {
+    let a = tx.outputs.iter().flat_map(|x| x.assets.iter());
+
+    let b = tx.mint.iter();
+
+    a.chain(b)
+}
+
 impl PatternOf<&ParsedTx> for Pattern {
     fn is_match(&self, subject: &ParsedTx) -> MatchOutcome {
         match self {
             Pattern::Block(_) => MatchOutcome::Negative,
             Pattern::Tx(x) => x.is_match(subject),
             Pattern::Address(x) => x.is_any_match(iter_tx_addresses(subject)),
+            Pattern::Asset(x) => x.is_any_match(iter_tx_assets(subject)),
             Pattern::Input(x) => x.is_any_match(subject.inputs.iter()),
             Pattern::Output(x) => x.is_any_match(subject.outputs.iter()),
             Pattern::Mint(x) => x.is_any_match(subject.mint.iter()),
@@ -550,6 +560,8 @@ pub fn eval(record: &Record, predicate: &Predicate) -> MatchOutcome {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
     use utxorpc::proto::cardano::v1::Tx;
 
@@ -590,14 +602,25 @@ mod tests {
 
         let _2 = Tx {
             outputs: vec![TxOutput {
-                address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
+                address: hex::decode("619493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e")
+                    .unwrap()
+                    .into(),
                 coin: 123000000,
-                assets: vec![
-                    multiasset_combo("019493315cd92eb5d8c4304e67b7e16ae36d61de", "abc"),
-                ],
-                datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+                assets: vec![multiasset_combo(
+                    "019493315cd92eb5d8c4304e67b7e16ae36d61de",
+                    "abc",
+                )],
+                datum_hash: hex::decode(
+                    "923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec",
+                )
+                .unwrap()
+                .into(),
                 ..Default::default()
             }],
+            mint: vec![multiasset_combo(
+                "ca3acbc34f8c46003c69fe79a3628cefa9c47251",
+                "xyz",
+            )],
             ..Default::default()
         };
 
@@ -635,17 +658,29 @@ mod tests {
         let pattern = Pattern::Tx(TxPattern::default());
 
         let positives = find_positive_test_vectors(Predicate::Match(pattern));
-        assert_eq!(positives, vec![0]);
+        assert_eq!(positives, vec![0, 1, 2, 3]);
     }
 
     #[test]
-    fn output_multiasset_asset_name_match() {
+    fn address_match() {
+        let pattern = |addr: &str| Pattern::Address(AddressPattern::from_str(addr).unwrap());
+
+        let possitives = find_positive_test_vectors(Predicate::Match(pattern(
+            "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
+        )));
+        assert_eq!(possitives, vec![1, 3]);
+
+        let possitives = find_positive_test_vectors(Predicate::Match(pattern(
+            "addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8",
+        )));
+        assert_eq!(possitives, vec![2]);
+    }
+
+    #[test]
+    fn asset_name_match() {
         let pattern = |token: &str| {
-            Pattern::Output(OutputPattern {
-                assets: vec![AssetPattern {
-                    name: Some(token.into()),
-                    ..Default::default()
-                }],
+            Pattern::Asset(AssetPattern {
+                name: Some(token.into()),
                 ..Default::default()
             })
         };
@@ -655,6 +690,9 @@ mod tests {
 
         let positives = find_positive_test_vectors(Predicate::Match(pattern("1231")));
         assert_eq!(positives, vec![1, 3]);
+
+        let positives = find_positive_test_vectors(Predicate::Match(pattern("xyz1")));
+        assert_eq!(positives, vec![2]);
 
         let positives = find_positive_test_vectors(Predicate::Match(pattern("doesntexist")));
         assert_eq!(positives, Vec::<usize>::new());
