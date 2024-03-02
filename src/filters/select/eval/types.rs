@@ -4,7 +4,7 @@ use std::fmt::{self, Debug, Display};
 use std::ops::Deref;
 
 #[derive(Clone, PartialEq)]
-pub struct FlexBytes(Vec<u8>);
+pub struct FlexBytes(pub Vec<u8>);
 
 impl FlexBytes {
     pub fn from_hex(s: &str) -> anyhow::Result<Self> {

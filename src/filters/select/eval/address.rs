@@ -1,13 +1,10 @@
 use pallas::ledger::addresses::{Address, ByronAddress, ShelleyAddress, StakeAddress};
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use super::{
-    eval::{MatchOutcome, PatternOf},
-    FlexBytes,
-};
+use super::*;
 
-#[derive(Serialize, Clone, Debug, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct AddressPattern {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub byron_address: Option<FlexBytes>,
@@ -26,7 +23,7 @@ pub struct AddressPattern {
 }
 
 impl PatternOf<&ByronAddress> for AddressPattern {
-    fn is_match(&self, subject: &ByronAddress) -> super::eval::MatchOutcome {
+    fn is_match(&self, subject: &ByronAddress) -> MatchOutcome {
         let a = self.byron_address.is_match(&subject.to_vec());
 
         let b = MatchOutcome::if_false(self.payment_part.is_some());
@@ -80,7 +77,7 @@ impl PatternOf<&StakeAddress> for AddressPattern {
 }
 
 impl PatternOf<&Address> for AddressPattern {
-    fn is_match(&self, subject: &Address) -> super::eval::MatchOutcome {
+    fn is_match(&self, subject: &Address) -> MatchOutcome {
         match subject {
             Address::Byron(addr) => self.is_match(addr),
             Address::Shelley(addr) => self.is_match(addr),
@@ -97,70 +94,41 @@ impl PatternOf<&[u8]> for AddressPattern {
     }
 }
 
+impl From<Address> for AddressPattern {
+    fn from(value: Address) -> Self {
+        match value {
+            Address::Byron(x) => Self {
+                byron_address: Some(x.to_vec().into()),
+                ..Default::default()
+            },
+            Address::Stake(x) => Self {
+                delegation_part: Some(x.to_vec().into()),
+                ..Default::default()
+            },
+            Address::Shelley(x) => Self {
+                payment_part: Some(x.payment().to_vec().into()),
+                delegation_part: Some(x.delegation().to_vec().into()),
+                ..Default::default()
+            },
+        }
+    }
+}
+
+impl FromBech32 for AddressPattern {
+    fn from_bech32_parts(hrp: &str, content: Vec<u8>) -> Option<Self> {
+        match hrp {
+            "addr" | "addr_test" | "stake" => Address::from_bytes(&content).ok().map(From::from),
+            // TODO: add vk prefixes
+            _ => None,
+        }
+    }
+}
+
 impl FromStr for AddressPattern {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parse = Address::from_bech32(s);
-
-        if let Ok(addr) = parse {
-            match addr {
-                Address::Byron(x) => {
-                    return Ok(Self {
-                        byron_address: Some(x.to_vec().into()),
-                        ..Default::default()
-                    });
-                }
-                Address::Stake(x) => {
-                    return Ok(Self {
-                        delegation_part: Some(x.to_vec().into()),
-                        ..Default::default()
-                    });
-                }
-                Address::Shelley(x) => {
-                    return Ok(Self {
-                        payment_part: Some(x.payment().to_vec().into()),
-                        delegation_part: Some(x.delegation().to_vec().into()),
-                        ..Default::default()
-                    });
-                }
-            }
-        }
-
-        Err(anyhow::anyhow!("can't parse address pattern"))
-    }
-}
-
-struct AddressPatternVisitor;
-
-impl<'de> Visitor<'de> for AddressPatternVisitor {
-    type Value = AddressPattern;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("string or map")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        AddressPattern::from_str(value).map_err(serde::de::Error::custom)
-    }
-
-    fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
-    where
-        A: serde::de::MapAccess<'de>,
-    {
-        Deserialize::deserialize(serde::de::value::MapAccessDeserializer::new(map))
-    }
-}
-
-impl<'de> Deserialize<'de> for AddressPattern {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_any(AddressPatternVisitor)
+        AddressPattern::from_bech32(s)
     }
 }
 
@@ -169,9 +137,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_serde() {
-        let pattern: AddressPattern =
-         serde_json::from_str("\"addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x\"").unwrap();
+    fn parse_pattern() {
+        let pattern = AddressPattern::from_str("addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x").unwrap();
 
         let expected = AddressPattern {
             payment_part: FlexBytes::from_hex(
@@ -187,7 +154,8 @@ mod tests {
             .into(),
 
             ..Default::default()
-        };
+        }
+        .into();
 
         assert_eq!(pattern, expected);
     }

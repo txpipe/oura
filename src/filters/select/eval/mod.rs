@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use tracing::warn;
@@ -8,7 +8,16 @@ use utxorpc::proto::cardano::v1::{
 
 use crate::framework::*;
 
-use super::{address::AddressPattern, FlexBytes};
+mod address;
+mod assets;
+mod serde_ext;
+mod types;
+
+pub use address::*;
+pub use assets::*;
+pub use types::*;
+
+use self::serde_ext::{FromBech32, StringOrStruct};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum MatchOutcome {
@@ -153,7 +162,7 @@ impl PatternOf<u64> for u64 {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum NumericPattern<I: Ord + Eq> {
     Exact(I),
     Gte(I),
@@ -174,7 +183,7 @@ impl PatternOf<u64> for CoinPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum TextPattern {
     Exact(String),
     // TODO: Regex
@@ -210,50 +219,28 @@ impl PatternOf<&Metadatum> for TextPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct AssetPattern {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    policy: Option<FlexBytes>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    name: Option<FlexBytes>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    ascii_name: Option<TextPattern>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    coin: Option<CoinPattern>,
-}
-
-impl PatternOf<(&[u8], &Asset)> for AssetPattern {
-    fn is_match(&self, subject: (&[u8], &Asset)) -> MatchOutcome {
-        let (subject_policy, subject_asset) = subject;
-
-        let a = self.policy.is_match(subject_policy);
-
-        let b = self.name.is_match(subject_asset.name.as_ref());
-
-        let c = self.ascii_name.is_match(subject_asset.name.as_ref());
-
-        let d = self.coin.is_match(subject_asset.output_coin);
-
-        MatchOutcome::fold_all_of([a, b, c, d].into_iter())
-    }
-}
-
-impl PatternOf<&Multiasset> for AssetPattern {
-    fn is_match(&self, subject: &Multiasset) -> MatchOutcome {
-        let policy = subject.policy_id.as_ref();
-
-        let subjects = subject.assets.iter().map(|x| (policy, x));
-
-        self.is_any_match(subjects)
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DatumPattern {
     hash: Option<Vec<u8>>,
+}
+
+impl FromBech32 for DatumPattern {
+    fn from_bech32_parts(hrp: &str, content: Vec<u8>) -> Option<Self> {
+        match hrp {
+            "datum" => Some(Self {
+                hash: Some(content),
+            }),
+            _ => None,
+        }
+    }
+}
+
+impl FromStr for DatumPattern {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_bech32(s)
+    }
 }
 
 impl PatternOf<&[u8]> for DatumPattern {
@@ -267,7 +254,7 @@ pub struct ScriptPattern {
     hash: Option<Vec<u8>>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct OutputPattern {
     #[serde(skip_serializing_if = "Option::is_none")]
     address: Option<AddressPattern>,
@@ -301,7 +288,7 @@ impl PatternOf<&TxOutput> for OutputPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InputPattern {
     #[serde(skip_serializing_if = "Option::is_none")]
     address: Option<AddressPattern>,
@@ -342,7 +329,7 @@ impl PatternOf<&TxInput> for InputPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MintPattern {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     assets: Vec<AssetPattern>,
@@ -360,7 +347,7 @@ impl PatternOf<&Multiasset> for MintPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum MetadatumPattern {
     Text(TextPattern),
     Int(NumericPattern<i64>),
@@ -376,7 +363,7 @@ impl PatternOf<&Metadatum> for MetadatumPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MetadataPattern {
     #[serde(skip_serializing_if = "Option::is_none")]
     label: Option<u64>,
@@ -401,7 +388,7 @@ impl PatternOf<&AuxData> for MetadataPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct TxPattern {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     inputs: Vec<InputPattern>,
@@ -450,7 +437,7 @@ pub type SlotPattern = NumericPattern<u64>;
 
 pub type EraPattern = NumericPattern<u8>;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlockPattern {
     hash: Option<Vec<u8>>,
     slot: Option<SlotPattern>,
@@ -458,17 +445,57 @@ pub struct BlockPattern {
     txs: Vec<TxPattern>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Pattern {
     Block(BlockPattern),
     Tx(TxPattern),
-    Address(AddressPattern),
-    Asset(AssetPattern),
+    Address(StringOrStruct<AddressPattern>),
+    Asset(StringOrStruct<AssetPattern>),
     Input(InputPattern),
     Output(OutputPattern),
     Mint(MintPattern),
     Metadata(MetadataPattern),
+    Datum(StringOrStruct<DatumPattern>),
+}
+
+impl From<AssetPattern> for Pattern {
+    fn from(value: AssetPattern) -> Self {
+        Pattern::Asset(StringOrStruct(value))
+    }
+}
+
+impl From<AddressPattern> for Pattern {
+    fn from(value: AddressPattern) -> Self {
+        Pattern::Address(StringOrStruct(value))
+    }
+}
+
+impl From<DatumPattern> for Pattern {
+    fn from(value: DatumPattern) -> Self {
+        Pattern::Datum(StringOrStruct(value))
+    }
+}
+
+impl FromBech32 for Pattern {
+    fn from_bech32_parts(hrp: &str, content: Vec<u8>) -> Option<Self> {
+        match hrp {
+            "asset" => AssetPattern::from_bech32_parts(hrp, content).map(From::from),
+            "addr" => AddressPattern::from_bech32_parts(hrp, content).map(From::from),
+            "addr_test" => AddressPattern::from_bech32_parts(hrp, content).map(From::from),
+            "stake" => AddressPattern::from_bech32_parts(hrp, content).map(From::from),
+            "datum" => DatumPattern::from_bech32_parts(hrp, content).map(From::from),
+            _ => None,
+        }
+    }
+}
+
+impl FromStr for Pattern {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_bech32(s)
+    }
 }
 
 fn iter_tx_addresses(tx: &ParsedTx) -> impl Iterator<Item = &[u8]> {
@@ -491,6 +518,12 @@ fn iter_tx_assets(tx: &ParsedTx) -> impl Iterator<Item = &Multiasset> {
     a.chain(b)
 }
 
+fn iter_tx_datums(tx: &ParsedTx) -> impl Iterator<Item = &[u8]> {
+    let a = tx.outputs.iter().map(|x| x.datum_hash.as_ref());
+
+    a
+}
+
 impl PatternOf<&ParsedTx> for Pattern {
     fn is_match(&self, subject: &ParsedTx) -> MatchOutcome {
         match self {
@@ -502,11 +535,12 @@ impl PatternOf<&ParsedTx> for Pattern {
             Pattern::Output(x) => x.is_any_match(subject.outputs.iter()),
             Pattern::Mint(x) => x.is_any_match(subject.mint.iter()),
             Pattern::Metadata(x) => x.is_any_match(subject.auxiliary.iter()),
+            Pattern::Datum(x) => x.is_any_match(iter_tx_datums(subject)),
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Predicate {
     #[serde(rename = "match")]
@@ -663,7 +697,7 @@ mod tests {
 
     #[test]
     fn address_match() {
-        let pattern = |addr: &str| Pattern::Address(AddressPattern::from_str(addr).unwrap());
+        let pattern = |addr: &str| Pattern::from(AddressPattern::from_str(addr).unwrap());
 
         let possitives = find_positive_test_vectors(Predicate::Match(pattern(
             "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
@@ -679,10 +713,13 @@ mod tests {
     #[test]
     fn asset_name_match() {
         let pattern = |token: &str| {
-            Pattern::Asset(AssetPattern {
-                name: Some(token.into()),
-                ..Default::default()
-            })
+            Pattern::Asset(
+                AssetPattern {
+                    name: Some(token.into()),
+                    ..Default::default()
+                }
+                .into(),
+            )
         };
 
         let positives = find_positive_test_vectors(Predicate::Match(pattern("abc1")));
@@ -699,6 +736,18 @@ mod tests {
     }
 
     #[test]
+    fn parse_pattern() {
+        let pattern = Pattern::from_str("addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x").unwrap();
+        assert!(matches!(pattern, Pattern::Address(..)));
+
+        let pattern = Pattern::from_str("asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92").unwrap();
+        assert!(matches!(pattern, Pattern::Asset(..)));
+
+        let pattern = Pattern::from_str("datum1kthqfw4769ejpkx3h8le45yxaph5fmzdnur2s4").unwrap();
+        assert!(matches!(pattern, Pattern::Datum(..)));
+    }
+
+    #[test]
     fn serde() {
         let predicate1 = Predicate::Match(Pattern::Output(OutputPattern {
             assets: vec![AssetPattern {
@@ -709,10 +758,13 @@ mod tests {
             ..Default::default()
         }));
 
-        let predicate2 = Predicate::Match(Pattern::Address(AddressPattern {
-            payment_part: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
-            ..Default::default()
-        }));
+        let predicate2 = Predicate::Match(Pattern::Address(
+            AddressPattern {
+                payment_part: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
+                ..Default::default()
+            }
+            .into(),
+        ));
 
         let predicate = Predicate::AnyOf(vec![predicate1, predicate2]);
 
