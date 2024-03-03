@@ -421,7 +421,7 @@ pub enum Pattern {
     Input(InputPattern),
     Output(OutputPattern),
     Mint(MintPattern),
-    Metadata(MetadataPattern),
+    Metadata(StringOrStruct<MetadataPattern>),
     Datum(StringOrStruct<DatumPattern>),
 }
 
@@ -443,6 +443,12 @@ impl From<DatumPattern> for Pattern {
     }
 }
 
+impl From<MetadataPattern> for Pattern {
+    fn from(value: MetadataPattern) -> Self {
+        Pattern::Metadata(StringOrStruct(value))
+    }
+}
+
 impl FromBech32 for Pattern {
     fn from_bech32_parts(hrp: &str, content: Vec<u8>) -> Option<Self> {
         match hrp {
@@ -460,7 +466,15 @@ impl FromStr for Pattern {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::from_bech32(s)
+        if let Ok(p) = Self::from_bech32(s) {
+            return Ok(p);
+        }
+
+        if let Ok(p) = MetadataPattern::from_str(s) {
+            return Ok(p.into());
+        }
+
+        anyhow::bail!("can't parse pattern from string");
     }
 }
 
@@ -610,15 +624,16 @@ mod tests {
 
         let pattern = Pattern::from_str("datum1kthqfw4769ejpkx3h8le45yxaph5fmzdnur2s4").unwrap();
         assert!(matches!(pattern, Pattern::Datum(..)));
+
+        let pattern = Pattern::from_str("#8888").unwrap();
+        assert!(matches!(pattern, Pattern::Metadata(..)));
     }
 
     #[test]
     fn deser_predicate() {
         serde_json::from_str::<StringOrStruct<Predicate>>("\"addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x\"").unwrap();
 
-        serde_json::from_str::<StringOrStruct<Predicate>>(r#"{
-            "match": { "metadata": "\#127" }
-        }"#).unwrap();
+        serde_json::from_str::<StringOrStruct<Predicate>>("\"#127\"").unwrap();
 
         serde_json::from_str::<StringOrStruct<Predicate>>(
             &r#"{
