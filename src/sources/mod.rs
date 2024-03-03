@@ -17,6 +17,8 @@ pub mod utxorpc;
 
 pub enum Bootstrapper {
     N2N(n2n::Stage),
+
+    #[cfg(target_family = "unix")]
     N2C(n2c::Stage),
 
     #[cfg(feature = "aws")]
@@ -30,6 +32,8 @@ impl Bootstrapper {
     pub fn borrow_output(&mut self) -> &mut SourceOutputPort {
         match self {
             Bootstrapper::N2N(p) => &mut p.output,
+
+            #[cfg(target_family = "unix")]
             Bootstrapper::N2C(p) => &mut p.output,
 
             #[cfg(feature = "aws")]
@@ -43,6 +47,8 @@ impl Bootstrapper {
     pub fn spawn(self, policy: gasket::runtime::Policy) -> Tether {
         match self {
             Bootstrapper::N2N(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(target_family = "unix")]
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "aws")]
@@ -73,6 +79,8 @@ impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Bootstrapper, Error> {
         match self {
             Config::N2N(c) => Ok(Bootstrapper::N2N(c.bootstrapper(ctx)?)),
+
+            #[cfg(target_family = "unix")]
             Config::N2C(c) => Ok(Bootstrapper::N2C(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "aws")]
