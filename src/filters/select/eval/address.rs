@@ -154,8 +154,7 @@ mod tests {
             .into(),
 
             ..Default::default()
-        }
-        .into();
+        };
 
         assert_eq!(pattern, expected);
     }

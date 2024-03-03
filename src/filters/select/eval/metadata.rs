@@ -75,7 +75,7 @@ mod tests {
             ..Default::default()
         };
 
-        let parsed = MetadataPattern::from_str(&"#127").unwrap();
+        let parsed = MetadataPattern::from_str("#127").unwrap();
         assert_eq!(parsed, expected);
     }
 

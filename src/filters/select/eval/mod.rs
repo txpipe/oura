@@ -634,7 +634,7 @@ mod tests {
         serde_json::from_str::<StringOrStruct<Predicate>>("\"#127\"").unwrap();
 
         serde_json::from_str::<StringOrStruct<Predicate>>(
-            &r#"{
+            r#"{
                 "all": [
                     "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x",
                     { "match": "asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92" },
@@ -653,7 +653,7 @@ mod tests {
         ).unwrap();
 
         serde_json::from_str::<StringOrStruct<Predicate>>(
-            &r#"{
+            r#"{
                 "match": {
                     "tx": {
                         "inputs": [{

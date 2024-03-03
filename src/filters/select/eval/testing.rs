@@ -31,9 +31,9 @@ pub fn metadata_combo(label: u64, text: &str) -> Metadata {
 }
 
 pub fn test_vectors() -> Vec<Tx> {
-    let _0 = Tx::default();
+    let tx0 = Tx::default();
 
-    let _1 = Tx {
+    let tx1 = Tx {
         outputs: vec![TxOutput {
             address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
             coin: 123000000,
@@ -54,7 +54,7 @@ pub fn test_vectors() -> Vec<Tx> {
         ..Default::default()
     };
 
-    let _2 = Tx {
+    let tx2 = Tx {
         outputs: vec![TxOutput {
             address: hex::decode("619493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e")
                 .unwrap()
@@ -82,7 +82,7 @@ pub fn test_vectors() -> Vec<Tx> {
         ..Default::default()
     };
 
-    let _3 = Tx {
+    let tx3 = Tx {
         outputs: vec![TxOutput {
             address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
             coin: 123000000,
@@ -101,7 +101,7 @@ pub fn test_vectors() -> Vec<Tx> {
         ..Default::default()
     };
 
-    vec![_0, _1, _2, _3]
+    vec![tx0, tx1, tx2, tx3]
 }
 
 pub fn find_positive_test_vectors(predicate: impl Into<Predicate>) -> Vec<usize> {

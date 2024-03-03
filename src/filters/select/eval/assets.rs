@@ -89,7 +89,7 @@ mod tests {
         };
 
         let parsed =
-            AssetPattern::from_str(&"asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92").unwrap();
+            AssetPattern::from_str("asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92").unwrap();
         assert_eq!(parsed, expected);
     }
 
