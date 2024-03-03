@@ -64,6 +64,7 @@ mod tests {
             "7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373",
             "0000000000000000000000000000000000000000000000000000000000000000",
         );
+        assert_eq!(fp, "asset1pkpwyknlvul7az0xx8czhl60pyel45rpje4z8w");
 
         // cip14 official test vector
         let fp = quickfp_hex(

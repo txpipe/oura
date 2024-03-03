@@ -5,6 +5,8 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::str::FromStr;
 
+use super::PatternOf;
+
 struct StringOrStructVisitor<T>(PhantomData<T>)
 where
     T: DeserializeOwned + FromStr;
@@ -52,6 +54,12 @@ where
     }
 }
 
+impl<T> StringOrStruct<T> {
+    pub fn unwrap(self) -> T {
+        self.0
+    }
+}
+
 impl<T> Deref for StringOrStruct<T> {
     type Target = T;
 
@@ -69,6 +77,15 @@ where
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inner = T::from_str(s)?;
         Ok(Self(inner))
+    }
+}
+
+impl<S, T> PatternOf<S> for StringOrStruct<T>
+where
+    T: PatternOf<S>,
+{
+    fn is_match(&self, subject: S) -> super::MatchOutcome {
+        self.0.is_match(subject)
     }
 }
 

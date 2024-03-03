@@ -4,7 +4,7 @@ use tracing::info;
 
 use crate::framework::*;
 
-use self::eval::{MatchOutcome, Predicate};
+use self::eval::{MatchOutcome, Predicate, StringOrStruct};
 
 mod eval;
 
@@ -64,7 +64,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    pub predicate: Predicate,
+    pub predicate: StringOrStruct<Predicate>,
     pub skip_uncertain: bool,
 }
 
@@ -73,7 +73,7 @@ impl Config {
         info!(predicate = ?self.predicate, "selection filter predicate");
 
         let stage = Stage {
-            predicate: self.predicate,
+            predicate: self.predicate.unwrap(),
             skip_uncertain: self.skip_uncertain,
             ops_count: Default::default(),
             input: Default::default(),

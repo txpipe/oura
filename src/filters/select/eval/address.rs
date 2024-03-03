@@ -6,19 +6,19 @@ use super::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct AddressPattern {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub byron_address: Option<FlexBytes>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub payment_part: Option<FlexBytes>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub delegation_part: Option<FlexBytes>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub payment_is_script: Option<bool>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub delegation_is_script: Option<bool>,
 }
 
@@ -158,5 +158,20 @@ mod tests {
         .into();
 
         assert_eq!(pattern, expected);
+    }
+
+    #[test]
+    fn address_match() {
+        let pattern = |addr: &str| Pattern::from(AddressPattern::from_str(addr).unwrap());
+
+        let possitives = testing::find_positive_test_vectors(pattern(
+            "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
+        ));
+        assert_eq!(possitives, vec![1, 3]);
+
+        let possitives = testing::find_positive_test_vectors(pattern(
+            "addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8",
+        ));
+        assert_eq!(possitives, vec![2]);
     }
 }

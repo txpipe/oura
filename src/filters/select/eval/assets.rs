@@ -92,4 +92,49 @@ mod tests {
             AssetPattern::from_str(&"asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92").unwrap();
         assert_eq!(parsed, expected);
     }
+
+    #[test]
+    fn name_match() {
+        let pattern = |token: &str| {
+            Pattern::Asset(
+                AssetPattern {
+                    name: Some(token.into()),
+                    ..Default::default()
+                }
+                .into(),
+            )
+        };
+
+        let positives = testing::find_positive_test_vectors(pattern("abc1"));
+        assert_eq!(positives, vec![1, 2]);
+
+        let positives = testing::find_positive_test_vectors(pattern("1231"));
+        assert_eq!(positives, vec![1, 3]);
+
+        let positives = testing::find_positive_test_vectors(pattern("xyz1"));
+        assert_eq!(positives, vec![2]);
+
+        let positives = testing::find_positive_test_vectors(pattern("doesntexist"));
+        assert_eq!(positives, Vec::<usize>::new());
+    }
+
+    #[test]
+    fn fingerprint_match() {
+        let pattern = |fp: &str| Pattern::from(AssetPattern::from_str(fp).unwrap());
+
+        let positives = testing::find_positive_test_vectors(pattern(
+            "asset1hrygjggfkalehpdecfhl52g80940an5rxqct44",
+        ));
+        assert_eq!(positives, [1, 2]);
+
+        let positives = testing::find_positive_test_vectors(pattern(
+            "asset1tra0mxecpkzgpu8a93jedlqzc9fr9wjwkf2f5y",
+        ));
+        assert_eq!(positives, [1, 3]);
+
+        let positives = testing::find_positive_test_vectors(pattern(
+            "asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92",
+        ));
+        assert_eq!(positives, Vec::<usize>::new());
+    }
 }

@@ -10,15 +10,20 @@ use crate::framework::*;
 
 mod address;
 mod assets;
+mod bytes;
 mod cip14;
+mod metadata;
 mod serde_ext;
-mod types;
+
+#[cfg(test)]
+mod testing;
 
 pub use address::*;
 pub use assets::*;
-pub use types::*;
+pub use bytes::*;
+pub use metadata::*;
 
-use self::serde_ext::{FromBech32, StringOrStruct};
+pub use self::serde_ext::{FromBech32, StringOrStruct};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MatchOutcome {
@@ -164,6 +169,7 @@ impl PatternOf<u64> for u64 {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum NumericPattern<I: Ord + Eq> {
     Exact(I),
     Gte(I),
@@ -257,17 +263,17 @@ pub struct ScriptPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct OutputPattern {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    address: Option<AddressPattern>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    address: Option<StringOrStruct<AddressPattern>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     lovelace: Option<CoinPattern>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    assets: Vec<AssetPattern>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    assets: Vec<StringOrStruct<AssetPattern>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    datum: Option<DatumPattern>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    datum: Option<StringOrStruct<DatumPattern>>,
 }
 
 impl PatternOf<&TxOutput> for OutputPattern {
@@ -291,17 +297,17 @@ impl PatternOf<&TxOutput> for OutputPattern {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InputPattern {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    address: Option<AddressPattern>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    address: Option<StringOrStruct<AddressPattern>>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    assets: Vec<AssetPattern>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    assets: Vec<StringOrStruct<AssetPattern>>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     lovelace: Option<CoinPattern>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    datum: Option<DatumPattern>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    datum: Option<StringOrStruct<DatumPattern>>,
     // u5c redeemer structure is not suitable, is lacks a datum hash (and it also contains a
     // redundant purpose flag) redeemer: Option<DatumPattern>,
 }
@@ -333,7 +339,7 @@ impl PatternOf<&TxInput> for InputPattern {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MintPattern {
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    assets: Vec<AssetPattern>,
+    assets: Vec<StringOrStruct<AssetPattern>>,
     // the u5c struct is not suitable, it lacks the redeemer value
     // redeemer: Option<DatumPattern>,
 }
@@ -345,47 +351,6 @@ impl PatternOf<&Multiasset> for MintPattern {
         let a = MatchOutcome::fold_all_of(a);
 
         MatchOutcome::fold_all_of([a].into_iter())
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub enum MetadatumPattern {
-    Text(TextPattern),
-    Int(NumericPattern<i64>),
-    // TODO: bytes, array, map
-}
-
-impl PatternOf<&Metadatum> for MetadatumPattern {
-    fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
-        match self {
-            MetadatumPattern::Text(x) => x.is_match(subject),
-            MetadatumPattern::Int(_) => todo!(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct MetadataPattern {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    label: Option<u64>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    value: Option<MetadatumPattern>,
-}
-
-impl PatternOf<&Metadata> for MetadataPattern {
-    fn is_match(&self, subject: &Metadata) -> MatchOutcome {
-        let a = self.label.is_match(subject.label);
-
-        let b = self.value.is_any_match(subject.value.iter());
-
-        MatchOutcome::fold_all_of([a, b].into_iter())
-    }
-}
-
-impl PatternOf<&AuxData> for MetadataPattern {
-    fn is_match(&self, subject: &AuxData) -> MatchOutcome {
-        self.is_any_match(subject.metadata.iter())
     }
 }
 
@@ -548,18 +513,41 @@ pub enum Predicate {
     Match(StringOrStruct<Pattern>),
 
     #[serde(rename = "not")]
-    Not(Box<Predicate>),
+    Not(Box<StringOrStruct<Predicate>>),
 
     #[serde(rename = "any")]
-    AnyOf(Vec<Predicate>),
+    AnyOf(Vec<StringOrStruct<Predicate>>),
 
     #[serde(rename = "all")]
-    AllOf(Vec<Predicate>),
+    AllOf(Vec<StringOrStruct<Predicate>>),
+}
+
+impl Predicate {
+    pub fn any_of(p: Vec<Self>) -> Self {
+        Predicate::AnyOf(p.into_iter().map(StringOrStruct).collect())
+    }
+
+    pub fn all_of(p: Vec<Self>) -> Self {
+        Predicate::AllOf(p.into_iter().map(StringOrStruct).collect())
+    }
+
+    pub fn not(p: Self) -> Self {
+        Predicate::Not(Box::new(StringOrStruct(p)))
+    }
 }
 
 impl From<Pattern> for Predicate {
     fn from(value: Pattern) -> Self {
         Predicate::Match(StringOrStruct(value))
+    }
+}
+
+impl FromStr for Predicate {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let inner = Pattern::from_str(s)?;
+        Ok(inner.into())
     }
 }
 
@@ -603,160 +591,13 @@ pub fn eval(record: &Record, predicate: &Predicate) -> MatchOutcome {
 mod tests {
     use super::*;
     use std::str::FromStr;
-    use utxorpc::spec::cardano::Tx;
-
-    fn multiasset_combo(policy_hex: &str, asset_prefix: &str) -> Multiasset {
-        Multiasset {
-            policy_id: hex::decode(policy_hex).unwrap().into(),
-            assets: vec![
-                Asset {
-                    name: format!("{asset_prefix}1").as_bytes().to_vec().into(),
-                    output_coin: 345000000,
-                    mint_coin: 0,
-                },
-                Asset {
-                    name: format!("{asset_prefix}2").as_bytes().to_vec().into(),
-                    output_coin: 345000000,
-                    mint_coin: 0,
-                },
-            ],
-        }
-    }
-
-    fn test_vectors() -> Vec<Tx> {
-        let _0 = Tx::default();
-
-        let _1 = Tx {
-            outputs: vec![TxOutput {
-                address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
-                coin: 123000000,
-                assets: vec![
-                    multiasset_combo("7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373", "abc"),
-                    multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
-                ],
-                datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-
-        let _2 = Tx {
-            outputs: vec![TxOutput {
-                address: hex::decode("619493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e")
-                    .unwrap()
-                    .into(),
-                coin: 123000000,
-                assets: vec![multiasset_combo(
-                    "7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373",
-                    "abc",
-                )],
-                datum_hash: hex::decode(
-                    "923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec",
-                )
-                .unwrap()
-                .into(),
-                ..Default::default()
-            }],
-            mint: vec![multiasset_combo(
-                "533bb94a8850ee3ccbe483106489399112b74c905342cb1792a797a0",
-                "xyz",
-            )],
-            ..Default::default()
-        };
-
-        let _3 = Tx {
-            outputs: vec![TxOutput {
-                address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
-                coin: 123000000,
-                assets: vec![
-                    multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
-                ],
-                datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
-                ..Default::default()
-            }],
-            ..Default::default()
-        };
-
-        vec![_0, _1, _2, _3]
-    }
-
-    fn find_positive_test_vectors(predicate: impl Into<Predicate>) -> Vec<usize> {
-        let subjects = test_vectors();
-        let predicate = predicate.into();
-
-        subjects
-            .into_iter()
-            .enumerate()
-            .filter_map(|(idx, subject)| match eval_tx(&subject, &predicate) {
-                MatchOutcome::Positive => Some(idx),
-                _ => None,
-            })
-            .collect()
-    }
 
     #[test]
     fn empty_tx_pattern() {
         let pattern = Pattern::Tx(TxPattern::default());
 
-        let positives = find_positive_test_vectors(pattern);
+        let positives = testing::find_positive_test_vectors(pattern);
         assert_eq!(positives, vec![0, 1, 2, 3]);
-    }
-
-    #[test]
-    fn address_match() {
-        let pattern = |addr: &str| Pattern::from(AddressPattern::from_str(addr).unwrap());
-
-        let possitives = find_positive_test_vectors(pattern(
-            "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
-        ));
-        assert_eq!(possitives, vec![1, 3]);
-
-        let possitives = find_positive_test_vectors(pattern(
-            "addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8",
-        ));
-        assert_eq!(possitives, vec![2]);
-    }
-
-    #[test]
-    fn asset_name_match() {
-        let pattern = |token: &str| {
-            Pattern::Asset(
-                AssetPattern {
-                    name: Some(token.into()),
-                    ..Default::default()
-                }
-                .into(),
-            )
-        };
-
-        let positives = find_positive_test_vectors(pattern("abc1"));
-        assert_eq!(positives, vec![1, 2]);
-
-        let positives = find_positive_test_vectors(pattern("1231"));
-        assert_eq!(positives, vec![1, 3]);
-
-        let positives = find_positive_test_vectors(pattern("xyz1"));
-        assert_eq!(positives, vec![2]);
-
-        let positives = find_positive_test_vectors(pattern("doesntexist"));
-        assert_eq!(positives, Vec::<usize>::new());
-    }
-
-    #[test]
-    fn asset_fingerprint_match() {
-        let pattern = |fp: &str| Pattern::from(AssetPattern::from_str(fp).unwrap());
-
-        let positives =
-            find_positive_test_vectors(pattern("asset1hrygjggfkalehpdecfhl52g80940an5rxqct44"));
-        assert_eq!(positives, [1, 2]);
-
-        let positives =
-            find_positive_test_vectors(pattern("asset1tra0mxecpkzgpu8a93jedlqzc9fr9wjwkf2f5y"));
-        assert_eq!(positives, [1, 3]);
-
-        let positives =
-            find_positive_test_vectors(pattern("asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92"));
-        assert_eq!(positives, Vec::<usize>::new());
     }
 
     #[test]
@@ -772,26 +613,54 @@ mod tests {
     }
 
     #[test]
-    fn serde() {
-        let predicate1 = Pattern::Output(OutputPattern {
-            assets: vec![AssetPattern {
-                policy: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
-                name: Some("abc1".into()),
-                ..Default::default()
-            }],
-            ..Default::default()
-        });
+    fn deser_predicate() {
+        serde_json::from_str::<StringOrStruct<Predicate>>("\"addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x\"").unwrap();
 
-        let predicate2 = Pattern::Address(
-            AddressPattern {
-                payment_part: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
-                ..Default::default()
-            }
-            .into(),
-        );
+        serde_json::from_str::<StringOrStruct<Predicate>>(r#"{
+            "match": { "metadata": "\#127" }
+        }"#).unwrap();
 
-        let predicate = Predicate::AnyOf(vec![predicate1.into(), predicate2.into()]);
+        serde_json::from_str::<StringOrStruct<Predicate>>(
+            &r#"{
+                "all": [
+                    "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x",
+                    { "match": "asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92" },
+                    { "not": "datum1kthqfw4769ejpkx3h8le45yxaph5fmzdnur2s4" },
+                    {
+                        "all": [{
+                            "match": {
+                                "mint": {
+                                    "assets": ["asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92"]
+                                }
+                            }
+                        }]
+                    }
+                ]
+            }"#,
+        ).unwrap();
 
-        println!("{}", serde_json::to_string_pretty(&predicate).unwrap());
+        serde_json::from_str::<StringOrStruct<Predicate>>(
+            &r#"{
+                "match": {
+                    "tx": {
+                        "inputs": [{
+                            "address": "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x",
+                            "datum": "datum1kthqfw4769ejpkx3h8le45yxaph5fmzdnur2s4"
+                        }],
+                        "outputs": [{
+                            "address": "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x",
+                            "lovelace": { "between": [1000000, 5000000 ] },
+                            "datum": "datum1kthqfw4769ejpkx3h8le45yxaph5fmzdnur2s4"
+                        }],
+                        "mint": [{
+                            "assets": ["asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92"]
+                        }],
+                        "metadata": [{
+                            "label": 127
+                        }]
+                    }
+                }
+            }"#,
+        ).unwrap();
     }
 }
