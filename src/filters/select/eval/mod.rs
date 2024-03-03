@@ -2,7 +2,7 @@ use std::{ops::Deref, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use tracing::warn;
-use utxorpc::proto::cardano::v1::{
+use utxorpc::spec::cardano::{
     Asset, AuxData, Metadata, Metadatum, Multiasset, Redeemer, TxInput, TxOutput,
 };
 
@@ -10,6 +10,7 @@ use crate::framework::*;
 
 mod address;
 mod assets;
+mod cip14;
 mod serde_ext;
 mod types;
 
@@ -19,7 +20,7 @@ pub use types::*;
 
 use self::serde_ext::{FromBech32, StringOrStruct};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MatchOutcome {
     Positive,
     Negative,
@@ -211,7 +212,7 @@ impl PatternOf<&[u8]> for TextPattern {
 impl PatternOf<&Metadatum> for TextPattern {
     fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
         match subject.metadatum.as_ref() {
-            Some(utxorpc::proto::cardano::v1::metadatum::Metadatum::Text(subject)) => {
+            Some(utxorpc::spec::cardano::metadatum::Metadatum::Text(subject)) => {
                 self.is_match(subject.as_str())
             }
             _ => MatchOutcome::Negative,
@@ -544,7 +545,7 @@ impl PatternOf<&ParsedTx> for Pattern {
 #[serde(rename_all = "lowercase")]
 pub enum Predicate {
     #[serde(rename = "match")]
-    Match(Pattern),
+    Match(StringOrStruct<Pattern>),
 
     #[serde(rename = "not")]
     Not(Box<Predicate>),
@@ -554,6 +555,12 @@ pub enum Predicate {
 
     #[serde(rename = "all")]
     AllOf(Vec<Predicate>),
+}
+
+impl From<Pattern> for Predicate {
+    fn from(value: Pattern) -> Self {
+        Predicate::Match(StringOrStruct(value))
+    }
 }
 
 fn eval_tx(tx: &ParsedTx, predicate: &Predicate) -> MatchOutcome {
@@ -594,10 +601,9 @@ pub fn eval(record: &Record, predicate: &Predicate) -> MatchOutcome {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use super::*;
-    use utxorpc::proto::cardano::v1::Tx;
+    use std::str::FromStr;
+    use utxorpc::spec::cardano::Tx;
 
     fn multiasset_combo(policy_hex: &str, asset_prefix: &str) -> Multiasset {
         Multiasset {
@@ -625,8 +631,8 @@ mod tests {
                 address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
                 coin: 123000000,
                 assets: vec![
-                    multiasset_combo("019493315cd92eb5d8c4304e67b7e16ae36d61de", "abc"),
-                    multiasset_combo("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d", "123")
+                    multiasset_combo("7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373", "abc"),
+                    multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
                 ],
                 datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
                 ..Default::default()
@@ -641,7 +647,7 @@ mod tests {
                     .into(),
                 coin: 123000000,
                 assets: vec![multiasset_combo(
-                    "019493315cd92eb5d8c4304e67b7e16ae36d61de",
+                    "7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373",
                     "abc",
                 )],
                 datum_hash: hex::decode(
@@ -652,7 +658,7 @@ mod tests {
                 ..Default::default()
             }],
             mint: vec![multiasset_combo(
-                "ca3acbc34f8c46003c69fe79a3628cefa9c47251",
+                "533bb94a8850ee3ccbe483106489399112b74c905342cb1792a797a0",
                 "xyz",
             )],
             ..Default::default()
@@ -663,7 +669,7 @@ mod tests {
                 address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
                 coin: 123000000,
                 assets: vec![
-                    multiasset_combo("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d", "123")
+                    multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
                 ],
                 datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
                 ..Default::default()
@@ -674,8 +680,9 @@ mod tests {
         vec![_0, _1, _2, _3]
     }
 
-    fn find_positive_test_vectors(predicate: Predicate) -> Vec<usize> {
+    fn find_positive_test_vectors(predicate: impl Into<Predicate>) -> Vec<usize> {
         let subjects = test_vectors();
+        let predicate = predicate.into();
 
         subjects
             .into_iter()
@@ -691,7 +698,7 @@ mod tests {
     fn empty_tx_pattern() {
         let pattern = Pattern::Tx(TxPattern::default());
 
-        let positives = find_positive_test_vectors(Predicate::Match(pattern));
+        let positives = find_positive_test_vectors(pattern);
         assert_eq!(positives, vec![0, 1, 2, 3]);
     }
 
@@ -699,14 +706,14 @@ mod tests {
     fn address_match() {
         let pattern = |addr: &str| Pattern::from(AddressPattern::from_str(addr).unwrap());
 
-        let possitives = find_positive_test_vectors(Predicate::Match(pattern(
+        let possitives = find_positive_test_vectors(pattern(
             "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
-        )));
+        ));
         assert_eq!(possitives, vec![1, 3]);
 
-        let possitives = find_positive_test_vectors(Predicate::Match(pattern(
+        let possitives = find_positive_test_vectors(pattern(
             "addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8",
-        )));
+        ));
         assert_eq!(possitives, vec![2]);
     }
 
@@ -722,16 +729,33 @@ mod tests {
             )
         };
 
-        let positives = find_positive_test_vectors(Predicate::Match(pattern("abc1")));
+        let positives = find_positive_test_vectors(pattern("abc1"));
         assert_eq!(positives, vec![1, 2]);
 
-        let positives = find_positive_test_vectors(Predicate::Match(pattern("1231")));
+        let positives = find_positive_test_vectors(pattern("1231"));
         assert_eq!(positives, vec![1, 3]);
 
-        let positives = find_positive_test_vectors(Predicate::Match(pattern("xyz1")));
+        let positives = find_positive_test_vectors(pattern("xyz1"));
         assert_eq!(positives, vec![2]);
 
-        let positives = find_positive_test_vectors(Predicate::Match(pattern("doesntexist")));
+        let positives = find_positive_test_vectors(pattern("doesntexist"));
+        assert_eq!(positives, Vec::<usize>::new());
+    }
+
+    #[test]
+    fn asset_fingerprint_match() {
+        let pattern = |fp: &str| Pattern::from(AssetPattern::from_str(fp).unwrap());
+
+        let positives =
+            find_positive_test_vectors(pattern("asset1hrygjggfkalehpdecfhl52g80940an5rxqct44"));
+        assert_eq!(positives, [1, 2]);
+
+        let positives =
+            find_positive_test_vectors(pattern("asset1tra0mxecpkzgpu8a93jedlqzc9fr9wjwkf2f5y"));
+        assert_eq!(positives, [1, 3]);
+
+        let positives =
+            find_positive_test_vectors(pattern("asset13n25uv0yaf5kus35fm2k86cqy60z58d9xmde92"));
         assert_eq!(positives, Vec::<usize>::new());
     }
 
@@ -749,24 +773,24 @@ mod tests {
 
     #[test]
     fn serde() {
-        let predicate1 = Predicate::Match(Pattern::Output(OutputPattern {
+        let predicate1 = Pattern::Output(OutputPattern {
             assets: vec![AssetPattern {
                 policy: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
                 name: Some("abc1".into()),
                 ..Default::default()
             }],
             ..Default::default()
-        }));
+        });
 
-        let predicate2 = Predicate::Match(Pattern::Address(
+        let predicate2 = Pattern::Address(
             AddressPattern {
                 payment_part: Some("b2ee04babed17320d8d1b9ff9ad086e86f44ec4d".into()),
                 ..Default::default()
             }
             .into(),
-        ));
+        );
 
-        let predicate = Predicate::AnyOf(vec![predicate1, predicate2]);
+        let predicate = Predicate::AnyOf(vec![predicate1.into(), predicate2.into()]);
 
         println!("{}", serde_json::to_string_pretty(&predicate).unwrap());
     }

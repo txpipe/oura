@@ -5,15 +5,12 @@ use serde::Deserialize;
 
 use pallas::interop::utxorpc as interop;
 use pallas::ledger::traverse as trv;
-use utxorpc::proto::cardano::v1 as u5c;
+use utxorpc::spec::cardano as u5c;
 
 use crate::framework::*;
 
 fn map_cbor_to_u5c(cbor: &[u8]) -> Result<u5c::Tx, WorkerError> {
-    let tx = trv::MultiEraTx::decode(trv::Era::Babbage, cbor)
-        .or_else(|_| trv::MultiEraTx::decode(trv::Era::Alonzo, cbor))
-        .or_else(|_| trv::MultiEraTx::decode(trv::Era::Byron, cbor))
-        .or_panic()?;
+    let tx = trv::MultiEraTx::decode(&cbor).or_panic()?;
 
     Ok(interop::map_tx(&tx))
 }

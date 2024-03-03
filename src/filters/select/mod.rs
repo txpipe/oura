@@ -1,5 +1,6 @@
 use gasket::framework::*;
 use serde::Deserialize;
+use tracing::info;
 
 use crate::framework::*;
 
@@ -69,6 +70,8 @@ pub struct Config {
 
 impl Config {
     pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
+        info!(predicate = ?self.predicate, "selection filter predicate");
+
         let stage = Stage {
             predicate: self.predicate,
             skip_uncertain: self.skip_uncertain,

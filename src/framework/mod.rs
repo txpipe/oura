@@ -10,8 +10,8 @@ use std::path::PathBuf;
 pub use crate::cursor::Config as CursorConfig;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
-pub use utxorpc::proto::cardano::v1::Block as ParsedBlock;
-pub use utxorpc::proto::cardano::v1::Tx as ParsedTx;
+pub use utxorpc::spec::cardano::Block as ParsedBlock;
+pub use utxorpc::spec::cardano::Tx as ParsedTx;
 
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;

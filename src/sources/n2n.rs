@@ -217,11 +217,11 @@ impl gasket::framework::Worker<Stage> for Worker {
         self.process_next(stage, unit).await
     }
 
-    async fn teardown(&mut self) -> Result<(), WorkerError> {
-        self.peer_session.abort();
+    // async fn teardown(&mut self) -> Result<(), WorkerError> {
+    //     self.peer_session.abort();
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 #[derive(Deserialize)]

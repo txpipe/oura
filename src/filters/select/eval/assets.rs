@@ -40,19 +40,28 @@ impl FromStr for AssetPattern {
     }
 }
 
-impl PatternOf<(&[u8], &Asset)> for AssetPattern {
-    fn is_match(&self, subject: (&[u8], &Asset)) -> MatchOutcome {
+pub type PolicyId = [u8];
+
+impl PatternOf<(&PolicyId, &Asset)> for AssetPattern {
+    fn is_match(&self, subject: (&PolicyId, &Asset)) -> MatchOutcome {
         let (subject_policy, subject_asset) = subject;
 
-        let a = self.policy.is_match(subject_policy);
+        let a = if self.fingerprint.is_some() {
+            let hash = cip14::compute_hash(subject_policy, &subject_asset.name);
+            self.fingerprint.is_match(hash.as_ref())
+        } else {
+            MatchOutcome::Positive
+        };
 
-        let b = self.name.is_match(subject_asset.name.as_ref());
+        let b = self.policy.is_match(subject_policy);
 
-        let c = self.name_text.is_match(subject_asset.name.as_ref());
+        let c = self.name.is_match(subject_asset.name.as_ref());
 
-        let d = self.coin.is_match(subject_asset.output_coin);
+        let d = self.name_text.is_match(subject_asset.name.as_ref());
 
-        MatchOutcome::fold_all_of([a, b, c, d].into_iter())
+        let e = self.coin.is_match(subject_asset.output_coin);
+
+        MatchOutcome::fold_all_of([a, b, c, d, e].into_iter())
     }
 }
 
