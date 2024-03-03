@@ -42,6 +42,9 @@ mod redis;
 #[cfg(feature = "sink-elasticsearch")]
 mod elasticsearch;
 
+#[cfg(feature = "sql")]
+mod sql_db;
+
 pub enum Bootstrapper {
     Terminal(terminal::Stage),
     Stdout(stdout::Stage),
@@ -80,6 +83,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "sink-elasticsearch")]
     ElasticSearch(elasticsearch::Stage),
+
+    #[cfg(feature = "sql")]
+    SqlDb(sql_db::Stage),
 }
 
 impl Bootstrapper {
@@ -122,6 +128,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "sink-elasticsearch")]
             Bootstrapper::ElasticSearch(p) => &mut p.input,
+
+            #[cfg(feature = "sql")]
+            Bootstrapper::SqlDb(p) => &mut p.input,
         }
     }
 
@@ -164,6 +173,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "sink-elasticsearch")]
             Bootstrapper::ElasticSearch(p) => &mut p.cursor,
+
+            #[cfg(feature = "sql")]
+            Bootstrapper::SqlDb(p) => &mut p.cursor,
         }
     }
 
@@ -206,6 +218,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "sink-elasticsearch")]
             Bootstrapper::ElasticSearch(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "sql")]
+            Bootstrapper::SqlDb(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -250,6 +265,9 @@ pub enum Config {
 
     #[cfg(feature = "sink-elasticsearch")]
     ElasticSearch(elasticsearch::Config),
+
+    #[cfg(feature = "sql")]
+    SqlDb(sql_db::Config),
 }
 
 impl Config {
@@ -292,6 +310,9 @@ impl Config {
 
             #[cfg(feature = "sink-elasticsearch")]
             Config::ElasticSearch(c) => Ok(Bootstrapper::ElasticSearch(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "sql")]
+            Config::SqlDb(c) => Ok(Bootstrapper::SqlDb(c.bootstrapper(ctx)?)),
         }
     }
 }

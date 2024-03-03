@@ -216,12 +216,6 @@ impl gasket::framework::Worker<Stage> for Worker {
     ) -> Result<(), WorkerError> {
         self.process_next(stage, unit).await
     }
-
-    // async fn teardown(&mut self) -> Result<(), WorkerError> {
-    //     self.peer_session.abort();
-
-    //     Ok(())
-    // }
 }
 
 #[derive(Deserialize)]

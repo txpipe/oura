@@ -24,10 +24,11 @@ sink-gcp-cloudfunction = ["reqwest", "jsonwebtoken"]
 sink-redis = ["r2d2_redis"]
 sink-elasticsearch = ["elasticsearch"]
 source-utxorpc = ["tonic", "futures"]
+sql = ["sqlx"]
 
 [dependencies]
-# pallas = "0.19.0"
-pallas = { path = "../pallas/pallas" }
+pallas = "0.21.0"
+# pallas = { path = "../pallas/pallas" }
 # pallas = { git = "https://github.com/txpipe/pallas" }
 
 gasket = { version = "^0.6", features = ["derive"] }
@@ -43,6 +44,8 @@ clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
 crossterm = "0.26"
 merge = "0.1.0"
+regex = "1.10.3"
+handlebars = "5.1.1"
 config = { version = "0.13.2", default-features = false, features = ["toml", "yaml", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
@@ -74,6 +77,8 @@ file-rotate = { version = "0.7.5", optional = true }
 tonic = { version = "0.9.2", features = ["tls", "tls-roots"], optional = true }
 futures = { version = "0.3.28", optional = true }
 
+# sql
+sqlx = { version = "0.7", features = ["runtime-tokio", "tls-native-tls", "any", "sqlite", "postgres"], optional = true }
 
 # aws
 aws-config = { version = "^1.1", optional = true }
@@ -81,4 +86,3 @@ aws-types = { version = "^1.1", optional = true }
 aws-sdk-s3 = { version = "^1.1", optional = true }
 aws-sdk-sqs = { version = "^1.1", optional = true }
 aws-sdk-lambda = { version = "^1.1", optional = true }
-regex = "1.10.3"
