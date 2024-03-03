@@ -25,8 +25,6 @@ pub struct MetadataPattern {
     value: Option<MetadatumPattern>,
 }
 
-
-
 use regex::Regex;
 
 impl FromStr for MetadataPattern {
