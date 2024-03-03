@@ -2,9 +2,7 @@ use std::{ops::Deref, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use tracing::warn;
-use utxorpc::spec::cardano::{
-    Asset, AuxData, Metadata, Metadatum, Multiasset, Redeemer, TxInput, TxOutput,
-};
+use utxorpc::spec::cardano::{Asset, AuxData, Metadata, Metadatum, Multiasset, TxInput, TxOutput};
 
 use crate::framework::*;
 
@@ -78,7 +76,7 @@ impl MatchOutcome {
                 return Self::Positive;
             }
 
-            folded = folded + item;
+            folded += item;
         }
 
         folded

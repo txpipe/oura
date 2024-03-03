@@ -50,7 +50,7 @@ where
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_any(StringOrStructVisitor(PhantomData::default()))
+        deserializer.deserialize_any(StringOrStructVisitor(PhantomData))
     }
 }
 

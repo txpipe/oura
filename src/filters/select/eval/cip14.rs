@@ -9,6 +9,7 @@ pub fn compute_hash(policy_id: &[u8], asset_name: &[u8]) -> Hash<20> {
     hasher.finalize()
 }
 
+#[allow(dead_code)]
 pub fn fingerprint(policy_id: &[u8], asset_name: &[u8]) -> anyhow::Result<String> {
     let hash = compute_hash(policy_id, asset_name);
     let base32 = hash.to_base32();
@@ -16,6 +17,7 @@ pub fn fingerprint(policy_id: &[u8], asset_name: &[u8]) -> anyhow::Result<String
     Ok(x)
 }
 
+#[allow(dead_code)]
 pub fn read_hash(bech32: &str) -> anyhow::Result<Vec<u8>> {
     let (_, datapart, _) = bech32::decode(bech32)?;
     let x = Vec::<u8>::from_base32(&datapart)?;
