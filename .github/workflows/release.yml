@@ -186,7 +186,7 @@ jobs:
           git-chglog -c .github/chglog/release.yml $(git describe --tags) > RELEASE.md
 
       - name: Build | Publish
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: oura-*/oura-*
           body_path: RELEASE.md
