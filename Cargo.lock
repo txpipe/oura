@@ -1013,6 +1013,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
+
+[[package]]
 name = "base64-simd"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3488,7 +3494,7 @@ dependencies = [
  "httpdate",
  "itoa 1.0.10",
  "pin-project-lite",
- "socket2 0.4.10",
+ "socket2 0.5.6",
  "tokio",
  "tower-service",
  "tracing",
@@ -4689,8 +4695,8 @@ dependencies = [
 
 [[package]]
 name = "pallas"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "pallas-addresses",
  "pallas-applying",
@@ -4705,8 +4711,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-addresses"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "base58",
  "bech32",
@@ -4720,8 +4726,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-applying"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "hex",
  "pallas-addresses",
@@ -4734,8 +4740,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-codec"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "hex",
  "minicbor",
@@ -4745,10 +4751,10 @@ dependencies = [
 
 [[package]]
 name = "pallas-configs"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.0",
  "hex",
  "pallas-addresses",
  "pallas-codec",
@@ -4759,8 +4765,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-crypto"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "cryptoxide",
  "hex",
@@ -4772,8 +4778,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-network"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "byteorder",
  "hex",
@@ -4789,8 +4795,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-primitives"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "base58",
  "bech32",
@@ -4804,8 +4810,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-traverse"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "hex",
  "pallas-addresses",
@@ -4819,8 +4825,8 @@ dependencies = [
 
 [[package]]
 name = "pallas-utxorpc"
-version = "0.23.0"
-source = "git+https://github.com/txpipe/pallas#94b37fd798bb2528223aaa7946a9293083df5003"
+version = "0.24.0"
+source = "git+https://github.com/txpipe/pallas#00ece5d3008c1e808fb700914992853ece37a06b"
 dependencies = [
  "pallas-codec",
  "pallas-primitives",
