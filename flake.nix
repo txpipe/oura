@@ -1,5 +1,5 @@
 {
-  description = "A Nix flake for building the oura project on the main branch";
+  description = "A Nix flake for building oura";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -10,7 +10,7 @@
   outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        overlays = [ rust-overlay.overlay ];
+        overlays = [ rust-overlay.overlays.default ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
@@ -24,12 +24,8 @@
               "pallas-0.23.0" = "7deb0f9c183c39d24499f123b17372394385a159ee6380df72fc27335cfa28e8"; 
             };
           };
-          cargoSha256 = "0000000000000000000000000000000000000000000000000000"; # Placeholder, replace with actual hash
-          buildInputs = with pkgs; [ ];
         };
-
         defaultPackage = self.packages.oura;
       }
     );
 }
-
