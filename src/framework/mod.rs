@@ -184,10 +184,10 @@ impl ChainEvent {
         Ok(out)
     }
 
-    pub fn try_map_record_to_many<E>(
-        self,
-        f: fn(Record) -> Result<Vec<Record>, E>,
-    ) -> Result<Vec<Self>, E> {
+    pub fn try_map_record_to_many<F, E>(self, f: F) -> Result<Vec<Self>, E>
+    where
+        F: FnOnce(Record) -> Result<Vec<Record>, E>,
+    {
         let out = match self {
             Self::Apply(p, x) => f(x)?
                 .into_iter()
