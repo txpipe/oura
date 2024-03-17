@@ -20,7 +20,9 @@ Run the following command from inside the `./extract_fee` directory to compile t
 tinygo build -o plugin.wasm -target wasi main.go
 ```
 
-2. Run Oura using the plugin
+The Golang code relies on a plugin system called [extism](https://github.com/extism) that provides several extra features which are not reflected in this example. To read more about how to use Extism in go, refer to the [official docs](https://github.com/extism/go-pdk).
+
+1. Run Oura using the plugin
 
 Run Oura using the `daemon.toml` config in this example that already points to the compiled WASM module generated in the previous step.
 
