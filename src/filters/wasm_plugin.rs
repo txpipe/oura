@@ -91,23 +91,14 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Default, Deserialize)]
 pub struct Config {
-    wasm_url: Option<String>,
-    wasm_path: Option<String>,
-
-    #[serde(default)]
-    enable_wasi: bool,
+    path: String,
 }
 
 impl Config {
     pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
-        let wasm = match (self.wasm_url, self.wasm_path) {
-            (Some(x), _) => extism::Wasm::url(x),
-            (_, Some(x)) => extism::Wasm::file(x),
-            _ => return Err(Error::config("no wasm source specified")),
-        };
-
+        let wasm = extism::Wasm::file(self.path);
         let manifest = extism::Manifest::new([wasm]);
-        let plugin = extism::Plugin::new(&manifest, [], self.enable_wasi).map_err(Error::custom)?;
+        let plugin = extism::Plugin::new(&manifest, [], true).map_err(Error::custom)?;
 
         Ok(Stage {
             input: Default::default(),

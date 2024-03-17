@@ -12,7 +12,7 @@ pub mod select;
 pub mod split_block;
 
 #[cfg(feature = "wasm")]
-pub mod wasm;
+pub mod wasm_plugin;
 
 #[cfg(feature = "deno")]
 pub mod deno;
@@ -27,7 +27,7 @@ pub enum Bootstrapper {
     Select(select::Stage),
 
     #[cfg(feature = "wasm")]
-    Wasm(wasm::Stage),
+    WasmPlugin(wasm_plugin::Stage),
 
     #[cfg(feature = "deno")]
     Deno(deno::Stage),
@@ -45,7 +45,7 @@ impl Bootstrapper {
             Bootstrapper::Select(p) => &mut p.input,
 
             #[cfg(feature = "wasm")]
-            Bootstrapper::Wasm(p) => &mut p.input,
+            Bootstrapper::WasmPlugin(p) => &mut p.input,
 
             #[cfg(feature = "deno")]
             Bootstrapper::Deno(p) => &mut p.input,
@@ -63,7 +63,7 @@ impl Bootstrapper {
             Bootstrapper::Select(p) => &mut p.output,
 
             #[cfg(feature = "wasm")]
-            Bootstrapper::Wasm(p) => &mut p.output,
+            Bootstrapper::WasmPlugin(p) => &mut p.output,
 
             #[cfg(feature = "deno")]
             Bootstrapper::Deno(p) => &mut p.output,
@@ -81,7 +81,7 @@ impl Bootstrapper {
             Bootstrapper::Select(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "wasm")]
-            Bootstrapper::Wasm(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::WasmPlugin(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "deno")]
             Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
@@ -101,7 +101,7 @@ pub enum Config {
     Select(select::Config),
 
     #[cfg(feature = "wasm")]
-    Wasm(wasm::Config),
+    WasmPlugin(wasm_plugin::Config),
 
     #[cfg(feature = "deno")]
     Deno(deno::Config),
@@ -119,7 +119,7 @@ impl Config {
             Config::Select(c) => Ok(Bootstrapper::Select(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "wasm")]
-            Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
+            Config::WasmPlugin(c) => Ok(Bootstrapper::WasmPlugin(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "deno")]
             Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
