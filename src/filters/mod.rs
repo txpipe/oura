@@ -3,7 +3,6 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
-pub mod dsl;
 pub mod json;
 pub mod legacy_v1;
 pub mod noop;
@@ -20,7 +19,6 @@ pub mod deno;
 pub enum Bootstrapper {
     Noop(noop::Stage),
     SplitBlock(split_block::Stage),
-    Dsl(dsl::Stage),
     Json(json::Stage),
     LegacyV1(legacy_v1::Stage),
     ParseCbor(parse_cbor::Stage),
@@ -38,7 +36,6 @@ impl Bootstrapper {
         match self {
             Bootstrapper::Noop(p) => &mut p.input,
             Bootstrapper::SplitBlock(p) => &mut p.input,
-            Bootstrapper::Dsl(p) => &mut p.input,
             Bootstrapper::Json(p) => &mut p.input,
             Bootstrapper::LegacyV1(p) => &mut p.input,
             Bootstrapper::ParseCbor(p) => &mut p.input,
@@ -56,7 +53,6 @@ impl Bootstrapper {
         match self {
             Bootstrapper::Noop(p) => &mut p.output,
             Bootstrapper::SplitBlock(p) => &mut p.output,
-            Bootstrapper::Dsl(p) => &mut p.output,
             Bootstrapper::Json(p) => &mut p.output,
             Bootstrapper::LegacyV1(p) => &mut p.output,
             Bootstrapper::ParseCbor(p) => &mut p.output,
@@ -74,7 +70,6 @@ impl Bootstrapper {
         match self {
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::SplitBlock(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::Dsl(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Json(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::LegacyV1(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
@@ -94,7 +89,6 @@ impl Bootstrapper {
 pub enum Config {
     Noop(noop::Config),
     SplitBlock(split_block::Config),
-    Dsl(dsl::Config),
     Json(json::Config),
     LegacyV1(legacy_v1::Config),
     ParseCbor(parse_cbor::Config),
@@ -112,7 +106,6 @@ impl Config {
         match self {
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
             Config::SplitBlock(c) => Ok(Bootstrapper::SplitBlock(c.bootstrapper(ctx)?)),
-            Config::Dsl(c) => Ok(Bootstrapper::Dsl(c.bootstrapper(ctx)?)),
             Config::Json(c) => Ok(Bootstrapper::Json(c.bootstrapper(ctx)?)),
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
