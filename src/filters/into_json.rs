@@ -2,11 +2,12 @@
 
 use gasket::framework::*;
 use serde::Deserialize;
+use serde_json::Value as JsonValue;
 
 use crate::framework::*;
 
 #[derive(Default, Stage)]
-#[stage(name = "filter-json", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "into-json", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     pub input: FilterInputPort,
     pub output: FilterOutputPort,
@@ -25,7 +26,7 @@ impl From<&Stage> for Worker {
 }
 
 gasket::impl_mapper!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
-    let out = unit.clone();
+    let out = unit.clone().map_record(|r| Record::GenericJson(JsonValue::from(r)));
     stage.ops_count.inc(1);
     out
 });
