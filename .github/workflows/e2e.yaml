@@ -48,7 +48,7 @@ jobs:
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 1200
 
-      - uses: azure/setup-kubectl@v3.2
+      - uses: azure/setup-kubectl@v4
         with:
           version: "v1.23.6"
 
@@ -93,7 +93,7 @@ jobs:
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 3600
 
-      - uses: azure/setup-kubectl@v3.2
+      - uses: azure/setup-kubectl@v4
         with:
           version: "v1.23.6"
 
