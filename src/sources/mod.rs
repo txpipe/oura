@@ -10,7 +10,7 @@ pub mod n2c;
 pub mod n2n;
 
 #[cfg(feature = "u5c")]
-pub mod utxorpc;
+pub mod u5c;
 
 #[cfg(feature = "aws")]
 pub mod s3;
@@ -22,7 +22,7 @@ pub enum Bootstrapper {
     N2C(n2c::Stage),
 
     #[cfg(feature = "u5c")]
-    UtxoRPC(utxorpc::Stage),
+    U5C(u5c::Stage),
 
     #[cfg(feature = "aws")]
     S3(s3::Stage),
@@ -37,7 +37,7 @@ impl Bootstrapper {
             Bootstrapper::N2C(p) => &mut p.output,
 
             #[cfg(feature = "u5c")]
-            Bootstrapper::UtxoRPC(p) => &mut p.output,
+            Bootstrapper::U5C(p) => &mut p.output,
 
             #[cfg(feature = "aws")]
             Bootstrapper::S3(p) => &mut p.output,
@@ -52,7 +52,7 @@ impl Bootstrapper {
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "u5c")]
-            Bootstrapper::UtxoRPC(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::U5C(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "aws")]
             Bootstrapper::S3(x) => gasket::runtime::spawn_stage(x, policy),
@@ -69,7 +69,7 @@ pub enum Config {
     N2C(n2c::Config),
 
     #[cfg(feature = "u5c")]
-    UtxoRPC(utxorpc::Config),
+    U5C(u5c::Config),
 
     #[cfg(feature = "aws")]
     S3(s3::Config),
@@ -84,7 +84,7 @@ impl Config {
             Config::N2C(c) => Ok(Bootstrapper::N2C(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "u5c")]
-            Config::UtxoRPC(c) => Ok(Bootstrapper::UtxoRPC(c.bootstrapper(ctx)?)),
+            Config::U5C(c) => Ok(Bootstrapper::U5C(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "aws")]
             Config::S3(c) => Ok(Bootstrapper::S3(c.bootstrapper(ctx)?)),
