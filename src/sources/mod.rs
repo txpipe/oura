@@ -9,11 +9,11 @@ use crate::framework::*;
 pub mod n2c;
 pub mod n2n;
 
+#[cfg(feature = "u5c")]
+pub mod utxorpc;
+
 #[cfg(feature = "aws")]
 pub mod s3;
-
-#[cfg(feature = "source-utxorpc")]
-pub mod utxorpc;
 
 pub enum Bootstrapper {
     N2N(n2n::Stage),
@@ -21,11 +21,11 @@ pub enum Bootstrapper {
     #[cfg(target_family = "unix")]
     N2C(n2c::Stage),
 
+    #[cfg(feature = "u5c")]
+    UtxoRPC(utxorpc::Stage),
+
     #[cfg(feature = "aws")]
     S3(s3::Stage),
-
-    #[cfg(feature = "source-utxorpc")]
-    UtxoRPC(utxorpc::Stage),
 }
 
 impl Bootstrapper {
@@ -36,11 +36,11 @@ impl Bootstrapper {
             #[cfg(target_family = "unix")]
             Bootstrapper::N2C(p) => &mut p.output,
 
+            #[cfg(feature = "u5c")]
+            Bootstrapper::UtxoRPC(p) => &mut p.output,
+
             #[cfg(feature = "aws")]
             Bootstrapper::S3(p) => &mut p.output,
-
-            #[cfg(feature = "source-utxorpc")]
-            Bootstrapper::UtxoRPC(p) => &mut p.output,
         }
     }
 
@@ -51,11 +51,11 @@ impl Bootstrapper {
             #[cfg(target_family = "unix")]
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),
 
+            #[cfg(feature = "u5c")]
+            Bootstrapper::UtxoRPC(x) => gasket::runtime::spawn_stage(x, policy),
+
             #[cfg(feature = "aws")]
             Bootstrapper::S3(x) => gasket::runtime::spawn_stage(x, policy),
-
-            #[cfg(feature = "source-utxorpc")]
-            Bootstrapper::UtxoRPC(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -68,11 +68,11 @@ pub enum Config {
     #[cfg(target_family = "unix")]
     N2C(n2c::Config),
 
+    #[cfg(feature = "u5c")]
+    UtxoRPC(utxorpc::Config),
+
     #[cfg(feature = "aws")]
     S3(s3::Config),
-
-    #[cfg(feature = "source-utxorpc")]
-    UtxoRPC(utxorpc::Config),
 }
 
 impl Config {
@@ -83,11 +83,11 @@ impl Config {
             #[cfg(target_family = "unix")]
             Config::N2C(c) => Ok(Bootstrapper::N2C(c.bootstrapper(ctx)?)),
 
+            #[cfg(feature = "u5c")]
+            Config::UtxoRPC(c) => Ok(Bootstrapper::UtxoRPC(c.bootstrapper(ctx)?)),
+
             #[cfg(feature = "aws")]
             Config::S3(c) => Ok(Bootstrapper::S3(c.bootstrapper(ctx)?)),
-
-            #[cfg(feature = "source-utxorpc")]
-            Config::UtxoRPC(c) => Ok(Bootstrapper::UtxoRPC(c.bootstrapper(ctx)?)),
         }
     }
 }
