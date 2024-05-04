@@ -1,33 +1,25 @@
+use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client as S3Client;
 use gasket::framework::*;
-use gasket::messaging::SendPort;
 use serde::Deserialize;
 
 use crate::framework::*;
 
 #[derive(Stage)]
+#[stage(name = "source", unit = "KeyBatch", worker = "Worker")]
 #[stage(name = "source-s3")]
 pub struct Stage {
     bucket: String,
     items_per_batch: u32,
-    cursor: Cursor,
 
-    retry_policy: gasket::retries::Policy,
+    intersect: IntersectConfig,
+
+    breadcrumbs: Breadcrumbs,
 
     pub output: SourceOutputPort,
 
     #[metric]
     ops_count: gasket::metrics::Counter,
-}
-
-impl gasket::framework::Stage for Stage {
-    fn policy(&self) -> gasket::runtime::Policy {
-        gasket::runtime::Policy {
-            work_retry: self.retry_policy.clone(),
-            bootstrap_retry: self.retry_policy.clone(),
-            ..Default::default()
-        }
-    }
 }
 
 pub struct Worker {
@@ -40,20 +32,21 @@ pub struct KeyBatch {
 }
 
 #[async_trait::async_trait(?Send)]
-impl gasket::framework::Worker for Worker {
-    type Unit = KeyBatch;
-    type Stage = Stage;
-
-    async fn bootstrap(stage: &Self::Stage) -> Result<Self, WorkerError> {
-        let sdk_config = aws_config::load_from_env().await;
+impl gasket::framework::Worker<Stage> for Worker {
+    async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
+        let sdk_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
         let s3_client = aws_sdk_s3::Client::new(&sdk_config);
 
-        let p = stage
-            .cursor
-            .latest_known_point()
+        let breadcrumbs = stage.breadcrumbs.points();
+        let intersect = stage.intersect.points();
+
+        let point = breadcrumbs
+            .last()
+            .cloned()
+            .or_else(|| intersect.and_then(|p| p.last().cloned()))
             .unwrap_or(pallas::network::miniprotocols::Point::Origin);
 
-        let key = match p {
+        let key = match point {
             pallas::network::miniprotocols::Point::Origin => "origin".to_owned(),
             pallas::network::miniprotocols::Point::Specific(slot, _) => format!("{slot}"),
         };
@@ -64,10 +57,7 @@ impl gasket::framework::Worker for Worker {
         })
     }
 
-    async fn schedule(
-        &mut self,
-        stage: &mut Self::Stage,
-    ) -> Result<WorkSchedule<Self::Unit>, WorkerError> {
+    async fn schedule(&mut self, stage: &mut Stage) -> Result<WorkSchedule<KeyBatch>, WorkerError> {
         let result = self
             .s3_client
             .list_objects_v2()
@@ -88,11 +78,7 @@ impl gasket::framework::Worker for Worker {
         Ok(WorkSchedule::Unit(KeyBatch { keys }))
     }
 
-    async fn execute(
-        &mut self,
-        unit: &Self::Unit,
-        stage: &mut Self::Stage,
-    ) -> Result<(), WorkerError> {
+    async fn execute(&mut self, unit: &KeyBatch, stage: &mut Stage) -> Result<(), WorkerError> {
         for key in &unit.keys {
             let object = self
                 .s3_client
@@ -125,7 +111,7 @@ impl gasket::framework::Worker for Worker {
 
             let event = ChainEvent::Apply(point, Record::CborBlock(body.into_bytes().to_vec()));
 
-            stage.output_port.send(event.into()).await.or_panic()?;
+            stage.output.send(event.into()).await.or_panic()?;
         }
 
         Ok(())
@@ -136,7 +122,6 @@ impl gasket::framework::Worker for Worker {
 pub struct Config {
     bucket: String,
     items_per_batch: u32,
-    retry_policy: gasket::retries::Policy,
 }
 
 impl Config {
@@ -144,9 +129,9 @@ impl Config {
         let stage = Stage {
             bucket: self.bucket,
             items_per_batch: self.items_per_batch,
-            retry_policy: self.retry_policy,
-            cursor: ctx.cursor.clone(),
-            output_port: Default::default(),
+            breadcrumbs: ctx.breadcrumbs.clone(),
+            intersect: ctx.intersect.clone(),
+            output: Default::default(),
             ops_count: Default::default(),
         };
 

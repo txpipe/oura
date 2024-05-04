@@ -5,41 +5,37 @@ use crate::framework::*;
 
 mod assert;
 mod common;
+mod file_rotate;
 mod noop;
 mod stdout;
 mod terminal;
-
-#[cfg(feature = "sink-file-rotate")]
-mod file_rotate;
-
-#[cfg(feature = "sink-webhook")]
 mod webhook;
 
-#[cfg(feature = "sink-rabbitmq")]
+#[cfg(feature = "rabbitmq")]
 mod rabbitmq;
 
-#[cfg(feature = "sink-kafka")]
+#[cfg(feature = "kafka")]
 mod kafka;
 
-#[cfg(feature = "sink-aws-sqs")]
+#[cfg(feature = "aws")]
 mod aws_sqs;
 
-#[cfg(feature = "sink-aws-lambda")]
+#[cfg(feature = "aws")]
 mod aws_lambda;
 
-#[cfg(feature = "sink-aws-s3")]
+#[cfg(feature = "aws")]
 mod aws_s3;
 
-#[cfg(feature = "sink-gcp-pubsub")]
+#[cfg(feature = "gcp")]
 mod gcp_pubsub;
 
-#[cfg(feature = "sink-gcp-cloudfunction")]
+#[cfg(feature = "gcp")]
 mod gcp_cloudfunction;
 
-#[cfg(feature = "sink-redis")]
+#[cfg(feature = "redis")]
 mod redis;
 
-#[cfg(feature = "sink-elasticsearch")]
+#[cfg(feature = "elasticsearch")]
 mod elasticsearch;
 
 #[cfg(feature = "sql")]
@@ -50,38 +46,34 @@ pub enum Bootstrapper {
     Stdout(stdout::Stage),
     Noop(noop::Stage),
     Assert(assert::Stage),
-
-    #[cfg(feature = "sink-file-rotate")]
     FileRotate(file_rotate::Stage),
-
-    #[cfg(feature = "sink-webhook")]
     WebHook(webhook::Stage),
 
-    #[cfg(feature = "sink-rabbitmq")]
+    #[cfg(feature = "rabbitmq")]
     Rabbitmq(rabbitmq::Stage),
 
-    #[cfg(feature = "sink-kafka")]
+    #[cfg(feature = "kafka")]
     Kafka(kafka::Stage),
 
-    #[cfg(feature = "sink-aws-sqs")]
+    #[cfg(feature = "aws")]
     AwsSqs(aws_sqs::Stage),
 
-    #[cfg(feature = "sink-aws-lambda")]
+    #[cfg(feature = "aws")]
     AwsLambda(aws_lambda::Stage),
 
-    #[cfg(feature = "sink-aws-s3")]
+    #[cfg(feature = "aws")]
     AwsS3(aws_s3::Stage),
 
-    #[cfg(feature = "sink-gcp-pubsub")]
+    #[cfg(feature = "gcp")]
     GcpPubSub(gcp_pubsub::Stage),
 
-    #[cfg(feature = "sink-gcp-cloudfunction")]
+    #[cfg(feature = "gcp")]
     GcpCloudFunction(gcp_cloudfunction::Stage),
 
-    #[cfg(feature = "sink-redis")]
+    #[cfg(feature = "redis")]
     Redis(redis::Stage),
 
-    #[cfg(feature = "sink-elasticsearch")]
+    #[cfg(feature = "elasticsearch")]
     ElasticSearch(elasticsearch::Stage),
 
     #[cfg(feature = "sql")]
@@ -95,38 +87,34 @@ impl Bootstrapper {
             Bootstrapper::Stdout(p) => &mut p.input,
             Bootstrapper::Noop(p) => &mut p.input,
             Bootstrapper::Assert(p) => &mut p.input,
-
-            #[cfg(feature = "sink-file-rotate")]
             Bootstrapper::FileRotate(p) => &mut p.input,
-
-            #[cfg(feature = "sink-webhook")]
             Bootstrapper::WebHook(p) => &mut p.input,
 
-            #[cfg(feature = "sink-rabbitmq")]
+            #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(p) => &mut p.input,
 
-            #[cfg(feature = "sink-kafka")]
+            #[cfg(feature = "kafka")]
             Bootstrapper::Kafka(p) => &mut p.input,
 
-            #[cfg(feature = "sink-aws-sqs")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsSqs(p) => &mut p.input,
 
-            #[cfg(feature = "sink-aws-lambda")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsLambda(p) => &mut p.input,
 
-            #[cfg(feature = "sink-aws-s3")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsS3(p) => &mut p.input,
 
-            #[cfg(feature = "sink-gcp-pubsub")]
+            #[cfg(feature = "gcp")]
             Bootstrapper::GcpPubSub(p) => &mut p.input,
 
-            #[cfg(feature = "sink-gcp-cloudfunction")]
+            #[cfg(feature = "gcp")]
             Bootstrapper::GcpCloudFunction(p) => &mut p.input,
 
-            #[cfg(feature = "sink-redis")]
+            #[cfg(feature = "redis")]
             Bootstrapper::Redis(p) => &mut p.input,
 
-            #[cfg(feature = "sink-elasticsearch")]
+            #[cfg(feature = "elasticsearch")]
             Bootstrapper::ElasticSearch(p) => &mut p.input,
 
             #[cfg(feature = "sql")]
@@ -140,38 +128,34 @@ impl Bootstrapper {
             Bootstrapper::Stdout(p) => &mut p.cursor,
             Bootstrapper::Noop(p) => &mut p.cursor,
             Bootstrapper::Assert(p) => &mut p.cursor,
-
-            #[cfg(feature = "sink-file-rotate")]
             Bootstrapper::FileRotate(p) => &mut p.cursor,
-
-            #[cfg(feature = "sink-webhook")]
             Bootstrapper::WebHook(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-rabbitmq")]
+            #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-kafka")]
+            #[cfg(feature = "kafka")]
             Bootstrapper::Kafka(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-aws-sqs")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsSqs(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-aws-lambda")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsLambda(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-aws-s3")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsS3(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-gcp-pubsub")]
+            #[cfg(feature = "gcp")]
             Bootstrapper::GcpPubSub(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-gcp-cloudfunction")]
+            #[cfg(feature = "gcp")]
             Bootstrapper::GcpCloudFunction(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-redis")]
+            #[cfg(feature = "redis")]
             Bootstrapper::Redis(p) => &mut p.cursor,
 
-            #[cfg(feature = "sink-elasticsearch")]
+            #[cfg(feature = "elasticsearch")]
             Bootstrapper::ElasticSearch(p) => &mut p.cursor,
 
             #[cfg(feature = "sql")]
@@ -185,38 +169,34 @@ impl Bootstrapper {
             Bootstrapper::Stdout(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Assert(x) => gasket::runtime::spawn_stage(x, policy),
-
-            #[cfg(feature = "sink-file-rotate")]
             Bootstrapper::FileRotate(x) => gasket::runtime::spawn_stage(x, policy),
-
-            #[cfg(feature = "sink-webhook")]
             Bootstrapper::WebHook(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-rabbitmq")]
+            #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-kafka")]
+            #[cfg(feature = "kafka")]
             Bootstrapper::Kafka(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-aws-sqs")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsSqs(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-aws-lambda")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsLambda(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-aws-s3")]
+            #[cfg(feature = "aws")]
             Bootstrapper::AwsS3(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-gcp-pubsub")]
+            #[cfg(feature = "gcp")]
             Bootstrapper::GcpPubSub(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-gcp-cloudfunction")]
+            #[cfg(feature = "gcp")]
             Bootstrapper::GcpCloudFunction(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-redis")]
+            #[cfg(feature = "redis")]
             Bootstrapper::Redis(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "sink-elasticsearch")]
+            #[cfg(feature = "elasticsearch")]
             Bootstrapper::ElasticSearch(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "sql")]
@@ -232,38 +212,34 @@ pub enum Config {
     Stdout(stdout::Config),
     Noop(noop::Config),
     Assert(assert::Config),
-
-    #[cfg(feature = "sink-file-rotate")]
     FileRotate(file_rotate::Config),
-
-    #[cfg(feature = "sink-webhook")]
     WebHook(webhook::Config),
 
-    #[cfg(feature = "sink-rabbitmq")]
+    #[cfg(feature = "rabbitmq")]
     Rabbitmq(rabbitmq::Config),
 
-    #[cfg(feature = "sink-kafka")]
+    #[cfg(feature = "kafka")]
     Kafka(kafka::Config),
 
-    #[cfg(feature = "sink-aws-sqs")]
+    #[cfg(feature = "aws")]
     AwsSqs(aws_sqs::Config),
 
-    #[cfg(feature = "sink-aws-lambda")]
+    #[cfg(feature = "aws")]
     AwsLambda(aws_lambda::Config),
 
-    #[cfg(feature = "sink-aws-s3")]
+    #[cfg(feature = "aws")]
     AwsS3(aws_s3::Config),
 
-    #[cfg(feature = "sink-gcp-pubsub")]
+    #[cfg(feature = "gcp")]
     GcpPubSub(gcp_pubsub::Config),
 
-    #[cfg(feature = "sink-gcp-cloudfunction")]
+    #[cfg(feature = "gcp")]
     GcpCloudFunction(gcp_cloudfunction::Config),
 
-    #[cfg(feature = "sink-redis")]
+    #[cfg(feature = "redis")]
     Redis(redis::Config),
 
-    #[cfg(feature = "sink-elasticsearch")]
+    #[cfg(feature = "elasticsearch")]
     ElasticSearch(elasticsearch::Config),
 
     #[cfg(feature = "sql")]
@@ -277,38 +253,34 @@ impl Config {
             Config::Stdout(c) => Ok(Bootstrapper::Stdout(c.bootstrapper(ctx)?)),
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
             Config::Assert(c) => Ok(Bootstrapper::Assert(c.bootstrapper(ctx)?)),
-
-            #[cfg(feature = "sink-file-rotate")]
             Config::FileRotate(c) => Ok(Bootstrapper::FileRotate(c.bootstrapper(ctx)?)),
-
-            #[cfg(feature = "sink-webhook")]
             Config::WebHook(c) => Ok(Bootstrapper::WebHook(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-rabbitmq")]
+            #[cfg(feature = "rabbitmq")]
             Config::Rabbitmq(c) => Ok(Bootstrapper::Rabbitmq(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-kafka")]
+            #[cfg(feature = "kafka")]
             Config::Kafka(c) => Ok(Bootstrapper::Kafka(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-aws-sqs")]
+            #[cfg(feature = "aws")]
             Config::AwsSqs(c) => Ok(Bootstrapper::AwsSqs(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-aws-lambda")]
+            #[cfg(feature = "aws")]
             Config::AwsLambda(c) => Ok(Bootstrapper::AwsLambda(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-aws-s3")]
+            #[cfg(feature = "aws")]
             Config::AwsS3(c) => Ok(Bootstrapper::AwsS3(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-gcp-pubsub")]
+            #[cfg(feature = "gcp")]
             Config::GcpPubSub(c) => Ok(Bootstrapper::GcpPubSub(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-gcp-cloudfunction")]
+            #[cfg(feature = "gcp")]
             Config::GcpCloudFunction(c) => Ok(Bootstrapper::GcpCloudFunction(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-redis")]
+            #[cfg(feature = "redis")]
             Config::Redis(c) => Ok(Bootstrapper::Redis(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "sink-elasticsearch")]
+            #[cfg(feature = "elasticsearch")]
             Config::ElasticSearch(c) => Ok(Bootstrapper::ElasticSearch(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "sql")]
