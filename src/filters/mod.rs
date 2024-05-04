@@ -26,9 +26,6 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "wasm")]
     WasmPlugin(wasm_plugin::Stage),
-
-    #[cfg(feature = "deno")]
-    Deno(deno::Stage),
 }
 
 impl Bootstrapper {
@@ -43,9 +40,6 @@ impl Bootstrapper {
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(p) => &mut p.input,
-
-            #[cfg(feature = "deno")]
-            Bootstrapper::Deno(p) => &mut p.input,
         }
     }
 
@@ -60,9 +54,6 @@ impl Bootstrapper {
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(p) => &mut p.output,
-
-            #[cfg(feature = "deno")]
-            Bootstrapper::Deno(p) => &mut p.output,
         }
     }
 
@@ -77,9 +68,6 @@ impl Bootstrapper {
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(x) => gasket::runtime::spawn_stage(x, policy),
-
-            #[cfg(feature = "deno")]
-            Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -96,9 +84,6 @@ pub enum Config {
 
     #[cfg(feature = "wasm")]
     WasmPlugin(wasm_plugin::Config),
-
-    #[cfg(feature = "deno")]
-    Deno(deno::Config),
 }
 
 impl Config {
@@ -113,9 +98,6 @@ impl Config {
 
             #[cfg(feature = "wasm")]
             Config::WasmPlugin(c) => Ok(Bootstrapper::WasmPlugin(c.bootstrapper(ctx)?)),
-
-            #[cfg(feature = "deno")]
-            Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
         }
     }
 }

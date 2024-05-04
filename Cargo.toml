@@ -11,7 +11,6 @@ readme = "README.md"
 authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 [features]
-deno = ["deno_runtime"]
 wasm = ["extism"]
 aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
 sql = ["sqlx"]
@@ -69,7 +68,6 @@ google-cloud-pubsub = { version = "0.16.0", optional = true }
 google-cloud-googleapis = { version = "0.10.0", optional = true }
 google-cloud-default = { version = "0.4.0", optional = true, features = ["pubsub"] }
 r2d2_redis = { version = "0.14.0", optional = true }
-deno_runtime = { version = "0.126.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
 tonic = { version = "0.9.2", features = ["tls", "tls-roots"], optional = true }
 futures = { version = "0.3.28", optional = true }
@@ -80,3 +78,4 @@ aws-sdk-s3 = { version = "^1.1", optional = true }
 aws-sdk-sqs = { version = "^1.1", optional = true }
 aws-sdk-lambda = { version = "^1.1", optional = true }
 extism = { version = "1.2.0", optional = true }
+gasket-prometheus = { version = "0.6.0", path = "../../construkts/gasket-rs/gasket-prometheus" }
