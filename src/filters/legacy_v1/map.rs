@@ -1,7 +1,7 @@
 use gasket::framework::AsWorkError;
-use lazy_static::__Deref;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
+use std::ops::Deref as _;
 use tracing::warn;
 
 use pallas::ledger::primitives::babbage::{MintedDatumOption, NetworkId};

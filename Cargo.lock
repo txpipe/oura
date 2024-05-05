@@ -2274,9 +2274,9 @@ dependencies = [
 
 [[package]]
 name = "gasket"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7541dcf8d4eeaef26146a14eaf2d392c242d3d02c9c3678d4a093fc3bbad34d8"
+checksum = "07b0e0817f9ef592c3a1788550b66bccaa8d58c7a52f1ed9996828130158bf5d"
 dependencies = [
  "async-trait",
  "crossbeam",
@@ -2289,13 +2289,23 @@ dependencies = [
 
 [[package]]
 name = "gasket-derive"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19c5a116a2bb67b22a0e5cb7f0fb58220c2729715b5c8a6267df320ae3393138"
+checksum = "8f280aa9c78c708fddd07172482e39e9e6cc8a4d353b76de811d7b06c791245b"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.52",
+]
+
+[[package]]
+name = "gasket-prometheus"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8582f2a30cebd31ebc3d88ce3eeeb96cf9f8d466e79f233474b52d67f4373f5c"
+dependencies = [
+ "gasket",
+ "prometheus_exporter_base",
 ]
 
 [[package]]
@@ -3497,6 +3507,7 @@ dependencies = [
  "file-rotate",
  "futures",
  "gasket",
+ "gasket-prometheus",
  "google-cloud-default",
  "google-cloud-googleapis",
  "google-cloud-pubsub",
@@ -3506,13 +3517,11 @@ dependencies = [
  "jsonwebtoken",
  "kafka",
  "lapin",
- "lazy_static",
  "merge",
  "murmur3",
  "net2",
  "openssl",
  "pallas",
- "prometheus_exporter_base",
  "r2d2_redis",
  "regex",
  "reqwest",
