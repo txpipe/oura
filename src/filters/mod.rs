@@ -13,9 +13,6 @@ pub mod split_block;
 #[cfg(feature = "wasm")]
 pub mod wasm_plugin;
 
-#[cfg(feature = "deno")]
-pub mod deno;
-
 pub enum Bootstrapper {
     Noop(noop::Stage),
     SplitBlock(split_block::Stage),

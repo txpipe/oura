@@ -1,10 +1,16 @@
-use gasket::runtime::Tether;
+use gasket::daemon::Daemon;
 use oura::{cursor, filters, framework::*, sinks, sources};
-use serde::Deserialize;
-use std::{fmt::Debug, sync::Arc, time::Duration};
-use tracing::{info, warn};
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use std::{sync::Arc, time::Duration};
+use tracing::info;
 
-use crate::{console, prometheus};
+use crate::console;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetricsConfig {
+    pub address: Option<String>,
+}
 
 #[derive(Deserialize)]
 struct ConfigRoot {
@@ -16,7 +22,7 @@ struct ConfigRoot {
     chain: Option<ChainConfig>,
     retries: Option<gasket::retries::Policy>,
     cursor: Option<cursor::Config>,
-    metrics: Option<prometheus::Config>,
+    metrics: Option<MetricsConfig>,
 }
 
 impl ConfigRoot {
@@ -41,55 +47,6 @@ impl ConfigRoot {
     }
 }
 
-pub struct Runtime {
-    pub source: Tether,
-    pub filters: Vec<Tether>,
-    pub sink: Tether,
-    pub cursor: Tether,
-}
-
-impl Debug for Runtime {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Runtime").finish()
-    }
-}
-
-impl Runtime {
-    pub fn all_tethers(&self) -> impl Iterator<Item = &Tether> {
-        std::iter::once(&self.source)
-            .chain(self.filters.iter())
-            .chain(std::iter::once(&self.sink))
-            .chain(std::iter::once(&self.cursor))
-    }
-
-    fn should_stop(&self) -> bool {
-        self.all_tethers().any(|tether| match tether.check_state() {
-            gasket::runtime::TetherState::Alive(x) => {
-                matches!(x, gasket::runtime::StagePhase::Ended)
-            }
-            _ => true,
-        })
-    }
-
-    fn shutdown(&self) {
-        for tether in self.all_tethers() {
-            let state = tether.check_state();
-            warn!("dismissing stage: {} with state {:?}", tether.name(), state);
-            tether.dismiss_stage().expect("stage stops");
-
-            // Can't join the stage because there's a risk of deadlock, usually
-            // because a stage gets stuck sending into a port which depends on a
-            // different stage not yet dismissed. The solution is to either
-            // create a DAG of dependencies and dismiss in the
-            // correct order, or implement a 2-phase teardown where
-            // ports are disconnected and flushed before joining the
-            // stage.
-
-            //tether.join_stage();
-        }
-    }
-}
-
 fn define_gasket_policy(config: Option<&gasket::retries::Policy>) -> gasket::runtime::Policy {
     let default_policy = gasket::retries::Policy {
         max_retries: 20,
@@ -107,13 +64,13 @@ fn define_gasket_policy(config: Option<&gasket::retries::Policy>) -> gasket::run
     }
 }
 
-fn bootstrap(
+fn connect_stages(
     mut source: sources::Bootstrapper,
     mut filters: Vec<filters::Bootstrapper>,
     mut sink: sinks::Bootstrapper,
     mut cursor: cursor::Bootstrapper,
     policy: gasket::runtime::Policy,
-) -> Result<Runtime, Error> {
+) -> Result<Daemon, Error> {
     let mut prev = source.borrow_output();
 
     for filter in filters.iter_mut() {
@@ -126,39 +83,51 @@ fn bootstrap(
 
     gasket::messaging::tokio::connect_ports(prev, cursor.borrow_track(), 100);
 
-    let runtime = Runtime {
-        source: source.spawn(policy.clone()),
-        filters: filters
-            .into_iter()
-            .map(|x| x.spawn(policy.clone()))
-            .collect(),
-        sink: sink.spawn(policy.clone()),
-        cursor: cursor.spawn(policy),
-    };
+    let mut tethers = vec![];
+    tethers.push(source.spawn(policy.clone()));
+    tethers.extend(filters.into_iter().map(|x| x.spawn(policy.clone())));
+    tethers.push(sink.spawn(policy.clone()));
+    tethers.push(cursor.spawn(policy));
+
+    let runtime = Daemon(tethers);
 
     Ok(runtime)
 }
 
-async fn monitor_loop(
-    runtime: &Arc<Runtime>,
-    metrics: Option<prometheus::Config>,
-    console: Option<super::console::Mode>,
-) {
+fn setup_tracing() {
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_max_level(tracing::Level::DEBUG)
+            .finish(),
+    )
+    .unwrap();
+}
+
+async fn serve_prometheus(
+    daemon: Arc<Daemon>,
+    metrics: Option<MetricsConfig>,
+) -> Result<(), Error> {
     if let Some(metrics) = metrics {
         info!("starting metrics exporter");
-        let runtime = runtime.clone();
-        tokio::spawn(async { prometheus::initialize(metrics, runtime).await });
+        let runtime = daemon.clone();
+
+        let addr: SocketAddr = metrics
+            .address
+            .as_deref()
+            .unwrap_or("0.0.0.0:9186")
+            .parse()
+            .map_err(Error::parse)?;
+
+        gasket_prometheus::serve(addr, runtime).await;
     }
 
-    while !runtime.should_stop() {
-        // TODO: move console refresh to it's own tokio thread
-        console::refresh(&console, runtime.all_tethers());
-        tokio::time::sleep(Duration::from_millis(1500)).await;
-    }
+    Ok(())
 }
 
 pub fn run(args: &Args) -> Result<(), Error> {
-    console::initialize(&args.console);
+    if !args.tui {
+        setup_tracing();
+    }
 
     let config = ConfigRoot::new(&args.config).map_err(Error::config)?;
 
@@ -191,8 +160,12 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let cursor = cursor.bootstrapper(&ctx)?;
 
     let retries = define_gasket_policy(config.retries.as_ref());
-    let runtime = bootstrap(source, filters, sink, cursor, retries)?;
-    let runtime = Arc::new(runtime);
+
+    let daemon = connect_stages(source, filters, sink, cursor, retries)?;
+
+    info!("oura is running");
+
+    let daemon = Arc::new(daemon);
 
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
         .enable_io()
@@ -200,13 +173,16 @@ pub fn run(args: &Args) -> Result<(), Error> {
         .build()
         .unwrap();
 
-    info!("oura is running...");
+    let prometheus = tokio_rt.spawn(serve_prometheus(daemon.clone(), config.metrics));
+    let tui = tokio_rt.spawn(console::render(daemon.clone(), args.tui));
 
-    tokio_rt.block_on(async { monitor_loop(&runtime, config.metrics, args.console.clone()).await });
+    daemon.block();
 
-    info!("Oura is stopping...");
+    info!("oura is stopping");
 
-    runtime.shutdown();
+    daemon.teardown();
+    prometheus.abort();
+    tui.abort();
 
     Ok(())
 }
@@ -214,11 +190,11 @@ pub fn run(args: &Args) -> Result<(), Error> {
 #[derive(clap::Args)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
+    /// config file to load by the daemon
     #[clap(long, value_parser)]
-    //#[clap(description = "config file to load by the daemon")]
     config: Option<std::path::PathBuf>,
 
-    #[clap(long, value_parser)]
-    //#[clap(description = "type of progress to display")],
-    console: Option<console::Mode>,
+    /// display the terminal UI
+    #[clap(long, action)]
+    tui: bool,
 }

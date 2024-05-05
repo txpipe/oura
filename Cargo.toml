@@ -26,7 +26,8 @@ u5c = ["tonic"]
 # pallas = { path = "../pallas/pallas" }
 pallas = { git = "https://github.com/txpipe/pallas" }
 
-gasket = { version = "^0.6", features = ["derive"] }
+gasket = { version = "^0.7", features = ["derive"] }
+gasket-prometheus = { version = "^0.7" }
 # gasket = { path = "../../construkts/gasket-rs/gasket", features = ["derive"] }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git", features = ["derive"] }
 
@@ -46,11 +47,9 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
 strum = "0.24"
 strum_macros = "0.25"
-prometheus_exporter_base = { version = "1.4.0", features = ["hyper", "hyper_server"] }
 unicode-truncate = "0.2.0"
 thiserror = "1.0.39"
 indicatif = "0.17.3"
-lazy_static = "1.4.0"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
 anyhow = "1.0.77"
