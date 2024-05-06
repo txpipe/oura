@@ -3,7 +3,6 @@ use std::process;
 
 mod console;
 mod daemon;
-mod prometheus;
 
 #[derive(Parser)]
 #[clap(name = "Oura")]

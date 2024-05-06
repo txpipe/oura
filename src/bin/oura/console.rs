@@ -1,20 +1,5 @@
-use std::{
-    sync::Mutex,
-    time::{Duration, Instant},
-};
-
-use gasket::{metrics::Reading, runtime::Tether};
-use lazy_static::lazy_static;
-use tracing::{debug, error, warn};
-
-#[derive(clap::ValueEnum, Clone, Default)]
-pub enum Mode {
-    /// shows progress as a plain sequence of logs
-    #[default]
-    Plain,
-    /// shows aggregated progress and metrics
-    Tui,
-}
+use gasket::{daemon::Daemon, metrics::Reading, runtime::Tether};
+use std::{sync::Arc, time::Duration};
 
 struct TuiConsole {
     chainsync_progress: indicatif::ProgressBar,
@@ -116,77 +101,15 @@ impl TuiConsole {
     }
 }
 
-struct PlainConsole {
-    last_report: Mutex<Instant>,
-}
-
-impl PlainConsole {
-    fn new() -> Self {
-        Self {
-            last_report: Mutex::new(Instant::now()),
-        }
+pub async fn render(daemon: Arc<Daemon>, tui_enabled: bool) {
+    if !tui_enabled {
+        return;
     }
 
-    fn refresh<'a>(&self, tethers: impl Iterator<Item = &'a Tether>) {
-        let mut last_report = self.last_report.lock().unwrap();
+    let tui = TuiConsole::new();
 
-        if last_report.elapsed() <= Duration::from_secs(10) {
-            return;
-        }
-
-        for tether in tethers {
-            match tether.check_state() {
-                gasket::runtime::TetherState::Dropped => {
-                    error!("[{}] stage tether has been dropped", tether.name());
-                }
-                gasket::runtime::TetherState::Blocked(_) => {
-                    warn!(
-                        "[{}] stage tehter is blocked or not reporting state",
-                        tether.name()
-                    );
-                }
-                gasket::runtime::TetherState::Alive(state) => {
-                    debug!("[{}] stage is alive with state: {:?}", tether.name(), state);
-                    match tether.read_metrics() {
-                        Ok(readings) => {
-                            for (key, value) in readings {
-                                debug!("[{}] metric `{}` = {:?}", tether.name(), key, value);
-                            }
-                        }
-                        Err(err) => {
-                            error!("[{}] error reading metrics: {}", tether.name(), err)
-                        }
-                    }
-                }
-            }
-        }
-
-        *last_report = Instant::now();
-    }
-}
-
-lazy_static! {
-    static ref TUI_CONSOLE: TuiConsole = TuiConsole::new();
-}
-
-lazy_static! {
-    static ref PLAIN_CONSOLE: PlainConsole = PlainConsole::new();
-}
-
-pub fn initialize(mode: &Option<Mode>) {
-    if !matches!(mode, Some(Mode::Tui)) {
-        tracing::subscriber::set_global_default(
-            tracing_subscriber::FmtSubscriber::builder()
-                .with_max_level(tracing::Level::DEBUG)
-                .finish(),
-        )
-        .unwrap();
-    }
-}
-
-pub fn refresh<'a>(mode: &Option<Mode>, tethers: impl Iterator<Item = &'a Tether>) {
-    match mode {
-        Some(Mode::Tui) => TUI_CONSOLE.refresh(tethers),
-        _ => PLAIN_CONSOLE.refresh(tethers),
+    loop {
+        tui.refresh(daemon.tethers());
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }

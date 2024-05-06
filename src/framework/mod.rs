@@ -10,7 +10,8 @@ use std::path::PathBuf;
 pub use crate::cursor::Config as CursorConfig;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
-pub use utxorpc::proto::cardano::v1::Tx as ParsedTx;
+pub use utxorpc::spec::cardano::Block as ParsedBlock;
+pub use utxorpc::spec::cardano::Tx as ParsedTx;
 
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;
@@ -107,6 +108,7 @@ pub enum Record {
     GenericJson(JsonValue),
     OuraV1Event(legacy_v1::Event),
     ParsedTx(ParsedTx),
+    ParsedBlock(ParsedBlock),
 }
 
 impl From<Record> for JsonValue {
@@ -114,6 +116,7 @@ impl From<Record> for JsonValue {
         match value {
             Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
             Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
+            Record::ParsedBlock(x) => json!(x),
             Record::ParsedTx(x) => json!(x),
             Record::OuraV1Event(x) => json!(x),
             Record::GenericJson(x) => x,
@@ -181,10 +184,10 @@ impl ChainEvent {
         Ok(out)
     }
 
-    pub fn try_map_record_to_many<E>(
-        self,
-        f: fn(Record) -> Result<Vec<Record>, E>,
-    ) -> Result<Vec<Self>, E> {
+    pub fn try_map_record_to_many<F, E>(self, f: F) -> Result<Vec<Self>, E>
+    where
+        F: FnOnce(Record) -> Result<Vec<Record>, E>,
+    {
         let out = match self {
             Self::Apply(p, x) => f(x)?
                 .into_iter()

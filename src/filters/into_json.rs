@@ -1,15 +1,13 @@
-//! A filter that turns raw cbor Tx into the corresponding parsed representation
+//! A noop filter used as example and placeholder for other filters
 
 use gasket::framework::*;
 use serde::Deserialize;
-
-use pallas::interop::utxorpc as interop;
-use pallas::ledger::traverse as trv;
+use serde_json::Value as JsonValue;
 
 use crate::framework::*;
 
 #[derive(Default, Stage)]
-#[stage(name = "filter-parse-cbor", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "into-json", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     pub input: FilterInputPort,
     pub output: FilterOutputPort,
@@ -28,18 +26,9 @@ impl From<&Stage> for Worker {
 }
 
 gasket::impl_mapper!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
-    let output = unit.clone().try_map_record(|r| match r {
-        Record::CborTx(cbor) => {
-            let tx = trv::MultiEraTx::decode(&cbor).or_panic()?;
-            let tx = interop::map_tx(&tx);
-            Ok(Record::ParsedTx(tx))
-        }
-        x => Ok(x),
-    })?;
-
+    let out = unit.clone().map_record(|r| Record::GenericJson(JsonValue::from(r)));
     stage.ops_count.inc(1);
-
-    output
+    out
 });
 
 #[derive(Default, Deserialize)]

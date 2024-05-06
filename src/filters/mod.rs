@@ -3,30 +3,26 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
-pub mod dsl;
-pub mod json;
+pub mod into_json;
 pub mod legacy_v1;
-pub mod match_pattern;
 pub mod noop;
 pub mod parse_cbor;
+pub mod select;
 pub mod split_block;
-pub mod wasm;
 
-#[cfg(feature = "deno")]
-pub mod deno;
+#[cfg(feature = "wasm")]
+pub mod wasm_plugin;
 
 pub enum Bootstrapper {
     Noop(noop::Stage),
     SplitBlock(split_block::Stage),
-    Dsl(dsl::Stage),
-    Json(json::Stage),
+    IntoJson(into_json::Stage),
     LegacyV1(legacy_v1::Stage),
-    Wasm(wasm::Stage),
     ParseCbor(parse_cbor::Stage),
-    MatchPattern(match_pattern::Stage),
+    Select(select::Stage),
 
-    #[cfg(feature = "deno")]
-    Deno(deno::Stage),
+    #[cfg(feature = "wasm")]
+    WasmPlugin(wasm_plugin::Stage),
 }
 
 impl Bootstrapper {
@@ -34,15 +30,13 @@ impl Bootstrapper {
         match self {
             Bootstrapper::Noop(p) => &mut p.input,
             Bootstrapper::SplitBlock(p) => &mut p.input,
-            Bootstrapper::Dsl(p) => &mut p.input,
-            Bootstrapper::Json(p) => &mut p.input,
+            Bootstrapper::IntoJson(p) => &mut p.input,
             Bootstrapper::LegacyV1(p) => &mut p.input,
-            Bootstrapper::Wasm(p) => &mut p.input,
             Bootstrapper::ParseCbor(p) => &mut p.input,
-            Bootstrapper::MatchPattern(p) => &mut p.input,
+            Bootstrapper::Select(p) => &mut p.input,
 
-            #[cfg(feature = "deno")]
-            Bootstrapper::Deno(p) => &mut p.input,
+            #[cfg(feature = "wasm")]
+            Bootstrapper::WasmPlugin(p) => &mut p.input,
         }
     }
 
@@ -50,15 +44,13 @@ impl Bootstrapper {
         match self {
             Bootstrapper::Noop(p) => &mut p.output,
             Bootstrapper::SplitBlock(p) => &mut p.output,
-            Bootstrapper::Dsl(p) => &mut p.output,
-            Bootstrapper::Json(p) => &mut p.output,
+            Bootstrapper::IntoJson(p) => &mut p.output,
             Bootstrapper::LegacyV1(p) => &mut p.output,
-            Bootstrapper::Wasm(p) => &mut p.output,
             Bootstrapper::ParseCbor(p) => &mut p.output,
-            Bootstrapper::MatchPattern(p) => &mut p.output,
+            Bootstrapper::Select(p) => &mut p.output,
 
-            #[cfg(feature = "deno")]
-            Bootstrapper::Deno(p) => &mut p.output,
+            #[cfg(feature = "wasm")]
+            Bootstrapper::WasmPlugin(p) => &mut p.output,
         }
     }
 
@@ -66,15 +58,13 @@ impl Bootstrapper {
         match self {
             Bootstrapper::Noop(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::SplitBlock(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::Dsl(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::Json(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::IntoJson(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::LegacyV1(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::Wasm(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
-            Bootstrapper::MatchPattern(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::Select(x) => gasket::runtime::spawn_stage(x, policy),
 
-            #[cfg(feature = "deno")]
-            Bootstrapper::Deno(x) => gasket::runtime::spawn_stage(x, policy),
+            #[cfg(feature = "wasm")]
+            Bootstrapper::WasmPlugin(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -84,15 +74,13 @@ impl Bootstrapper {
 pub enum Config {
     Noop(noop::Config),
     SplitBlock(split_block::Config),
-    Dsl(dsl::Config),
-    Json(json::Config),
+    IntoJson(into_json::Config),
     LegacyV1(legacy_v1::Config),
-    Wasm(wasm::Config),
     ParseCbor(parse_cbor::Config),
-    MatchPattern(match_pattern::Config),
+    Select(select::Config),
 
-    #[cfg(feature = "deno")]
-    Deno(deno::Config),
+    #[cfg(feature = "wasm")]
+    WasmPlugin(wasm_plugin::Config),
 }
 
 impl Config {
@@ -100,15 +88,13 @@ impl Config {
         match self {
             Config::Noop(c) => Ok(Bootstrapper::Noop(c.bootstrapper(ctx)?)),
             Config::SplitBlock(c) => Ok(Bootstrapper::SplitBlock(c.bootstrapper(ctx)?)),
-            Config::Dsl(c) => Ok(Bootstrapper::Dsl(c.bootstrapper(ctx)?)),
-            Config::Json(c) => Ok(Bootstrapper::Json(c.bootstrapper(ctx)?)),
+            Config::IntoJson(c) => Ok(Bootstrapper::IntoJson(c.bootstrapper(ctx)?)),
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
-            Config::Wasm(c) => Ok(Bootstrapper::Wasm(c.bootstrapper(ctx)?)),
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
-            Config::MatchPattern(c) => Ok(Bootstrapper::MatchPattern(c.bootstrapper(ctx)?)),
+            Config::Select(c) => Ok(Bootstrapper::Select(c.bootstrapper(ctx)?)),
 
-            #[cfg(feature = "deno")]
-            Config::Deno(c) => Ok(Bootstrapper::Deno(c.bootstrapper(ctx)?)),
+            #[cfg(feature = "wasm")]
+            Config::WasmPlugin(c) => Ok(Bootstrapper::WasmPlugin(c.bootstrapper(ctx)?)),
         }
     }
 }
