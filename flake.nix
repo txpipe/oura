@@ -21,11 +21,11 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "pallas-0.23.0" = "7deb0f9c183c39d24499f123b17372394385a159ee6380df72fc27335cfa28e8"; 
+              "pallas-0.23.0" = "7deb0f9c183c39d24499f123b17372394385a159ee6380df72fc27335cfa28e8";
             };
           };
         };
-        defaultPackage = self.packages.oura;
+        defaultPackage = self.packages.${system}.oura;
       }
     );
 }
