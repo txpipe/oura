@@ -24,6 +24,7 @@
               "pallas-0.23.0" = "7deb0f9c183c39d24499f123b17372394385a159ee6380df72fc27335cfa28e8";
             };
           };
+          buildInputs = with pkgs; nixpkgs.lib.optionals (stdenv.isDarwin) [ darwin.apple_sdk.frameworks.Security darwin.apple_sdk.frameworks.SystemConfiguration]; #TODO: make optional based off macos
         };
         defaultPackage = self.packages.${system}.oura;
       }
