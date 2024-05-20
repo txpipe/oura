@@ -3,13 +3,13 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
+pub mod emit_cbor;
 pub mod into_json;
 pub mod legacy_v1;
 pub mod noop;
 pub mod parse_cbor;
 pub mod select;
 pub mod split_block;
-pub mod emit_cbor;
 
 #[cfg(feature = "wasm")]
 pub mod wasm_plugin;
