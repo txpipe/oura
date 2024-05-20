@@ -9,6 +9,7 @@ pub mod noop;
 pub mod parse_cbor;
 pub mod select;
 pub mod split_block;
+pub mod emit_cbor;
 
 #[cfg(feature = "wasm")]
 pub mod wasm_plugin;
@@ -20,6 +21,7 @@ pub enum Bootstrapper {
     LegacyV1(legacy_v1::Stage),
     ParseCbor(parse_cbor::Stage),
     Select(select::Stage),
+    EmitCbor(emit_cbor::Stage),
 
     #[cfg(feature = "wasm")]
     WasmPlugin(wasm_plugin::Stage),
@@ -34,6 +36,7 @@ impl Bootstrapper {
             Bootstrapper::LegacyV1(p) => &mut p.input,
             Bootstrapper::ParseCbor(p) => &mut p.input,
             Bootstrapper::Select(p) => &mut p.input,
+            Bootstrapper::EmitCbor(p) => &mut p.input,
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(p) => &mut p.input,
@@ -48,6 +51,7 @@ impl Bootstrapper {
             Bootstrapper::LegacyV1(p) => &mut p.output,
             Bootstrapper::ParseCbor(p) => &mut p.output,
             Bootstrapper::Select(p) => &mut p.output,
+            Bootstrapper::EmitCbor(p) => &mut p.output,
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(p) => &mut p.output,
@@ -62,6 +66,7 @@ impl Bootstrapper {
             Bootstrapper::LegacyV1(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Select(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::EmitCbor(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(x) => gasket::runtime::spawn_stage(x, policy),
@@ -78,6 +83,7 @@ pub enum Config {
     LegacyV1(legacy_v1::Config),
     ParseCbor(parse_cbor::Config),
     Select(select::Config),
+    EmitCbor(emit_cbor::Config),
 
     #[cfg(feature = "wasm")]
     WasmPlugin(wasm_plugin::Config),
@@ -92,6 +98,7 @@ impl Config {
             Config::LegacyV1(c) => Ok(Bootstrapper::LegacyV1(c.bootstrapper(ctx)?)),
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
             Config::Select(c) => Ok(Bootstrapper::Select(c.bootstrapper(ctx)?)),
+            Config::EmitCbor(c) => Ok(Bootstrapper::EmitCbor(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "wasm")]
             Config::WasmPlugin(c) => Ok(Bootstrapper::WasmPlugin(c.bootstrapper(ctx)?)),
