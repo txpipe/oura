@@ -1,17 +1,27 @@
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["preprod-node.play.dev.cardano.org:3001"]
+
+[chain]
+type = "preprod"
 
 [intersect]
 type = "Point"
-value = [114220807, "01822b10afde3d09bd5e72758857b669ddadcdaad6776a3dc8ee902c3ace1d7e"]
+value = [60484568, "874858059dc6c871105b80b38238cf84a91e617b2afde53904407cb2a3299e9d"]
 
 [[filters]]
-type = "SplitBlock"
+type = "EmitCbor"
 
 [sink]
 type = "SqlDb"
-connection = "postgres://postgres:example@localhost:5432/postgres"
-apply_template = "INSERT INTO txs (slot, cbor) VALUES ('{{point.slot}}', decode('{{record.hex}}', 'hex'));"
-undo_template = "DELETE FROM txs WHERE slot = {{point.slot}}"
-reset_template = "DELETE FROM txs WHERE slot > {{point.slot}}"
+connection = "postgres://postgres:test1234@localhost:15432/oura_test"
+apply_cbor_block_template = "INSERT INTO blocks (slot, cbor) VALUES ('{{point.slot}}', decode('{{record.hex}}', 'hex'));"
+undo_cbor_block_template = "DELETE FROM blocks WHERE slot = {{point.slot}}"
+apply_cbor_tx_template = "INSERT INTO txs (slot, cbor) VALUES ('{{point.slot}}', decode('{{record.hex}}', 'hex'));"
+undo_cbor_tx_template = "DELETE FROM txs WHERE slot = {{point.slot}}"
+reset_cbor_block_template = "DELETE FROM blocks WHERE slot > {{point.slot}};"
+reset_cbor_tx_template = "DELETE FROM txs WHERE slot > {{point.slot}};"
+
+[cursor]
+type = "File"
+path = "cursor"
