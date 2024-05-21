@@ -1,6 +1,7 @@
 name: Testdrive
 
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - testdrive
