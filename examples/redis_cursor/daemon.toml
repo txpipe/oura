@@ -8,11 +8,11 @@ type = "Origin"
 [chain]
 type = "preprod"
 
-# [cursor]
-# type = "Redis"
-# key = "key"
-# url = "redis://localhost:6379"
-# flush_interval = 1
+[cursor]
+type = "Redis"
+key = "key"
+url = "redis://localhost:6379"
+flush_interval = 1
 
 [sink]
 type = "Stdout"
