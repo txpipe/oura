@@ -1,4 +1,4 @@
-use utxorpc::spec::cardano::{metadatum, AuxData, Metadata, Metadatum, Tx};
+use utxorpc_spec::utxorpc::v1alpha::cardano::{metadatum, AuxData, Metadata, Metadatum, Tx};
 
 use super::*;
 
