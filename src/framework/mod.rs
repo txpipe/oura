@@ -10,8 +10,8 @@ use std::path::PathBuf;
 pub use crate::cursor::Config as CursorConfig;
 
 // we use UtxoRpc as our canonical representation of a parsed Tx
-pub use utxorpc::spec::cardano::Block as ParsedBlock;
-pub use utxorpc::spec::cardano::Tx as ParsedTx;
+pub use utxorpc_spec::utxorpc::v1alpha::cardano::Block as ParsedBlock;
+pub use utxorpc_spec::utxorpc::v1alpha::cardano::Tx as ParsedTx;
 
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;
@@ -174,7 +174,10 @@ impl ChainEvent {
         }
     }
 
-    pub fn try_map_record<E>(self, f: fn(Record) -> Result<Record, E>) -> Result<Self, E> {
+    pub fn try_map_record<E, F>(self, f: F) -> Result<Self, E>
+    where
+        F: FnOnce(Record) -> Result<Record, E>,
+    {
         let out = match self {
             Self::Apply(p, x) => Self::Apply(p, f(x)?),
             Self::Undo(p, x) => Self::Undo(p, f(x)?),

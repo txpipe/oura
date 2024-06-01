@@ -2,7 +2,9 @@ use std::{ops::Deref, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use tracing::warn;
-use utxorpc::spec::cardano::{Asset, AuxData, Metadata, Metadatum, Multiasset, TxInput, TxOutput};
+use utxorpc_spec::utxorpc::v1alpha::cardano::{
+    Asset, AuxData, Metadata, Metadatum, Multiasset, TxInput, TxOutput,
+};
 
 use crate::framework::*;
 
@@ -216,7 +218,7 @@ impl PatternOf<&[u8]> for TextPattern {
 impl PatternOf<&Metadatum> for TextPattern {
     fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
         match subject.metadatum.as_ref() {
-            Some(utxorpc::spec::cardano::metadatum::Metadatum::Text(subject)) => {
+            Some(utxorpc_spec::utxorpc::v1alpha::cardano::metadatum::Metadatum::Text(subject)) => {
                 self.is_match(subject.as_str())
             }
             _ => MatchOutcome::Negative,

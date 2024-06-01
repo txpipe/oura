@@ -8,10 +8,12 @@ use tonic::transport::Channel;
 use tonic::Streaming;
 use tracing::{debug, error};
 
-use utxorpc::spec::sync::any_chain_block::Chain;
-use utxorpc::spec::sync::chain_sync_service_client::ChainSyncServiceClient;
-use utxorpc::spec::sync::follow_tip_response::Action;
-use utxorpc::spec::sync::{BlockRef, DumpHistoryRequest, FollowTipRequest, FollowTipResponse};
+use utxorpc_spec::utxorpc::v1alpha::sync::any_chain_block::Chain;
+use utxorpc_spec::utxorpc::v1alpha::sync::chain_sync_service_client::ChainSyncServiceClient;
+use utxorpc_spec::utxorpc::v1alpha::sync::follow_tip_response::Action;
+use utxorpc_spec::utxorpc::v1alpha::sync::{
+    BlockRef, DumpHistoryRequest, FollowTipRequest, FollowTipResponse,
+};
 
 use crate::framework::*;
 
