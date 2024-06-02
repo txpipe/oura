@@ -1,0 +1,20 @@
+[source]
+type = "N2N"
+peers = ["preprod-node.play.dev.cardano.org:3001"]
+
+[chain]
+type = "preprod"
+
+[intersect]
+type = "Point"
+value = [57829508, "f7b3b3f98d1fb76cb53956cf4703abac966f7fc14d965ac8d2f5a107da683637"]
+
+[[filters]]
+type = "EmitCbor"
+
+[sink]
+type = "Stdout"
+
+[cursor]
+type = "File"
+path = "cursor"
