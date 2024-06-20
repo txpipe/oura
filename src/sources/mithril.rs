@@ -1,12 +1,15 @@
-use miette::{Context as _, IntoDiagnostic as _};
-use pallas::{ledger::traverse::MultiEraBlock, network::miniprotocols::Point::{self, *}};
-use serde::Deserialize;
 use gasket::framework::*;
-use mithril_client::{ClientBuilder, MessageBuilder, MithrilError, MithrilResult};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use tracing::warn;
-use std::{path::Path, sync::Arc};
 use itertools::Itertools;
+use miette::{Context as _, IntoDiagnostic as _};
+use mithril_client::{ClientBuilder, MessageBuilder, MithrilError, MithrilResult};
+use pallas::{
+    ledger::traverse::MultiEraBlock,
+    network::miniprotocols::Point::{self, *},
+};
+use serde::Deserialize;
+use std::{path::Path, sync::Arc};
+use tracing::warn;
 
 use crate::framework::*;
 
@@ -93,10 +96,7 @@ impl mithril_client::feedback::FeedbackReceiver for Feedback {
     }
 }
 
-async fn fetch_snapshot(
-    config: &Config,
-    feedback: Arc<Feedback>,
-) -> MithrilResult<()> {
+async fn fetch_snapshot(config: &Config, feedback: Arc<Feedback>) -> MithrilResult<()> {
     let client = ClientBuilder::aggregator(&config.aggregator, &config.genesis_key)
         .add_feedback_receiver(feedback)
         .build()?;
@@ -149,11 +149,7 @@ async fn fetch_snapshot(
 }
 
 #[derive(Stage)]
-#[stage(
-    name = "source",
-    unit = "()",
-    worker = "Worker"
-)]
+#[stage(name = "source", unit = "()", worker = "Worker")]
 pub struct Stage {
     config: Config,
 
@@ -164,8 +160,7 @@ pub struct Worker {
     config: Config,
 }
 
-impl Worker {
-}
+impl Worker {}
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
@@ -182,7 +177,7 @@ impl gasket::framework::Worker<Stage> for Worker {
                 ))
                 .map_err(|_| WorkerError::Panic)?;
         }
-        
+
         fetch_snapshot(&stage.config, feedback.clone())
             .await
             .map_err(|err| miette::miette!(err.to_string()))
@@ -199,13 +194,12 @@ impl gasket::framework::Worker<Stage> for Worker {
     }
 
     async fn execute(&mut self, _unit: &(), stage: &mut Stage) -> Result<(), WorkerError> {
-
         let immutable_path = Path::new(&self.config.snapshot_download_dir).join("immutable");
 
         let iter = pallas::storage::hardano::immutable::read_blocks(&immutable_path)
-        .into_diagnostic()
-        .context("reading immutable db")
-        .map_err(|_| WorkerError::Panic)?;
+            .into_diagnostic()
+            .context("reading immutable db")
+            .map_err(|_| WorkerError::Panic)?;
 
         for chunk in iter.chunks(100).into_iter() {
             let bodies: Vec<_> = chunk
@@ -242,7 +236,6 @@ pub struct Config {
     snapshot_download_dir: String,
     skip_validation: bool,
 }
-
 
 impl Config {
     pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
