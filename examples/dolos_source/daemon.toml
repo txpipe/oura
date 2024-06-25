@@ -1,5 +1,5 @@
 [source]
-type = "UtxoRPC"
+type = "U5C"
 url = "https://50051-romantic-calmness-b55bqg.us1.demeter.run"
 
 [intersect]

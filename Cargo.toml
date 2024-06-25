@@ -18,11 +18,12 @@ gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default",
 rabbitmq = ["lapin"]
 redis = ["r2d2_redis"]
 u5c = ["tonic"]
+mithril = ["mithril-client"]
 # elasticsearch = auto feature flag
 # kafka = auto feature flag
 
 [dependencies]
-pallas = "0.27.0"
+pallas = { version = "0.27.0", features = ["hardano"] }
 # pallas = { path = "../pallas/pallas" }
 # pallas = { git = "https://github.com/txpipe/pallas" }
 
@@ -49,7 +50,7 @@ strum = "0.24"
 strum_macros = "0.25"
 unicode-truncate = "0.2.0"
 thiserror = "1.0.39"
-indicatif = "0.17.3"
+indicatif = "0.17.8"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
 anyhow = "1.0.77"
@@ -77,3 +78,6 @@ aws-sdk-s3 = { version = "^1.1", optional = true }
 aws-sdk-sqs = { version = "^1.1", optional = true }
 aws-sdk-lambda = { version = "^1.1", optional = true }
 extism = { version = "1.2.0", optional = true }
+mithril-client = { version = "^0.8", optional = true, features = ["fs"] }
+miette = { version = "7.2.0", features = ["fancy"] }
+itertools = "0.12.1"
