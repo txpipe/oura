@@ -2457,6 +2457,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "google-cloud-googleapis"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4a213e794a47db2d924df10caf76a6ba6336d64a396110aa8c78b4d496b73c3"
+dependencies = [
+ "prost 0.12.3",
+ "prost-types 0.12.3",
+ "tonic 0.11.0",
+]
+
+[[package]]
 name = "google-cloud-metadata"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2476,7 +2487,7 @@ dependencies = [
  "async-channel 1.9.0",
  "async-stream",
  "google-cloud-gax",
- "google-cloud-googleapis",
+ "google-cloud-googleapis 0.10.0",
  "google-cloud-token",
  "prost-types 0.11.9",
  "thiserror",
@@ -3559,7 +3570,7 @@ dependencies = [
  "gasket",
  "gasket-prometheus",
  "google-cloud-default",
- "google-cloud-googleapis",
+ "google-cloud-googleapis 0.14.0",
  "google-cloud-pubsub",
  "handlebars",
  "hex",
@@ -4208,7 +4219,7 @@ checksum = "c55e02e35260070b6f716a2423c2ff1c3bb1642ddca6f99e1f26d06268a0e2d2"
 dependencies = [
  "bytes",
  "heck",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "log",
  "multimap",
  "once_cell",
@@ -4242,7 +4253,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efb6c9a1dd1def8e2124d17e83a20af56f1570d6c2d2bd9e266ccb768df3840e"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "proc-macro2",
  "quote",
  "syn 2.0.52",
@@ -5871,6 +5882,7 @@ dependencies = [
  "axum",
  "base64 0.21.7",
  "bytes",
+ "flate2",
  "h2",
  "http 0.2.11",
  "http-body",
