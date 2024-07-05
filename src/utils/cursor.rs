@@ -148,7 +148,11 @@ impl CanStore for FileStorage {
     }
 
     fn write_cursor(&self, point: PointArg) -> Result<(), Error> {
-        std::fs::write(&self.0.path, point.to_string().as_bytes())?;
+        // we save to a tmp file and then rename to make it an atomic operation. If the
+        // write were to fail, the only affected file will be the temporal one.
+        let tmp_file = format!("{}.tmp", self.0.path);
+        std::fs::write(&tmp_file, point.to_string().as_bytes())?;
+        std::fs::rename(&tmp_file, &self.0.path)?;
 
         Ok(())
     }
