@@ -177,11 +177,56 @@ async fn fetch_snapshot(config: &Config, feedback: Arc<Feedback>) -> MithrilResu
     Ok(())
 }
 
+fn get_starting_points(
+    dir: &Path,
+    config: &IntersectConfig,
+) -> Result<Vec<Point>, Box<dyn std::error::Error>> {
+    match config {
+        IntersectConfig::Tip => pallas::storage::hardano::immutable::get_tip(dir)?
+            .map_or(Ok(vec![Point::Origin]), |point| Ok(vec![point])),
+        IntersectConfig::Origin => Ok(vec![Point::Origin]),
+        IntersectConfig::Point(slot, hash) => {
+            let hash_bytes = hex::decode(hash)?;
+            Ok(vec![Point::Specific(*slot, hash_bytes)])
+        }
+        IntersectConfig::Breadcrumbs(points) => points
+            .iter()
+            .map(|(slot, hash)| {
+                let hash_bytes = hex::decode(hash)?;
+                Ok(Point::Specific(*slot, hash_bytes))
+            })
+            .collect(),
+    }
+}
+
+fn read_blocks_with_config(
+    immutable_path: &Path,
+    config: &IntersectConfig,
+) -> Result<
+    Box<dyn Iterator<Item = pallas::storage::hardano::immutable::FallibleBlock> + Send + Sync>,
+    WorkerError,
+> {
+    let starting_points =
+        get_starting_points(immutable_path, config).map_err(|_| WorkerError::Panic)?;
+
+    for point in starting_points {
+        match pallas::storage::hardano::immutable::read_blocks_from_point(immutable_path, point) {
+            Ok(iter) => return Ok(iter),
+            Err(_) => continue,
+        }
+    }
+
+    // If all points fail (or if the list was empty), try from Origin
+    pallas::storage::hardano::immutable::read_blocks_from_point(immutable_path, Point::Origin)
+        .map_err(|_| WorkerError::Panic)
+}
+
+
 #[derive(Stage)]
 #[stage(name = "source", unit = "()", worker = "Worker")]
 pub struct Stage {
     config: Config,
-
+    intersect: IntersectConfig,
     pub output: SourceOutputPort,
 }
 
@@ -208,21 +253,36 @@ impl gasket::framework::Worker<Stage> for Worker {
                 .map_err(|_| WorkerError::Panic)?;
         }
 
-        fetch_snapshot(&stage.config, feedback.clone())
-            .await
+        // Check if the directory is empty
+        let is_dir_empty = target_directory
+            .read_dir()
             .map_err(|err| miette::miette!(err.to_string()))
-            .context("fetching and validating mithril snapshot")
-            .map_err(|_| WorkerError::Panic)?;
+            .context("Failed to read target directory")
+            .map_err(|_| WorkerError::Panic)?
+            .next()
+            .is_none();
+
+        if is_dir_empty {
+            // Directory is empty, fetch the snapshot
+            fetch_snapshot(&stage.config, feedback.clone())
+                .await
+                .map_err(|err| miette::miette!(err.to_string()))
+                .context("fetching and validating mithril snapshot")
+                .map_err(|_| WorkerError::Panic)?;
+        } else {
+            println!("Snapshot directory is not empty. Assuming existing snapshot data.");
+            // You might want to add some validation here to ensure the existing data is valid
+        }
 
         Ok(Self {
             config: stage.config.clone(),
-            is_bootstrapped: false,
+            is_bootstrapped: false, // Set to true since we either fetched or found existing data
         })
     }
 
     async fn schedule(&mut self, _stage: &mut Stage) -> Result<WorkSchedule<()>, WorkerError> {
         if self.is_bootstrapped {
-            return Ok(WorkSchedule::Done);
+            Ok(WorkSchedule::Done)
         } else {
             Ok(WorkSchedule::Unit(()))
         }
@@ -231,7 +291,7 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn execute(&mut self, _unit: &(), stage: &mut Stage) -> Result<(), WorkerError> {
         let immutable_path = Path::new(&self.config.snapshot_download_dir).join("immutable");
 
-        let iter = pallas::storage::hardano::immutable::read_blocks(&immutable_path)
+        let iter = read_blocks_with_config(&immutable_path, &stage.intersect)
             .into_diagnostic()
             .context("reading immutable db")
             .map_err(|_| WorkerError::Panic)?;
@@ -275,9 +335,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn bootstrapper(self, _ctx: &Context) -> Result<Stage, Error> {
+    pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
+            intersect: ctx.intersect.clone(),
             output: Default::default(),
         };
 

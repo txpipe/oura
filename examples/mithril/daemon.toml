@@ -6,7 +6,11 @@ snapshot_download_dir = "./snapshot"
 skip_validation = false
 
 [intersect]
-type = "Origin"
+type = "Point"
+value = [
+    46243673,
+    "75af0dbb19e37a5efa0e1d5109efffb4ffddae04d45008e88e63951fb3337fb6",
+]
 
 [sink]
 type = "Stdout"
