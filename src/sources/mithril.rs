@@ -271,7 +271,7 @@ impl gasket::framework::Worker<Stage> for Worker {
                 .map_err(|_| WorkerError::Panic)?;
         } else {
             println!("Snapshot directory is not empty. Assuming existing snapshot data.");
-            // You might want to add some validation here to ensure the existing data is valid
+            // @TODO add data validation (?) or just assume it's correct
         }
 
         Ok(Self {
