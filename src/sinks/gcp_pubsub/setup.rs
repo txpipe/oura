@@ -16,6 +16,9 @@ pub struct Config {
     pub retry_policy: Option<retry::Policy>,
     pub ordering_key: Option<String>,
     pub attributes: Option<GenericKV>,
+    pub emulator: Option<bool>,
+    pub emulator_endpoint: Option<String>,
+    pub emulator_project_id: Option<String>,
 
     #[warn(deprecated)]
     pub credentials: Option<String>,
@@ -24,6 +27,12 @@ pub struct Config {
 impl SinkProvider for WithUtils<Config> {
     fn bootstrap(&self, input: StageReceiver) -> BootstrapResult {
         let topic_name = self.inner.topic.to_owned();
+        let mut use_emulator = self.inner.emulator.unwrap_or(false);
+        let emulator_endpoint = self.inner.emulator_endpoint.to_owned();
+        let emulator_project_id = self.inner.emulator_project_id.to_owned();
+        if use_emulator && (emulator_endpoint.is_none() || emulator_project_id.is_none()) {
+            use_emulator = false;
+        }
 
         let error_policy = self
             .inner
@@ -47,6 +56,9 @@ impl SinkProvider for WithUtils<Config> {
                 &retry_policy,
                 &ordering_key,
                 &attributes,
+                use_emulator,
+                &emulator_endpoint,
+                &emulator_project_id,
                 utils,
             )
             .expect("writer loop failed");
