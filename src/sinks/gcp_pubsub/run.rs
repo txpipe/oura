@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use google_cloud_gax::conn::Environment;
 use google_cloud_googleapis::pubsub::v1::PubsubMessage;
 use google_cloud_pubsub::{
     client::{Client, ClientConfig},
@@ -32,7 +33,7 @@ async fn send_pubsub_msg(
     };
 
     publisher
-        .publish_immediately(vec![msg], None, None)
+        .publish_immediately(vec![msg], None)
         .await
         .map_err(|err| err.message().to_owned())?;
 
@@ -48,6 +49,9 @@ pub fn writer_loop(
     retry_policy: &retry::Policy,
     ordering_key: &str,
     attributes: &GenericKV,
+    emulator: bool,
+    emulator_endpoint: &Option<String>,
+    emulator_project_id: &Option<String>,
     utils: Arc<Utils>,
 ) -> Result<(), crate::Error> {
     let rt = tokio::runtime::Builder::new_current_thread()
@@ -56,7 +60,16 @@ pub fn writer_loop(
         .build()?;
 
     let publisher: Publisher = rt.block_on(async {
-        let client = Client::new(ClientConfig::default()).await?;
+        let client_config = if emulator {
+            ClientConfig {
+                project_id: Some(emulator_project_id.clone().unwrap_or_default()),
+                environment: Environment::Emulator(emulator_endpoint.clone().unwrap_or_default()),
+                ..Default::default()
+            }
+        } else {
+            ClientConfig::default()
+        };
+        let client = Client::new(client_config).await?;
         let topic = client.topic(topic_name);
         Result::<_, crate::Error>::Ok(topic.new_publisher(None))
     })?;
