@@ -15,6 +15,9 @@ pub mod u5c;
 #[cfg(feature = "aws")]
 pub mod s3;
 
+#[cfg(feature = "mithril")]
+pub mod mithril;
+
 pub enum Bootstrapper {
     N2N(n2n::Stage),
 
@@ -26,6 +29,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "aws")]
     S3(s3::Stage),
+
+    #[cfg(feature = "mithril")]
+    Mithril(mithril::Stage),
 }
 
 impl Bootstrapper {
@@ -41,6 +47,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "aws")]
             Bootstrapper::S3(p) => &mut p.output,
+
+            #[cfg(feature = "mithril")]
+            Bootstrapper::Mithril(p) => &mut p.output,
         }
     }
 
@@ -56,6 +65,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "aws")]
             Bootstrapper::S3(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "mithril")]
+            Bootstrapper::Mithril(x) => gasket::runtime::spawn_stage(x, policy),
         }
     }
 }
@@ -73,6 +85,9 @@ pub enum Config {
 
     #[cfg(feature = "aws")]
     S3(s3::Config),
+
+    #[cfg(feature = "mithril")]
+    Mithril(mithril::Config),
 }
 
 impl Config {
@@ -88,6 +103,9 @@ impl Config {
 
             #[cfg(feature = "aws")]
             Config::S3(c) => Ok(Bootstrapper::S3(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "mithril")]
+            Config::Mithril(c) => Ok(Bootstrapper::Mithril(c.bootstrapper(ctx)?)),
         }
     }
 }
