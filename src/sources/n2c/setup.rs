@@ -51,11 +51,11 @@ impl SourceProvider for WithUtils<Config> {
 
         let config = self.inner.clone();
         let utils = self.utils.clone();
-        let handle = std::thread::spawn(move || {
+        let handle = tokio::spawn(async move {
             do_chainsync(&config, utils, output_tx)
+                .await
                 .expect("chainsync process fails after max retries")
         });
-
         Ok((handle, output_rx))
     }
 }

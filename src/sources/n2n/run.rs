@@ -2,7 +2,7 @@ use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
 use pallas::network::{
     miniprotocols::{blockfetch, chainsync, handshake, Point, MAINNET_MAGIC},
-    multiplexer::StdChannel,
+    multiplexer::AgentChannel,
 };
 
 use std::sync::mpsc::{Receiver, SyncSender};
@@ -113,7 +113,7 @@ impl ChainObserver {
     fn on_next_message(
         &mut self,
         msg: chainsync::NextResponse<chainsync::HeaderContent>,
-        client: &mut chainsync::N2NClient<StdChannel>,
+        client: &mut chainsync::N2NClient,
     ) -> Result<Continuation, AttemptError> {
         match msg {
             chainsync::NextResponse::RollForward(c, t) => match self.on_roll_forward(c, &t) {
@@ -136,7 +136,7 @@ impl ChainObserver {
 }
 
 pub(crate) fn fetch_blocks_forever(
-    mut client: blockfetch::Client<StdChannel>,
+    mut client: blockfetch::Client,
     event_writer: EventWriter,
     input: Receiver<Point>,
 ) -> Result<(), Error> {
@@ -152,7 +152,7 @@ pub(crate) fn fetch_blocks_forever(
 }
 
 fn observe_headers_forever(
-    mut client: chainsync::N2NClient<StdChannel>,
+    mut client: chainsync::N2NClient,
     event_writer: EventWriter,
     block_requests: SyncSender<Point>,
     min_depth: usize,
@@ -185,11 +185,11 @@ enum AttemptError {
     Other(Error),
 }
 
-fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
+async fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
     let mut client = handshake::N2NClient::new(channel);
-    let versions = handshake::n2n::VersionTable::v4_and_above(magic);
+    let versions = handshake::n2n::VersionTable::v11_and_above(magic);
 
-    match client.handshake(versions) {
+    match client.handshake(versions).await {
         Ok(confirmation) => match confirmation {
             handshake::Confirmation::Accepted(_, _) => Ok(()),
             _ => Err(AttemptError::Other(
@@ -200,7 +200,7 @@ fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
     }
 }
 
-fn do_chainsync_attempt(
+async fn do_chainsync_attempt(
     config: &super::Config,
     utils: Arc<Utils>,
     output_tx: &StageSender,
@@ -220,7 +220,7 @@ fn do_chainsync_attempt(
     plexer.muxer.spawn();
     plexer.demuxer.spawn();
 
-    do_handshake(hs_channel, magic)?;
+    do_handshake(hs_channel, magic).await?;
 
     let mut cs_client = chainsync::N2NClient::new(cs_channel);
 
@@ -265,7 +265,7 @@ fn do_chainsync_attempt(
     Ok(())
 }
 
-pub fn do_chainsync(
+pub async fn do_chainsync(
     config: &super::Config,
     utils: Arc<Utils>,
     output_tx: StageSender,

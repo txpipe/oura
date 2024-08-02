@@ -12,7 +12,7 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.18.2"
+pallas = "0.29.0"
 # pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
@@ -30,6 +30,7 @@ strum = "0.24"
 strum_macros = "0.24"
 prometheus_exporter = { version = "0.8.5", default-features = false }
 unicode-truncate = "0.2.0"
+tokio-retry = "0.3"
 
 # feature logs
 file-rotate = { version = "0.7.1", optional = true }

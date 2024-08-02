@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use pallas::codec::utils::KeepRaw;
 
 use pallas::ledger::primitives::babbage::{
@@ -101,7 +103,11 @@ impl EventWriter {
                     .into();
 
                 record.native_witnesses = self
-                    .collect_native_witness_records(&witnesses.native_script)?
+                    .collect_native_witness_records(&witnesses.native_script.as_ref().map(|x| {
+                        x.iter()
+                            .map(|ws| ws.deref().clone())
+                            .collect::<Vec<pallas::ledger::primitives::alonzo::NativeScript>>()
+                    }))?
                     .into();
 
                 record.plutus_witnesses = self

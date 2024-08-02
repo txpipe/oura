@@ -5,12 +5,18 @@ use pallas::{
     ledger::traverse::{probe, Era},
     network::{
         miniprotocols::{chainsync, Point, MAINNET_MAGIC, TESTNET_MAGIC},
-        multiplexer::{bearers::Bearer, StdChannel, StdPlexer},
+        multiplexer::{Bearer, Plexer},
     },
 };
 
+use tokio_retry::strategy::{jitter, ExponentialBackoff};
+use tokio_retry::Retry;
+
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
+
+use std::boxed::Box;
+use std::error::Error as StdError;
 
 use crate::{
     mapper::EventWriter,
@@ -182,36 +188,43 @@ impl RetryPolicy {
     }
 }
 
-pub fn setup_multiplexer_attempt(bearer: &BearerKind, address: &str) -> Result<StdPlexer, Error> {
+pub async fn setup_multiplexer_attempt(
+    bearer: &BearerKind,
+    address: &str,
+) -> Result<Plexer, Error> {
     match bearer {
         BearerKind::Tcp => {
-            let bearer = Bearer::connect_tcp(address)?;
-            Ok(StdPlexer::new(bearer))
+            let bearer = Bearer::connect_tcp(address).await?;
+            Ok(Plexer::new(bearer))
         }
         #[cfg(target_family = "unix")]
         BearerKind::Unix => {
-            let unix = Bearer::connect_unix(address)?;
-            Ok(StdPlexer::new(unix))
+            let unix = Bearer::connect_unix(address).await?;
+            Ok(Plexer::new(unix))
         }
     }
 }
 
-pub fn setup_multiplexer(
+pub async fn setup_multiplexer(
     bearer: &BearerKind,
     address: &str,
     retry: &Option<RetryPolicy>,
-) -> Result<StdPlexer, Error> {
+) -> Result<Plexer, Error> {
     match retry {
-        Some(policy) => retry::retry_operation(
-            || setup_multiplexer_attempt(bearer, address),
-            &retry::Policy {
-                max_retries: policy.connection_max_retries,
-                backoff_unit: Duration::from_secs(1),
-                backoff_factor: 2,
-                max_backoff: Duration::from_secs(policy.connection_max_backoff as u64),
-            },
-        ),
-        None => setup_multiplexer_attempt(bearer, address),
+        Some(policy) => {
+            let retry_strategy =
+                ExponentialBackoff::from_millis(1000) // backoff_unit
+                    .factor(2) // backoff_factor
+                    .max_delay(Duration::from_secs(policy.connection_max_backoff as u64)) // max_backoff
+                    .map(jitter) // add jitter to delays
+                    .take(policy.connection_max_retries.try_into().unwrap()); // max_retries
+
+            Retry::spawn(retry_strategy, || async {
+                setup_multiplexer_attempt(bearer, address).await
+            })
+            .await
+        }
+        None => setup_multiplexer_attempt(bearer, address).await,
     }
 }
 
@@ -262,8 +275,8 @@ pub fn should_finalize(
     false
 }
 
-pub(crate) fn intersect_starting_point<O>(
-    client: &mut chainsync::Client<StdChannel, O>,
+pub(crate) async fn intersect_starting_point<O>(
+    client: &mut chainsync::Client<O>,
     intersect_arg: &Option<IntersectArg>,
     since_arg: &Option<PointArg>,
     utils: &Utils,
@@ -277,7 +290,7 @@ where
         Some(cursor) => {
             log::info!("found persisted cursor, will use as starting point");
             let desired = cursor.try_into()?;
-            let (point, _) = client.find_intersect(vec![desired])?;
+            let (point, _) = client.find_intersect(vec![desired]).await?;
 
             Ok(point)
         }
@@ -286,14 +299,14 @@ where
                 log::info!("found 'fallbacks' intersect argument, will use as starting point");
                 let options: Result<Vec<_>, _> = x.iter().map(|x| x.clone().try_into()).collect();
 
-                let (point, _) = client.find_intersect(options?)?;
+                let (point, _) = client.find_intersect(options?).await?;
 
                 Ok(point)
             }
             Some(IntersectArg::Origin) => {
                 log::info!("found 'origin' intersect argument, will use as starting point");
 
-                let point = client.intersect_origin()?;
+                let point = client.intersect_origin().await?;
 
                 Ok(Some(point))
             }
@@ -301,14 +314,14 @@ where
                 log::info!("found 'point' intersect argument, will use as starting point");
                 let options = vec![x.clone().try_into()?];
 
-                let (point, _) = client.find_intersect(options)?;
+                let (point, _) = client.find_intersect(options).await?;
 
                 Ok(point)
             }
             Some(IntersectArg::Tip) => {
                 log::info!("found 'tip' intersect argument, will use as starting point");
 
-                let point = client.intersect_tip()?;
+                let point = client.intersect_tip().await?;
 
                 Ok(Some(point))
             }
@@ -318,14 +331,14 @@ where
                     log::warn!("`since` value is deprecated, please use `intersect`");
                     let options = vec![x.clone().try_into()?];
 
-                    let (point, _) = client.find_intersect(options)?;
+                    let (point, _) = client.find_intersect(options).await?;
 
                     Ok(point)
                 }
                 None => {
                     log::info!("no starting point specified, will use tip of chain");
 
-                    let point = client.intersect_tip()?;
+                    let point = client.intersect_tip().await?;
 
                     Ok(Some(point))
                 }

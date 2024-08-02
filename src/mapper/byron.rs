@@ -168,7 +168,7 @@ impl EventWriter {
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
-        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
+        let abs_slot = pallas::ledger::traverse::time::relative_slot_to_absolute(
             source.header.consensus_data.0.epoch,
             source.header.consensus_data.0.slot,
         );

@@ -1,4 +1,4 @@
-use std::thread::JoinHandle;
+use tokio::task::JoinHandle;
 
 use crate::{model::Event, Error};
 

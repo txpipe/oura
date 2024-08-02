@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 
+use pallas::codec::utils::Nullable;
 use pallas::ledger::primitives::alonzo::MintedWitnessSet;
 use pallas::ledger::primitives::babbage::MintedDatumOption;
 use pallas::ledger::traverse::{ComputeHash, OriginalHash};
@@ -68,19 +70,24 @@ fn relay_to_string(relay: &Relay) -> String {
     match relay {
         Relay::SingleHostAddr(port, ipv4, ipv6) => {
             let ip = match (ipv6, ipv4) {
-                (None, None) => "".to_string(),
-                (_, Some(x)) => ip_string_from_bytes(x.as_ref()),
-                (Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                (Nullable::Null, Nullable::Null) => "".to_string(),
+                (_, Nullable::Some(x)) => ip_string_from_bytes(x.as_ref()),
+                (Nullable::Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                (Nullable::Null, Nullable::Undefined) => "".to_string(),
+                (Nullable::Undefined, Nullable::Null) => "".to_string(),
+                (Nullable::Undefined, Nullable::Undefined) => "".to_string(),
             };
 
             match port {
-                Some(port) => format!("{ip}:{port}"),
-                None => ip,
+                Nullable::Some(port) => format!("{ip}:{port}"),
+                Nullable::Null => ip,
+                Nullable::Undefined => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
-            Some(port) => format!("{host}:{port}"),
-            None => host.clone(),
+            Nullable::Some(port) => format!("{host}:{port}"),
+            Nullable::Null => host.clone(),
+            Nullable::Undefined => host.clone(),
         },
         Relay::MultiHostName(host) => host.clone(),
     }
@@ -342,8 +349,11 @@ impl EventWriter {
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
-                pool_metadata: pool_metadata.as_ref().map(|m| m.url.clone()),
-                pool_metadata_hash: pool_metadata.as_ref().map(|m| m.hash.clone().to_hex()),
+                pool_metadata: pool_metadata.clone().map(|m| m.url.clone()).into(),
+                pool_metadata_hash: pool_metadata
+                    .clone()
+                    .map(|m| m.hash.clone().to_hex())
+                    .into(),
             },
             Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
                 pool: pool.to_hex(),
@@ -454,7 +464,11 @@ impl EventWriter {
                     .into();
 
                 record.native_witnesses = self
-                    .collect_native_witness_records(&witnesses.native_script)?
+                    .collect_native_witness_records(&witnesses.native_script.as_ref().map(|x| {
+                        x.iter()
+                            .map(|ws| ws.deref().clone())
+                            .collect::<Vec<pallas::ledger::primitives::alonzo::NativeScript>>()
+                    }))?
                     .into();
 
                 record.plutus_witnesses = self

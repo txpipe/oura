@@ -4,9 +4,10 @@ use pallas::{
     ledger::traverse::MultiEraBlock,
     network::{
         miniprotocols::{chainsync, handshake, Point, MAINNET_MAGIC},
-        multiplexer::StdChannel,
+        multiplexer::AgentChannel,
     },
 };
+use tokio_retry::{strategy::{jitter, ExponentialBackoff}, Retry};
 
 use crate::{
     mapper::EventWriter,
@@ -121,10 +122,10 @@ impl ChainObserver {
         Ok(())
     }
 
-    fn on_next_message(
+    async fn on_next_message(
         &mut self,
         msg: chainsync::NextResponse<chainsync::BlockContent>,
-        client: &mut chainsync::N2CClient<StdChannel>,
+        client: &mut chainsync::N2CClient,
     ) -> Result<Continuation, AttemptError> {
         match msg {
             chainsync::NextResponse::RollForward(c, t) => match self.on_roll_forward(c, &t) {
@@ -138,16 +139,17 @@ impl ChainObserver {
             chainsync::NextResponse::Await => {
                 let next = client
                     .recv_while_must_reply()
+                    .await
                     .map_err(|x| AttemptError::Recoverable(x.into()))?;
 
-                self.on_next_message(next, client)
+                Box::pin(self.on_next_message(next, client)).await
             }
         }
     }
 }
 
-fn observe_forever(
-    mut client: chainsync::N2CClient<StdChannel>,
+async fn observe_forever(
+    mut client: chainsync::N2CClient,
     event_writer: EventWriter,
     min_depth: usize,
     finalize_config: Option<FinalizeConfig>,
@@ -162,8 +164,8 @@ fn observe_forever(
     };
 
     loop {
-        match client.request_next() {
-            Ok(next) => match observer.on_next_message(next, &mut client) {
+        match client.request_next().await {
+            Ok(next) => match observer.on_next_message(next, &mut client).await {
                 Ok(Continuation::Proceed) => (),
                 Ok(Continuation::DropOut) => break Ok(()),
                 Err(err) => break Err(err),
@@ -179,11 +181,11 @@ enum AttemptError {
     Other(Error),
 }
 
-fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
+async fn do_handshake(channel: AgentChannel, magic: u64) -> Result<(), AttemptError> {
     let mut client = handshake::N2CClient::new(channel);
     let versions = handshake::n2c::VersionTable::v1_and_above(magic);
 
-    match client.handshake(versions) {
+    match client.handshake(versions).await {
         Ok(confirmation) => match confirmation {
             handshake::Confirmation::Accepted(_, _) => Ok(()),
             _ => Err(AttemptError::Other(
@@ -194,7 +196,7 @@ fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
     }
 }
 
-fn do_chainsync_attempt(
+async fn do_chainsync_attempt(
     config: &super::Config,
     utils: Arc<Utils>,
     output_tx: &StageSender,
@@ -205,15 +207,15 @@ fn do_chainsync_attempt(
     };
 
     let mut plexer = setup_multiplexer(&config.address.0, &config.address.1, &config.retry_policy)
+        .await
         .map_err(AttemptError::Recoverable)?;
 
-    let hs_channel = plexer.use_channel(0);
-    let cs_channel = plexer.use_channel(5);
+    let hs_channel = plexer.subscribe_server(0);
+    let cs_channel = plexer.subscribe_client(5);
 
-    plexer.muxer.spawn();
-    plexer.demuxer.spawn();
+    plexer.spawn();
 
-    do_handshake(hs_channel, magic)?;
+    do_handshake(hs_channel, magic).await?;
 
     let mut client = chainsync::N2CClient::new(cs_channel);
 
@@ -224,6 +226,7 @@ fn do_chainsync_attempt(
         &config.since,
         &utils,
     )
+    .await
     .map_err(AttemptError::Recoverable)?;
 
     if intersection.is_none() {
@@ -236,18 +239,36 @@ fn do_chainsync_attempt(
 
     let writer = EventWriter::new(output_tx.clone(), utils, config.mapper.clone());
 
-    observe_forever(client, writer, config.min_depth, config.finalize.clone())?;
+    observe_forever(client, writer, config.min_depth, config.finalize.clone()).await?;
 
     Ok(())
 }
 
-pub fn do_chainsync(
+pub async fn do_chainsync(
     config: &super::Config,
     utils: Arc<Utils>,
     output_tx: StageSender,
 ) -> Result<(), Error> {
-    retry::retry_operation(
-        || match do_chainsync_attempt(config, utils.clone(), &output_tx) {
+    let retry_strategy = ExponentialBackoff::from_millis(1000) // backoff_unit in millis
+        .factor(2) // backoff_factor
+        .max_delay(
+            config
+                .retry_policy
+                .as_ref()
+                .map(|x| Duration::from_secs(x.chainsync_max_backoff as u64))
+                .unwrap_or_else(|| Duration::from_secs(60)),
+        ) // max_backoff
+        .map(jitter) // add jitter to delays
+        .take(
+            config
+                .retry_policy
+                .as_ref()
+                .map(|x| x.chainsync_max_retries)
+                .unwrap_or(50).try_into().unwrap(),
+        ); // max_retries
+
+    Retry::spawn(retry_strategy, || async {
+        match do_chainsync_attempt(config, utils.clone(), &output_tx).await {
             Ok(()) => Ok(()),
             Err(AttemptError::Other(msg)) => {
                 log::error!("N2C error: {}", msg);
@@ -255,21 +276,7 @@ pub fn do_chainsync(
                 Ok(())
             }
             Err(AttemptError::Recoverable(err)) => Err(err),
-        },
-        &retry::Policy {
-            max_retries: config
-                .retry_policy
-                .as_ref()
-                .map(|x| x.chainsync_max_retries)
-                .unwrap_or(50),
-            backoff_unit: Duration::from_secs(1),
-            backoff_factor: 2,
-            max_backoff: config
-                .retry_policy
-                .as_ref()
-                .map(|x| x.chainsync_max_backoff as u64)
-                .map(Duration::from_secs)
-                .unwrap_or_else(|| Duration::from_secs(60)),
-        },
-    )
+        }
+    })
+    .await
 }

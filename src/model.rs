@@ -247,7 +247,7 @@ impl From<PlutusWitnessRecord> for EventData {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct PlutusRedeemerRecord {
     pub purpose: String,
-    pub ex_units_mem: u32,
+    pub ex_units_mem: u64,
     pub ex_units_steps: u64,
     pub input_idx: u32,
     pub plutus_data: JsonValue,
