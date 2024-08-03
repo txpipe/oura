@@ -1,12 +1,12 @@
-use pallas::codec::utils::KeepRaw;
+use pallas_codec::utils::KeepRaw;
 
-use pallas::ledger::primitives::babbage::{
+use pallas_primitives::babbage::{
     AuxiliaryData, MintedBlock, MintedDatumOption, MintedPostAlonzoTransactionOutput,
     MintedTransactionBody, MintedTransactionOutput, MintedWitnessSet, NetworkId,
 };
 
-use pallas::crypto::hash::Hash;
-use pallas::ledger::traverse::OriginalHash;
+use pallas_crypto::hash::Hash;
+use pallas_traverse::OriginalHash;
 
 use crate::model::{BlockRecord, Era, TransactionRecord};
 use crate::utils::time::TimeProvider;
@@ -199,7 +199,7 @@ impl EventWriter {
         let record = self.to_post_alonzo_output_record(output)?;
         self.append(record.into())?;
 
-        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+        let address = pallas_addresses::Address::from_bytes(&output.address)?;
 
         let child = &self.child_writer(EventContext {
             output_address: address.to_string().into(),
@@ -389,7 +389,7 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
     pub fn crawl_from_babbage_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let (_, block): (u16, MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
+        let (_, block): (u16, MintedBlock) = pallas_codec::minicbor::decode(cbor)?;
         self.crawl_babbage_with_cbor(&block, cbor)
     }
 }

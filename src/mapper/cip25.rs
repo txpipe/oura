@@ -1,6 +1,6 @@
 use serde_json::Value as JsonValue;
 
-use pallas::ledger::primitives::alonzo::Metadatum;
+use pallas_primitives::alonzo::Metadatum;
 
 use crate::{model::CIP25AssetRecord, Error};
 

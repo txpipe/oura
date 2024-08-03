@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use pallas::network::miniprotocols::{Point, MAINNET_MAGIC, TESTNET_MAGIC};
+use pallas_miniprotocols::{Point, MAINNET_MAGIC, TESTNET_MAGIC};
 
 // TODO: move these values to Pallas
 pub const PREPROD_MAGIC: u64 = 1;

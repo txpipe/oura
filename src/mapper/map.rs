@@ -1,20 +1,21 @@
 use std::collections::HashMap;
 
-use pallas::ledger::primitives::alonzo::MintedWitnessSet;
-use pallas::ledger::primitives::babbage::MintedDatumOption;
-use pallas::ledger::traverse::{ComputeHash, OriginalHash};
-use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
+use pallas_codec::utils::KeepRaw;
+use pallas_crypto::hash::Hash;
+use pallas_primitives::alonzo::MintedWitnessSet;
+use pallas_primitives::babbage::MintedDatumOption;
+use pallas_traverse::{ComputeHash, OriginalHash};
 
-use pallas::ledger::primitives::{
+use pallas_primitives::{
     alonzo::{
         self as alonzo, AuxiliaryData, Certificate, InstantaneousRewardSource,
         InstantaneousRewardTarget, Metadatum, MetadatumLabel, MintedBlock, NetworkId, Relay,
         TransactionBody, TransactionInput, Value,
     },
-    babbage, ToCanonicalJson,
+    babbage, conway, ToCanonicalJson,
 };
 
-use pallas::network::miniprotocols::Point;
+use pallas_miniprotocols::Point;
 use serde_json::{json, Value as JsonValue};
 
 use crate::model::{
@@ -64,23 +65,23 @@ fn ip_string_from_bytes(bytes: &[u8]) -> String {
     format!("{}.{}.{}.{}", bytes[0], bytes[1], bytes[2], bytes[3])
 }
 
-fn relay_to_string(relay: &Relay) -> String {
+pub fn relay_to_string(relay: &Relay) -> String {
     match relay {
         Relay::SingleHostAddr(port, ipv4, ipv6) => {
             let ip = match (ipv6, ipv4) {
-                (None, None) => "".to_string(),
-                (_, Some(x)) => ip_string_from_bytes(x.as_ref()),
-                (Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                (_, pallas_codec::utils::Nullable::Some(x)) => ip_string_from_bytes(x.as_ref()),
+                (pallas_codec::utils::Nullable::Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                _ => "".to_string(),
             };
 
             match port {
-                Some(port) => format!("{ip}:{port}"),
-                None => ip,
+                pallas_codec::utils::Nullable::Some(port) => format!("{ip}:{port}"),
+                _ => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
-            Some(port) => format!("{host}:{port}"),
-            None => host.clone(),
+            pallas_codec::utils::Nullable::Some(port) => format!("{host}:{port}"),
+            _ => host.clone(),
         },
         Relay::MultiHostName(host) => host.clone(),
     }
@@ -98,7 +99,7 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
     }
 }
 
-fn get_tx_output_coin_value(amount: &Value) -> u64 {
+pub fn get_tx_output_coin_value(amount: &Value) -> u64 {
     match amount {
         Value::Coin(x) => *x,
         Value::Multiasset(x, _) => *x,
@@ -169,7 +170,7 @@ impl EventWriter {
         &self,
         output: &alonzo::TransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
-        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+        let address = pallas_addresses::Address::from_bytes(&output.address)?;
 
         Ok(TxOutputRecord {
             address: address.to_string(),
@@ -184,7 +185,7 @@ impl EventWriter {
         &self,
         output: &babbage::MintedPostAlonzoTransactionOutput,
     ) -> Result<TxOutputRecord, Error> {
-        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+        let address = pallas_addresses::Address::from_bytes(&output.address)?;
 
         Ok(TxOutputRecord {
             address: address.to_string(),
@@ -205,7 +206,7 @@ impl EventWriter {
     pub fn to_transaction_output_asset_record(
         &self,
         policy: &Hash<28>,
-        asset: &pallas::codec::utils::Bytes,
+        asset: &pallas_codec::utils::Bytes,
         amount: u64,
     ) -> OutputAssetRecord {
         OutputAssetRecord {
@@ -219,7 +220,7 @@ impl EventWriter {
     pub fn to_mint_record(
         &self,
         policy: &Hash<28>,
-        asset: &pallas::codec::utils::Bytes,
+        asset: &pallas_codec::utils::Bytes,
         quantity: i64,
     ) -> MintRecord {
         MintRecord {
@@ -291,6 +292,16 @@ impl EventWriter {
         })
     }
 
+    pub fn to_plutus_v3_witness_record(
+        &self,
+        script: &conway::PlutusV3Script,
+    ) -> Result<PlutusWitnessRecord, crate::Error> {
+        Ok(PlutusWitnessRecord {
+            script_hash: script.compute_hash().to_hex(),
+            script_hex: script.as_ref().to_hex(),
+        })
+    }
+
     pub fn to_native_witness_record(
         &self,
         script: &alonzo::NativeScript,
@@ -342,8 +353,11 @@ impl EventWriter {
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
-                pool_metadata: pool_metadata.as_ref().map(|m| m.url.clone()),
-                pool_metadata_hash: pool_metadata.as_ref().map(|m| m.hash.clone().to_hex()),
+                pool_metadata: pool_metadata.to_owned().map(|m| m.url.clone()).into(),
+                pool_metadata_hash: pool_metadata
+                    .to_owned()
+                    .map(|m| m.hash.clone().to_hex())
+                    .into(),
             },
             Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
                 pool: pool.to_hex(),

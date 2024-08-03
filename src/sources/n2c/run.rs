@@ -1,18 +1,14 @@
 use std::{collections::HashMap, fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
-use pallas::{
-    ledger::traverse::MultiEraBlock,
-    network::{
-        miniprotocols::{chainsync, handshake, Point, MAINNET_MAGIC},
-        multiplexer::StdChannel,
-    },
-};
+use pallas_miniprotocols::{chainsync, handshake, Point, MAINNET_MAGIC};
+use pallas_multiplexer::StdChannel;
+use pallas_traverse::MultiEraBlock;
 
 use crate::{
     mapper::EventWriter,
     pipelining::StageSender,
     sources::{
-        intersect_starting_point, setup_multiplexer, should_finalize, unknown_block_to_events,
+        intersect_starting_point_n2c, setup_multiplexer, should_finalize, unknown_block_to_events,
         FinalizeConfig,
     },
     utils::{retry, Utils},
@@ -217,7 +213,7 @@ fn do_chainsync_attempt(
 
     let mut client = chainsync::N2CClient::new(cs_channel);
 
-    let intersection = intersect_starting_point(
+    let intersection = intersect_starting_point_n2c(
         &mut client,
         &config.intersect,
         #[allow(deprecated)]

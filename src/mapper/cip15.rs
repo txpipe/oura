@@ -3,7 +3,7 @@ use crate::model::CIP15AssetRecord;
 use crate::Error;
 use serde_json::Value as JsonValue;
 
-use pallas::ledger::primitives::alonzo::Metadatum;
+use pallas_primitives::alonzo::Metadatum;
 
 fn extract_json_property<'a>(
     json: &'a JsonValue,

@@ -9,6 +9,7 @@ pub(crate) trait TimeProvider {
     /// Maps between slots and wallclock
     fn slot_to_wallclock(&self, slot: u64) -> u64;
     fn absolute_slot_to_relative(&self, slot: u64) -> (u64, u64);
+    fn byron_epoch_slot_to_absolute(&self, epoch: u64, slot: u64) -> u64;
 }
 
 /// A naive, standalone implementation of a time provider
@@ -66,6 +67,16 @@ fn compute_era_epoch(era_slot: u64, era_slot_length: u64, era_epoch_length: u64)
     (epoch, reminder)
 }
 
+#[inline]
+fn relative_slot_to_absolute(
+    epoch: u64,
+    sub_epoch_slot: u64,
+    epoch_length: u64,
+    slot_length: u64,
+) -> u64 {
+    ((epoch * epoch_length) / slot_length) + sub_epoch_slot
+}
+
 impl TimeProvider for NaiveProvider {
     fn slot_to_wallclock(&self, slot: u64) -> u64 {
         let NaiveProvider { config, .. } = self;
@@ -110,6 +121,15 @@ impl TimeProvider for NaiveProvider {
 
             (shelley_start_epoch + era_epoch, reminder)
         }
+    }
+
+    fn byron_epoch_slot_to_absolute(&self, epoch: u64, slot: u64) -> u64 {
+        relative_slot_to_absolute(
+            epoch,
+            slot,
+            self.config.byron_epoch_length as u64,
+            self.config.byron_slot_length as u64,
+        )
     }
 }
 

@@ -1,19 +1,15 @@
-use pallas::{
-    codec::utils::{KeepRaw, KeyValuePairs, MaybeIndefArray},
-    ledger::{
-        primitives::{
-            alonzo::{
-                AuxiliaryData, Coin, MintedBlock, Multiasset, NativeScript, PlutusData,
-                PlutusScript, Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
-            },
-            babbage::{
-                LegacyTransactionOutput, MintedPostAlonzoTransactionOutput,
-                MintedTransactionOutput, PlutusV2Script,
-            },
-        },
-        traverse::OriginalHash,
+use pallas_codec::utils::{KeepRaw, KeyValuePairs, MaybeIndefArray};
+use pallas_primitives::{
+    alonzo::{
+        AuxiliaryData, Coin, MintedBlock, Multiasset, NativeScript, PlutusData, PlutusScript,
+        Redeemer, RewardAccount, TransactionInput, VKeyWitness, Value,
+    },
+    babbage::{
+        LegacyTransactionOutput, MintedPostAlonzoTransactionOutput, MintedTransactionOutput,
+        PlutusV2Script,
     },
 };
+use pallas_traverse::OriginalHash;
 
 use crate::{
     model::{
@@ -138,7 +134,7 @@ impl EventWriter {
 
     pub fn collect_native_witness_records(
         &self,
-        witness_set: &Option<Vec<NativeScript>>,
+        witness_set: &Option<Vec<KeepRaw<'_, NativeScript>>>,
     ) -> Result<Vec<NativeWitnessRecord>, Error> {
         match witness_set {
             Some(all) => all
