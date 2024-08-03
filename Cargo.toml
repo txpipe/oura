@@ -36,6 +36,7 @@ strum = "0.24"
 strum_macros = "0.24"
 prometheus_exporter = { version = "0.8.5", default-features = false }
 unicode-truncate = "0.2.0"
+time = "0.3.36"
 
 # feature logs
 file-rotate = { version = "0.7.1", optional = true }
