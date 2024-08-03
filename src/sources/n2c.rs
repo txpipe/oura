@@ -195,7 +195,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    socket_path: PathBuf,
+    pub socket_path: PathBuf,
 }
 
 impl Config {

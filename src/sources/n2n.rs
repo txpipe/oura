@@ -220,7 +220,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    peers: Vec<String>,
+    pub peers: Vec<String>,
 }
 
 impl Config {
