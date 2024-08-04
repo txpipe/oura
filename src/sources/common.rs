@@ -68,9 +68,9 @@ impl FromStr for PointArg {
     }
 }
 
-impl ToString for PointArg {
-    fn to_string(&self) -> String {
-        format!("{},{}", self.0, self.1)
+impl std::fmt::Display for PointArg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{},{}", self.0, self.1)
     }
 }
 

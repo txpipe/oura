@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use pallas_codec::utils::{KeepRaw, NonZeroInt};
 
 use pallas_primitives::conway::{
@@ -229,9 +227,8 @@ impl EventWriter {
                     witnesses
                         .redeemer
                         .iter()
-                        .map(|i| i.iter())
-                        .flatten()
-                        .map(|(k, v)| self.to_conway_redeemer_record(&k, &v))
+                        .flat_map(|i| i.iter())
+                        .map(|(k, v)| self.to_conway_redeemer_record(k, v))
                         .collect::<Result<_, _>>()?,
                 );
 
