@@ -3,11 +3,12 @@ use std::ops::Deref;
 use super::map::ToHex;
 use super::EventWriter;
 use crate::model::{BlockRecord, Era, EventData, TransactionRecord, TxInputRecord, TxOutputRecord};
+use crate::utils::time::TimeProvider;
 use crate::{model::EventContext, Error};
 
-use pallas::crypto::hash::Hash;
-use pallas::ledger::primitives::byron;
-use pallas::ledger::traverse::OriginalHash;
+use pallas_crypto::hash::Hash;
+use pallas_primitives::byron;
+use pallas_traverse::OriginalHash;
 
 impl EventWriter {
     fn to_byron_input_record(&self, source: &byron::TxIn) -> Option<TxInputRecord> {
@@ -41,12 +42,9 @@ impl EventWriter {
     }
 
     fn to_byron_output_record(&self, source: &byron::TxOut) -> Result<TxOutputRecord, Error> {
-        let address: pallas::ledger::addresses::Address =
-            pallas::ledger::addresses::ByronAddress::new(
-                &source.address.payload.0,
-                source.address.crc,
-            )
-            .into();
+        let address: pallas_addresses::Address =
+            pallas_addresses::ByronAddress::new(&source.address.payload.0, source.address.crc)
+                .into();
 
         Ok(TxOutputRecord {
             address: address.to_string(),
@@ -168,10 +166,12 @@ impl EventWriter {
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
-        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
-            source.header.consensus_data.0.epoch,
-            source.header.consensus_data.0.slot,
-        );
+        let abs_slot = self.utils.time.as_ref().map(|time| {
+            time.byron_epoch_slot_to_absolute(
+                source.header.consensus_data.0.epoch,
+                source.header.consensus_data.0.slot,
+            )
+        });
 
         let mut record = BlockRecord {
             era: Era::Byron,
@@ -181,7 +181,7 @@ impl EventWriter {
             tx_count: source.body.tx_payload.len(),
             hash: hash.to_hex(),
             number: source.header.consensus_data.2[0],
-            slot: abs_slot,
+            slot: abs_slot.unwrap_or_default(),
             epoch: Some(source.header.consensus_data.0.epoch),
             epoch_slot: Some(source.header.consensus_data.0.slot),
             previous_hash: source.header.prev_block.to_hex(),
@@ -234,10 +234,9 @@ impl EventWriter {
         hash: &Hash<32>,
         cbor: &[u8],
     ) -> Result<BlockRecord, Error> {
-        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
-            source.header.consensus_data.epoch_id,
-            0,
-        );
+        let abs_slot = self.utils.time.as_ref().map(|time| {
+            time.byron_epoch_slot_to_absolute(source.header.consensus_data.epoch_id, 0)
+        });
 
         Ok(BlockRecord {
             era: Era::Byron,
@@ -247,7 +246,7 @@ impl EventWriter {
             vrf_vkey: Default::default(),
             tx_count: 0,
             number: source.header.consensus_data.difficulty[0],
-            slot: abs_slot,
+            slot: abs_slot.unwrap_or_default(),
             epoch: Some(source.header.consensus_data.epoch_id),
             epoch_slot: Some(0),
             previous_hash: source.header.prev_block.to_hex(),
@@ -288,16 +287,18 @@ impl EventWriter {
     ) -> Result<(), Error> {
         let hash = block.header.original_hash();
 
-        let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
-            block.header.consensus_data.0.epoch,
-            block.header.consensus_data.0.slot,
-        );
+        let abs_slot = self.utils.time.as_ref().map(|time| {
+            time.byron_epoch_slot_to_absolute(
+                block.header.consensus_data.0.epoch,
+                block.header.consensus_data.0.slot,
+            )
+        });
 
         let child = self.child_writer(EventContext {
             block_hash: Some(hex::encode(hash)),
             block_number: Some(block.header.consensus_data.2[0]),
-            slot: Some(abs_slot),
-            timestamp: self.compute_timestamp(abs_slot),
+            slot: abs_slot,
+            timestamp: abs_slot.and_then(|slot| self.compute_timestamp(slot)),
             ..EventContext::default()
         });
 
@@ -311,7 +312,7 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
     pub fn crawl_from_byron_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let (_, block): (u16, byron::MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
+        let (_, block): (u16, byron::MintedBlock) = pallas_codec::minicbor::decode(cbor)?;
         self.crawl_byron_with_cbor(&block, cbor)
     }
 
@@ -328,16 +329,15 @@ impl EventWriter {
         if self.config.include_byron_ebb {
             let hash = block.header.original_hash();
 
-            let abs_slot = pallas::ledger::traverse::time::byron_epoch_slot_to_absolute(
-                block.header.consensus_data.epoch_id,
-                0,
-            );
+            let abs_slot = self.utils.time.as_ref().map(|time| {
+                time.byron_epoch_slot_to_absolute(block.header.consensus_data.epoch_id, 0)
+            });
 
             let child = self.child_writer(EventContext {
                 block_hash: Some(hex::encode(hash)),
                 block_number: Some(block.header.consensus_data.difficulty[0]),
-                slot: Some(abs_slot),
-                timestamp: self.compute_timestamp(abs_slot),
+                slot: abs_slot,
+                timestamp: abs_slot.and_then(|slot| self.compute_timestamp(slot)),
                 ..EventContext::default()
             });
 
@@ -352,7 +352,7 @@ impl EventWriter {
     /// Entry-point to start crawling a blocks for events. Meant to be used when
     /// we haven't decoded the CBOR yet (for example, N2N).
     pub fn crawl_from_ebb_cbor(&self, cbor: &[u8]) -> Result<(), Error> {
-        let (_, block): (u16, byron::MintedEbBlock) = pallas::codec::minicbor::decode(cbor)?;
+        let (_, block): (u16, byron::MintedEbBlock) = pallas_codec::minicbor::decode(cbor)?;
         self.crawl_ebb_with_cbor(&block, cbor)
     }
 }

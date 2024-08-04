@@ -42,6 +42,7 @@ async fn send_pubsub_msg(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn writer_loop(
     input: StageReceiver,
     topic_name: &str,

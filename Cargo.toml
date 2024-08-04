@@ -12,7 +12,13 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas = "0.18.2"
+pallas-multiplexer = "0.18.2"
+pallas-miniprotocols = "0.18.2"
+pallas-primitives = "0.29.0"
+pallas-traverse = "0.29.0"
+pallas-addresses = "0.29.0"
+pallas-codec = "0.29.0"
+pallas-crypto = "0.29.0"
 # pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
 hex = "0.4.3"
@@ -30,6 +36,7 @@ strum = "0.24"
 strum_macros = "0.24"
 prometheus_exporter = { version = "0.8.5", default-features = false }
 unicode-truncate = "0.2.0"
+time = "0.3.36"
 
 # feature logs
 file-rotate = { version = "0.7.1", optional = true }
@@ -63,7 +70,7 @@ redis = { version = "0.21.6", optional = true, features = ["tokio-comp"] }
 
 # features: gcp
 
-google-cloud-gax = {version ="0.17.0", optional = true }
+google-cloud-gax = { version = "0.17.0", optional = true }
 google-cloud-pubsub = { version = "0.23.0", optional = true }
 google-cloud-googleapis = { version = "0.12.0", optional = true }
 
@@ -80,5 +87,5 @@ elasticsink = ["elasticsearch", "tokio"]
 fingerprint = ["murmur3"]
 aws = ["aws-config", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3", "tokio"]
 redissink = ["redis", "tokio"]
-gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "tokio", "web" ,"google-cloud-gax"]
+gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "tokio", "web", "google-cloud-gax"]
 rabbitmqsink = ["lapin", "tokio"]

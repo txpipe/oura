@@ -1,13 +1,9 @@
 use core::fmt;
 use std::{ops::Deref, str::FromStr, time::Duration};
 
-use pallas::{
-    ledger::traverse::{probe, Era},
-    network::{
-        miniprotocols::{chainsync, Point, MAINNET_MAGIC, TESTNET_MAGIC},
-        multiplexer::{bearers::Bearer, StdChannel, StdPlexer},
-    },
-};
+use pallas_miniprotocols::{chainsync, Point, MAINNET_MAGIC, TESTNET_MAGIC};
+use pallas_multiplexer::{bearers::Bearer, StdChannel, StdPlexer};
+use pallas_traverse::{probe, Era};
 
 use serde::{de::Visitor, Deserializer};
 use serde::{Deserialize, Serialize};
@@ -72,9 +68,9 @@ impl FromStr for PointArg {
     }
 }
 
-impl ToString for PointArg {
-    fn to_string(&self) -> String {
-        format!("{},{}", self.0, self.1)
+impl std::fmt::Display for PointArg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{},{}", self.0, self.1)
     }
 }
 
@@ -262,77 +258,91 @@ pub fn should_finalize(
     false
 }
 
-pub(crate) fn intersect_starting_point<O>(
-    client: &mut chainsync::Client<StdChannel, O>,
-    intersect_arg: &Option<IntersectArg>,
-    since_arg: &Option<PointArg>,
-    utils: &Utils,
-) -> Result<Option<Point>, Error>
-where
-    chainsync::Message<O>: pallas::codec::Fragment,
-{
-    let cursor = utils.get_cursor_if_any();
+macro_rules! intersect_starting_point {
+    ($fn:ident, $client:ty) => {
+        pub(crate) fn $fn(
+            client: &mut $client,
+            intersect_arg: &Option<IntersectArg>,
+            since_arg: &Option<PointArg>,
+            utils: &Utils,
+        ) -> Result<Option<Point>, Error> {
+            let cursor = utils.get_cursor_if_any();
 
-    match cursor {
-        Some(cursor) => {
-            log::info!("found persisted cursor, will use as starting point");
-            let desired = cursor.try_into()?;
-            let (point, _) = client.find_intersect(vec![desired])?;
-
-            Ok(point)
-        }
-        None => match intersect_arg {
-            Some(IntersectArg::Fallbacks(x)) => {
-                log::info!("found 'fallbacks' intersect argument, will use as starting point");
-                let options: Result<Vec<_>, _> = x.iter().map(|x| x.clone().try_into()).collect();
-
-                let (point, _) = client.find_intersect(options?)?;
-
-                Ok(point)
-            }
-            Some(IntersectArg::Origin) => {
-                log::info!("found 'origin' intersect argument, will use as starting point");
-
-                let point = client.intersect_origin()?;
-
-                Ok(Some(point))
-            }
-            Some(IntersectArg::Point(x)) => {
-                log::info!("found 'point' intersect argument, will use as starting point");
-                let options = vec![x.clone().try_into()?];
-
-                let (point, _) = client.find_intersect(options)?;
-
-                Ok(point)
-            }
-            Some(IntersectArg::Tip) => {
-                log::info!("found 'tip' intersect argument, will use as starting point");
-
-                let point = client.intersect_tip()?;
-
-                Ok(Some(point))
-            }
-            None => match since_arg {
-                Some(x) => {
-                    log::info!("explicit 'since' argument, will use as starting point");
-                    log::warn!("`since` value is deprecated, please use `intersect`");
-                    let options = vec![x.clone().try_into()?];
-
-                    let (point, _) = client.find_intersect(options)?;
+            match cursor {
+                Some(cursor) => {
+                    log::info!("found persisted cursor, will use as starting point");
+                    let desired = cursor.try_into()?;
+                    let (point, _) = client.find_intersect(vec![desired])?;
 
                     Ok(point)
                 }
-                None => {
-                    log::info!("no starting point specified, will use tip of chain");
+                None => match intersect_arg {
+                    Some(IntersectArg::Fallbacks(x)) => {
+                        log::info!(
+                            "found 'fallbacks' intersect argument, will use as starting point"
+                        );
+                        let options: Result<Vec<_>, _> =
+                            x.iter().map(|x| x.clone().try_into()).collect();
 
-                    let point = client.intersect_tip()?;
+                        let (point, _) = client.find_intersect(options?)?;
 
-                    Ok(Some(point))
-                }
-            },
-        },
-    }
+                        Ok(point)
+                    }
+                    Some(IntersectArg::Origin) => {
+                        log::info!("found 'origin' intersect argument, will use as starting point");
+
+                        let point = client.intersect_origin()?;
+
+                        Ok(Some(point))
+                    }
+                    Some(IntersectArg::Point(x)) => {
+                        log::info!("found 'point' intersect argument, will use as starting point");
+                        let options = vec![x.clone().try_into()?];
+
+                        let (point, _) = client.find_intersect(options)?;
+
+                        Ok(point)
+                    }
+                    Some(IntersectArg::Tip) => {
+                        log::info!("found 'tip' intersect argument, will use as starting point");
+
+                        let point = client.intersect_tip()?;
+
+                        Ok(Some(point))
+                    }
+                    None => match since_arg {
+                        Some(x) => {
+                            log::info!("explicit 'since' argument, will use as starting point");
+                            log::warn!("`since` value is deprecated, please use `intersect`");
+                            let options = vec![x.clone().try_into()?];
+
+                            let (point, _) = client.find_intersect(options)?;
+
+                            Ok(point)
+                        }
+                        None => {
+                            log::info!("no starting point specified, will use tip of chain");
+
+                            let point = client.intersect_tip()?;
+
+                            Ok(Some(point))
+                        }
+                    },
+                },
+            }
+        }
+    };
 }
+
+intersect_starting_point!(
+    intersect_starting_point_n2n,
+    chainsync::N2NClient<StdChannel>
+);
+
+intersect_starting_point!(
+    intersect_starting_point_n2c,
+    chainsync::N2CClient<StdChannel>
+);
 
 pub fn unknown_block_to_events(writer: &EventWriter, body: &Vec<u8>) -> Result<(), Error> {
     match probe::block_era(body) {
@@ -351,6 +361,11 @@ pub fn unknown_block_to_events(writer: &EventWriter, body: &Vec<u8>) -> Result<(
                 writer
                     .crawl_from_babbage_cbor(body)
                     .ok_or_warn("error crawling babbage block for events");
+            }
+            Era::Conway => {
+                writer
+                    .crawl_from_conway_cbor(body)
+                    .ok_or_warn("error crawling conway block for events");
             }
             x => {
                 return Err(format!("This version of Oura can't handle era: {x}").into());

@@ -1,12 +1,12 @@
-use pallas::codec::utils::KeepRaw;
+use pallas_codec::utils::KeepRaw;
 
-use pallas::ledger::primitives::alonzo::{
+use pallas_primitives::alonzo::{
     AuxiliaryData, Certificate, Metadata, MintedBlock, MintedWitnessSet, Multiasset,
     TransactionBody, TransactionInput, TransactionOutput, Value,
 };
 
-use pallas::crypto::hash::Hash;
-use pallas::ledger::traverse::OriginalHash;
+use pallas_crypto::hash::Hash;
+use pallas_traverse::OriginalHash;
 
 use crate::{
     model::{Era, EventContext, EventData},
@@ -89,7 +89,7 @@ impl EventWriter {
         let record = self.to_legacy_output_record(output)?;
         self.append(record.into())?;
 
-        let address = pallas::ledger::addresses::Address::from_bytes(&output.address)?;
+        let address = pallas_addresses::Address::from_bytes(&output.address)?;
 
         let child = &self.child_writer(EventContext {
             output_address: address.to_string().into(),
@@ -325,7 +325,7 @@ impl EventWriter {
     /// Shelley. In this way, we can avoid having to fork the crawling procedure
     /// for each different hard-fork.
     pub fn crawl_from_shelley_cbor(&self, cbor: &[u8], era: Era) -> Result<(), Error> {
-        let (_, block): (u16, MintedBlock) = pallas::codec::minicbor::decode(cbor)?;
+        let (_, block): (u16, MintedBlock) = pallas_codec::minicbor::decode(cbor)?;
         self.crawl_shelley_with_cbor(&block, cbor, era)
     }
 }

@@ -1,9 +1,7 @@
 use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
-use pallas::network::{
-    miniprotocols::{blockfetch, chainsync, handshake, Point, MAINNET_MAGIC},
-    multiplexer::StdChannel,
-};
+use pallas_miniprotocols::{blockfetch, chainsync, handshake, Point, MAINNET_MAGIC};
+use pallas_multiplexer::StdChannel;
 
 use std::sync::mpsc::{Receiver, SyncSender};
 
@@ -11,7 +9,7 @@ use crate::{
     mapper::EventWriter,
     pipelining::StageSender,
     sources::{
-        intersect_starting_point, setup_multiplexer, should_finalize, unknown_block_to_events,
+        intersect_starting_point_n2n, setup_multiplexer, should_finalize, unknown_block_to_events,
         FinalizeConfig,
     },
     utils::{retry, Utils},
@@ -56,7 +54,7 @@ impl ChainObserver {
     ) -> Result<Continuation, Error> {
         // parse the header and extract the point of the chain
 
-        let header = pallas::ledger::traverse::MultiEraHeader::decode(
+        let header = pallas_traverse::MultiEraHeader::decode(
             content.variant,
             content.byron_prefix.map(|x| x.0),
             &content.cbor,
@@ -224,7 +222,7 @@ fn do_chainsync_attempt(
 
     let mut cs_client = chainsync::N2NClient::new(cs_channel);
 
-    let intersection = intersect_starting_point(
+    let intersection = intersect_starting_point_n2n(
         &mut cs_client,
         &config.intersect,
         #[allow(deprecated)]
