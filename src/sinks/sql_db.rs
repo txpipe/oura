@@ -43,25 +43,39 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn execute(&mut self, unit: &ChainEvent, stage: &mut Stage) -> Result<(), WorkerError> {
         let point = unit.point().clone();
 
-        let template = match unit {
+        let templates = match unit {
             ChainEvent::Apply(p, r) => {
                 let data = hbs_data(p.clone(), Some(r.clone()));
-                stage.templates.render("apply", &data)
+                let template = match r {
+                    Record::CborBlock(_) => stage.templates.render("apply_cbor_block", &data),
+                    Record::CborTx(_) => stage.templates.render("apply_cbor_tx", &data),
+                    _ => stage.templates.render("apply", &data),
+                };
+                vec![template]
             }
             ChainEvent::Undo(p, r) => {
                 let data = hbs_data(p.clone(), Some(r.clone()));
-                stage.templates.render("undo", &data)
+                let template = match r {
+                    Record::CborBlock(_) => stage.templates.render("undo_cbor_block", &data),
+                    Record::CborTx(_) => stage.templates.render("undo_cbor_tx", &data),
+                    _ => stage.templates.render("undo", &data),
+                };
+                vec![template]
             }
             ChainEvent::Reset(p) => {
                 let data = hbs_data(p.clone(), None);
-                stage.templates.render("reset", &data)
+                vec![
+                    stage.templates.render("reset_cbor_block", &data),
+                    stage.templates.render("reset_cbor_tx", &data),
+                ]
             }
         };
 
-        let statement = template.or_panic()?;
-
-        let result = sqlx::query(&statement).execute(&self.db).await.or_retry()?;
-        debug!(rows = result.rows_affected(), "sql statement executed");
+        for template in templates {
+            let statement = template.or_panic()?;
+            let result = sqlx::query(&statement).execute(&self.db).await.or_retry()?;
+            debug!(rows = result.rows_affected(), "sql statement executed");
+        }
 
         stage.ops_count.inc(1);
         stage.latest_block.set(point.slot_or_default() as i64);
@@ -91,9 +105,12 @@ pub struct Stage {
 pub struct Config {
     /// eg: sqlite::memory:
     pub connection: String,
-    pub apply_template: String,
-    pub undo_template: String,
-    pub reset_template: String,
+    pub apply_cbor_block_template: String,
+    pub undo_cbor_block_template: String,
+    pub apply_cbor_tx_template: String,
+    pub undo_cbor_tx_template: String,
+    pub reset_cbor_block_template: String,
+    pub reset_cbor_tx_template: String,
 }
 
 impl Config {
@@ -103,15 +120,27 @@ impl Config {
         let mut templates = handlebars::Handlebars::new();
 
         templates
-            .register_template_string("apply", &self.apply_template)
+            .register_template_string("apply_cbor_block", &self.apply_cbor_block_template)
             .map_err(Error::config)?;
 
         templates
-            .register_template_string("undo", &self.undo_template)
+            .register_template_string("undo_cbor_block", &self.undo_cbor_block_template)
             .map_err(Error::config)?;
 
         templates
-            .register_template_string("reset", &self.reset_template)
+            .register_template_string("apply_cbor_tx", &self.apply_cbor_tx_template)
+            .map_err(Error::config)?;
+
+        templates
+            .register_template_string("undo_cbor_tx", &self.undo_cbor_tx_template)
+            .map_err(Error::config)?;
+
+        templates
+            .register_template_string("reset_cbor_block", &self.reset_cbor_block_template)
+            .map_err(Error::config)?;
+
+        templates
+            .register_template_string("reset_cbor_tx", &self.reset_cbor_tx_template)
             .map_err(Error::config)?;
 
         let stage = Stage {
