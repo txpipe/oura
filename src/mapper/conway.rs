@@ -1,9 +1,10 @@
-use pallas_codec::utils::{KeepRaw, NonZeroInt};
+use pallas_codec::utils::{KeepRaw, NonEmptyKeyValuePairs, NonZeroInt};
 
 use pallas_primitives::conway::{
-    AuxiliaryData, Certificate, MintedBlock, MintedDatumOption, MintedPostAlonzoTransactionOutput,
-    MintedTransactionBody, MintedTransactionOutput, MintedWitnessSet, Multiasset, NetworkId,
-    RedeemerTag, RedeemersKey, RedeemersValue,
+    AuxiliaryData, Certificate, Coin, MintedBlock, MintedDatumOption,
+    MintedPostAlonzoTransactionOutput, MintedTransactionBody, MintedTransactionOutput,
+    MintedWitnessSet, Multiasset, NetworkId, RedeemerTag, RedeemersKey, RedeemersValue,
+    RewardAccount, Value,
 };
 
 use pallas_crypto::hash::Hash;
@@ -11,7 +12,8 @@ use pallas_primitives::ToCanonicalJson as _;
 use pallas_traverse::OriginalHash;
 
 use crate::model::{
-    BlockRecord, Era, MintRecord, PlutusRedeemerRecord, TransactionRecord, TxOutputRecord,
+    BlockRecord, Era, MintRecord, OutputAssetRecord, PlutusRedeemerRecord, TransactionRecord,
+    TxOutputRecord, WithdrawalRecord,
 };
 use crate::utils::time::TimeProvider;
 use crate::{
@@ -22,6 +24,27 @@ use crate::{
 use super::{map::ToHex, EventWriter};
 
 impl EventWriter {
+    pub fn collect_conway_coin_value(&self, amount: &Value) -> u64 {
+        match amount {
+            Value::Coin(x) => *x,
+            Value::Multiasset(x, _) => *x,
+        }
+    }
+
+    pub fn collect_conway_asset_records(&self, amount: &Value) -> Vec<OutputAssetRecord> {
+        match amount {
+            Value::Coin(_) => vec![],
+            Value::Multiasset(_, policies) => policies
+                .iter()
+                .flat_map(|(policy, assets)| {
+                    assets.iter().map(|(asset, amount)| {
+                        self.to_transaction_output_asset_record(policy, asset, u64::from(amount))
+                    })
+                })
+                .collect(),
+        }
+    }
+
     pub fn collect_conway_mint_records(&self, mint: &Multiasset<NonZeroInt>) -> Vec<MintRecord> {
         mint.iter()
             .flat_map(|(policy, assets)| {
@@ -50,8 +73,8 @@ impl EventWriter {
 
         Ok(TxOutputRecord {
             address: address.to_string(),
-            amount: super::map::get_tx_output_coin_value(&output.value),
-            assets: self.collect_asset_records(&output.value).into(),
+            amount: self.collect_conway_coin_value(&output.value),
+            assets: self.collect_conway_asset_records(&output.value).into(),
             datum_hash: match &output.datum_option {
                 Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
                 Some(MintedDatumOption::Data(x)) => Some(x.original_hash().to_hex()),
@@ -94,6 +117,22 @@ impl EventWriter {
             .map(|x| match x {
                 MintedTransactionOutput::Legacy(x) => self.to_legacy_output_record(x),
                 MintedTransactionOutput::PostAlonzo(x) => self.to_conway_output_record(x),
+            })
+            .collect()
+    }
+
+    pub fn collect_conway_withdrawal_records(
+        &self,
+        withdrawls: &NonEmptyKeyValuePairs<RewardAccount, Coin>,
+    ) -> Vec<WithdrawalRecord> {
+        withdrawls
+            .iter()
+            .map(|(reward_account, coin)| WithdrawalRecord {
+                reward_account: {
+                    let hex = reward_account.to_hex();
+                    hex.strip_prefix("e1").map(|x| x.to_string()).unwrap_or(hex)
+                },
+                coin: *coin,
             })
             .collect()
     }
@@ -243,7 +282,7 @@ impl EventWriter {
             }
 
             if let Some(withdrawals) = &body.withdrawals {
-                record.withdrawals = self.collect_withdrawal_records(withdrawals).into();
+                record.withdrawals = self.collect_conway_withdrawal_records(withdrawals).into();
             }
         }
 
@@ -317,6 +356,22 @@ impl EventWriter {
             .collect()
     }
 
+    pub fn crawl_conway_transaction_output_amount(&self, amount: &Value) -> Result<(), Error> {
+        if let Value::Multiasset(_, policies) = amount {
+            for (policy, assets) in policies.iter() {
+                for (asset, amount) in assets.iter() {
+                    self.append_from(self.to_transaction_output_asset_record(
+                        policy,
+                        asset,
+                        u64::from(amount),
+                    ))?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     fn crawl_conway_output(&self, output: &MintedPostAlonzoTransactionOutput) -> Result<(), Error> {
         let record = self.to_conway_output_record(output)?;
         self.append(record.into())?;
@@ -328,7 +383,7 @@ impl EventWriter {
             ..EventContext::default()
         });
 
-        child.crawl_transaction_output_amount(&output.value)?;
+        child.crawl_conway_transaction_output_amount(&output.value)?;
 
         if let Some(MintedDatumOption::Data(datum)) = &output.datum_option {
             let record = self.to_plutus_datum_record(datum)?;
