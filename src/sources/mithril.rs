@@ -221,7 +221,6 @@ fn read_blocks_with_config(
         .map_err(|_| WorkerError::Panic)
 }
 
-
 #[derive(Stage)]
 #[stage(name = "source", unit = "()", worker = "Worker")]
 pub struct Stage {
