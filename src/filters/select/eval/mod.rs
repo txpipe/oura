@@ -510,8 +510,7 @@ fn iter_tx_datums(tx: &ParsedTx) -> impl Iterator<Item = &[u8]> {
     let a = tx
         .outputs
         .iter()
-        .map(|x| &x.datum)
-        .flatten()
+        .flat_map(|x| &x.datum)
         .map(|x| x.hash.as_ref());
 
     a
