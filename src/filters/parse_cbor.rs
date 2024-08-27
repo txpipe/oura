@@ -11,12 +11,8 @@ use crate::framework::*;
 #[derive(Clone, Default)]
 struct NoOpContext;
 
-impl interop::Context for NoOpContext {
-    fn get_txo<'a>(
-        &self,
-        _tx_hash: pallas::crypto::hash::Hash<32>,
-        _txo_index: u32,
-    ) -> Option<trv::MultiEraOutput<'a>> {
+impl interop::LedgerContext for NoOpContext {
+    fn get_utxos(&self, _refs: &[interop::TxoRef]) -> Option<interop::UtxoMap> {
         None
     }
 }

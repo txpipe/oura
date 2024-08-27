@@ -1,10 +1,10 @@
 use std::{ops::Deref, str::FromStr};
 
-use serde::{Deserialize, Serialize};
-use tracing::warn;
-use utxorpc_spec::utxorpc::v1alpha::cardano::{
+use pallas::interop::utxorpc::spec::cardano::{
     Asset, AuxData, Metadata, Metadatum, Multiasset, TxInput, TxOutput,
 };
+use serde::{Deserialize, Serialize};
+use tracing::warn;
 
 use crate::framework::*;
 
@@ -129,6 +129,10 @@ pub trait PatternOf<S> {
         let outcomes = iter.map(|x| self.is_match(x));
         MatchOutcome::fold_any_of(outcomes)
     }
+
+    fn is_some_match(&self, subject: Option<S>) -> MatchOutcome {
+        self.is_any_match(subject.into_iter())
+    }
 }
 
 impl<S, P> PatternOf<S> for Option<P>
@@ -218,7 +222,7 @@ impl PatternOf<&[u8]> for TextPattern {
 impl PatternOf<&Metadatum> for TextPattern {
     fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
         match subject.metadatum.as_ref() {
-            Some(utxorpc_spec::utxorpc::v1alpha::cardano::metadatum::Metadatum::Text(subject)) => {
+            Some(pallas::interop::utxorpc::spec::cardano::metadatum::Metadatum::Text(subject)) => {
                 self.is_match(subject.as_str())
             }
             _ => MatchOutcome::Negative,
@@ -289,7 +293,9 @@ impl PatternOf<&TxOutput> for OutputPattern {
 
         let c = MatchOutcome::fold_all_of(c);
 
-        let d = self.datum.is_match(subject.datum_hash.as_ref());
+        let d = self
+            .datum
+            .is_some_match(subject.datum.as_ref().map(|d| d.hash.as_ref()));
 
         MatchOutcome::fold_all_of([a, b, c, d].into_iter())
     }
@@ -330,7 +336,9 @@ impl PatternOf<&TxInput> for InputPattern {
 
         let c = MatchOutcome::fold_all_of(c);
 
-        let d = self.datum.is_match(as_output.datum_hash.as_ref());
+        let d = self
+            .datum
+            .is_some_match(as_output.datum.as_ref().map(|x| x.hash.as_ref()));
 
         MatchOutcome::fold_all_of([a, b, c, d].into_iter())
     }
@@ -499,7 +507,12 @@ fn iter_tx_assets(tx: &ParsedTx) -> impl Iterator<Item = &Multiasset> {
 }
 
 fn iter_tx_datums(tx: &ParsedTx) -> impl Iterator<Item = &[u8]> {
-    let a = tx.outputs.iter().map(|x| x.datum_hash.as_ref());
+    let a = tx
+        .outputs
+        .iter()
+        .map(|x| &x.datum)
+        .flatten()
+        .map(|x| x.hash.as_ref());
 
     a
 }

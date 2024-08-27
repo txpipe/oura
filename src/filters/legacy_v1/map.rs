@@ -408,7 +408,7 @@ impl EventWriter<'_> {
                 conway::RedeemerTag::Vote => "vote".to_string(),
                 conway::RedeemerTag::Propose => "propose".to_string(),
             },
-            ex_units_mem: redeemer.ex_units().mem,
+            ex_units_mem: redeemer.ex_units().mem as u32,
             ex_units_steps: redeemer.ex_units().steps,
             input_idx: redeemer.index(),
             plutus_data: redeemer.data().to_json(),
