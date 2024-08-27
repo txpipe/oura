@@ -1,4 +1,4 @@
-use utxorpc_spec::utxorpc::v1alpha::cardano::{metadatum, AuxData, Metadata, Metadatum, Tx};
+use pallas::interop::utxorpc::spec::cardano::{metadatum, AuxData, Datum, Metadata, Metadatum, Tx};
 
 use super::*;
 
@@ -17,6 +17,7 @@ pub fn multiasset_combo(policy_hex: &str, asset_prefix: &str) -> Multiasset {
                 mint_coin: 0,
             },
         ],
+        redeemer: None,
     }
 }
 
@@ -41,7 +42,10 @@ pub fn test_vectors() -> Vec<Tx> {
                 multiasset_combo("7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373", "abc"),
                 multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
             ],
-            datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+            datum: Datum{
+                hash:hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+                ..Default::default()
+            }.into(),
             ..Default::default()
         }],
         auxiliary: Some(AuxData {
@@ -64,10 +68,14 @@ pub fn test_vectors() -> Vec<Tx> {
                 "7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373",
                 "abc",
             )],
-            datum_hash: hex::decode(
-                "923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec",
-            )
-            .unwrap()
+            datum: Datum {
+                hash: hex::decode(
+                    "923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec",
+                )
+                .unwrap()
+                .into(),
+                ..Default::default()
+            }
             .into(),
             ..Default::default()
         }],
@@ -89,7 +97,10 @@ pub fn test_vectors() -> Vec<Tx> {
             assets: vec![
                 multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
             ],
-            datum_hash: hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+            datum: Datum{
+                hash:hex::decode("923918e403bf43c34b4ef6b48eb2ee04babed17320d8d1b9ff9ad086e86f44ec").unwrap().into(),
+                ..Default::default()
+            }.into(),
             ..Default::default()
         }],
         auxiliary: Some(AuxData {

@@ -43,7 +43,7 @@ impl Stage {
         let output = match output {
             serde_json::Value::Null => vec![],
             serde_json::Value::Array(x) => x.into_iter().map(Record::GenericJson).collect(),
-            x @ _ => vec![Record::GenericJson(x)],
+            x => vec![Record::GenericJson(x)],
         };
 
         Ok(output)
