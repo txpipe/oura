@@ -104,10 +104,26 @@ impl EventWriter {
                     .collect_native_witness_records(&witnesses.native_script)?
                     .into();
 
-                record.plutus_witnesses = self
-                    .collect_plutus_v1_witness_records(&witnesses.plutus_v1_script)?
-                    .into();
+                let mut all_plutus = vec![];
 
+                let plutus_v1: Vec<_> = witnesses
+                    .plutus_v1_script
+                    .iter()
+                    .flatten()
+                    .map(|i| self.to_plutus_v1_witness_record(i))
+                    .collect::<Result<_, _>>()?;
+
+                all_plutus.extend(plutus_v1);
+
+                let plutus_v2: Vec<_> = witnesses
+                    .plutus_v2_script
+                    .iter()
+                    .flatten()
+                    .map(|i| self.to_plutus_v2_witness_record(i))
+                    .collect::<Result<_, _>>()?;
+
+                all_plutus.extend(plutus_v2);
+                record.plutus_witnesses = Some(all_plutus);
                 record.plutus_redeemers = self
                     .collect_plutus_redeemer_records(&witnesses.redeemer)?
                     .into();
