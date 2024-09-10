@@ -1,5 +1,6 @@
 //! Internal pipeline framework
 
+use pallas::crypto::hash::Hash;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use serde_json::{json, Value as JsonValue};
@@ -101,21 +102,37 @@ pub struct Context {
     pub breadcrumbs: Breadcrumbs,
 }
 
+pub type Cbor = Vec<u8>;
+pub type TxRef = Hash<32>;
+pub type TxoIdx = u32;
+pub type TxoRef = (TxRef, TxoIdx);
+pub type Spent = bool;
+
 #[derive(Debug, Clone)]
 pub enum Record {
-    CborBlock(Vec<u8>),
-    CborTx(Vec<u8>),
+    CborBlock(Cbor),
+    CborTx(TxRef, Cbor),
+    CborUtxo(TxoRef, Option<Cbor>, Spent),
+    ParsedBlock(ParsedBlock),
+    ParsedTx(ParsedTx),
     GenericJson(JsonValue),
     OuraV1Event(legacy_v1::Event),
-    ParsedTx(ParsedTx),
-    ParsedBlock(ParsedBlock),
 }
 
 impl From<Record> for JsonValue {
     fn from(value: Record) -> Self {
         match value {
             Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
-            Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
+            Record::CborTx(hash, cbor) => {
+                json!({ "hash": hash.to_string(), "hex": hex::encode(cbor) })
+            }
+            Record::CborUtxo((hash, idx), cbor, spent) => {
+                json!({
+                    "txo": format!("{hash}#{idx}"),
+                    "hex": cbor.map(|x| hex::encode(x)),
+                    "spent": spent,
+                })
+            }
             Record::ParsedBlock(x) => json!(x),
             Record::ParsedTx(x) => json!(x),
             Record::OuraV1Event(x) => json!(x),
