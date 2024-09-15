@@ -1,4 +1,6 @@
-use pallas::ledger::addresses::{Address, ByronAddress, ShelleyAddress, StakeAddress};
+use pallas::ledger::addresses::{
+    Address, ByronAddress, ShelleyAddress, ShelleyDelegationPart, StakeAddress,
+};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -107,7 +109,11 @@ impl From<Address> for AddressPattern {
             },
             Address::Shelley(x) => Self {
                 payment_part: Some(x.payment().to_vec().into()),
-                delegation_part: Some(x.delegation().to_vec().into()),
+                delegation_part: match x.delegation() {
+                    ShelleyDelegationPart::Key(x) => Some(x.to_vec().into()),
+                    ShelleyDelegationPart::Script(x) => Some(x.to_vec().into()),
+                    _ => None,
+                },
                 ..Default::default()
             },
         }
@@ -137,8 +143,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_pattern() {
+    fn parse_full_address_pattern() {
         let pattern = AddressPattern::from_str("addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x").unwrap();
+
+        dbg!(&pattern);
 
         let expected = AddressPattern {
             payment_part: FlexBytes::from_hex(
@@ -160,6 +168,27 @@ mod tests {
     }
 
     #[test]
+    fn parse_payment_part_pattern() {
+        let pattern =
+            AddressPattern::from_str("addr1w8ax5k9mutg07p2ngscu3chsauktmstq92z9de938j8nqacprc9mw")
+                .unwrap();
+
+        let expected = AddressPattern {
+            payment_part: FlexBytes::from_hex(
+                "fa6a58bbe2d0ff05534431c8e2f0ef2cbdc1602a8456e4b13c8f3077",
+            )
+            .unwrap()
+            .into(),
+
+            delegation_part: None,
+
+            ..Default::default()
+        };
+
+        assert_eq!(pattern, expected);
+    }
+
+    #[test]
     fn address_match() {
         let pattern = |addr: &str| Pattern::from(AddressPattern::from_str(addr).unwrap());
 
@@ -171,6 +200,6 @@ mod tests {
         let possitives = testing::find_positive_test_vectors(pattern(
             "addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8",
         ));
-        assert_eq!(possitives, vec![2]);
+        assert_eq!(possitives, vec![1, 2, 3]);
     }
 }
