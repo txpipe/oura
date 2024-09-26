@@ -289,6 +289,17 @@ impl EventWriter<'_> {
                 .map(|x| self.to_withdrawal_record(*x))
                 .collect::<Vec<_>>()
                 .into();
+
+            record.reference_inputs = if tx.reference_inputs().is_empty() {
+                None
+            } else {
+                Some(
+                    tx.reference_inputs()
+                        .iter()
+                        .map(TxInputRecord::from)
+                        .collect(),
+                )
+            };
         }
 
         record
