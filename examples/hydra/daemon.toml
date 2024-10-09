@@ -1,0 +1,25 @@
+[source]
+type = "Hydra"
+hydra_socket_url = "ws://127.0.0.1:4001"
+magic = 42
+
+[chain]
+type = "custom"
+magic = 42
+network_id = 1
+byron_epoch_length = 21600
+byron_slot_length = 20
+byron_known_slot = 18
+byron_known_hash = "96f058d2ab8abb3a7726ef7b18bfba4b9003e84819c59b0a9406a63d48ad274a"
+byron_known_time = 1506203091
+shelley_epoch_length = 432000
+shelley_slot_length = 1
+shelley_known_slot = 18
+shelley_known_hash = "96f058d2ab8abb3a7726ef7b18bfba4b9003e84819c59b0a9406a63d48ad274a"
+shelley_known_time = 1596491091
+
+[intersect]
+type = "Tip"
+
+[sink]
+type = "Stdout"
