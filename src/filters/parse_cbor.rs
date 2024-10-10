@@ -40,6 +40,11 @@ impl From<&Stage> for Worker {
 
 gasket::impl_mapper!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let output = unit.clone().try_map_record(|r| match r {
+        Record::CborBlock(cbor) => {
+            let block = trv::MultiEraBlock::decode(&cbor).or_panic()?;
+            let block = stage.mapper.map_block(&block);
+            Ok(Record::ParsedBlock(block))
+        }
         Record::CborTx(cbor) => {
             let tx = trv::MultiEraTx::decode(&cbor).or_panic()?;
             let tx = stage.mapper.map_tx(&tx);
