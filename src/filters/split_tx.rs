@@ -4,28 +4,33 @@ use gasket::framework::*;
 use serde::Deserialize;
 use std::borrow::Cow;
 
-use pallas::crypto::hash::Hash;
 use pallas::ledger::traverse as trv;
 
 use crate::framework::*;
 
-type CborBlock<'a> = Cow<'a, [u8]>;
 type CborTx<'a> = Cow<'a, [u8]>;
+type CborUtxo<'a> = Cow<'a, [u8]>;
 
-fn map_block_to_tx(cbor: CborBlock) -> Result<Vec<(Hash<32>, CborTx)>, WorkerError> {
-    let block = trv::MultiEraBlock::decode(cbor.as_ref()).or_panic()?;
+fn map_tx_to_utxo(cbor: CborTx) -> Result<Vec<(TxoRef, Option<CborUtxo>, Spent)>, WorkerError> {
+    let tx = trv::MultiEraTx::decode(cbor.as_ref()).or_panic()?;
 
-    let txs: Vec<_> = block
-        .txs()
+    let utxos: Vec<_> = tx
+        .produces()
         .iter()
-        .map(|tx| (tx.hash(), Cow::Owned(tx.encode())))
+        .map(|(idx, utxo)| {
+            (
+                (tx.hash(), *idx as u32),
+                Some(Cow::Owned(utxo.encode())),
+                false,
+            )
+        })
         .collect();
 
-    Ok(txs)
+    Ok(utxos)
 }
 
 #[derive(Default, Stage)]
-#[stage(name = "filter-split-block", unit = "ChainEvent", worker = "Worker")]
+#[stage(name = "filter-split-tx", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
     pub input: FilterInputPort,
     pub output: FilterOutputPort,
@@ -45,10 +50,10 @@ impl From<&Stage> for Worker {
 
 gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let output = unit.clone().try_map_record_to_many(|r| match r {
-        Record::CborBlock(cbor) => {
-            let out = map_block_to_tx(Cow::Borrowed(&cbor))?
+        Record::CborTx(_, cbor) => {
+            let out = map_tx_to_utxo(Cow::Borrowed(&cbor))?
                 .into_iter()
-                .map(|(hash, cbor)| Record::CborTx(hash, cbor.into()))
+                .map(|(txo, cbor, spent)| Record::CborUtxo(txo, cbor.map(|cbor| cbor.into()), spent))
                 .collect();
 
             Ok(out)

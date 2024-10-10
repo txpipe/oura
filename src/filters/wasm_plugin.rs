@@ -21,7 +21,8 @@ impl Stage {
     fn map_record(&mut self, r: Record) -> Result<Vec<Record>, Error> {
         let extism::convert::Json::<serde_json::Value>(output) = match r {
             Record::CborBlock(x) => self.plugin.call("map_cbor_block", x).unwrap(),
-            Record::CborTx(x) => self.plugin.call("map_cbor_tx", x).unwrap(),
+            Record::CborTx(_, x) => self.plugin.call("map_cbor_tx", x).unwrap(),
+            Record::CborUtxo(_, x, spent) => self.plugin.call("map_cbor_utxo", x).unwrap(),
             Record::ParsedTx(x) => self
                 .plugin
                 .call("map_u5c_tx", extism::convert::Json(x))
