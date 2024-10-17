@@ -8,6 +8,7 @@ use crate::framework::*;
 
 pub mod n2c;
 pub mod n2n;
+pub mod hydra;
 
 #[cfg(feature = "u5c")]
 pub mod u5c;
@@ -23,6 +24,8 @@ pub enum Bootstrapper {
 
     #[cfg(target_family = "unix")]
     N2C(n2c::Stage),
+
+    Hydra(hydra::Stage),
 
     #[cfg(feature = "u5c")]
     U5C(u5c::Stage),
@@ -42,6 +45,8 @@ impl Bootstrapper {
             #[cfg(target_family = "unix")]
             Bootstrapper::N2C(p) => &mut p.output,
 
+            Bootstrapper::Hydra(p) => &mut p.output,
+
             #[cfg(feature = "u5c")]
             Bootstrapper::U5C(p) => &mut p.output,
 
@@ -59,6 +64,8 @@ impl Bootstrapper {
 
             #[cfg(target_family = "unix")]
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),
+
+            Bootstrapper::Hydra(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "u5c")]
             Bootstrapper::U5C(x) => gasket::runtime::spawn_stage(x, policy),
@@ -80,6 +87,8 @@ pub enum Config {
     #[cfg(target_family = "unix")]
     N2C(n2c::Config),
 
+    Hydra(hydra::Config),
+
     #[cfg(feature = "u5c")]
     U5C(u5c::Config),
 
@@ -97,6 +106,8 @@ impl Config {
 
             #[cfg(target_family = "unix")]
             Config::N2C(c) => Ok(Bootstrapper::N2C(c.bootstrapper(ctx)?)),
+
+            Config::Hydra(c) => Ok(Bootstrapper::Hydra(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "u5c")]
             Config::U5C(c) => Ok(Bootstrapper::U5C(c.bootstrapper(ctx)?)),

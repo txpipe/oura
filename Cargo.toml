@@ -79,3 +79,7 @@ extism = { version = "1.2.0", optional = true }
 mithril-client = { version = "^0.8", optional = true, features = ["fs"] }
 miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
+tungstenite = "0.24.0"
+tokio-tungstenite = "0.24.0"
+futures-util = "0.3"
+bytes = "1.7.2"
