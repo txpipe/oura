@@ -13,10 +13,11 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use serde::de::{self};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
+use serde_with::{formats::PreferMany, serde_as, OneOrMany};
 
 use crate::framework::*;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct HydraMessage {
     pub seq: u64,
     pub head_id: Option<Vec<u8>>,
@@ -111,6 +112,10 @@ where
 
     Ok(cbor)
 }
+
+#[serde_as]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
+pub struct HydraMessages(#[serde_as(as = "OneOrMany<_, PreferMany>")] pub Vec<HydraMessage>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Snapshot {

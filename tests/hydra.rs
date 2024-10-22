@@ -1,20 +1,37 @@
 use std::fs;
 
-use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
+use oura::sources::hydra::{HydraMessage, HydraMessagePayload, HydraMessages};
 use serde_json::json;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-fn run_scenario(_expected_msgs: &[HydraMessage], expected_file: &str) -> TestResult {
-    let _file = fs::read_to_string(expected_file)?;
-    panic!("unimplemented: run_scenario")
-}
+//fn run_scenario(expected_msgs: &Vec<HydraMessagePayload>, expected_file: &str) -> TestResult {
+//    let input = fs::read_to_string(expected_file)?;
+//    let deserialized: HydraMessages = serde_json::from_str(&input)?;
+//    println!("deserialized {:?}", deserialized);
+//    assert_eq!(
+//        deserialized
+//            .0
+//            .iter()
+//            .map(|msg| msg.payload.clone())
+//            .collect::<Vec<HydraMessagePayload>>(),
+//        *expected_msgs
+//    );
+//    Ok(())
+//}
 
 fn test_event_deserialization(expected: HydraMessage, input: &str) -> TestResult {
     let deserialized: HydraMessage = serde_json::from_str(&input)?;
     assert_eq!(deserialized, expected);
     Ok(())
 }
+
+fn test_events_deserialization(expected: HydraMessages, input: &str) -> TestResult {
+    let deserialized: HydraMessages = serde_json::from_str(&input)?;
+    assert_eq!(deserialized, expected);
+    Ok(())
+}
+
 #[test]
 fn tx_valid_evt() -> TestResult {
     let evt = HydraMessage {
@@ -167,4 +184,37 @@ fn committed_evt() -> TestResult {
  }
 "#;
     test_event_deserialization(evt, &raw_str)
+}
+
+#[test]
+fn one_hydra_message() -> TestResult {
+    let evts = HydraMessages(vec![HydraMessage {
+        seq: 2,
+        payload: HydraMessagePayload::Other,
+        head_id: None,
+        raw_json: json!(
+        { "headStatus": "Idle"
+           , "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425"
+           , "me":
+           { "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
+           }
+           , "seq": 2
+           , "tag": "Greetings"
+           , "timestamp": "2024-10-08T13:04:56.445761285Z"
+        }),
+    }]);
+
+    let raw_str = r#"
+ {
+   "headStatus": "Idle",
+   "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425",
+   "me": {
+     "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
+   },
+   "seq": 2,
+   "tag": "Greetings",
+   "timestamp": "2024-10-08T13:04:56.445761285Z"
+ }
+"#;
+    test_events_deserialization(evts, &raw_str)
 }
