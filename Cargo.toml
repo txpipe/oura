@@ -12,8 +12,8 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas-multiplexer = "0.18.2"
-pallas-miniprotocols = "0.18.2"
+pallas-multiplexer = "0.18.3"
+pallas-miniprotocols = "0.18.3"
 pallas-primitives = "0.30.1"
 pallas-traverse = "0.30.1"
 pallas-addresses = "0.30.1"
