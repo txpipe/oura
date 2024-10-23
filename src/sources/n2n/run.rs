@@ -1,4 +1,4 @@
-use std::{fmt::Debug, ops::Deref, sync::Arc, time::Duration};
+use std::{collections::HashMap, fmt::Debug, ops::Deref, sync::Arc, time::Duration};
 
 use pallas_miniprotocols::{blockfetch, chainsync, handshake, Point, MAINNET_MAGIC};
 use pallas_multiplexer::StdChannel;
@@ -183,9 +183,21 @@ enum AttemptError {
     Other(Error),
 }
 
+pub fn get_compatible_version_table(
+    network_magic: u64,
+    min_protocol: u64,
+    max_protocol: u64,
+) -> handshake::n2n::VersionTable {
+    let values = (min_protocol..=max_protocol)
+        .map(|x| (x, handshake::n2n::VersionData::new(network_magic, false)))
+        .collect::<HashMap<u64, handshake::n2n::VersionData>>();
+
+    handshake::n2n::VersionTable { values }
+}
+
 fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
     let mut client = handshake::N2NClient::new(channel);
-    let versions = handshake::n2n::VersionTable::v4_and_above(magic);
+    let versions = get_compatible_version_table(magic, 7, 13);
 
     match client.handshake(versions) {
         Ok(confirmation) => match confirmation {
