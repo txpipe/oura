@@ -185,7 +185,7 @@ enum AttemptError {
 
 fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
     let mut client = handshake::N2NClient::new(channel);
-    let versions = handshake::n2n::VersionTable::v4_and_above(magic);
+    let versions = handshake::n2n::VersionTable::v7_and_above(magic);
 
     match client.handshake(versions) {
         Ok(confirmation) => match confirmation {
