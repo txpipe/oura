@@ -178,6 +178,7 @@ pub struct TransactionRecord {
     pub outputs: Option<Vec<TxOutputRecord>>,
     pub collateral_inputs: Option<Vec<TxInputRecord>>,
     pub collateral_output: Option<TxOutputRecord>,
+    pub reference_inputs: Option<Vec<TxInputRecord>>,
     pub mint: Option<Vec<MintRecord>>,
     pub vkey_witnesses: Option<Vec<VKeyWitnessRecord>>,
     pub native_witnesses: Option<Vec<NativeWitnessRecord>>,
