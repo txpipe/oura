@@ -214,3 +214,52 @@ fn two_valid_evts() -> TestResult {
 "#;
     test_events_deserialisation(evts, &raw_str)
 }
+
+#[test]
+fn three_valid_evts() -> TestResult {
+    let evts = vec![
+        HydraMessage {
+            seq: 0,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "peer": "3"
+               , "seq": 0
+               , "tag": "PeerConnected"
+               , "timestamp": "2024-10-08T13:01:20.556003751Z"
+            }),
+        },
+        HydraMessage {
+            seq: 1,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "peer": "2"
+               , "seq": 1
+               , "tag": "PeerConnected"
+               , "timestamp": "2024-10-08T13:01:20.559653645Z"
+            }),
+        },
+        HydraMessage {
+            seq: 2,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "headStatus": "Idle"
+               , "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425"
+               , "me":
+               { "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
+               }
+               , "seq": 2
+               , "tag": "Greetings"
+               , "timestamp": "2024-10-08T13:04:56.445761285Z"
+            }),
+        },
+    ];
+
+    let raw_str = r#"{"peer":"3","seq":0,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.556003751Z"}
+{"peer":"2","seq":1,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.559653645Z"}
+{"headStatus":"Idle","hydraNodeVersion":"0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425","me":{"vkey":"b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"},"seq":2,"tag":"Greetings","timestamp":"2024-10-08T13:04:56.445761285Z"}
+"#;
+    test_events_deserialisation(evts, &raw_str)
+}
