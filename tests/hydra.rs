@@ -1,33 +1,20 @@
-use std::fs;
-
-use oura::sources::hydra::{HydraMessage, HydraMessagePayload, HydraMessages};
+use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use serde_json::json;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-//fn run_scenario(expected_msgs: &Vec<HydraMessagePayload>, expected_file: &str) -> TestResult {
-//    let input = fs::read_to_string(expected_file)?;
-//    let deserialized: HydraMessages = serde_json::from_str(&input)?;
-//    println!("deserialized {:?}", deserialized);
-//    assert_eq!(
-//        deserialized
-//            .0
-//            .iter()
-//            .map(|msg| msg.payload.clone())
-//            .collect::<Vec<HydraMessagePayload>>(),
-//        *expected_msgs
-//    );
-//    Ok(())
-//}
-
-fn test_event_deserialization(expected: HydraMessage, input: &str) -> TestResult {
-    let deserialized: HydraMessage = serde_json::from_str(&input)?;
-    assert_eq!(deserialized, expected);
+fn test_events_deserialisation(expected_msgs: Vec<HydraMessage>, input: &str) -> TestResult {
+    let mut deserialized: Vec<HydraMessage> = Vec::new();
+    for line in input.lines() {
+        let msg: HydraMessage = serde_json::from_str(&line)?;
+        deserialized.push(msg);
+    }
+    assert_eq!(deserialized, expected_msgs);
     Ok(())
 }
 
-fn test_events_deserialization(expected: HydraMessages, input: &str) -> TestResult {
-    let deserialized: HydraMessages = serde_json::from_str(&input)?;
+fn test_event_deserialization(expected: HydraMessage, input: &str) -> TestResult {
+    let deserialized: HydraMessage = serde_json::from_str(&input)?;
     assert_eq!(deserialized, expected);
     Ok(())
 }
@@ -187,34 +174,43 @@ fn committed_evt() -> TestResult {
 }
 
 #[test]
-fn one_hydra_message() -> TestResult {
-    let evts = HydraMessages(vec![HydraMessage {
-        seq: 2,
+fn two_valid_evts() -> TestResult {
+    let evts = vec![
+       HydraMessage {
+        seq: 7,
+        head_id: Some(hex::decode("84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab").unwrap()
+                .to_vec()),
+        payload: HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6")
+                    .unwrap()
+                    .to_vec(),
+        },
+        raw_json: json!(
+            { "headId": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"
+               , "seq": 7
+               , "tag": "TxValid"
+               , "timestamp": "2024-10-08T13:07:18.008847436Z"
+               , "transaction":
+               { "cborHex": "84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6"
+                  , "description": "Ledger Cddl Format"
+                  , "txId": "633777d68a85fe989f88aa839aa84743f64d68a931192c41f4df8ed0f16e03d1"
+                  , "type": "Witnessed Tx ConwayEra"
+               }
+            }),
+    }, HydraMessage {
+        seq: 0,
         payload: HydraMessagePayload::Other,
         head_id: None,
         raw_json: json!(
-        { "headStatus": "Idle"
-           , "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425"
-           , "me":
-           { "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
-           }
-           , "seq": 2
-           , "tag": "Greetings"
-           , "timestamp": "2024-10-08T13:04:56.445761285Z"
+        { "peer": "3"
+           , "seq": 0
+           , "tag": "PeerConnected"
+           , "timestamp": "2024-10-08T13:01:20.556003751Z"
         }),
-    }]);
+    }];
 
-    let raw_str = r#"
- {
-   "headStatus": "Idle",
-   "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425",
-   "me": {
-     "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
-   },
-   "seq": 2,
-   "tag": "Greetings",
-   "timestamp": "2024-10-08T13:04:56.445761285Z"
- }
+    let raw_str = r#"{"headId":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","seq":7,"tag":"TxValid","timestamp":"2024-10-08T13:07:18.008847436Z","transaction":{"cborHex":"84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6","description":"Ledger Cddl Format","txId":"633777d68a85fe989f88aa839aa84743f64d68a931192c41f4df8ed0f16e03d1","type":"Witnessed Tx ConwayEra"}}
+{"peer":"3","seq":0,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.556003751Z"}
 "#;
-    test_events_deserialization(evts, &raw_str)
+    test_events_deserialisation(evts, &raw_str)
 }
