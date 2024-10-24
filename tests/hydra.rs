@@ -1,16 +1,41 @@
+use std::fs;
+
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use serde_json::json;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[derive(Debug, PartialEq)]
-enum LineParseResult {
-    LineParsed(HydraMessage),
+enum LineParseResult<T> {
+    LineParsed(T),
     LineNotParsed,
 }
 
-fn test_events_deserialisation(expected_msgs: Vec<LineParseResult>, input: &str) -> TestResult {
-    let mut deserialized: Vec<LineParseResult> = Vec::new();
+fn test_events_deserialisation(
+    expected_msgs: Vec<LineParseResult<HydraMessage>>,
+    input: &str,
+) -> TestResult {
+    let mut deserialized: Vec<LineParseResult<HydraMessage>> = Vec::new();
+    for line in input.lines() {
+        match serde_json::from_str(&line) {
+            Ok(msg) => {
+                deserialized.push(LineParseResult::LineParsed(msg));
+            }
+            _ => {
+                deserialized.push(LineParseResult::LineNotParsed);
+            }
+        }
+    }
+    assert_eq!(deserialized, expected_msgs);
+    Ok(())
+}
+
+fn test_scenario(
+    expected_msgs: Vec<LineParseResult<HydraMessagePayload>>,
+    file: &str,
+) -> TestResult {
+    let mut deserialized: Vec<LineParseResult<HydraMessagePayload>> = Vec::new();
+    let input = fs::read_to_string(file)?;
     for line in input.lines() {
         match serde_json::from_str(&line) {
             Ok(msg) => {
