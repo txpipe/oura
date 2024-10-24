@@ -37,9 +37,9 @@ fn test_scenario(
     let mut deserialized: Vec<LineParseResult<HydraMessagePayload>> = Vec::new();
     let input = fs::read_to_string(file)?;
     for line in input.lines() {
-        match serde_json::from_str(&line) {
+        match serde_json::from_str::<HydraMessage>(&line) {
             Ok(msg) => {
-                deserialized.push(LineParseResult::LineParsed(msg));
+                deserialized.push(LineParseResult::LineParsed(msg.payload));
             }
             _ => {
                 deserialized.push(LineParseResult::LineNotParsed);
@@ -352,4 +352,38 @@ fn three_valid_two_invalid_evts() -> TestResult {
 {"headStatus":"Idle","hydraNodeVersion":"0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425","me":{"vkey":"b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"},"seq":2,"tag":"Greetings","timestamp":"2024-10-08T13:04:56.445761285Z"}
 "#;
     test_events_deserialisation(evts, &raw_str)
+}
+
+#[test]
+fn scenario_1() -> TestResult {
+    let payloads = vec![
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6")
+                .unwrap()
+                .to_vec(),
+        }),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed
+    ];
+    test_scenario(payloads, "tests/hydra/scenario_1.txt")
 }
