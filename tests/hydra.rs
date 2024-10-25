@@ -5,9 +5,49 @@ use serde_json::json;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-fn run_scenario(_expected_msgs: &[HydraMessage], expected_file: &str) -> TestResult {
-    let _file = fs::read_to_string(expected_file)?;
-    panic!("unimplemented: run_scenario")
+#[derive(Debug, PartialEq)]
+enum LineParseResult<T> {
+    LineParsed(T),
+    LineNotParsed,
+}
+
+fn test_events_deserialisation(
+    expected_msgs: Vec<LineParseResult<HydraMessage>>,
+    input: &str,
+) -> TestResult {
+    let mut deserialized: Vec<LineParseResult<HydraMessage>> = Vec::new();
+    for line in input.lines() {
+        match serde_json::from_str(&line) {
+            Ok(msg) => {
+                deserialized.push(LineParseResult::LineParsed(msg));
+            }
+            _ => {
+                deserialized.push(LineParseResult::LineNotParsed);
+            }
+        }
+    }
+    assert_eq!(deserialized, expected_msgs);
+    Ok(())
+}
+
+fn test_scenario(
+    expected_msgs: Vec<LineParseResult<HydraMessagePayload>>,
+    file: &str,
+) -> TestResult {
+    let mut deserialized: Vec<LineParseResult<HydraMessagePayload>> = Vec::new();
+    let input = fs::read_to_string(file)?;
+    for line in input.lines() {
+        match serde_json::from_str::<HydraMessage>(&line) {
+            Ok(msg) => {
+                deserialized.push(LineParseResult::LineParsed(msg.payload));
+            }
+            _ => {
+                deserialized.push(LineParseResult::LineNotParsed);
+            }
+        }
+    }
+    assert_eq!(deserialized, expected_msgs);
+    Ok(())
 }
 
 fn test_event_deserialization(expected: HydraMessage, input: &str) -> TestResult {
@@ -15,6 +55,7 @@ fn test_event_deserialization(expected: HydraMessage, input: &str) -> TestResult
     assert_eq!(deserialized, expected);
     Ok(())
 }
+
 #[test]
 fn tx_valid_evt() -> TestResult {
     let evt = HydraMessage {
@@ -167,4 +208,235 @@ fn committed_evt() -> TestResult {
  }
 "#;
     test_event_deserialization(evt, &raw_str)
+}
+
+#[test]
+fn two_valid_evts() -> TestResult {
+    let evts = vec![
+       LineParseResult::LineParsed(HydraMessage {
+        seq: 7,
+        head_id: Some(hex::decode("84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab").unwrap()
+                .to_vec()),
+        payload: HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6")
+                    .unwrap()
+                    .to_vec(),
+        },
+        raw_json: json!(
+            { "headId": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"
+               , "seq": 7
+               , "tag": "TxValid"
+               , "timestamp": "2024-10-08T13:07:18.008847436Z"
+               , "transaction":
+               { "cborHex": "84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6"
+                  , "description": "Ledger Cddl Format"
+                  , "txId": "633777d68a85fe989f88aa839aa84743f64d68a931192c41f4df8ed0f16e03d1"
+                  , "type": "Witnessed Tx ConwayEra"
+               }
+            }),
+    }), LineParseResult::LineParsed(HydraMessage {
+        seq: 0,
+        payload: HydraMessagePayload::Other,
+        head_id: None,
+        raw_json: json!(
+        { "peer": "3"
+           , "seq": 0
+           , "tag": "PeerConnected"
+           , "timestamp": "2024-10-08T13:01:20.556003751Z"
+        }),
+    })];
+
+    let raw_str = r#"{"headId":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","seq":7,"tag":"TxValid","timestamp":"2024-10-08T13:07:18.008847436Z","transaction":{"cborHex":"84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6","description":"Ledger Cddl Format","txId":"633777d68a85fe989f88aa839aa84743f64d68a931192c41f4df8ed0f16e03d1","type":"Witnessed Tx ConwayEra"}}
+{"peer":"3","seq":0,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.556003751Z"}
+"#;
+    test_events_deserialisation(evts, &raw_str)
+}
+
+#[test]
+fn three_valid_evts() -> TestResult {
+    let evts = vec![
+        LineParseResult::LineParsed(HydraMessage {
+            seq: 0,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "peer": "3"
+               , "seq": 0
+               , "tag": "PeerConnected"
+               , "timestamp": "2024-10-08T13:01:20.556003751Z"
+            }),
+        }),
+        LineParseResult::LineParsed(HydraMessage {
+            seq: 1,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "peer": "2"
+               , "seq": 1
+               , "tag": "PeerConnected"
+               , "timestamp": "2024-10-08T13:01:20.559653645Z"
+            }),
+        }),
+        LineParseResult::LineParsed(HydraMessage {
+            seq: 2,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "headStatus": "Idle"
+               , "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425"
+               , "me":
+               { "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
+               }
+               , "seq": 2
+               , "tag": "Greetings"
+               , "timestamp": "2024-10-08T13:04:56.445761285Z"
+            }),
+        }),
+    ];
+
+    let raw_str = r#"{"peer":"3","seq":0,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.556003751Z"}
+{"peer":"2","seq":1,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.559653645Z"}
+{"headStatus":"Idle","hydraNodeVersion":"0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425","me":{"vkey":"b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"},"seq":2,"tag":"Greetings","timestamp":"2024-10-08T13:04:56.445761285Z"}
+"#;
+    test_events_deserialisation(evts, &raw_str)
+}
+
+#[test]
+fn three_valid_two_invalid_evts() -> TestResult {
+    let evts = vec![
+        LineParseResult::LineParsed(HydraMessage {
+            seq: 0,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "peer": "3"
+               , "seq": 0
+               , "tag": "PeerConnected"
+               , "timestamp": "2024-10-08T13:01:20.556003751Z"
+            }),
+        }),
+        LineParseResult::LineParsed(HydraMessage {
+            seq: 1,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "peer": "2"
+               , "seq": 1
+               , "tag": "PeerConnected"
+               , "timestamp": "2024-10-08T13:01:20.559653645Z"
+            }),
+        }),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessage {
+            seq: 2,
+            payload: HydraMessagePayload::Other,
+            head_id: None,
+            raw_json: json!(
+            { "headStatus": "Idle"
+               , "hydraNodeVersion": "0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425"
+               , "me":
+               { "vkey": "b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"
+               }
+               , "seq": 2
+               , "tag": "Greetings"
+               , "timestamp": "2024-10-08T13:04:56.445761285Z"
+            }),
+        }),
+    ];
+
+    let raw_str = r#"{"peer":"3","seq":0,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.556003751Z"}
+{"peer":"2","seq":1,"tag":"PeerConnected","timestamp":"2024-10-08T13:01:20.559653645Z"}
+1
+2
+{"headStatus":"Idle","hydraNodeVersion":"0.19.0-1ffe7c6b505e3f38b5546ae5e5b97de26bc70425","me":{"vkey":"b37aabd81024c043f53a069c91e51a5b52e4ea399ae17ee1fe3cb9c44db707eb"},"seq":2,"tag":"Greetings","timestamp":"2024-10-08T13:04:56.445761285Z"}
+"#;
+    test_events_deserialisation(evts, &raw_str)
+}
+
+#[test]
+fn scenario_1() -> TestResult {
+    let payloads = vec![
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6")
+                .unwrap()
+                .to_vec(),
+        }),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed
+    ];
+    test_scenario(payloads, "tests/hydra/scenario_1.txt")
+}
+
+#[test]
+fn scenario_2() -> TestResult {
+    let payloads = vec![
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858407342c0c4de1b55bc9e56c86829a1fb5906e964f109fd698d37d5933ed230b1a878bfee20980bb90b48aa32c472fdd465c2eb770551b84de7041838415faed502f5f6")
+                .unwrap()
+                .to_vec(),
+        }),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d901028182582065d64ade1fa9da5099107e3ab9efeea6f305c3c831ca8b9c8f87594289e5161701018282581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a0016e36082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a014810600200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf85840b991c62af8e2b2d06f821fb6064f98c2fc8909b0b2d81435c7e075a61fc92ee6c9224f23d817de35d5529f54034c2ab8dfaded387e99fc525344846bb5dc860af5f6")
+                .unwrap()
+                .to_vec(),
+        }),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d90102818258207b27f432e04984dc21ee61e8b1539775cd72cc8669f72cf39aebf6d87e35c69700018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a00a7d8c082581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a025317c00200a100d9010281825820aa268d154185c9ea06ea73442fd8143c34c1dd543b7142bcb132aac0d1ed6ece5840fc6e2b0750259deedd5a73eeadf481138bf82edc3425614871a0ef09bfcf8cae52a80240fb895a7e6a8ad94d4acb32dffe567ed0d338afcd7878f745737f420df5f6")
+                .unwrap()
+                .to_vec(),
+        }),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::TxValid {
+            tx: hex::decode("84a300d9010281825820c9a5fb7ca6f55f07facefccb7c5d824eed00ce18719d28ec4c4a2e4041e85d9700018282581d6069830961c6af9095b0f2648dff31fa9545d8f0b6623db865eb78fde81a00c65d4082581d6069830961c6af9095b0f2648dff31fa9545d8f0b6623db865eb78fde81a052f83c00200a100d9010281825820f953b2d6b6f319faa9f8462257eb52ad73e33199c650f0755e279e21882399c05840ac8f1632d9a636d3627328ffd09cd32e1b654cbf318f0ce499a9870b05530041aa0badf07cd43fec8f1456537ada71227bea8123c1ed641ae3cb22b7313d5f08f5f6")
+                .unwrap()
+                .to_vec(),
+        }),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineParsed(HydraMessagePayload::Other),
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed,
+        LineParseResult::LineNotParsed
+    ];
+    test_scenario(payloads, "tests/hydra/scenario_2.txt")
 }

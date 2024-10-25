@@ -16,7 +16,7 @@ use serde_json::Value;
 
 use crate::framework::*;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct HydraMessage {
     pub seq: u64,
     pub head_id: Option<Vec<u8>>,
