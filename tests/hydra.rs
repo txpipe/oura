@@ -1,7 +1,10 @@
 use std::fs;
+use std::time::Duration;
 
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use serde_json::json;
+use tokio::runtime::Runtime;
+use tokio::time;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -439,4 +442,32 @@ fn scenario_2() -> TestResult {
         LineParseResult::LineNotParsed
     ];
     test_scenario(payloads, "tests/hydra/scenario_2.txt")
+}
+
+#[test]
+fn integration_test() -> TestResult {
+    println!("from main thread BEFORE");
+
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async move {
+        println!("hello from the async block");
+        async_function("task0").await;
+
+        let task1 = tokio::spawn(async { async_function("task1").await });
+        let task2 = tokio::spawn(async { async_function("task2").await });
+
+        let _ = task1.await;
+        let _ = task2.await;
+    });
+
+    println!("from main thread AFTER");
+
+    Ok(())
+}
+
+async fn async_function(name: &str) {
+    for i in 0..3 {
+        println!("{} : {}", name, i);
+        time::sleep(Duration::from_secs(1)).await;
+    }
 }
