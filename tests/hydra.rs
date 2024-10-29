@@ -452,7 +452,19 @@ fn scenario_2() -> TestResult {
 }
 
 #[test]
-fn hydra_emulation_test() -> TestResult {
+fn hydra_emulation_scenario_1() -> TestResult {
+    hydra_emulation_test("tests/hydra/scenario_1.txt".to_string())
+}
+
+#[test]
+fn hydra_emulation_scenario_2() -> TestResult {
+    hydra_emulation_test("tests/hydra/scenario_2.txt".to_string())
+}
+
+// Run:
+// cargo test hydra_emulation -- --nocapture
+// in order to see println
+fn hydra_emulation_test(file: String) -> TestResult {
     let rt = Runtime::new().unwrap();
     let (tx, rx) = mpsc::channel();
     let _ = rt.block_on(async move {
@@ -460,14 +472,13 @@ fn hydra_emulation_test() -> TestResult {
         let server = TcpListener::bind(&addr).await?;
         println!("WebSocket server started on ws://{}", addr);
 
-        let file = "tests/hydra/scenario_2.txt";
-        let to_send = fs::read_to_string(file)?;
+        let to_send = fs::read_to_string(&file)?;
 
         let _ = tokio::spawn(async move { websocket_client(to_send, rx).await });
 
         while let Ok((stream, _)) = server.accept().await {
-            tokio::spawn(handle_connection(stream, &file, tx));
-            time::sleep(Duration::from_secs(5)).await;
+            tokio::spawn(handle_connection(stream, file, tx));
+            time::sleep(Duration::from_secs(3)).await;
             break;
         }
 
@@ -478,7 +489,7 @@ fn hydra_emulation_test() -> TestResult {
 
 async fn handle_connection(
     stream: tokio::net::TcpStream,
-    file: &str,
+    file: String,
     tx: mpsc::Sender<usize>,
 ) -> Result<()> {
     let mut ws_stream = accept_async(stream).await?;
