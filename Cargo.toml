@@ -83,3 +83,6 @@ tungstenite = "0.24.0"
 tokio-tungstenite = "0.24.0"
 futures-util = "0.3"
 bytes = "1.7.2"
+
+[dev-dependencies]
+url = "2"

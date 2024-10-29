@@ -1,10 +1,16 @@
 use std::fs;
 use std::time::Duration;
 
+use anyhow::Result;
+use futures_util::{SinkExt, StreamExt};
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use serde_json::json;
+use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 use tokio::time;
+use tokio_tungstenite::tungstenite::protocol::Message;
+use tokio_tungstenite::{accept_async, connect_async};
+use url::Url;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -449,15 +455,22 @@ fn integration_test() -> TestResult {
     println!("from main thread BEFORE");
 
     let rt = Runtime::new().unwrap();
-    rt.block_on(async move {
-        println!("hello from the async block");
-        async_function("task0").await;
+    let _ = rt.block_on(async move {
+        let addr = "127.0.0.1:8080".to_string();
+        let listener = TcpListener::bind(&addr).await?;
+        println!("WebSocket server started on ws://{}", addr);
 
-        let task1 = tokio::spawn(async { async_function("task1").await });
-        let task2 = tokio::spawn(async { async_function("task2").await });
+        let web_socket_client = tokio::spawn(async { client().await });
 
-        let _ = task1.await;
-        let _ = task2.await;
+        while let Ok((stream, _)) = listener.accept().await {
+            tokio::spawn(handle_connection(stream));
+        }
+
+        println!("from main thread BETWEEN");
+
+        let _ = web_socket_client.await;
+
+        Ok::<(), std::io::Error>(())
     });
 
     println!("from main thread AFTER");
@@ -465,9 +478,45 @@ fn integration_test() -> TestResult {
     Ok(())
 }
 
-async fn async_function(name: &str) {
-    for i in 0..3 {
-        println!("{} : {}", name, i);
-        time::sleep(Duration::from_secs(1)).await;
+async fn handle_connection(stream: tokio::net::TcpStream) -> Result<()> {
+    let mut ws_stream = accept_async(stream).await?;
+    println!("WebSocket server connection established");
+
+    while let Some(msg) = ws_stream.next().await {
+        let msg = msg?;
+        if msg.is_text() {
+            let received_text = msg.to_text()?;
+            println!("WebSocket server received message: {}", received_text);
+            time::sleep(Duration::from_secs(1)).await;
+            ws_stream
+                .send(Message::Text(received_text.to_string()))
+                .await?;
+        }
     }
+
+    Ok(())
+}
+
+async fn client() -> Result<()> {
+    let url = Url::parse("ws://127.0.0.1:8080")?;
+    let (mut ws_stream, _) = connect_async(url.as_str())
+        .await
+        .expect("Failed to connect");
+    println!("WebSocket client connected");
+
+    // Sending a message to the server
+    let message = "Hello, Server!";
+    ws_stream.send(Message::Text(message.into())).await?;
+
+    // Receiving messages from the server
+    while let Some(msg) = ws_stream.next().await {
+        match msg? {
+            Message::Text(text) => {
+                println!("WebSocket client received message from server: {}", text);
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
 }
