@@ -4,7 +4,7 @@ use tokio_tungstenite::MaybeTlsStream;
 use pallas::network::miniprotocols::Point;
 
 use gasket::framework::*;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use futures_util::StreamExt;
 use tokio_tungstenite::WebSocketStream;
@@ -143,7 +143,41 @@ pub struct Stage {
 
 pub struct Worker {
     socket: HydraConnection,
-    intersect: Point,
+    intersect: WorkerIntersect,
+}
+#[derive(Debug, Clone)]
+/// Worker state for finding the right intersection point
+pub enum WorkerIntersect {
+    SkipUntil(u64, Vec<u8>), // Possibility of Point::Origin is excluded
+    ProcessMessages,
+}
+
+impl WorkerIntersect {
+    /// When passed the point of the next hydra message, this function will return whether or not
+    /// that message should be processed. The `WorkerIntersect` will be mutated to reflect the
+    /// state where the next message has been processed.
+    fn should_process(&mut self, next: Point) -> bool {
+        match self {
+            WorkerIntersect::SkipUntil(slot, hash) => {
+                let p = Point::Specific(slot.clone(), hash.clone());
+                debug!(
+                    "Skipping message {} before or at intersection {}",
+                    next.slot_or_default(), p.slot_or_default()
+                );
+                if p == next {
+                    *self = WorkerIntersect::ProcessMessages;
+                } else if next.slot_or_default() >= p.slot_or_default() {
+                    warn!(
+                        "Skipping message from wrong hydra chain (intersection point hash mismatch) {:?} {:?}",
+                        p, next
+
+                    );
+                }
+               false
+            }
+            WorkerIntersect::ProcessMessages => true,
+        }
+    }
 }
 
 impl Worker {
@@ -176,11 +210,11 @@ impl Worker {
     }
 }
 
-fn intersect_from_config(intersect: &IntersectConfig) -> Point {
+fn intersect_from_config(intersect: &IntersectConfig) -> WorkerIntersect {
     match intersect {
         IntersectConfig::Origin => {
-            info!("intersecting origin");
-            Point::Origin
+            info!("starting from Origin");
+            WorkerIntersect::ProcessMessages
         }
         IntersectConfig::Tip => {
             panic!("intersecting tip not currently supported with hydra as source")
@@ -188,7 +222,7 @@ fn intersect_from_config(intersect: &IntersectConfig) -> Point {
         IntersectConfig::Point(slot, hash_str) => {
             info!("intersecting specific point");
             let hash = hex::decode(hash_str).expect("valid hex hash");
-            Point::Specific(slot.clone(), hash)
+            WorkerIntersect::SkipUntil(slot.clone(), hash)
         }
         IntersectConfig::Breadcrumbs(_) => {
             panic!("intersecting breadcrumbs not currently supported with hydra as source")
@@ -226,19 +260,10 @@ impl gasket::framework::Worker<Stage> for Worker {
                 debug!("Hydra message: {}", text);
                 match serde_json::from_str::<HydraMessage>(text) {
                     Ok(hydra_message) => {
-                        // TODO: search for the intersection point to ensure
-                        // we're on the same chain.
-                        match &self.intersect {
-                            Point::Specific(slot, _hash) if &hydra_message.seq <= slot => {
-                                debug!(
-                                    "Skipping message {} before or at intersection {}",
-                                    hydra_message.seq, slot
-                                );
-                                Ok(())
-                            }
-                            Point::Origin | Point::Specific(_, _) => {
+                        if self.intersect.should_process(hydra_message.pseudo_point()) {
                                 self.process_next(stage, hydra_message).await
-                            }
+                        } else {
+                            Ok(())
                         }
                     }
                     Err(err) => {
