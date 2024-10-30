@@ -3,8 +3,10 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use anyhow::Result;
+use assert_cmd::Command;
 use futures_util::{SinkExt, StreamExt};
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
+use predicates::prelude::*;
 use serde_json::json;
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -461,6 +463,11 @@ fn hydra_emulation_scenario_2() -> TestResult {
     hydra_emulation_test("tests/hydra/scenario_2.txt".to_string())
 }
 
+#[test]
+fn hydra_oura_stdout_scenario_1() -> TestResult {
+    hydra_emulation_oura_stdout_test("tests/hydra/scenario_1.txt".to_string())
+}
+
 // Run:
 // cargo test hydra_emulation -- --nocapture
 // in order to see println
@@ -475,6 +482,29 @@ fn hydra_emulation_test(file: String) -> TestResult {
         let to_send = fs::read_to_string(&file)?;
 
         let _ = tokio::spawn(async move { websocket_client(to_send, rx).await });
+
+        while let Ok((stream, _)) = server.accept().await {
+            tokio::spawn(handle_connection(stream, file, tx));
+            time::sleep(Duration::from_secs(3)).await;
+            break;
+        }
+
+        Ok::<(), std::io::Error>(())
+    });
+    Ok(())
+}
+
+fn hydra_emulation_oura_stdout_test(file: String) -> TestResult {
+    let rt = Runtime::new().unwrap();
+    let (tx, rx) = mpsc::channel();
+    let _ = rt.block_on(async move {
+        let addr = "127.0.0.1:4001".to_string();
+        let server = TcpListener::bind(&addr).await?;
+        println!("WebSocket server started on ws://{}", addr);
+
+        let to_send = fs::read_to_string(&file)?;
+
+        let _ = tokio::spawn(async move { oura_pipeline(to_send, rx).await });
 
         while let Ok((stream, _)) = server.accept().await {
             tokio::spawn(handle_connection(stream, file, tx));
@@ -551,5 +581,14 @@ async fn websocket_client(expected: String, rx: mpsc::Receiver<usize>) -> Result
     assert_eq!(joined, expected);
     println!("WebSocket client disconnected");
 
+    Ok(())
+}
+
+async fn oura_pipeline(expected: String, rx: mpsc::Receiver<usize>) -> Result<()> {
+    let mut cmd = Command::cargo_bin("oura")?;
+    cmd.args(vec!["daemon", "--config", "examples/hydra/daemon.toml"])
+        .assert()
+        .success()
+        .stdout(expected);
     Ok(())
 }
