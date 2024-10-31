@@ -465,7 +465,22 @@ fn hydra_emulation_scenario_2() -> TestResult {
 
 #[test]
 fn hydra_oura_stdout_scenario_1() -> TestResult {
-    hydra_emulation_oura_stdout_test("tests/hydra/scenario_1.txt".to_string())
+    let events = vec![
+        "PeerConnected".to_string(),
+        "PeerConnected".to_string(),
+        "Greetings".to_string(),
+        "HeadIsInitializing0".to_string(),
+        "Committed".to_string(),
+        "Committed".to_string(),
+        "Committed".to_string(),
+        "HeadIsOpen".to_string(),
+        "TxValid".to_string(),
+        "SnapshotConfirmed".to_string(),
+        "HeadIsClosed".to_string(),
+        "ReadyToFanout".to_string(),
+        "HeadIsFinalized".to_string(),
+    ];
+    hydra_oura_stdout_test("tests/hydra/scenario_1.txt".to_string(), events)
 }
 
 // Run:
@@ -475,7 +490,7 @@ fn hydra_emulation_test(file: String) -> TestResult {
     let rt = Runtime::new().unwrap();
     let (tx, rx) = mpsc::channel();
     let _ = rt.block_on(async move {
-        let addr = "127.0.0.1:8080".to_string();
+        let addr = "127.0.0.1:4001".to_string();
         let server = TcpListener::bind(&addr).await?;
         println!("WebSocket server started on ws://{}", addr);
 
@@ -494,17 +509,18 @@ fn hydra_emulation_test(file: String) -> TestResult {
     Ok(())
 }
 
-fn hydra_emulation_oura_stdout_test(file: String) -> TestResult {
+// Run:
+// cargo test hydra_oura -- --nocapture
+// in order to see println
+fn hydra_oura_stdout_test(file: String, expected: Vec<String>) -> TestResult {
     let rt = Runtime::new().unwrap();
-    let (tx, rx) = mpsc::channel();
+    let (tx, _rx) = mpsc::channel();
     let _ = rt.block_on(async move {
         let addr = "127.0.0.1:4001".to_string();
         let server = TcpListener::bind(&addr).await?;
         println!("WebSocket server started on ws://{}", addr);
 
-        let to_send = fs::read_to_string(&file)?;
-
-        let _ = tokio::spawn(async move { oura_pipeline(to_send, rx).await });
+        let _ = tokio::spawn(async move { oura_pipeline(expected).await });
 
         while let Ok((stream, _)) = server.accept().await {
             tokio::spawn(handle_connection(stream, file, tx));
@@ -523,37 +539,26 @@ async fn handle_connection(
     tx: mpsc::Sender<usize>,
 ) -> Result<()> {
     let mut ws_stream = accept_async(stream).await?;
-    println!("WebSocket server connection established");
+    println!("WebSocket server oura connection established");
 
     let to_send = fs::read_to_string(file)?;
 
-    while let Some(msg) = ws_stream.next().await {
-        let msg = msg?;
-        if msg.is_text() {
-            let received_text = msg.to_text()?;
-            println!("WebSocket server received message: {}", received_text);
-            let mut lines = 0;
-            for line in to_send.lines() {
-                ws_stream.send(Message::Text(line.to_string())).await?;
-                lines += 1;
-            }
-            tx.send(lines).unwrap();
-        }
+    let mut lines = 0;
+    for line in to_send.lines() {
+        ws_stream.send(Message::Text(line.to_string())).await?;
+        lines += 1;
     }
+    tx.send(lines).unwrap();
 
     Ok(())
 }
 
 async fn websocket_client(expected: String, rx: mpsc::Receiver<usize>) -> Result<()> {
-    let url = Url::parse("ws://127.0.0.1:8080")?;
+    let url = Url::parse("ws://127.0.0.1:4001")?;
     let (mut ws_stream, _) = connect_async(url.as_str())
         .await
         .expect("Failed to connect");
-    println!("WebSocket client connected");
-
-    // Sending a message to the server
-    let message = "Hello, Server!";
-    ws_stream.send(Message::Text(message.into())).await?;
+    println!("WebSocket client oura connected");
 
     let mut received = vec![];
     let mut msgs_number = 0;
@@ -579,16 +584,37 @@ async fn websocket_client(expected: String, rx: mpsc::Receiver<usize>) -> Result
     joined.push_str("\n");
 
     assert_eq!(joined, expected);
-    println!("WebSocket client disconnected");
+    println!("WebSocket client oura disconnected");
 
     Ok(())
 }
 
-async fn oura_pipeline(expected: String, rx: mpsc::Receiver<usize>) -> Result<()> {
+async fn oura_pipeline(expected: Vec<String>) -> Result<()> {
+    println!("oura_pipeline online");
+
+    //Clean output file
+    let _ = std::process::Command::new("truncate")
+        .arg("-s 0")
+        .arg("tests/hydra/logs.txt")
+        .spawn();
+
     let mut cmd = Command::cargo_bin("oura")?;
-    cmd.args(vec!["daemon", "--config", "examples/hydra/daemon.toml"])
+    cmd.args(vec!["daemon", "--config", "tests/daemon.toml"])
         .assert()
-        .success()
-        .stdout(expected);
+        .success();
+
+    let jsons = fs::read_to_string("tests/hydra/logs.txt")?;
+
+    let mut predicates = vec![];
+    let mut count = 0;
+
+    for json in jsons.lines() {
+        let predicate_fn = predicate::str::contains(&expected[count]);
+        predicates.push(predicate_fn.eval(json));
+        count += 1;
+    }
+
+    assert_eq!(predicates, vec![true; expected.len()]);
+
     Ok(())
 }
