@@ -6,7 +6,6 @@ use anyhow::Result;
 use assert_cmd::Command;
 use futures_util::SinkExt;
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
-use predicates::prelude::*;
 use serde_json::json;
 use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
@@ -454,64 +453,20 @@ fn scenario_2() -> TestResult {
 
 #[test]
 fn hydra_oura_stdout_scenario_1() -> TestResult {
-    let tx_event = r#"{"event":"apply","point":{"hash":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","slot":7},"record":{"hex":"84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858401b13ee550f3167a1b94796f2a2f5e22d782d628336a7797c5b798f358fa564dbe92ea75a4e2449eb2cef59c097d8497545ef1e4ea441b88a481194323ae7c608f5f6"}}"#;
-    let events = vec![
-        "PeerConnected".to_string(),
-        "PeerConnected".to_string(),
-        "Greetings".to_string(),
-        "HeadIsInitializing".to_string(),
-        "Committed".to_string(),
-        "Committed".to_string(),
-        "Committed".to_string(),
-        "HeadIsOpen".to_string(),
-        "TxValid".to_string(),
-        tx_event.to_string(),
-        "SnapshotConfirmed".to_string(),
-        "HeadIsClosed".to_string(),
-        "ReadyToFanout".to_string(),
-        "HeadIsFinalized".to_string(),
-    ];
-    hydra_oura_stdout_test("tests/hydra/scenario_1.txt".to_string(), events)
+    let golden_jsons = fs::read_to_string("tests/hydra/golden_1.txt")?;
+    hydra_oura_stdout_test("tests/hydra/scenario_1.txt".to_string(), golden_jsons)
 }
 
 #[test]
 fn hydra_oura_stdout_scenario_2() -> TestResult {
-    let tx_event_1 = r#"{"event":"apply","point":{"hash":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","slot":7},"record":{"hex":"84a300d9010281825820f0a39560ea80ccc68e8dffb6a4a077c8927811f06c5d9058d0fa2d1a8d047d2000018282581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a001e848082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a015ef3c00200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf858407342c0c4de1b55bc9e56c86829a1fb5906e964f109fd698d37d5933ed230b1a878bfee20980bb90b48aa32c472fdd465c2eb770551b84de7041838415faed502f5f6"}}"#;
-    let tx_event_2 = r#"{"event":"apply","point":{"hash":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","slot":9},"record":{"hex":"84a300d901028182582065d64ade1fa9da5099107e3ab9efeea6f305c3c831ca8b9c8f87594289e5161701018282581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a0016e36082581d600d45f2b310a98e766cee2ab2f6756c91719bd7b35929cef058365b651a014810600200a100d90102818258200f193a88190f6dace0a3db1e0e50797a6e28cd4b6e289260dc96b5a8d7934bf85840b991c62af8e2b2d06f821fb6064f98c2fc8909b0b2d81435c7e075a61fc92ee6c9224f23d817de35d5529f54034c2ab8dfaded387e99fc525344846bb5dc860af5f6"}}"#;
-    let tx_event_3 = r#"{"event":"apply","point":{"hash":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","slot":11},"record":{"hex":"84a300d90102818258207b27f432e04984dc21ee61e8b1539775cd72cc8669f72cf39aebf6d87e35c69700018282581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a00a7d8c082581d605e4e214a6addd337126b3a61faad5dfe1e4f14f637a8969e3a05eefd1a025317c00200a100d9010281825820aa268d154185c9ea06ea73442fd8143c34c1dd543b7142bcb132aac0d1ed6ece5840fc6e2b0750259deedd5a73eeadf481138bf82edc3425614871a0ef09bfcf8cae52a80240fb895a7e6a8ad94d4acb32dffe567ed0d338afcd7878f745737f420df5f6"}}"#;
-    let tx_event_4 = r#"{"event":"apply","point":{"hash":"84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab","slot":13},"record":{"hex":"84a300d9010281825820c9a5fb7ca6f55f07facefccb7c5d824eed00ce18719d28ec4c4a2e4041e85d9700018282581d6069830961c6af9095b0f2648dff31fa9545d8f0b6623db865eb78fde81a00c65d4082581d6069830961c6af9095b0f2648dff31fa9545d8f0b6623db865eb78fde81a052f83c00200a100d9010281825820f953b2d6b6f319faa9f8462257eb52ad73e33199c650f0755e279e21882399c05840ac8f1632d9a636d3627328ffd09cd32e1b654cbf318f0ce499a9870b05530041aa0badf07cd43fec8f1456537ada71227bea8123c1ed641ae3cb22b7313d5f08f5f6"}}"#;
-    let events = vec![
-        "PeerConnected".to_string(),
-        "PeerConnected".to_string(),
-        "Greetings".to_string(),
-        "HeadIsInitializing".to_string(),
-        "Committed".to_string(),
-        "Committed".to_string(),
-        "Committed".to_string(),
-        "HeadIsOpen".to_string(),
-        "TxValid".to_string(),
-        tx_event_1.to_string(),
-        "SnapshotConfirmed".to_string(),
-        "TxValid".to_string(),
-        tx_event_2.to_string(),
-        "SnapshotConfirmed".to_string(),
-        "TxValid".to_string(),
-        tx_event_3.to_string(),
-        "SnapshotConfirmed".to_string(),
-        "TxValid".to_string(),
-        tx_event_4.to_string(),
-        "SnapshotConfirmed".to_string(),
-        "HeadIsClosed".to_string(),
-        "ReadyToFanout".to_string(),
-        "HeadIsFinalized".to_string(),
-    ];
-    hydra_oura_stdout_test("tests/hydra/scenario_2.txt".to_string(), events)
+    let golden_jsons = fs::read_to_string("tests/hydra/golden_2.txt")?;
+    hydra_oura_stdout_test("tests/hydra/scenario_2.txt".to_string(), golden_jsons)
 }
 
 // Run:
 // cargo test hydra_oura -- --nocapture
 // in order to see println
-fn hydra_oura_stdout_test(file: String, expected: Vec<String>) -> TestResult {
+fn hydra_oura_stdout_test(file: String, expected: String) -> TestResult {
     let rt = Runtime::new().unwrap();
     let (tx, _rx) = mpsc::channel();
     let _ = rt.block_on(async move {
@@ -527,15 +482,8 @@ fn hydra_oura_stdout_test(file: String, expected: Vec<String>) -> TestResult {
             break;
         }
 
-        let jsons = fs::read_to_string("tests/hydra/logs.txt")?;
-        let mut predicates = vec![];
-        let mut count = 0;
-        for json in jsons.lines() {
-            let predicate_fn = predicate::str::contains(&expected[count]);
-            predicates.push(predicate_fn.eval(json));
-            count += 1;
-        }
-        assert_eq!(predicates, vec![true; expected.len()]);
+        let emitted_jsons = fs::read_to_string("tests/hydra/logs.txt")?;
+        assert_eq!(emitted_jsons, expected);
 
         Ok::<(), std::io::Error>(())
     });
