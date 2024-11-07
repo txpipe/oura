@@ -4,7 +4,6 @@ use std::sync::mpsc;
 use std::time::Duration;
 
 use anyhow::Result;
-use assert_cmd::Command;
 use futures_util::SinkExt;
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use serde_json::json;
@@ -471,7 +470,6 @@ fn hydra_oura_stdout_scenario_2() -> TestResult {
 // in order to see println
 fn hydra_oura_stdout_test(file: String, expected: String) -> TestResult {
     let rt = Runtime::new().unwrap();
-    let (tx, _rx) = mpsc::channel();
     let _ = rt.block_on(async move {
         let addr = "127.0.0.1:4001".to_string();
         let server = TcpListener::bind(&addr).await?;
@@ -479,11 +477,7 @@ fn hydra_oura_stdout_test(file: String, expected: String) -> TestResult {
 
         let _ = tokio::spawn(async move { oura_pipeline().await });
 
-        while let Ok((stream, _)) = server.accept().await {
-            tokio::spawn(handle_connection(stream, file, tx));
-            time::sleep(Duration::from_secs(3)).await;
-            break;
-        }
+        mock_hydra_node(server, file).await;
 
         let emitted_jsons = fs::read_to_string("tests/hydra/logs.txt")?;
         assert_eq!(emitted_jsons, expected);
@@ -491,6 +485,15 @@ fn hydra_oura_stdout_test(file: String, expected: String) -> TestResult {
         Ok::<(), std::io::Error>(())
     });
     Ok(())
+}
+
+async fn mock_hydra_node(server: TcpListener, file: String) {
+    let (tx, _rx) = mpsc::channel();
+    while let Ok((stream, _)) = server.accept().await {
+        tokio::spawn(handle_connection(stream, file, tx));
+        time::sleep(Duration::from_secs(3)).await;
+        break;
+    }
 }
 
 async fn handle_connection(
