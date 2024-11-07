@@ -1,11 +1,8 @@
-use gasket::daemon::Daemon;
-use oura::{cursor, filters, framework::*, sinks, sources};
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use std::{sync::Arc, time::Duration};
-use tracing::info;
 
-use crate::console;
+use gasket::daemon::Daemon;
+use crate::{cursor, filters, framework::*, sinks, sources};
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsConfig {
@@ -13,16 +10,16 @@ pub struct MetricsConfig {
 }
 
 #[derive(Deserialize)]
-struct ConfigRoot {
-    source: sources::Config,
-    filters: Option<Vec<filters::Config>>,
-    sink: sinks::Config,
-    intersect: IntersectConfig,
-    finalize: Option<FinalizeConfig>,
-    chain: Option<ChainConfig>,
-    retries: Option<gasket::retries::Policy>,
-    cursor: Option<cursor::Config>,
-    metrics: Option<MetricsConfig>,
+pub struct ConfigRoot {
+    pub source: sources::Config,
+    pub filters: Option<Vec<filters::Config>>,
+    pub sink: sinks::Config,
+    pub intersect: IntersectConfig,
+    pub finalize: Option<FinalizeConfig>,
+    pub chain: Option<ChainConfig>,
+    pub retries: Option<gasket::retries::Policy>,
+    pub cursor: Option<cursor::Config>,
+    pub metrics: Option<MetricsConfig>,
 }
 
 impl ConfigRoot {
@@ -94,50 +91,13 @@ fn connect_stages(
     Ok(runtime)
 }
 
-fn setup_tracing() {
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::FmtSubscriber::builder()
-            .with_max_level(tracing::Level::DEBUG)
-            .finish(),
-    )
-    .unwrap();
-}
-
-async fn serve_prometheus(
-    daemon: Arc<Daemon>,
-    metrics: Option<MetricsConfig>,
-) -> Result<(), Error> {
-    if let Some(metrics) = metrics {
-        info!("starting metrics exporter");
-        let runtime = daemon.clone();
-
-        let addr: SocketAddr = metrics
-            .address
-            .as_deref()
-            .unwrap_or("0.0.0.0:9186")
-            .parse()
-            .map_err(Error::parse)?;
-
-        gasket_prometheus::serve(addr, runtime).await;
-    }
-
-    Ok(())
-}
-
-pub fn run(args: &Args) -> Result<(), Error> {
-    if !args.tui {
-        setup_tracing();
-    }
-
-    let config = ConfigRoot::new(&args.config).map_err(Error::config)?;
-
+pub fn run_daemon(config: ConfigRoot) -> Result<Daemon, Error> {
     let chain = config.chain.unwrap_or_default();
     let intersect = config.intersect;
     let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
     let cursor = config.cursor.unwrap_or_default();
     let breadcrumbs = cursor.initial_load()?;
-
     let ctx = Context {
         chain,
         intersect,
@@ -145,56 +105,17 @@ pub fn run(args: &Args) -> Result<(), Error> {
         current_dir,
         breadcrumbs,
     };
-
     let source = config.source.bootstrapper(&ctx)?;
-
     let filters = config
         .filters
         .into_iter()
         .flatten()
         .map(|x| x.bootstrapper(&ctx))
         .collect::<Result<_, _>>()?;
-
     let sink = config.sink.bootstrapper(&ctx)?;
-
     let cursor = cursor.bootstrapper(&ctx)?;
-
     let retries = define_gasket_policy(config.retries.as_ref());
-
     let daemon = connect_stages(source, filters, sink, cursor, retries)?;
-
-    info!("oura is running");
-
-    let daemon = Arc::new(daemon);
-
-    let tokio_rt = tokio::runtime::Builder::new_multi_thread()
-        .enable_io()
-        .enable_time()
-        .build()
-        .unwrap();
-
-    let prometheus = tokio_rt.spawn(serve_prometheus(daemon.clone(), config.metrics));
-    let tui = tokio_rt.spawn(console::render(daemon.clone(), args.tui));
-
-    daemon.block();
-
-    info!("oura is stopping");
-
-    daemon.teardown();
-    prometheus.abort();
-    tui.abort();
-
-    Ok(())
+    Ok(daemon)
 }
 
-#[derive(clap::Args)]
-#[clap(author, version, about, long_about = None)]
-pub struct Args {
-    /// config file to load by the daemon
-    #[clap(long, value_parser)]
-    config: Option<std::path::PathBuf>,
-
-    /// display the terminal UI
-    #[clap(long, action)]
-    tui: bool,
-}

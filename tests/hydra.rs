@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::Duration;
 
@@ -8,6 +9,8 @@ use futures_util::SinkExt;
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use serde_json::json;
 use tokio::net::TcpListener;
+use oura::daemon::{run_daemon, ConfigRoot};
+use gasket::daemon::Daemon;
 use tokio::runtime::Runtime;
 use tokio::time;
 use tokio_tungstenite::accept_async;
@@ -511,23 +514,12 @@ async fn handle_connection(
 }
 
 async fn oura_pipeline() -> Result<()> {
-    //Clean output file
-    let _ = std::process::Command::new("truncate")
-        .arg("-s 0")
-        .arg("tests/hydra/logs.txt")
-        .spawn();
-
     tokio::spawn(invoke_pipeline());
     time::sleep(Duration::from_secs(1)).await;
-
     Ok(())
 }
 
-async fn invoke_pipeline() -> Result<()> {
-    let mut cmd = Command::cargo_bin("oura")?;
-    cmd.args(vec!["daemon", "--config", "tests/daemon.toml"])
-        .assert()
-        .success();
-
-    Ok(())
+async fn invoke_pipeline() -> Result<Daemon> {
+    let config = ConfigRoot::new(&Some(PathBuf::from("tests/daemon.toml")))?;
+    run_daemon(config).map_err(|e| anyhow::anyhow!(e))
 }
