@@ -254,7 +254,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    hydra_socket_url: String,
+    pub hydra_socket_url: String,
 }
 
 impl Config {
