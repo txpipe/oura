@@ -71,7 +71,6 @@ pub fn run(args: &Args) -> Result<(), Error> {
     Ok(())
 }
 
-
 #[derive(clap::Args)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
