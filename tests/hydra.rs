@@ -461,18 +461,20 @@ fn scenario_2() -> TestResult {
 
 #[test]
 fn hydra_oura_stdout_scenario_1() -> TestResult {
-    hydra_oura_stdout_test("tests/hydra/scenario_1.txt".to_string(), "golden_1".to_string())
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt")?;
+    hydra_oura_stdout_test(scenario, "golden_1".to_string())
 }
 
 #[test]
 fn hydra_oura_stdout_scenario_2() -> TestResult {
-    hydra_oura_stdout_test("tests/hydra/scenario_2.txt".to_string(), "golden_2".to_string())
+    let scenario = fs::read_to_string("tests/hydra/scenario_2.txt")?;
+    hydra_oura_stdout_test(scenario, "golden_2".to_string())
 }
 
 // Run:
 // cargo test hydra_oura -- --nocapture
 // in order to see println
-fn hydra_oura_stdout_test(scenario_file: String, golden_name: String) -> TestResult {
+fn hydra_oura_stdout_test(mock_data: String, golden_name: String) -> TestResult {
 
     let mut mint = Mint::new("tests/hydra");
     let mut golden = mint.new_goldenfile(golden_name.clone()).unwrap();
@@ -488,7 +490,7 @@ fn hydra_oura_stdout_test(scenario_file: String, golden_name: String) -> TestRes
         println!("WebSocket server starting on ws://{}", addr);
 
         let _ = tokio::spawn(async move { run_oura(config) });
-        let _ = mock_hydra_node(server, scenario_file).await;
+        let _ = mock_hydra_node(server, mock_data).await;
 
         // After the connection is established, give oura time to process
         // the chain data and write the output to disk.
@@ -503,19 +505,17 @@ fn hydra_oura_stdout_test(scenario_file: String, golden_name: String) -> TestRes
 
 /// Will await the first connection, and then return while handling it in the
 /// background.
-async fn mock_hydra_node(server: TcpListener, file: String) {
+async fn mock_hydra_node(server: TcpListener, mock_data: String) {
     async fn handle_connection(
         stream: tokio::net::TcpStream,
-        file: String,
+        mock_data: String,
         tx: mpsc::Sender<usize>,
     ) -> Result<()> {
         let mut ws_stream = accept_async(stream).await?;
         println!("WebSocket server oura connection established");
 
-        let to_send = fs::read_to_string(file)?;
-
         let mut lines = 0;
-        for line in to_send.lines() {
+        for line in mock_data.lines() {
             ws_stream.send(Message::Text(line.to_string())).await?;
             lines += 1;
         }
@@ -525,7 +525,7 @@ async fn mock_hydra_node(server: TcpListener, file: String) {
 
     let (tx, _rx) = mpsc::channel();
     let (stream, _) = server.accept().await.unwrap();
-    let _ = tokio::spawn(handle_connection(stream, file, tx));
+    let _ = tokio::spawn(handle_connection(stream, mock_data , tx));
 }
 
 
