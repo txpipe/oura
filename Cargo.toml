@@ -85,4 +85,6 @@ futures-util = "0.3"
 bytes = "1.7.2"
 
 [dev-dependencies]
-assert_cmd = "2"
+goldenfile = "1.7.3"
+tempfile = "3.4"
+port-selector = "0.1.6"
