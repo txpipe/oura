@@ -463,14 +463,12 @@ fn scenario_2() -> TestResult {
 
 #[test]
 fn hydra_oura_stdout_scenario_1() {
-    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
-    hydra_oura_stdout_test(scenario, "golden_1".to_string())
+    hydra_oura_stdout_test("scenario_1.txt".to_string(), "golden_1".to_string())
 }
 
 #[test]
 fn hydra_oura_stdout_scenario_2() {
-    let scenario = fs::read_to_string("tests/hydra/scenario_2.txt").unwrap();
-    hydra_oura_stdout_test(scenario, "golden_2".to_string())
+    hydra_oura_stdout_test("scenario_2.txt".to_string(), "golden_2".to_string())
 }
 
 #[test]
@@ -542,11 +540,12 @@ fn oura_events_from_mock_chain(scenario: String, intersect: IntersectConfig) -> 
 // Run:
 // cargo test hydra_oura -- --nocapture
 // in order to see println
-fn hydra_oura_stdout_test(mock_data: String, golden_name: String) {
+fn hydra_oura_stdout_test(scenario_name: String, golden_name: String) {
     let mut mint = Mint::new("tests/hydra");
     let mut golden = mint.new_goldenfile(golden_name.clone()).unwrap();
 
-    let output = oura_output_from_mock_chain(mock_data, IntersectConfig::Origin);
+    let scenario = fs::read_to_string(format!("tests/hydra/{}", scenario_name)).unwrap();
+    let output = oura_output_from_mock_chain(scenario, IntersectConfig::Origin);
 
     golden.write_all(output.as_bytes()).unwrap();
 }
