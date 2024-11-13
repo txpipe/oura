@@ -462,14 +462,14 @@ fn scenario_2() -> TestResult {
 }
 
 #[test]
-fn hydra_oura_stdout_scenario_1() -> TestResult {
-    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt")?;
+fn hydra_oura_stdout_scenario_1() {
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     hydra_oura_stdout_test(scenario, "golden_1".to_string())
 }
 
 #[test]
-fn hydra_oura_stdout_scenario_2() -> TestResult {
-    let scenario = fs::read_to_string("tests/hydra/scenario_2.txt")?;
+fn hydra_oura_stdout_scenario_2() {
+    let scenario = fs::read_to_string("tests/hydra/scenario_2.txt").unwrap();
     hydra_oura_stdout_test(scenario, "golden_2".to_string())
 }
 
@@ -480,7 +480,7 @@ fn hydra_restore_from_intersection_success() {
         6,
         "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
     );
-    let events = events(scenario, intersect);
+    let events = oura_events_from_mock_chain(scenario, intersect);
 
     assert_ne!(events.len(), 0);
     assert_eq!(events[0].point, json!({"slot": 7, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}));
@@ -490,7 +490,6 @@ fn hydra_restore_from_intersection_success() {
         }
     }
 }
-
 #[test]
 fn hydra_restore_from_intersection_failure() {
     let scenario= fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
@@ -498,10 +497,9 @@ fn hydra_restore_from_intersection_failure() {
         6,
         "ffffffffffffffffffffffffffffffffffffffffffffffffffffffff".to_string()
     );
-    let events = events(scenario, bad_intersect);
+    let events = oura_events_from_mock_chain(scenario, bad_intersect);
     assert_eq!(events, vec![]);
 }
-
 
 /// Wraps the json format of oura::framework::ChainEvent::Apply with just enough
 /// structure to test point equality without having to implement the full json
@@ -512,13 +510,13 @@ struct JsonApplyChainEvent {
     record: Value,
 }
 
-fn events(scenario: String, intersect: IntersectConfig) -> Vec<JsonApplyChainEvent> {
+fn oura_output_from_mock_chain(scenario: String, intersect: IntersectConfig) -> String {
     let rt = Runtime::new().unwrap();
     rt.block_on(async move {
         let port: u16 = random_free_port().unwrap();
         let addr = format!("127.0.0.1:{}", port);
-        let server = TcpListener::bind(&addr).await?;
-        let output_file = NamedTempFile::new()?;
+        let server = TcpListener::bind(&addr).await.unwrap();
+        let output_file = NamedTempFile::new().unwrap();
         let mut config = test_config(&output_file, &addr);
         config.intersect = intersect;
 
@@ -528,49 +526,29 @@ fn events(scenario: String, intersect: IntersectConfig) -> Vec<JsonApplyChainEve
         let _ = mock_hydra_node(server, scenario).await;
 
         // After the connection is established, give oura time to process
-        // the chain data and write the output to disk.
+        // the chain data before we read it.
         time::sleep(Duration::from_secs(3)).await;
-
-        let emitted_jsons: Vec<JsonApplyChainEvent> = fs::read_to_string(&output_file)?
-            .lines()
-            .map(|line| serde_json::from_str(line).expect("Invalid JSON line"))
-            .collect();
-
-        Ok::<Vec<JsonApplyChainEvent>, anyhow::Error>(emitted_jsons)
+        fs::read_to_string(&output_file).unwrap()
     })
-    .unwrap()
+}
+
+fn oura_events_from_mock_chain(scenario: String, intersect: IntersectConfig) -> Vec<JsonApplyChainEvent> {
+    oura_output_from_mock_chain(scenario, intersect)
+        .lines()
+        .map(|line| serde_json::from_str(line).expect("Invalid JSON line"))
+        .collect()
 }
 
 // Run:
 // cargo test hydra_oura -- --nocapture
 // in order to see println
-fn hydra_oura_stdout_test(mock_data: String, golden_name: String) -> TestResult {
-
+fn hydra_oura_stdout_test(mock_data: String, golden_name: String) {
     let mut mint = Mint::new("tests/hydra");
     let mut golden = mint.new_goldenfile(golden_name.clone()).unwrap();
 
-    let rt = Runtime::new().unwrap();
-    let _ = rt.block_on(async move {
-        let port: u16 = random_free_port().unwrap();
-        let addr= format!("127.0.0.1:{}", port);
-        let server = TcpListener::bind(&addr).await?;
-        let output_file = NamedTempFile::new()?;
-        let config = test_config(&output_file, &addr);
+    let output = oura_output_from_mock_chain(mock_data, IntersectConfig::Origin);
 
-        println!("WebSocket server starting on ws://{}", addr);
-
-        let _ = tokio::spawn(async move { run_oura(config) });
-        let _ = mock_hydra_node(server, mock_data).await;
-
-        // After the connection is established, give oura time to process
-        // the chain data and write the output to disk.
-        time::sleep(Duration::from_secs(3)).await;
-        let emitted_jsons= fs::read_to_string(output_file)?;
-        golden.write_all(emitted_jsons.as_bytes()).unwrap();
-        println!("test done, will exit");
-        Ok::<(), std::io::Error>(())
-    });
-    Ok(())
+    golden.write_all(output.as_bytes()).unwrap();
 }
 
 /// Will await the first connection, and then return while handling it in the
