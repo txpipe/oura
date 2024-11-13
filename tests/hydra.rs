@@ -1,3 +1,5 @@
+use serde::Deserialize;
+use oura::framework::IntersectConfig;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::mpsc;
@@ -7,7 +9,7 @@ use anyhow::Result;
 use futures_util::SinkExt;
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
 use oura::sinks::Config::FileRotate;
-use serde_json::json;
+use serde_json::{json, Value};
 use tokio::net::TcpListener;
 use oura::sources::Config::Hydra;
 use oura::daemon::{run_daemon, ConfigRoot};
@@ -469,6 +471,74 @@ fn hydra_oura_stdout_scenario_1() -> TestResult {
 fn hydra_oura_stdout_scenario_2() -> TestResult {
     let scenario = fs::read_to_string("tests/hydra/scenario_2.txt")?;
     hydra_oura_stdout_test(scenario, "golden_2".to_string())
+}
+
+#[test]
+fn hydra_restore_from_intersection_success() {
+    let scenario= fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let intersect = IntersectConfig::Point(
+        6,
+        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
+    );
+    let events = events(scenario, intersect);
+
+    assert_ne!(events.len(), 0);
+    assert_eq!(events[0].point, json!({"slot": 7, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}));
+    for e in events {
+        if e.point == json!({"slot": 6, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}) {
+            panic!("only events /after/ the intersection should be emitted");
+        }
+    }
+}
+
+#[test]
+fn hydra_restore_from_intersection_failure() {
+    let scenario= fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let bad_intersect= IntersectConfig::Point(
+        6,
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffff".to_string()
+    );
+    let events = events(scenario, bad_intersect);
+    assert_eq!(events, vec![]);
+}
+
+
+/// Wraps the json format of oura::framework::ChainEvent::Apply with just enough
+/// structure to test point equality without having to implement the full json
+/// deserializers.
+#[derive(Debug, Deserialize, PartialEq)]
+struct JsonApplyChainEvent {
+    point: Value,
+    record: Value,
+}
+
+fn events(scenario: String, intersect: IntersectConfig) -> Vec<JsonApplyChainEvent> {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(async move {
+        let port: u16 = random_free_port().unwrap();
+        let addr = format!("127.0.0.1:{}", port);
+        let server = TcpListener::bind(&addr).await?;
+        let output_file = NamedTempFile::new()?;
+        let mut config = test_config(&output_file, &addr);
+        config.intersect = intersect;
+
+        println!("WebSocket server starting on ws://{}", addr);
+
+        let _ = tokio::spawn(async move { run_oura(config) });
+        let _ = mock_hydra_node(server, scenario).await;
+
+        // After the connection is established, give oura time to process
+        // the chain data and write the output to disk.
+        time::sleep(Duration::from_secs(3)).await;
+
+        let emitted_jsons: Vec<JsonApplyChainEvent> = fs::read_to_string(&output_file)?
+            .lines()
+            .map(|line| serde_json::from_str(line).expect("Invalid JSON line"))
+            .collect();
+
+        Ok::<Vec<JsonApplyChainEvent>, anyhow::Error>(emitted_jsons)
+    })
+    .unwrap()
 }
 
 // Run:
