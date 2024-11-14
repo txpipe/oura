@@ -152,36 +152,33 @@ pub enum WorkerIntersect {
     ProcessMessages,
 }
 
-impl WorkerIntersect {
-    /// When passed the point of the next hydra message, this function will return whether or not
-    /// that message should be processed. The `WorkerIntersect` will be mutated to reflect the
-    /// state where the next message has been processed.
-    fn should_process(&mut self, next: Point) -> bool {
-        match self {
+impl Worker {
+    async fn process(&mut self, stage: &mut Stage, msg: HydraMessage) -> Result<(), WorkerError> {
+        let point = msg.pseudo_point();
+        match &self.intersect {
             WorkerIntersect::SkipUntil(slot, hash) => {
-                let p = Point::Specific(slot.clone(), hash.clone());
+                let target = Point::Specific(slot.clone(), hash.clone());
                 debug!(
                     "Skipping message {} before or at intersection {}",
-                    next.slot_or_default(), p.slot_or_default()
+                    point.slot_or_default(), target.slot_or_default()
                 );
-                if p == next {
-                    *self = WorkerIntersect::ProcessMessages;
-                } else if next.slot_or_default() >= p.slot_or_default() {
+
+                if target == point {
+                    self.intersect = WorkerIntersect::ProcessMessages;
+                } else if point.slot_or_default() >= target.slot_or_default() {
                     warn!(
                         "Skipping message from wrong hydra chain (intersection point hash mismatch) {:?} {:?}",
-                        p, next
-
+                        target, point
                     );
                 }
-               false
+                Ok(())
             }
-            WorkerIntersect::ProcessMessages => true,
+            WorkerIntersect::ProcessMessages => self.process_message(stage, msg).await,
         }
     }
-}
 
-impl Worker {
-    async fn process_next(
+    /// Helper only to be called by `process`
+    async fn process_message(
         &mut self,
         stage: &mut Stage,
         next: HydraMessage,
@@ -260,11 +257,7 @@ impl gasket::framework::Worker<Stage> for Worker {
                 debug!("Hydra message: {}", text);
                 match serde_json::from_str::<HydraMessage>(text) {
                     Ok(hydra_message) => {
-                        if self.intersect.should_process(hydra_message.pseudo_point()) {
-                                self.process_next(stage, hydra_message).await
-                        } else {
-                            Ok(())
-                        }
+                        self.process(stage, hydra_message).await
                     }
                     Err(err) => {
                         error!("Failed to parse Hydra message: {}", err);
