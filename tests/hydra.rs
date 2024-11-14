@@ -1,10 +1,10 @@
-use serde::Deserialize;
-use oura::framework::IntersectConfig;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::Duration;
 
+use serde::Deserialize;
+use oura::framework::IntersectConfig;
 use anyhow::Result;
 use futures_util::SinkExt;
 use oura::sources::hydra::{HydraMessage, HydraMessagePayload};

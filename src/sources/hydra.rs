@@ -145,8 +145,9 @@ pub struct Worker {
     socket: HydraConnection,
     intersect: WorkerIntersect,
 }
-#[derive(Debug, Clone)]
+
 /// Worker state for finding the right intersection point
+#[derive(Debug, Clone)]
 pub enum WorkerIntersect {
     SkipUntil(u64, Vec<u8>), // Possibility of Point::Origin is excluded
     ProcessMessages,
