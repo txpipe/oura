@@ -136,9 +136,6 @@ pub struct Stage {
 
     #[metric]
     current_slot: gasket::metrics::Gauge,
-
-    #[metric]
-    rollback_count: gasket::metrics::Counter,
 }
 
 pub struct Worker {
@@ -285,7 +282,6 @@ impl Config {
             ops_count: Default::default(),
             chain_tip: Default::default(),
             current_slot: Default::default(),
-            rollback_count: Default::default(),
         };
 
         Ok(stage)
