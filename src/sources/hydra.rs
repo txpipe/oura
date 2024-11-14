@@ -132,9 +132,6 @@ pub struct Stage {
     ops_count: gasket::metrics::Counter,
 
     #[metric]
-    chain_tip: gasket::metrics::Gauge,
-
-    #[metric]
     current_slot: gasket::metrics::Gauge,
 }
 
@@ -195,7 +192,6 @@ impl Worker {
                 stage.output.send(evt.into()).await.or_panic()?;
                 stage.ops_count.inc(1);
 
-                stage.chain_tip.set(point.slot_or_default() as i64);
                 stage.current_slot.set(point.slot_or_default() as i64);
                 stage.ops_count.inc(1);
             }
@@ -280,7 +276,6 @@ impl Config {
             intersect: ctx.intersect.clone(),
             output: Default::default(),
             ops_count: Default::default(),
-            chain_tip: Default::default(),
             current_slot: Default::default(),
         };
 
