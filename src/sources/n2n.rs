@@ -11,7 +11,7 @@ use crate::framework::*;
 
 #[derive(Stage)]
 #[stage(
-    name = "source-n2n",
+    name = "source",
     unit = "NextResponse<HeaderContent>",
     worker = "Worker"
 )]
@@ -22,7 +22,7 @@ pub struct Stage {
 
     intersect: IntersectConfig,
 
-    cursor: Cursor,
+    breadcrumbs: Breadcrumbs,
 
     pub output: SourceOutputPort,
 
@@ -31,6 +31,12 @@ pub struct Stage {
 
     #[metric]
     chain_tip: gasket::metrics::Gauge,
+
+    #[metric]
+    current_slot: gasket::metrics::Gauge,
+
+    #[metric]
+    rollback_count: gasket::metrics::Counter,
 }
 
 fn to_traverse(header: &HeaderContent) -> Result<MultiEraHeader<'_>, WorkerError> {
@@ -70,12 +76,13 @@ async fn intersect_from_config(
     Ok(())
 }
 
-async fn intersect_from_cursor(peer: &mut PeerClient, cursor: &Cursor) -> Result<(), WorkerError> {
-    let points = cursor.clone_state();
-
+async fn intersect_from_breadcrumbs(
+    peer: &mut PeerClient,
+    breadcrumbs: &Breadcrumbs,
+) -> Result<(), WorkerError> {
     let (intersect, _) = peer
         .chainsync()
-        .find_intersect(points.into())
+        .find_intersect(breadcrumbs.points())
         .await
         .or_restart()?;
 
@@ -99,13 +106,14 @@ impl Worker {
                 let header = to_traverse(header).or_panic()?;
                 let slot = header.slot();
                 let hash = header.hash();
+                let point = Point::Specific(slot, hash.to_vec());
 
                 debug!(slot, %hash, "chain sync roll forward");
 
                 let block = self
                     .peer_session
                     .blockfetch()
-                    .fetch_single(Point::Specific(slot, hash.to_vec()))
+                    .fetch_single(point.clone())
                     .await
                     .or_retry()?;
 
@@ -116,7 +124,11 @@ impl Worker {
 
                 stage.output.send(evt.into()).await.or_panic()?;
 
+                stage.breadcrumbs.track(point);
+
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
+                stage.current_slot.set(slot as i64);
+                stage.ops_count.inc(1);
 
                 Ok(())
             }
@@ -132,7 +144,12 @@ impl Worker {
                     .await
                     .or_panic()?;
 
+                stage.breadcrumbs.track(point.clone());
+
                 stage.chain_tip.set(tip.0.slot_or_default() as i64);
+                stage.current_slot.set(point.slot_or_default() as i64);
+                stage.ops_count.inc(1);
+                stage.rollback_count.inc(1);
 
                 Ok(())
             }
@@ -161,10 +178,10 @@ impl gasket::framework::Worker<Stage> for Worker {
             .await
             .or_retry()?;
 
-        if stage.cursor.is_empty() {
+        if stage.breadcrumbs.is_empty() {
             intersect_from_config(&mut peer_session, &stage.intersect).await?;
         } else {
-            intersect_from_cursor(&mut peer_session, &stage.cursor).await?;
+            intersect_from_breadcrumbs(&mut peer_session, &stage.breadcrumbs).await?;
         }
 
         let worker = Self { peer_session };
@@ -199,29 +216,25 @@ impl gasket::framework::Worker<Stage> for Worker {
     ) -> Result<(), WorkerError> {
         self.process_next(stage, unit).await
     }
-
-    async fn teardown(&mut self) -> Result<(), WorkerError> {
-        self.peer_session.abort();
-
-        Ok(())
-    }
 }
 
 #[derive(Deserialize)]
 pub struct Config {
-    peers: Vec<String>,
+    pub peers: Vec<String>,
 }
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
         let stage = Stage {
             config: self,
+            breadcrumbs: ctx.breadcrumbs.clone(),
             chain: ctx.chain.clone().into(),
             intersect: ctx.intersect.clone(),
-            cursor: ctx.cursor.clone(),
             output: Default::default(),
             ops_count: Default::default(),
+            rollback_count: Default::default(),
             chain_tip: Default::default(),
+            current_slot: Default::default(),
         };
 
         Ok(stage)

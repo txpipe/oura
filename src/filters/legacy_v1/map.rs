@@ -1,7 +1,9 @@
 use gasket::framework::AsWorkError;
-use lazy_static::__Deref;
+use pallas::codec::utils::Nullable;
+use pallas::ledger::primitives::conway;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
+use std::ops::Deref as _;
 use tracing::warn;
 
 use pallas::ledger::primitives::babbage::{MintedDatumOption, NetworkId};
@@ -14,7 +16,7 @@ use pallas::ledger::primitives::{
 };
 use pallas::ledger::traverse::{
     ComputeHash, MultiEraAsset, MultiEraBlock, MultiEraCert, MultiEraInput, MultiEraOutput,
-    MultiEraTx, OriginalHash,
+    MultiEraRedeemer, MultiEraTx, OriginalHash,
 };
 use pallas::network::miniprotocols::Point;
 use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
@@ -106,19 +108,19 @@ fn relay_to_string(relay: &Relay) -> String {
     match relay {
         Relay::SingleHostAddr(port, ipv4, ipv6) => {
             let ip = match (ipv6, ipv4) {
-                (None, None) => "".to_string(),
-                (_, Some(x)) => ip_string_from_bytes(x.as_ref()),
-                (Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                (_, Nullable::Some(x)) => ip_string_from_bytes(x.as_ref()),
+                (Nullable::Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                _ => "".to_string(),
             };
 
             match port {
-                Some(port) => format!("{ip}:{port}"),
-                None => ip,
+                Nullable::Some(port) => format!("{ip}:{port}"),
+                _ => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
-            Some(port) => format!("{host}:{port}"),
-            None => host.clone(),
+            Nullable::Some(port) => format!("{host}:{port}"),
+            _ => host.clone(),
         },
         Relay::MultiHostName(host) => host.clone(),
     }
@@ -396,18 +398,20 @@ impl EventWriter<'_> {
         }
     }
 
-    pub fn to_plutus_redeemer_record(&self, redeemer: &alonzo::Redeemer) -> PlutusRedeemerRecord {
+    pub fn to_plutus_redeemer_record(&self, redeemer: &MultiEraRedeemer) -> PlutusRedeemerRecord {
         PlutusRedeemerRecord {
-            purpose: match redeemer.tag {
-                alonzo::RedeemerTag::Spend => "spend".to_string(),
-                alonzo::RedeemerTag::Mint => "mint".to_string(),
-                alonzo::RedeemerTag::Cert => "cert".to_string(),
-                alonzo::RedeemerTag::Reward => "reward".to_string(),
+            purpose: match redeemer.tag() {
+                conway::RedeemerTag::Spend => "spend".to_string(),
+                conway::RedeemerTag::Mint => "mint".to_string(),
+                conway::RedeemerTag::Cert => "cert".to_string(),
+                conway::RedeemerTag::Reward => "reward".to_string(),
+                conway::RedeemerTag::Vote => "vote".to_string(),
+                conway::RedeemerTag::Propose => "propose".to_string(),
             },
-            ex_units_mem: redeemer.ex_units.mem,
-            ex_units_steps: redeemer.ex_units.steps,
-            input_idx: redeemer.index,
-            plutus_data: redeemer.data.to_json(),
+            ex_units_mem: redeemer.ex_units().mem as u32,
+            ex_units_steps: redeemer.ex_units().steps,
+            input_idx: redeemer.index(),
+            plutus_data: redeemer.data().to_json(),
         }
     }
 
@@ -476,8 +480,14 @@ impl EventWriter<'_> {
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
-                pool_metadata: pool_metadata.as_ref().map(|m| m.url.clone()),
-                pool_metadata_hash: pool_metadata.as_ref().map(|m| m.hash.clone().to_hex()),
+                pool_metadata: match pool_metadata {
+                    Nullable::Some(x) => Some(x.url.clone()),
+                    _ => None,
+                },
+                pool_metadata_hash: match pool_metadata {
+                    Nullable::Some(x) => Some(x.hash.clone().to_hex()),
+                    _ => None,
+                },
             },
             Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
                 pool: pool.to_hex(),

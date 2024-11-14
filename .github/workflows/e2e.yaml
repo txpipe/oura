@@ -12,20 +12,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64
@@ -37,9 +37,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -48,7 +48,7 @@ jobs:
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 1200
 
-      - uses: azure/setup-kubectl@v3.2
+      - uses: azure/setup-kubectl@v4
         with:
           version: "v1.23.6"
 
@@ -82,9 +82,9 @@ jobs:
           - name: aws-sqs-10-blocks
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -93,7 +93,7 @@ jobs:
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 3600
 
-      - uses: azure/setup-kubectl@v3.2
+      - uses: azure/setup-kubectl@v4
         with:
           version: "v1.23.6"
 

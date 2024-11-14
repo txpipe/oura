@@ -86,7 +86,7 @@ impl EventWriter<'_> {
         }
 
         for redeemer in tx.redeemers() {
-            self.append_from(self.to_plutus_redeemer_record(redeemer))?;
+            self.append_from(self.to_plutus_redeemer_record(&redeemer))?;
         }
 
         for datum in tx.plutus_data() {
