@@ -160,7 +160,7 @@ impl Worker {
             WorkerIntersect::SkipUntil(slot, hash) => {
                 let target = Point::Specific(slot.clone(), hash.clone());
                 debug!(
-                    "Skipping message {} before or at intersection {}",
+                    "Skipping message {} before (or at) requested intersection {}",
                     point.slot_or_default(), target.slot_or_default()
                 );
 
