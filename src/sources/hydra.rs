@@ -26,7 +26,7 @@ pub struct HydraMessage {
 
 impl HydraMessage {
     fn head_id_or_default(&self) -> Vec<u8> {
-        let dummy_hash = vec![0u8; 32];
+        let dummy_hash = vec![0u8; 28];
         self.head_id.clone().unwrap_or(dummy_hash)
     }
 
@@ -132,13 +132,7 @@ pub struct Stage {
     ops_count: gasket::metrics::Counter,
 
     #[metric]
-    chain_tip: gasket::metrics::Gauge,
-
-    #[metric]
     current_slot: gasket::metrics::Gauge,
-
-    #[metric]
-    rollback_count: gasket::metrics::Counter,
 }
 
 pub struct Worker {
@@ -198,7 +192,6 @@ impl Worker {
                 stage.output.send(evt.into()).await.or_panic()?;
                 stage.ops_count.inc(1);
 
-                stage.chain_tip.set(point.slot_or_default() as i64);
                 stage.current_slot.set(point.slot_or_default() as i64);
                 stage.ops_count.inc(1);
             }
@@ -283,9 +276,7 @@ impl Config {
             intersect: ctx.intersect.clone(),
             output: Default::default(),
             ops_count: Default::default(),
-            chain_tip: Default::default(),
             current_slot: Default::default(),
-            rollback_count: Default::default(),
         };
 
         Ok(stage)
