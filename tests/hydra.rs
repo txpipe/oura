@@ -488,9 +488,44 @@ fn hydra_restore_from_intersection_success() {
         }
     }
 }
+
+#[test]
+fn hydra_restore_from_intersection_tip() {
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let intersect = IntersectConfig::Point(
+        11,
+        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
+    );
+    let events = oura_events_from_mock_chain(scenario, intersect);
+    assert_eq!(events, vec![]);
+}
+
+#[test]
+fn hydra_restore_from_intersection_point_with_dummy_hash_and_shared_slot_1() {
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let intersect = IntersectConfig::Point(
+        2,
+        "0000000000000000000000000000000000000000000000000000000000000000".to_string()
+    );
+    let events = oura_events_from_mock_chain(scenario, intersect);
+    // It appears the Greetings and HeadIsInitializing messages share the same seq / slot.
+    assert_eq!(events[0].point, json!({"slot": 2, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}))
+}
+
+#[test]
+fn hydra_restore_from_intersection_point_with_shared_slot_2() {
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let intersect = IntersectConfig::Point(
+        2,
+        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
+    );
+    let events = oura_events_from_mock_chain(scenario, intersect);
+    assert_eq!(events[0].point, json!({"slot": 3, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}))
+}
+
 #[test]
 fn hydra_restore_from_intersection_failure() {
-    let scenario= fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     let bad_intersect= IntersectConfig::Point(
         6,
         "ffffffffffffffffffffffffffffffffffffffffffffffffffffffff".to_string()
