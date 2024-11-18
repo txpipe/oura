@@ -4,7 +4,7 @@ use tokio_tungstenite::MaybeTlsStream;
 use pallas::network::miniprotocols::Point;
 
 use gasket::framework::*;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 use futures_util::StreamExt;
 use tokio_tungstenite::WebSocketStream;
@@ -143,11 +143,43 @@ pub struct Stage {
 
 pub struct Worker {
     socket: HydraConnection,
-    intersect: Point,
+    intersect: WorkerIntersect,
+}
+
+/// Worker state for finding the right intersection point
+#[derive(Debug, Clone)]
+pub enum WorkerIntersect {
+    SkipUntil(u64, Vec<u8>), // Possibility of Point::Origin is excluded
+    ProcessMessages,
 }
 
 impl Worker {
-    async fn process_next(
+    async fn process(&mut self, stage: &mut Stage, msg: HydraMessage) -> Result<(), WorkerError> {
+        let point = msg.pseudo_point();
+        match &self.intersect {
+            WorkerIntersect::SkipUntil(slot, hash) => {
+                let target = Point::Specific(slot.clone(), hash.clone());
+                debug!(
+                    "Skipping message {} before (or at) requested intersection {}",
+                    point.slot_or_default(), target.slot_or_default()
+                );
+
+                if target == point {
+                    self.intersect = WorkerIntersect::ProcessMessages;
+                } else if point.slot_or_default() >= target.slot_or_default() {
+                    warn!(
+                        "Skipping message from wrong hydra chain (intersection point hash mismatch) {:?} {:?}",
+                        target, point
+                    );
+                }
+                Ok(())
+            }
+            WorkerIntersect::ProcessMessages => self.process_message(stage, msg).await,
+        }
+    }
+
+    /// Helper only to be called by `process`
+    async fn process_message(
         &mut self,
         stage: &mut Stage,
         next: HydraMessage,
@@ -176,11 +208,11 @@ impl Worker {
     }
 }
 
-fn intersect_from_config(intersect: &IntersectConfig) -> Point {
+fn intersect_from_config(intersect: &IntersectConfig) -> WorkerIntersect {
     match intersect {
         IntersectConfig::Origin => {
-            info!("intersecting origin");
-            Point::Origin
+            info!("starting from Origin");
+            WorkerIntersect::ProcessMessages
         }
         IntersectConfig::Tip => {
             panic!("intersecting tip not currently supported with hydra as source")
@@ -188,7 +220,7 @@ fn intersect_from_config(intersect: &IntersectConfig) -> Point {
         IntersectConfig::Point(slot, hash_str) => {
             info!("intersecting specific point");
             let hash = hex::decode(hash_str).expect("valid hex hash");
-            Point::Specific(slot.clone(), hash)
+            WorkerIntersect::SkipUntil(slot.clone(), hash)
         }
         IntersectConfig::Breadcrumbs(_) => {
             panic!("intersecting breadcrumbs not currently supported with hydra as source")
@@ -226,20 +258,7 @@ impl gasket::framework::Worker<Stage> for Worker {
                 debug!("Hydra message: {}", text);
                 match serde_json::from_str::<HydraMessage>(text) {
                     Ok(hydra_message) => {
-                        // TODO: search for the intersection point to ensure
-                        // we're on the same chain.
-                        match &self.intersect {
-                            Point::Specific(slot, _hash) if &hydra_message.seq <= slot => {
-                                debug!(
-                                    "Skipping message {} before or at intersection {}",
-                                    hydra_message.seq, slot
-                                );
-                                Ok(())
-                            }
-                            Point::Origin | Point::Specific(_, _) => {
-                                self.process_next(stage, hydra_message).await
-                            }
-                        }
+                        self.process(stage, hydra_message).await
                     }
                     Err(err) => {
                         error!("Failed to parse Hydra message: {}", err);
