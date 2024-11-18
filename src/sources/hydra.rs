@@ -112,11 +112,6 @@ where
     Ok(cbor)
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Snapshot {
-    number: u64,
-    confirmed_transaction_ids: Vec<String>,
-}
 type HydraConnection = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 #[derive(Stage)]
