@@ -112,11 +112,6 @@ where
     Ok(cbor)
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Snapshot {
-    number: u64,
-    confirmed_transaction_ids: Vec<String>,
-}
 type HydraConnection = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 #[derive(Stage)]
@@ -226,7 +221,7 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         debug!("connecting to hydra WebSocket");
 
-        let url = &stage.config.hydra_socket_url;
+        let url = &stage.config.hydra_socket_path;
         let (socket, _) = connect_async(url).await.expect("Can't connect");
         let worker = Self {
             socket,
@@ -266,7 +261,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    pub hydra_socket_url: String,
+    pub hydra_socket_path: String,
 }
 
 impl Config {

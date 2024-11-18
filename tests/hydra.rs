@@ -621,7 +621,7 @@ fn test_config(tmp_output_file: &NamedTempFile, socket_path: &String) -> ConfigR
     }
 
     if let Hydra(ref mut hydra_config) = config.source {
-        hydra_config.hydra_socket_url = "ws://".to_string() + socket_path;
+        hydra_config.hydra_socket_path = "ws://".to_string() + socket_path;
     } else {
         panic!("assumed config template to use hydra source");
     }
