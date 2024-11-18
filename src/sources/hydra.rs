@@ -26,7 +26,7 @@ pub struct HydraMessage {
 
 impl HydraMessage {
     fn head_id_or_default(&self) -> Vec<u8> {
-        let dummy_hash = vec![0u8; 32];
+        let dummy_hash = vec![0u8; 28];
         self.head_id.clone().unwrap_or(dummy_hash)
     }
 

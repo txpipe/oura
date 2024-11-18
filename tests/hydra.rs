@@ -505,7 +505,7 @@ fn hydra_restore_from_intersection_point_with_dummy_hash_and_shared_slot_1() {
     let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     let intersect = IntersectConfig::Point(
         2,
-        "0000000000000000000000000000000000000000000000000000000000000000".to_string()
+        "00000000000000000000000000000000000000000000000000000000".to_string()
     );
     let events = oura_events_from_mock_chain(scenario, intersect);
     // It appears the Greetings and HeadIsInitializing messages share the same seq / slot.
