@@ -75,7 +75,7 @@ jobs:
         uses: actions-rs/cargo@v1.0.3
         with:
           command: build
-          args: --release --all-features --target ${{ matrix.target }}
+          args: --release --all-features --target ${{ matrix.target }} --features force-cross
           use-cross: ${{ matrix.os == 'ubuntu-latest' }}
 
       - name: Post Build | Prepare artifacts [Windows]
