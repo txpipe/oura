@@ -16,7 +16,6 @@ aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
 sql = ["sqlx"]
 gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default", "jsonwebtoken"]
 rabbitmq = ["lapin"]
-redis = ["r2d2_redis"]
 u5c = ["tonic"]
 mithril = ["mithril-client"]
 # elasticsearch = auto feature flag
@@ -56,7 +55,6 @@ file-rotate = { version = "0.7.5" }
 reqwest = { version = "0.11", features = ["json", "multipart"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
 async-trait = "0.1.68"
-
 elasticsearch = { version = "8.5.0-alpha.1", optional = true }
 murmur3 = { version = "0.5.2", optional = true }
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
@@ -65,7 +63,6 @@ kafka = { version = "0.10.0", optional = true }
 google-cloud-pubsub = { version = "0.16.0", optional = true }
 google-cloud-googleapis = { version = "0.10.0", optional = true }
 google-cloud-default = { version = "0.4.0", optional = true, features = ["pubsub"] }
-r2d2_redis = { version = "0.14.0", optional = true }
 jsonwebtoken = { version = "8.3.0", optional = true }
 tonic = { version = "0.11", features = ["tls", "tls-roots"], optional = true }
 futures = { version = "0.3.28", optional = true }
@@ -79,3 +76,4 @@ extism = { version = "1.2.0", optional = true }
 mithril-client = { version = "^0.8", optional = true, features = ["fs"] }
 miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
+redis = { version = "0.27.6", optional = true }
