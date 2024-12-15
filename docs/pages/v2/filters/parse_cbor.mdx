@@ -1,8 +1,10 @@
 # Parse CBOR filter
 
-The `parse_cbor` filter aims to map cbor transactions to a structured transaction.
+The `parse_cbor` filter aims to map cbor blocks to structured blocks and cbor transactions to structured transactions.
 
-However, the filter will only work when the record received in the stage is CborTx in other words a transaction in Cbor format that was previously extracted from a block by another stage, otherwise, parse_cbor will ignore and pass the record to the next stage. When the record is CborTx, parse_cbor will decode and map the Cbor to a structure, so the next stage will receive the ParsedTx record. If no filter is enabled, the stages will receive the record in CborBlock format, and if only the parse_cbor filter is enabled in `daemon.toml`, it will be necessary to enable the [split_cbor](split_block) filter for the stage to receive the CborTx format.
+- When the record received in the stage is CborBlock, the filter will decode and map it to ParsedBlock, which is passed to the next stage.
+- When the record received in the stage is CborTx, the filter will decode and map it to ParsedTx, which is passed to the next stage. This will only happen when the record received in the stage is CborTx and therefore requires to enable the [split_cbor](split_block) filter before for the stage to receive the CborTx format.
+- Else, parse_cbor will ignore and pass the record to the next stage.
 
 ## Configuration
 
@@ -15,7 +17,23 @@ type = "ParseCbor"
 
 ## Examples
 
-Below is an example of the data that will be sent to the sink. A block can contain many transactions, so the sink will receive an event for each transaction in json format.
+Below is an example of the data that will be sent to the sink when the filter received a CborBlock record.
+
+```json
+{
+  "event": "apply",
+  "point": {
+    "slot": 0,
+    "hash": ""
+  },
+  "record": {
+    "header": {},
+    "body": {}
+  }
+}
+```
+
+Below is an example of the data that will be sent to the sink when the filter received a CborTx record. A block can contain many transactions, so the sink will receive an event for each transaction.
 
 ```json
 {

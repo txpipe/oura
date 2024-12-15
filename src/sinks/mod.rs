@@ -3,13 +3,13 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
-mod assert;
-mod common;
-mod file_rotate;
-mod noop;
-mod stdout;
-mod terminal;
-mod webhook;
+pub mod assert;
+pub mod common;
+pub mod file_rotate;
+pub mod noop;
+pub mod stdout;
+pub mod terminal;
+pub mod webhook;
 
 #[cfg(feature = "rabbitmq")]
 mod rabbitmq;
