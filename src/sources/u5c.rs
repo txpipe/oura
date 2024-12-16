@@ -3,7 +3,7 @@ use pallas::interop::utxorpc::spec::sync::BlockRef;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
 use tracing::debug;
-use utxorpc::{CardanoSyncClient, ClientBuilder, TipEvent};
+use utxorpc::{CardanoSyncClient, ChainBlock, ClientBuilder, TipEvent};
 
 use crate::framework::*;
 
@@ -22,6 +22,28 @@ pub struct Worker {
 }
 
 impl Worker {
+    fn block_to_record(
+        &self,
+        stage: &Stage,
+        block: &ChainBlock<utxorpc::spec::cardano::Block>,
+    ) -> Result<(Point, Record), WorkerError> {
+        let parsed = block.parsed.as_ref().ok_or(WorkerError::Panic)?;
+
+        let record = if stage.config.use_parsed_blocks {
+            Record::ParsedBlock(parsed.clone())
+        } else {
+            Record::CborBlock(block.native.to_vec())
+        };
+
+        let point = parsed
+            .header
+            .as_ref()
+            .map(|h| Point::Specific(h.slot, h.hash.to_vec()))
+            .ok_or(WorkerError::Panic)?;
+
+        Ok((point, record))
+    }
+
     async fn process_next(
         &self,
         stage: &mut Stage,
@@ -29,38 +51,20 @@ impl Worker {
     ) -> Result<(), WorkerError> {
         match unit {
             TipEvent::Apply(block) => {
-                if let Some(block) = &block.parsed {
-                    let header = block.header.as_ref().unwrap();
+                let (point, record) = self.block_to_record(stage, block)?;
 
-                    let block = block.body.as_ref().unwrap();
+                let evt = ChainEvent::Apply(point.clone(), record);
 
-                    for tx in block.tx.clone() {
-                        let evt = ChainEvent::Apply(
-                            Point::Specific(header.slot, header.hash.to_vec()),
-                            Record::ParsedTx(tx),
-                        );
-
-                        stage.output.send(evt.into()).await.or_panic()?;
-                        stage.chain_tip.set(header.slot as i64);
-                    }
-                }
+                stage.output.send(evt.into()).await.or_panic()?;
+                stage.chain_tip.set(point.slot_or_default() as i64);
             }
             TipEvent::Undo(block) => {
-                if let Some(block) = &block.parsed {
-                    let header = block.header.as_ref().unwrap();
+                let (point, record) = self.block_to_record(stage, block)?;
 
-                    let block = block.body.as_ref().unwrap();
+                let evt = ChainEvent::Undo(point.clone(), record);
 
-                    for tx in block.tx.clone() {
-                        let evt = ChainEvent::Undo(
-                            Point::Specific(header.slot, header.hash.to_vec()),
-                            Record::ParsedTx(tx),
-                        );
-
-                        stage.output.send(evt.into()).await.or_panic()?;
-                        stage.chain_tip.set(header.slot as i64);
-                    }
-                }
+                stage.output.send(evt.into()).await.or_panic()?;
+                stage.chain_tip.set(point.slot_or_default() as i64);
             }
             TipEvent::Reset(block) => {
                 stage
@@ -154,6 +158,7 @@ pub struct Stage {
 #[derive(Deserialize)]
 pub struct Config {
     url: String,
+    use_parsed_blocks: bool,
 }
 
 impl Config {
