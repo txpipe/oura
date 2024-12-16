@@ -16,7 +16,7 @@ aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
 sql = ["sqlx"]
 gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default", "jsonwebtoken"]
 rabbitmq = ["lapin"]
-u5c = ["tonic"]
+u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
 # elasticsearch = auto feature flag
 # kafka = auto feature flag
@@ -64,7 +64,6 @@ google-cloud-pubsub = { version = "0.16.0", optional = true }
 google-cloud-googleapis = { version = "0.10.0", optional = true }
 google-cloud-default = { version = "0.4.0", optional = true, features = ["pubsub"] }
 jsonwebtoken = { version = "8.3.0", optional = true }
-tonic = { version = "0.12.3", features = ["tls", "tls-roots"], optional = true }
 futures = { version = "0.3.28", optional = true }
 sqlx = { version = "0.7", features = ["runtime-tokio", "tls-native-tls", "any", "sqlite", "postgres"], optional = true }
 aws-config = { version = "^1.1", optional = true }
@@ -77,3 +76,4 @@ mithril-client = { version = "^0.8", optional = true, features = ["fs"] }
 miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
 redis = { version = "0.27.6", optional = true }
+utxorpc = { version = "0.9.0", optional = true }
