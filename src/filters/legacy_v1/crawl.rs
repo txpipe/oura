@@ -53,13 +53,14 @@ impl EventWriter<'_> {
         self.append(record.into()).or_panic()?;
 
         let address = output.address().or_panic()?;
+        let value = output.value();
 
         let mut child = self.child_writer(EventContext {
             output_address: Some(address.to_string()),
             ..EventContext::default()
         });
 
-        for policy in output.non_ada_assets() {
+        for policy in value.assets() {
             for asset in policy.assets() {
                 child.append_from(OutputAssetRecord::from(&asset))?;
             }
