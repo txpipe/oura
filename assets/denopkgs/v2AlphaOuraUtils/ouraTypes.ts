@@ -92,6 +92,7 @@ export type TransactionRecord = {
   outputs: TxOutputRecord[] | null;
   collateral_inputs: TxInputRecord[] | null;
   collateral_output: TxOutputRecord | null;
+  reference_inputs: TxInputRecord[] | null;
   mint: MintRecord[] | null;
   vkey_witnesses: VKeyWitnessRecord[] | null;
   native_witnesses: NativeWitnessRecord[] | null;
