@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use gasket::framework::*;
 use pallas::interop::utxorpc::spec::sync::BlockRef;
 use pallas::network::miniprotocols::Point;
@@ -86,11 +88,17 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         debug!("connecting");
 
-        let mut client = ClientBuilder::new()
+        let mut builder = ClientBuilder::new()
             .uri(stage.config.url.as_str())
-            .or_panic()?
-            .build::<CardanoSyncClient>()
-            .await;
+            .or_panic()?;
+
+        for (key, value) in stage.config.metadata.iter() {
+            builder = builder
+                .metadata(key.to_string(), value.to_string())
+                .or_panic()?;
+        }
+
+        let mut client = builder.build::<CardanoSyncClient>().await;
 
         let intersect: Vec<_> = if stage.breadcrumbs.is_empty() {
             stage.intersect.points().unwrap_or_default()
@@ -158,6 +166,8 @@ pub struct Stage {
 #[derive(Deserialize)]
 pub struct Config {
     url: String,
+    metadata: HashMap<String, String>,
+    #[serde(default)]
     use_parsed_blocks: bool,
 }
 
