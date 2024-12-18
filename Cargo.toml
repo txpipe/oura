@@ -43,7 +43,7 @@ handlebars = "^5.1"
 config = { version = "0.13.2", default-features = false, features = ["toml", "yaml", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
-strum = "0.24"
+strum = "0.26"
 strum_macros = "0.25"
 unicode-truncate = "0.2.0"
 thiserror = "1.0.39"
