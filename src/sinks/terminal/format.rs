@@ -45,7 +45,7 @@ impl LogLine {
                 let mut log = LogLine::new("BLOCK", Color::Magenta);
                 log.max_width = max_width;
 
-                match trv::MultiEraBlock::decode(&cbor) {
+                match trv::MultiEraBlock::decode(cbor) {
                     Ok(block) => {
                         let slot = block.slot();
                         let hash = block.hash().to_string();
@@ -62,7 +62,7 @@ impl LogLine {
                 let mut log = LogLine::new("TX", Color::DarkBlue);
                 log.max_width = max_width;
 
-                match trv::MultiEraTx::decode(&cbor) {
+                match trv::MultiEraTx::decode(cbor) {
                     Ok(tx) => {
                         let hash = tx.hash().to_string();
                         log.content = format!("hash: {hash}");
@@ -105,7 +105,7 @@ impl LogLine {
 
         match point {
             Point::Origin => {
-                log.content = format!("origin");
+                log.content = "origin".to_string();
             }
             Point::Specific(slot, hash) => {
                 let hash = hex::encode(hash);
