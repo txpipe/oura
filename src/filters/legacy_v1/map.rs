@@ -51,7 +51,7 @@ impl From<&alonzo::StakeCredential> for StakeCredential {
     fn from(other: &alonzo::StakeCredential) -> Self {
         match other {
             alonzo::StakeCredential::AddrKeyhash(x) => StakeCredential::AddrKeyhash(x.to_hex()),
-            alonzo::StakeCredential::Scripthash(x) => StakeCredential::Scripthash(x.to_hex()),
+            alonzo::StakeCredential::ScriptHash(x) => StakeCredential::Scripthash(x.to_hex()),
         }
     }
 }
@@ -141,12 +141,13 @@ fn metadatum_to_string_key(datum: &Metadatum) -> String {
 impl EventWriter<'_> {
     pub fn to_transaction_output_record(&self, output: &MultiEraOutput) -> TxOutputRecord {
         let address = output.address().or_panic();
+        let value = output.value();
 
         TxOutputRecord {
             address: address.map(|x| x.to_string()).unwrap_or_default(),
-            amount: output.lovelace_amount(),
-            assets: output
-                .non_ada_assets()
+            amount: value.coin(),
+            assets: value
+                .assets()
                 .iter()
                 .flat_map(|x| x.assets())
                 .map(|x| OutputAssetRecord::from(&x))
@@ -181,8 +182,8 @@ impl EventWriter<'_> {
             ttl: tx.ttl(),
             validity_interval_start: tx.validity_start(),
             network_id: tx.network_id().map(|x| match x {
-                NetworkId::One => 1,
-                NetworkId::Two => 2,
+                NetworkId::Testnet => 1,
+                NetworkId::Mainnet => 2,
             }),
             ..Default::default()
         };
@@ -289,6 +290,17 @@ impl EventWriter<'_> {
                 .map(|x| self.to_withdrawal_record(*x))
                 .collect::<Vec<_>>()
                 .into();
+
+            record.reference_inputs = if tx.reference_inputs().is_empty() {
+                None
+            } else {
+                Some(
+                    tx.reference_inputs()
+                        .iter()
+                        .map(TxInputRecord::from)
+                        .collect(),
+                )
+            };
         }
 
         record
@@ -391,7 +403,7 @@ impl EventWriter<'_> {
         }
     }
 
-    pub fn to_aux_plutus_script_event(&self, script: &alonzo::PlutusScript) -> EventData {
+    pub fn to_aux_plutus_script_event(&self, script: &alonzo::PlutusScript<1>) -> EventData {
         EventData::PlutusScript {
             hash: script.compute_hash().to_hex(),
             data: script.0.to_hex(),
@@ -417,7 +429,7 @@ impl EventWriter<'_> {
 
     pub fn to_plutus_v1_witness_record(
         &self,
-        script: &alonzo::PlutusScript,
+        script: &alonzo::PlutusScript<1>,
     ) -> PlutusWitnessRecord {
         PlutusWitnessRecord {
             script_hash: script.compute_hash().to_hex(),
@@ -427,7 +439,7 @@ impl EventWriter<'_> {
 
     pub fn to_plutus_v2_witness_record(
         &self,
-        script: &babbage::PlutusV2Script,
+        script: &babbage::PlutusScript<2>,
     ) -> PlutusWitnessRecord {
         PlutusWitnessRecord {
             script_hash: script.compute_hash().to_hex(),

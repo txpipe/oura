@@ -1,17 +1,11 @@
-use futures::StreamExt;
-use gasket::framework::*;
-use serde::Deserialize;
-use tonic::transport::Channel;
-use tonic::Streaming;
-use tracing::{debug, error};
+use std::collections::HashMap;
 
-use pallas::interop::utxorpc::spec::sync::any_chain_block::Chain;
-use pallas::interop::utxorpc::spec::sync::follow_tip_response::Action;
-use pallas::interop::utxorpc::spec::sync::sync_service_client::SyncServiceClient;
-use pallas::interop::utxorpc::spec::sync::{
-    BlockRef, DumpHistoryRequest, FollowTipRequest, FollowTipResponse,
-};
+use gasket::framework::*;
+use pallas::interop::utxorpc::spec::sync::BlockRef;
 use pallas::network::miniprotocols::Point;
+use serde::Deserialize;
+use tracing::debug;
+use utxorpc::{CardanoSyncClient, ChainBlock, ClientBuilder, TipEvent};
 
 use crate::framework::*;
 
@@ -26,131 +20,66 @@ fn point_to_blockref(point: Point) -> Option<BlockRef> {
 }
 
 pub struct Worker {
-    client: SyncServiceClient<Channel>,
-    stream: Option<Streaming<FollowTipResponse>>,
-    intersect: Option<BlockRef>,
-    max_items_per_page: u32,
+    stream: utxorpc::LiveTip<utxorpc::Cardano>,
 }
 
 impl Worker {
-    async fn process_next(&self, stage: &mut Stage, action: &Action) -> Result<(), WorkerError> {
-        match action {
-            Action::Apply(block) => {
-                if let Some(chain) = &block.chain {
-                    match chain {
-                        Chain::Cardano(block) => {
-                            if block.body.is_some() {
-                                let header = block.header.as_ref().unwrap();
+    fn block_to_record(
+        &self,
+        stage: &Stage,
+        block: &ChainBlock<utxorpc::spec::cardano::Block>,
+    ) -> Result<(Point, Record), WorkerError> {
+        let parsed = block.parsed.as_ref().ok_or(WorkerError::Panic)?;
 
-                                let block = block.body.as_ref().unwrap();
+        let record = if stage.config.use_parsed_blocks {
+            Record::ParsedBlock(parsed.clone())
+        } else {
+            Record::CborBlock(block.native.to_vec())
+        };
 
-                                for tx in block.tx.clone() {
-                                    let evt = ChainEvent::Apply(
-                                        Point::Specific(header.slot, header.hash.to_vec()),
-                                        Record::ParsedTx(tx),
-                                    );
+        let point = parsed
+            .header
+            .as_ref()
+            .map(|h| Point::Specific(h.slot, h.hash.to_vec()))
+            .ok_or(WorkerError::Panic)?;
 
-                                    stage.output.send(evt.into()).await.or_panic()?;
-                                    stage.chain_tip.set(header.slot as i64);
-                                }
-                            }
-                        }
-                    }
-                }
+        Ok((point, record))
+    }
+
+    async fn process_next(
+        &self,
+        stage: &mut Stage,
+        unit: &TipEvent<utxorpc::Cardano>,
+    ) -> Result<(), WorkerError> {
+        match unit {
+            TipEvent::Apply(block) => {
+                let (point, record) = self.block_to_record(stage, block)?;
+
+                let evt = ChainEvent::Apply(point.clone(), record);
+
+                stage.output.send(evt.into()).await.or_panic()?;
+                stage.chain_tip.set(point.slot_or_default() as i64);
             }
-            Action::Undo(block) => {
-                if let Some(chain) = &block.chain {
-                    match chain {
-                        Chain::Cardano(block) => {
-                            if block.body.is_some() {
-                                let header = block.header.as_ref().unwrap();
+            TipEvent::Undo(block) => {
+                let (point, record) = self.block_to_record(stage, block)?;
 
-                                let block = block.body.as_ref().unwrap();
+                let evt = ChainEvent::Undo(point.clone(), record);
 
-                                for tx in block.tx.clone() {
-                                    let evt = ChainEvent::Undo(
-                                        Point::Specific(header.slot, header.hash.to_vec()),
-                                        Record::ParsedTx(tx),
-                                    );
-
-                                    stage.output.send(evt.into()).await.or_panic()?;
-                                    stage.chain_tip.set(header.slot as i64);
-                                }
-                            }
-                        }
-                    }
-                }
+                stage.output.send(evt.into()).await.or_panic()?;
+                stage.chain_tip.set(point.slot_or_default() as i64);
             }
-            Action::Reset(reset) => {
+            TipEvent::Reset(block) => {
                 stage
                     .output
-                    .send(ChainEvent::Reset(Point::new(reset.index, reset.hash.to_vec())).into())
+                    .send(ChainEvent::Reset(Point::new(block.index, block.hash.to_vec())).into())
                     .await
                     .or_panic()?;
 
-                stage.chain_tip.set(reset.index as i64);
+                stage.chain_tip.set(block.index as i64);
             }
         }
 
         Ok(())
-    }
-
-    async fn next_stream(&mut self) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
-        if self.stream.is_none() {
-            let stream = self
-                .client
-                .follow_tip(FollowTipRequest::default())
-                .await
-                .or_restart()?
-                .into_inner();
-
-            self.stream = Some(stream);
-        }
-
-        let result = self.stream.as_mut().unwrap().next().await;
-
-        if result.is_none() {
-            return Ok(WorkSchedule::Idle);
-        }
-
-        let result = result.unwrap();
-        if let Err(err) = result {
-            error!("{err}");
-            return Err(WorkerError::Retry);
-        }
-
-        let response: FollowTipResponse = result.unwrap();
-        if response.action.is_none() {
-            return Ok(WorkSchedule::Idle);
-        }
-
-        let action = response.action.unwrap();
-
-        Ok(WorkSchedule::Unit(vec![action]))
-    }
-
-    async fn next_dump_history(&mut self) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
-        let dump_history_request = DumpHistoryRequest {
-            start_token: self.intersect.clone(),
-            max_items: self.max_items_per_page,
-            ..Default::default()
-        };
-
-        let result = self
-            .client
-            .dump_history(dump_history_request)
-            .await
-            .or_restart()?
-            .into_inner();
-
-        self.intersect = result.next_token;
-
-        if !result.block.is_empty() {
-            let actions: Vec<Action> = result.block.into_iter().map(Action::Apply).collect();
-            return Ok(WorkSchedule::Unit(actions));
-        }
-
-        Ok(WorkSchedule::Idle)
     }
 }
 
@@ -159,9 +88,17 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
         debug!("connecting");
 
-        let client = SyncServiceClient::connect(stage.config.url.clone())
-            .await
+        let mut builder = ClientBuilder::new()
+            .uri(stage.config.url.as_str())
             .or_panic()?;
+
+        for (key, value) in stage.config.metadata.iter() {
+            builder = builder
+                .metadata(key.to_string(), value.to_string())
+                .or_panic()?;
+        }
+
+        let mut client = builder.build::<CardanoSyncClient>().await;
 
         let intersect: Vec<_> = if stage.breadcrumbs.is_empty() {
             stage.intersect.points().unwrap_or_default()
@@ -175,35 +112,40 @@ impl gasket::framework::Worker<Stage> for Worker {
             .collect::<Vec<_>>()
             .pop();
 
-        let max_items_per_page = stage.config.max_items_per_page.unwrap_or(20);
+        let stream = client
+            .follow_tip(intersect.into_iter().collect())
+            .await
+            .or_restart()?;
 
-        Ok(Self {
-            client,
-            stream: None,
-            max_items_per_page,
-            intersect,
-        })
+        Ok(Self { stream })
     }
 
-    async fn schedule(&mut self, _: &mut Stage) -> Result<WorkSchedule<Vec<Action>>, WorkerError> {
-        if self.intersect.is_some() {
-            return self.next_dump_history().await;
-        }
+    async fn schedule(
+        &mut self,
+        _: &mut Stage,
+    ) -> Result<WorkSchedule<TipEvent<utxorpc::Cardano>>, WorkerError> {
+        let event = self.stream.event().await.or_restart()?;
 
-        self.next_stream().await
+        Ok(WorkSchedule::Unit(event))
     }
 
-    async fn execute(&mut self, unit: &Vec<Action>, stage: &mut Stage) -> Result<(), WorkerError> {
-        for action in unit {
-            self.process_next(stage, action).await.or_retry()?;
-        }
+    async fn execute(
+        &mut self,
+        unit: &TipEvent<utxorpc::Cardano>,
+        stage: &mut Stage,
+    ) -> Result<(), WorkerError> {
+        self.process_next(stage, unit).await.or_retry()?;
 
         Ok(())
     }
 }
 
 #[derive(Stage)]
-#[stage(name = "source-utxorpc", unit = "Vec<Action>", worker = "Worker")]
+#[stage(
+    name = "source-utxorpc",
+    unit = "TipEvent<utxorpc::Cardano>",
+    worker = "Worker"
+)]
 pub struct Stage {
     config: Config,
     breadcrumbs: Breadcrumbs,
@@ -224,7 +166,9 @@ pub struct Stage {
 #[derive(Deserialize)]
 pub struct Config {
     url: String,
-    max_items_per_page: Option<u32>,
+    metadata: HashMap<String, String>,
+    #[serde(default)]
+    use_parsed_blocks: bool,
 }
 
 impl Config {

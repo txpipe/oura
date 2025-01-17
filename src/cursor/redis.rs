@@ -1,10 +1,6 @@
 use gasket::framework::*;
 use pallas::network::miniprotocols::Point;
-use r2d2_redis::{
-    r2d2::{self, Pool},
-    redis::{self, Commands},
-    RedisConnectionManager,
-};
+use redis::Commands;
 use serde::Deserialize;
 use tokio::select;
 use tracing::debug;
@@ -40,18 +36,17 @@ pub enum Unit {
 }
 
 pub struct Worker {
-    pool: Pool<RedisConnectionManager>,
+    client: redis::Client,
     key: String,
 }
 
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        let manager = RedisConnectionManager::new(stage.url.clone()).or_panic()?;
-        let pool = r2d2::Pool::builder().build(manager).or_panic()?;
+        let client = redis::Client::open(stage.url.as_str()).or_retry()?;
 
         Ok(Self {
-            pool,
+            client,
             key: stage.key.clone(),
         })
     }
@@ -74,10 +69,12 @@ impl gasket::framework::Worker<Stage> for Worker {
             Unit::Track(x) => stage.breadcrumbs.track(x.clone()),
             Unit::Flush => {
                 let data = breadcrumbs_to_data(&stage.breadcrumbs);
-                let mut conn = self.pool.get().or_restart()?;
+                let mut conn = self.client.get_connection().or_restart()?;
 
                 let data_to_write = serde_json::to_string(&data).or_panic()?;
-                conn.set(&self.key, &data_to_write)
+
+                let _: () = conn
+                    .set(&self.key, &data_to_write)
                     .map_err(Error::custom)
                     .or_panic()?;
             }
