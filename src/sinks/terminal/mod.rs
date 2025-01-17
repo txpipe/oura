@@ -65,12 +65,12 @@ impl gasket::framework::Worker<Stage> for Worker {
 
         let line = match unit {
             ChainEvent::Apply(_, record) => {
-                LogLine::new_apply(record, width, &stage.config.adahandle_policy)
+                LogLine::handle(record, width, &stage.config.adahandle_policy)
             }
             ChainEvent::Undo(_, record) => {
-                LogLine::new_undo(record, width, &stage.config.adahandle_policy)
+                LogLine::handle(record, width, &stage.config.adahandle_policy)
             }
-            ChainEvent::Reset(point) => LogLine::new_reset(point.clone()),
+            ChainEvent::Reset(point) => LogLine::reset(point.clone()),
         };
 
         self.throttle.wait_turn();
