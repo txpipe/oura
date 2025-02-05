@@ -2860,6 +2860,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "google-cloud-googleapis"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "886aa8ec755382a1fdf4651f6e6ec01f2f3bf49f2cb0f068b9a74cafd574a715"
+dependencies = [
+ "prost 0.13.4",
+ "prost-types 0.13.4",
+ "tonic 0.12.3",
+]
+
+[[package]]
 name = "google-cloud-metadata"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2879,7 +2890,7 @@ dependencies = [
  "async-channel 1.9.0",
  "async-stream",
  "google-cloud-gax",
- "google-cloud-googleapis",
+ "google-cloud-googleapis 0.10.0",
  "google-cloud-token",
  "prost-types 0.11.9",
  "thiserror 1.0.69",
@@ -4480,7 +4491,7 @@ dependencies = [
  "gasket",
  "gasket-prometheus",
  "google-cloud-default",
- "google-cloud-googleapis",
+ "google-cloud-googleapis 0.16.1",
  "google-cloud-pubsub",
  "handlebars",
  "hex",
@@ -7303,6 +7314,7 @@ dependencies = [
  "axum 0.7.9",
  "base64 0.22.1",
  "bytes",
+ "flate2",
  "h2 0.4.7",
  "http 1.2.0",
  "http-body 1.0.1",
