@@ -1,0 +1,10 @@
+[source]
+type = "Hydra"
+ws_url = "ws://127.0.0.1:4001"
+magic = 42
+
+[intersect]
+type = "Origin"
+
+[sink]
+type = "Stdout"

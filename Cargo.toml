@@ -18,6 +18,7 @@ gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default",
 rabbitmq = ["lapin"]
 u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
+hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
 # elasticsearch = auto feature flag
 # kafka = auto feature flag
 
@@ -77,3 +78,12 @@ miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
 redis = { version = "0.27.6", optional = true }
 utxorpc = { version = "0.9.0", optional = true }
+tungstenite = { version = "0.24.0", optional = true }
+tokio-tungstenite = { version = "0.24.0", optional = true }
+futures-util = { version = "0.3", optional = true }
+bytes = { version = "1.7.2", optional = true }
+
+[dev-dependencies]
+goldenfile = "1.7.3"
+tempfile = "3.4"
+port-selector = "0.1.6"
