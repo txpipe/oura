@@ -4,7 +4,7 @@ export default {
     link: "https://github.com/txpipe/oura",
   },
   chat: {
-    link: "https://discord.gg/Vc3x8N9nz2",
+    link: "https://discord.gg/eVc6HJrYmP",
   },
   footer: {
     text: "Oura - TxPipe",
