@@ -400,7 +400,7 @@ where
 
 #[derive(Debug)]
 struct IntScalarVisitor;
-impl<'de> Visitor<'de> for IntScalarVisitor {
+impl Visitor<'_> for IntScalarVisitor {
     type Value = i128;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

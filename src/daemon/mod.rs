@@ -1,8 +1,8 @@
-
 use gasket::daemon::Daemon;
-use crate::{cursor, filters, framework::*, sinks, sources};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+
+use crate::{cursor, filters, framework::*, sinks, sources};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsConfig {
@@ -118,4 +118,3 @@ pub fn run_daemon(config: ConfigRoot) -> Result<Daemon, Error> {
     let daemon = connect_stages(source, filters, sink, cursor, retries)?;
     Ok(daemon)
 }
-

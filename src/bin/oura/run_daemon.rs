@@ -1,9 +1,9 @@
 use gasket::daemon::Daemon;
+use oura::daemon::{run_daemon, ConfigRoot, MetricsConfig};
 use oura::framework::*;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::info;
-use oura::daemon::{run_daemon, ConfigRoot, MetricsConfig};
 
 use crate::console;
 
