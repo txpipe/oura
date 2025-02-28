@@ -14,7 +14,7 @@ pub struct Worker {
 #[async_trait::async_trait(?Send)]
 impl gasket::framework::Worker<Stage> for Worker {
     async fn bootstrap(stage: &Stage) -> Result<Self, WorkerError> {
-        let aws_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
+        let aws_config = aws_config::defaults(BehaviorVersion::v2024_03_28())
             .region(Region::new(stage.config.region.clone()))
             .load()
             .await;
