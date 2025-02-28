@@ -57,7 +57,7 @@ impl Serialize for FlexBytes {
 
 struct FlexBytesVisitor;
 
-impl<'de> Visitor<'de> for FlexBytesVisitor {
+impl Visitor<'_> for FlexBytesVisitor {
     type Value = FlexBytes;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
