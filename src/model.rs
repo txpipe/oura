@@ -405,7 +405,6 @@ impl<'de> Visitor<'de> for IntScalarVisitor {
     type Value = i128;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        dbg!(self);
         formatter.write_str("expect to receive integer")
     }
 
