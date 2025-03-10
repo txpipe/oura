@@ -181,10 +181,10 @@ fn do_handshake(channel: StdChannel, magic: u64) -> Result<(), AttemptError> {
 
     match client.handshake(versions) {
         Ok(confirmation) => match confirmation {
-            handshake::Confirmation::Accepted(_, _) => Ok(()),
-            _ => Err(AttemptError::Other(
+            handshake::Confirmation::Rejected(_) => Err(AttemptError::Other(
                 "couldn't agree on handshake version".into(),
             )),
+            _ => Ok(()),
         },
         Err(err) => Err(AttemptError::Recoverable(err.into())),
     }

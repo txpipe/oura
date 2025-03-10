@@ -25,7 +25,6 @@ macro_rules! run_check {
                 }
                 Outcome::Fail => {
                     log::error!("failed assertion: {}", name);
-                    dbg!($state);
 
                     if $config.break_on_failure {
                         panic!("failed assertion in assert sink");

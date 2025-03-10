@@ -12,15 +12,18 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 
 
 [dependencies]
-pallas-multiplexer = "0.18.3"
-pallas-miniprotocols = "0.18.3"
+pallas-multiplexer = "0.18.4"
+pallas-miniprotocols = "0.18.4"
+
 pallas-primitives = "0.30.1"
 pallas-traverse = "0.30.1"
 pallas-addresses = "0.30.1"
 pallas-codec = "0.30.1"
 pallas-crypto = "0.30.1"
+
 # pallas = { git = "https://github.com/txpipe/pallas" }
 # pallas = { path = "../pallas/pallas" }
+
 hex = "0.4.3"
 net2 = "0.2.37"
 bech32 = "0.9.1"
