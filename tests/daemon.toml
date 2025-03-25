@@ -1,0 +1,18 @@
+[source]
+type = "Hydra"
+ws_url = "ws://127.0.0.1:4001"
+magic = 42
+
+[intersect]
+type = "Origin"
+
+[[filters]]
+type = "IntoJson"
+
+[sink]
+type = "FileRotate"
+max_total_files = 1
+output_format = "JSONL"
+output_path = "tests/hydra/logs.txt"
+max_bytes_per_file = 5_000_000
+compress_files = true
