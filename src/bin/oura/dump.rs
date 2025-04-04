@@ -5,15 +5,19 @@ use oura::{
     framework::{ChainConfig, Context, Error, IntersectConfig},
     sinks, sources,
 };
-use tracing::info;
+use tracing::{info, Level};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 pub fn run(args: &Args) -> Result<(), Error> {
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::FmtSubscriber::builder()
-            .with_max_level(tracing::Level::DEBUG)
-            .finish(),
-    )
-    .unwrap();
+    let env_filter = EnvFilter::builder()
+        .with_default_directive(Level::INFO.into())
+        .with_env_var("RUST_LOG")
+        .from_env_lossy();
+
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(env_filter)
+        .init();
 
     let chain = args.magic.clone().unwrap_or_default().into();
     let intersect = parse_since(args.since.clone())?;
@@ -35,10 +39,13 @@ pub fn run(args: &Args) -> Result<(), Error> {
         ..Default::default()
     });
 
-    let sink_config = sinks::Config::FileRotate(sinks::file_rotate::Config {
-        output_path: Some(args.output.clone()),
-        ..Default::default()
-    });
+    let sink_config = match args.output.clone() {
+        Some(output) => sinks::Config::FileRotate(sinks::file_rotate::Config {
+            output_path: Some(output),
+            ..Default::default()
+        }),
+        None => sinks::Config::Stdout(sinks::stdout::Config),
+    };
 
     let ctx = Context {
         chain,
@@ -108,7 +115,7 @@ pub struct Args {
 
     /// output file path
     #[arg(short, long)]
-    output: String,
+    output: Option<String>,
 }
 
 #[derive(ValueEnum, Clone, Default)]
