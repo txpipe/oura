@@ -1,0 +1,16 @@
+# Wasm filter
+
+The `wasm` or `webassembly` filter will allow a wasm binary to be executed as a stage within the pipeline. Therefore, it's possible to write a stage in any language that supports wasm.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "WasmPlugin"
+path = "./extract_fee/plugin.wasm"
+```
+
+Follow this example to build a plugin wasm in golang [example](https://github.com/txpipe/oura/blob/main/examples/wasm_basic/README.md)
+
