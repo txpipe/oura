@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                            INSERT OR REPLACE INTO tx(\n                                id,\n\t                              data\n                            )\n                            VALUES ($1, $2);\n                        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ab3ba45ae11cf3663ced415f382851d334a98d17610a3f4ced8c18e8eac9aa1c"
+}
