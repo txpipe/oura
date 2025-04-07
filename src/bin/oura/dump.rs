@@ -1,8 +1,8 @@
 use clap::{Parser, ValueEnum};
-use gasket::{daemon::Daemon, runtime::Policy};
 use oura::{
-    cursor, filters,
-    framework::{ChainConfig, Context, Error, IntersectConfig},
+    daemon::{run_daemon, ConfigRoot},
+    filters,
+    framework::{ChainConfig, Error, IntersectConfig},
     sinks, sources,
 };
 use tracing::{info, Level};
@@ -21,12 +21,8 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let chain = args.magic.clone().unwrap_or_default().into();
     let intersect = parse_since(args.since.clone())?;
-    let current_dir = std::env::current_dir().unwrap();
-    let cursor = cursor::Config::default();
-    let breadcrumbs = cursor.initial_load()?;
     let bearer = args.bearer.clone().unwrap_or_default();
-
-    let source_config = match bearer {
+    let source = match bearer {
         Bearer::Unix => sources::Config::N2C(sources::n2c::Config {
             socket_path: args.socket.clone().into(),
         }),
@@ -34,12 +30,12 @@ pub fn run(args: &Args) -> Result<(), Error> {
             peers: vec![args.socket.clone()],
         }),
     };
-    let filter_config = filters::Config::LegacyV1(filters::legacy_v1::Config {
+    let filter = filters::Config::LegacyV1(filters::legacy_v1::Config {
         include_block_end_events: true,
         ..Default::default()
     });
 
-    let sink_config = match args.output.clone() {
+    let sink = match args.output.clone() {
         Some(output) => sinks::Config::FileRotate(sinks::file_rotate::Config {
             output_path: Some(output),
             ..Default::default()
@@ -47,28 +43,19 @@ pub fn run(args: &Args) -> Result<(), Error> {
         None => sinks::Config::Stdout(sinks::stdout::Config),
     };
 
-    let ctx = Context {
-        chain,
+    let config = ConfigRoot {
+        source,
+        filters: Some(vec![filter]),
+        sink,
         intersect,
         finalize: None,
-        current_dir,
-        breadcrumbs,
+        chain: Some(chain),
+        retries: None,
+        cursor: None,
+        metrics: None,
     };
 
-    let mut source = source_config.bootstrapper(&ctx)?;
-    let mut filter = filter_config.bootstrapper(&ctx)?;
-    let mut sink = sink_config.bootstrapper(&ctx)?;
-    let mut cursor = cursor.bootstrapper(&ctx)?;
-
-    gasket::messaging::tokio::connect_ports(source.borrow_output(), filter.borrow_input(), 100);
-    gasket::messaging::tokio::connect_ports(filter.borrow_output(), sink.borrow_input(), 100);
-    gasket::messaging::tokio::connect_ports(sink.borrow_cursor(), cursor.borrow_track(), 100);
-
-    let daemon = Daemon(vec![
-        source.spawn(Policy::default()),
-        filter.spawn(Policy::default()),
-        sink.spawn(Policy::default()),
-    ]);
+    let daemon = run_daemon(config)?;
 
     daemon.block();
 
