@@ -74,7 +74,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
                     info!("new tx persisted");
                 }
-                _ => warn!("my_filter only supports parsedTx, enable split_block and parse_cbor"),
+                _ => warn!("my_sink only supports parsedTx, enable split_block and parse_cbor"),
             }
         }
 
