@@ -56,7 +56,7 @@ impl gasket::framework::Worker<Stage> for Worker {
                     }
                 }
             }
-            ChainEvent::Undo(point, _) => match self.buffer.roll_back(point) {
+            ChainEvent::Undo(point, record) => match self.buffer.roll_back(point) {
                 chainsync::RollbackEffect::Handled => {
                     debug!(?point, "handled rollback within buffer");
                     self.events
@@ -67,7 +67,7 @@ impl gasket::framework::Worker<Stage> for Worker {
                     self.events.clear();
                     stage
                         .output
-                        .send(ChainEvent::reset(point.clone()))
+                        .send(ChainEvent::undo(point.clone(), record.clone()))
                         .await
                         .or_panic()?;
                 }
