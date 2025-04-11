@@ -1,0 +1,31 @@
+---
+title: Mithril
+sidebar:
+  label: Mithril
+---
+
+Connect to Mithril Server and download a snapshot of the chain.
+
+This source requires building oura using the feature `mithril` enabled.
+
+## Configuration
+
+The following snippet shows an example of how to set up a Mithril source:
+
+```toml
+[source]
+type = "Mithril"
+aggregator = "https://aggregator.pre-release-preview.api.mithril.network/aggregator"
+genesis_key = "5b3132372c37332c3132342c3136312c362c3133372c3133312c3231332c3230372c3131372c3139382c38352c3137362c3139392c3136322c3234312c36382c3132332c3131392c3134352c31332c3233322c3234332c34392c3232392c322c3234392c3230352c3230352c33392c3233352c34345d"
+snapshot_download_dir = "./snapshot"
+skip_validation = false
+```
+
+### Section `source`:
+
+- `type`: this field must be set to the literal value `Mithril`
+- `aggregator`: url to fetch data from the aggregator
+- `genesis_key`: genesis verification key
+- `snapshot_download_dir`: the directory to persist snapshot, must have read/write access to it 
+- `skip_validation`: validate the chain snapshot
+
