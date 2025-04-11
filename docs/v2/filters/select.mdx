@@ -4,6 +4,21 @@ sidebar:
   label: Select
 ---
 
+The `select` filter makes it possible to filter data that make sense for your cases. 
+
+The select filter requires [ParseCbor](/oura/v2/filters/parse_cbor) filter enabled to work.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "Select"
+skip_uncertain = true
+predicate = <match>
+```
+
 ## Examples
 
 Match any tx that interacts with this particular address
