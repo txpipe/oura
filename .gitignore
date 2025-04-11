@@ -19,3 +19,4 @@ result
 .vscode
 .env*
 google_credentials.json
+oura.toml

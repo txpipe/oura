@@ -1,0 +1,42 @@
+name: Publish
+permissions:
+  "contents": "write"
+
+on:
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+
+jobs:
+  crates_io_publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo-release Cache
+        id: cargo_release_cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-release
+          key: ${{ runner.os }}-cargo-release
+
+      - run: cargo install cargo-release
+        if: steps.cargo_release_cache.outputs.cache-hit != 'true'
+
+      - name: cargo login
+        run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: "cargo release publish"
+        run: |-
+          cargo release \
+            publish \
+            --workspace \
+            --all-features \
+            --allow-branch HEAD \
+            --no-confirm \
+            --no-verify \
+            --execute

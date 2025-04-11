@@ -87,3 +87,8 @@ bytes = { version = "1.7.2", optional = true }
 goldenfile = "1.7.3"
 tempfile = "3.4"
 port-selector = "0.1.6"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
