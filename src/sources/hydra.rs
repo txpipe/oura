@@ -150,7 +150,8 @@ impl Worker {
                 let target = Point::Specific(slot.clone(), hash.clone());
                 debug!(
                     "Skipping message {} before (or at) requested intersection {}",
-                    point.slot_or_default(), target.slot_or_default()
+                    point.slot_or_default(),
+                    target.slot_or_default()
                 );
 
                 if target == point {
@@ -245,9 +246,7 @@ impl gasket::framework::Worker<Stage> for Worker {
             Message::Text(text) => {
                 debug!("Hydra message: {}", text);
                 match serde_json::from_str::<HydraMessage>(text) {
-                    Ok(hydra_message) => {
-                        self.process(stage, hydra_message).await
-                    }
+                    Ok(hydra_message) => self.process(stage, hydra_message).await,
                     Err(err) => {
                         error!("Failed to parse Hydra message: {}", err);
                         Ok(())
