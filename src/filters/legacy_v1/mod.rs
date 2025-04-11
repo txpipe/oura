@@ -85,9 +85,6 @@ pub struct Config {
 
     #[serde(default)]
     pub include_block_cbor: bool,
-
-    #[serde(default)]
-    pub include_byron_ebb: bool,
 }
 
 impl Config {
