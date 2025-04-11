@@ -1,0 +1,54 @@
+---
+title: Custom networks
+---
+
+Instructions on how to configure Oura for connecting to a custom network (aka: other than mainnet / preprod / preview).
+
+## Context
+
+Oura requires certain information about the chain it is reading from. In a way, this is similar to the json config files required to run the Cardano node. These values are used for procedures such as encoding bech32 addresses, computing wall-clock time for blocks, etc.
+
+Since `mainnet`, `testnet`, `preprod` and `preview` are well-known, heavily used networks, Oura hardcodes these values as part of the binary release so that the user is spared from having to manually specify them. On the other hand, custom networks require the user to configure these values manually for Oura to establish a connection.
+
+## Feature
+
+By adding a `[chain]` section in the daemon configuration file, users can provide the information required by Oura to connect to a custom network.
+
+The `[chain]` section has the following propoerties:
+
+| Name                 | DataType | Description                                                   |
+| :------------------- | :------- | :------------------------------------------------------------ |
+| type                 | string   | types of network (mainnet, testnet, preprod, preview, custom) |
+| magic                | integer  | the network number                                            |
+| byron_epoch_length   | integer  | the length (in seconds) of a Byron epoch in this network      |
+| byron_slot_length    | integer  | the length (in seconds) of a Byron slot in this network       |
+| byron_known_slot     | integer  | the slot of a Byron block known to exist in this network      |
+| byron_known_hash     | string   | the hash of the known Byron block                             |
+| byron_known_time     | integer  | the unix timestamp of the known Byron block                   |
+| shelley_epoch_length | integer  | the length (in seconds) of a Shelley epoch in this network    |
+| shelley_slot_length  | integer  | the length (in seconds) of a Shelley slot in this network     |
+| shelley_known_slot   | integer  | the slot of a Shelley block known to exist in this network    |
+| shelley_known_hash   | String   | the hash of the known Shelley block                           |
+| shelley_known_time   | integer  | the unix timestamp of the known Shelley block                 |
+
+## Examples
+
+### Chain information for mainnet
+
+This example configuration shows the values for mainnet. Since testnet values are hardcoded as part of Oura's release, users are not required to input these exact values anywhere, but it serves as a good example of what the configuration looks like.
+
+```toml
+[chain]
+type = "custom"
+magic = 764824073
+byron_epoch_length  = 432000
+byron_slot_length = 20
+byron_known_slot = 0
+byron_known_time = 1506203091
+byron_known_hash = "f0f7892b5c333cffc4b3c4344de48af4cc63f55e44936196f365a9ef2244134f"
+shelley_epoch_length = 432000
+shelley_slot_length = 1
+shelley_known_slot = 4492800
+shelley_known_hash = "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de"
+shelley_known_time = 1596059091
+```

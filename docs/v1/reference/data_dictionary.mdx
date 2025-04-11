@@ -1,0 +1,630 @@
+---
+title: Data Dictionary
+---
+
+_Oura_ follows a Cardano chain and outputs events. Each event contains data about itself and about the _context_ in which it occurred.
+
+A consumer aggregating a sequence of multiple events will notice redundant / duplicated data. For example, the "block number" value will appear repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor "consumption ergonomics" over "data normalization".
+
+## Available Events
+
+The following list represent the already implemented events. These data structures are represented as an `enum` at the code level.
+
+### `RollBack` Event
+
+Data on chain rollback(The result of the local node switching to the consensus chains).
+
+| Name       | DataType        | Description                                |
+| :---       | :---            | :---                                       |
+| block_slot | u64             | Slot of the rolled back block.             |
+| block_hash | Option\<String> | Block hash. Hash of the rolled back block. |
+
+
+<br />
+<br />
+<hr />
+
+
+### `Block` Event
+
+Data on an issued block.
+
+| Name        | DataType | Description                           |
+| :---        | :---     | :---                                  |
+| body_size   | usize    | Size of the block.                    |
+| issuer_vkey | String   | Block issuer Public verification key. |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+
+
+<br />
+<br />
+<hr />
+
+
+### `Transaction` Event
+
+Data on a transaction.
+
+| Name                    | DataType     | Description                            |
+| :---                    | :---         | :---                                   |
+| fee                     | u64          | Transaction fees in lovelace.          |
+| ttl                     | Option\<u64> | Transaction time to live.              |
+| validity_interval_start | Option\<u64> | Start of transaction validity interval |
+| network_id              | Option\<u32> | Network ID.                            |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+
+<br />
+<br />
+<hr />
+
+
+### `TxInput` Event
+
+Data on a transaction input.
+
+| Name  | DataType | Description                           |
+| :---  | :---     | :---                                  |
+| tx_id | String   | Transaction ID.                       |
+| index | u64      | Index of input in transaction inputs. |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+| input_idx    | Option\<usize>  | Input ID.                     |
+
+
+<br />
+<br />
+<hr />
+
+
+### `TxOutput` Event
+
+Data on a transaction output (UTXO).
+
+| Name    | DataType | Description                 |
+| :---    | :---     | :---                        |
+| address | String   | Address of UTXO.            |
+| amount  | u64      | Amount of lovelace in UTXO. |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+| output_idx   | Option\<usize>  | Output ID.                    |
+
+
+<br />
+<br />
+<hr />
+
+
+### `OutputAsset` Event
+
+Data on a non-ADA asset in a UTXO.
+
+| Name   | DataType | Description              |
+| :---   | :---     | :---                     |
+| policy | String   | Minting policy of asset. |
+| asset  | String   | Asset ID.                |
+| amount | u64      | Amount of asset.         |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+| output_idx   | Option\<usize>  | Output ID.                    |
+
+
+<br />
+<br />
+<hr />
+
+
+### `Metadata` Event
+
+| Name            | DataType           | Description   |
+| :---            | :---               | :---          |
+| label           | String             | Metada label. |
+| map_json (*)    | Option\<JsonValue> | Json map.     |
+| array_json (*)  | Option\<JsonValue> | Json array.   |
+| int_scalar (*)  | Option\<i128       | Number.       |
+| text_scalar (*) | Option\<String>    | Text.         |
+| bytes_hex (*)   | Option\<String>    | Bytes.        |
+
+(*) Only one of these options will be used.
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+
+<br />
+<br />
+<hr />
+
+### `VkeyWitness` Event
+
+| Name          | DataType | Description |
+| :---          | :---     | :---        |
+| vkey_hex      | String   |             |
+| signature_hex | String   |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+
+<br />
+<br />
+<hr />
+
+### `NativeWitness` Event
+
+| Name        | DataType  | Description |
+| :---        | :---      | :---        |
+| policy_id   | String    |             |
+| script_json | JsonValue |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+<br />
+<br />
+<hr />
+
+### `PlutusWitness` Event
+
+| Name        | DataType | Description |
+| :---        | :---     | :---        |
+| script_hash | String   |             |
+| script_hex  | String   |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+<br />
+<br />
+<hr />
+
+### `PlutusRedeemer` Event
+
+| Name           | DataType  | Description |
+| :---           | :---      | :---        |
+| purpose        | String    |             |
+| ex_units_mem   | u32       |             |
+| ex_units_steps | u64       |             |
+| input_idx      | u32       |             |
+| plutus_data    | JsonValue |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+<br />
+<br />
+<hr />
+
+### `PlutusDatum` Event
+
+| Name        | DataType  | Description |
+| :---        | :---      | :---        |
+| datum_hash  | String    |             |
+| plutus_data | JsonValue |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+<br />
+<br />
+<hr />
+
+### `CIP25Asset` Event
+
+| Name        | DataType        | Description                                          |
+| :---        | :---            | :---                                                 |
+| version     | String          | [version](https://cips.cardano.org/cips/cip25/#cddl) |
+| policy      | String          |                                                      |
+| asset       | String          |                                                      |
+| name        | Option\<String> |                                                      |
+| image       | Option\<String> |                                                      |
+| media_type  | Option\<String> |                                                      |
+| description | Option\<String> |                                                      |
+| raw_json    | JsonValue       |                                                      |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+<br />
+<br />
+<hr />
+
+### `CIP15Asset` Event
+
+| Name           | DataType  | Description |
+| :---           | :---      | :---        |
+| voting_key     | String    |             |
+| stake_pub      | String    |             |
+| reward_address | String    |             |
+| nonce          | i64       |             |
+| raw_json       | JsonValue |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash | Option\<String> | Block hash.                               |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp | Option\<u64> | Timestamp.                               |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+<br />
+<br />
+<hr />
+
+### `Mint` Event
+
+Data on the minting of a non-ADA asset.
+
+| Name     | DataType | Description               |
+| :---     | :---     | :---                      |
+| policy   | String   | Minting policy of asset.  |
+| asset    | String   | Asset ID.                 |
+| quantity | i64      | Quantity of asset minted. |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+
+<br />
+<br />
+<hr />
+
+
+### `Collateral` Event
+
+Data on [collateral inputs](https://docs.cardano.org/plutus/collateral-mechanism).
+
+| Name  | DataType | Description                           |
+| :---  | :---     | :---                                  |
+| tx_id | String   | Transaction ID.                       |
+| index | u64      | Index of transaction input in inputs. |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+
+<br />
+<br />
+<hr />
+
+### `NativeScript` Event
+
+| Name      | DataType  | Description |
+| :---      | :---      | :---        |
+| policy_id | String    |             |
+| script    | JsonValue |             |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+
+<br />
+<br />
+<hr />
+
+### `PlutusScript` Event
+
+| Name | DataType | Description |
+| :--- | :---     | :---        |
+| hash | String   | ....        |
+| data | String   | ....        |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+
+<br />
+<br />
+<hr />
+
+
+### `StakeRegistration` Event
+
+Data on stake registration event.
+
+| Name       | DataType                                                                           | Description          |
+| :---       | :---                                                                               | :---                 |
+| credential | [StakeCredential](https://docs.rs/oura/1.4.1/oura/model/enum.StakeCredential.html) | Staking credentials. |
+
+**Context**
+
+| Name            | DataType        | Description                   |
+| :---            | :---            | :---                          |
+| block_number    | Option\<u64>    | Height of block from genesis. |
+| block_hash      | Option\<String> | Block hash.                   |
+| slot            | Option\<u64>    | Current slot.                 |
+| timestamp       | Option\<u64>    | Timestamp.                    |
+| tx_idx          | Option\<usize>  | Transaction Index.            |
+| tx_hash         | Option\<String> | Transaction hash.             |
+| certificate_idx | Option\<usize>  |                               |
+
+
+<br />
+<br />
+<hr />
+
+
+### `StakeDeregistration` Event
+
+Data on stake deregistration event.
+
+| Name       | DataType                                                                           | Description          |
+| :---       | :---                                                                               | :---                 |
+| credential | [StakeCredential](https://docs.rs/oura/1.4.1/oura/model/enum.StakeCredential.html) | Staking credentials. |
+
+**Context**
+
+| Name            | DataType        | Description                   |
+| :---            | :---            | :---                          |
+| block_number    | Option\<u64>    | Height of block from genesis. |
+| block_hash      | Option\<String> | Block hash.                   |
+| slot            | Option\<u64>    | Current slot.                 |
+| timestamp       | Option\<u64>    | Timestamp.                    |
+| tx_idx          | Option\<usize>  | Transaction Index.            |
+| tx_hash         | Option\<String> | Transaction hash.             |
+| certificate_idx | Option\<usize>  |                               |
+
+
+<br />
+<br />
+<hr />
+
+
+### `StakeDelegation` Event
+
+Data on [stake delegation](https://docs.cardano.org/core-concepts/delegation) event.
+
+| Name       | DataType                                                                           | Description            |
+| :---       | :---                                                                               | :---                   |
+| credential | [StakeCredential](https://docs.rs/oura/1.4.1/oura/model/enum.StakeCredential.html) | Stake credentials.     |
+| pool_hash  | String                                                                             | Hash of stake pool ID. |
+
+**Context**
+
+| Name            | DataType        | Description                   |
+| :---            | :---            | :---                          |
+| block_number    | Option\<u64>    | Height of block from genesis. |
+| block_hash      | Option\<String> | Block hash.                   |
+| slot            | Option\<u64>    | Current slot.                 |
+| timestamp       | Option\<u64>    | Timestamp.                    |
+| tx_idx          | Option\<usize>  | Transaction Index.            |
+| tx_hash         | Option\<String> | Transaction hash.             |
+| certificate_idx | Option\<usize>  |                               |
+
+
+<br />
+<br />
+<hr />
+
+
+### `PoolRegistration` Event
+
+Data on the stake [registration event](https://developers.cardano.org/docs/stake-pool-course/handbook/register-stake-pool-metadata/).
+
+| Name           | DataType        | Description                             |
+| :---           | :---            | :---                                    |
+| operator       | String          | Stake pool operator ID.                 |
+| vrf_keyhash    | String          | Kehash of node VRF operational key.     |
+| pledge         | u64             | Stake pool pledge (lovelace).           |
+| cost           | u64             | Operational costs per epoch (lovelace). |
+| margin         | f64             | Operator margin.                        |
+| reward_account | String          | Account to receive stake pool rewards.  |
+| pool_owners    | Vec\<String>    | Stake pool owners.                      |
+| relays         | Vec\<String>    | ....                                    |
+| pool_metadata  | Option\<String> | ....                                    |
+
+**Context**
+
+| Name            | DataType        | Description                   |
+| :---            | :---            | :---                          |
+| block_number    | Option\<u64>    | Height of block from genesis. |
+| block_hash      | Option\<String> | Block hash.                   |
+| slot            | Option\<u64>    | Current slot.                 |
+| timestamp       | Option\<u64>    | Timestamp.                    |
+| tx_idx          | Option\<usize>  | Transaction Index.            |
+| tx_hash         | Option\<String> | Transaction hash.             |
+| certificate_idx | Option\<usize>  |                               |
+
+
+<br />
+<br />
+<hr />
+
+
+### `PoolRetirement` Event
+
+Data on [stake pool retirement](https://cardano-foundation.gitbook.io/stake-pool-course/stake-pool-guide/stake-pool/retire_stakepool) event.
+
+| Name  | DataType | Description    |
+| :---  | :---     | :---           |
+| pool  | String   | Pool ID.       |
+| epoch | u64      | Current epoch. |
+
+**Context**
+
+| Name            | DataType        | Description                   |
+| :---            | :---            | :---                          |
+| block_number    | Option\<u64>    | Height of block from genesis. |
+| block_hash      | Option\<String> | Block hash.                   |
+| slot            | Option\<u64>    | Current slot.                 |
+| timestamp       | Option\<u64>    | Timestamp.                    |
+| tx_idx          | Option\<usize>  | Transaction Index.            |
+| tx_hash         | Option\<String> | Transaction hash.             |
+| certificate_idx | Option\<usize>  |                               |
+
+
+<br />
+<br />
+<hr />
+
+
+### `GenesisKeyDelegation` Event
+
+Data on genesis key delegation.
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Current slot.                 |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |
+
+
+<br />
+<br />
+<hr />
+
+
+### `MoveInstantaneousRewardsCert` Event
+
+| Name                 | DataType                                | Description |
+| :---                 | :---                                    | :---        |
+| from_reserves        | bool                                    | ....        |
+| from_treasury        | bool                                    | ....        |
+| to_stake_credentials | Option\<BTreeMap\<StakeCredential, i64>> | ....        |
+| to_other_pot         | Option\<u64>                            | ....        |
+
+**Context**
+
+| Name         | DataType        | Description                   |
+| :---         | :---            | :---                          |
+| block_number | Option\<u64>    | Height of block from genesis. |
+| block_hash   | Option\<String> | Block hash.                   |
+| slot         | Option\<u64>    | Blockchain slot.              |
+| timestamp    | Option\<u64>    | Timestamp.                    |
+| tx_idx       | Option\<usize>  | Transaction Index.            |
+| tx_hash      | Option\<String> | Transaction hash.             |

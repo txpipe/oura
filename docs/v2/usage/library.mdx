@@ -1,0 +1,23 @@
+---
+title: Library
+---
+
+Oura allows users to build custom pipeline stages using the Oura library in Rust. If none of the default filters or sinks meet your needs, you can implement your own stages in Rust to filter data based on your business logic and output it wherever you choose.
+
+## Installing
+
+It's possible to install oura lib using crate or directly from github.
+
+Using crate
+```
+cargo add oura
+```
+
+Using github add this dependence in `Cargo.toml`
+```
+oura = { git = "https://github.com/txpipe/oura.git" }
+```
+
+### Example
+
+Follow the example code and the dependencies used to build a custom filter and sink. [Example Code](https://github.com/txpipe/oura/tree/main/examples/lib).
