@@ -23,6 +23,7 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let intersect = parse_since(args.since.clone())?;
     let bearer = args.bearer.clone().unwrap_or_default();
     let source = match bearer {
+        #[cfg(target_family = "unix")]
         Bearer::Unix => sources::Config::N2C(sources::n2c::Config {
             socket_path: args.socket.clone().into(),
         }),
@@ -107,6 +108,7 @@ pub struct Args {
 
 #[derive(ValueEnum, Clone, Default)]
 enum Bearer {
+    #[cfg(target_family = "unix")]
     Unix,
     #[default]
     Tcp,
