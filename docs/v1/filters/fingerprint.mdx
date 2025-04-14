@@ -1,0 +1,26 @@
+---
+title: Fingerprint Filter
+sidebar: 
+  label: Fingerprint
+---
+
+A filter that computes a (probably) unique identifier for each event and appends it as part of the data passed forward.
+
+Dealing with duplicated records is a common problem in data pipelines. A common workaround is to use identifiers based on the hash of the data for each record. In this way, a duplicated record would yield the same hash, allowing the storage engine to discard the extra instance.
+
+The _fingerprint_ filter uses the non-cryptographic hash algorithm `murmur3` to compute an id for each _Oura_ event with a very low collision level. We use a non-cryptographic hash because they are faster to compute and non of the cryptographic properties are required for this use-case.
+
+When enabled, this filter will set the `fingerprint` property of the `Event` data structure passed through each stage of the pipeline. _Sinks_ at the end of the process might leverage this value as primary key of the corresponding storage mechanism.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "Fingerprint"
+```
+
+### Section: `filter`
+
+- `type`: the literal value `Fingerprint`.

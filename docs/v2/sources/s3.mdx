@@ -1,0 +1,35 @@
+---
+title: Aws S3 Bucket
+sidebar:
+  label: S3
+---
+
+Download block object from S3 storage. 
+
+This source requires building oura using the feature `aws` enabled.
+
+## Configuration
+
+The following snippet shows an example of how to set up a S3 source:
+
+```toml
+[source]
+type = "S3"
+bucket = "bucket-name"
+items_per_batch = 10
+```
+
+the envs below need to be set if oura is not running in the aws environment configured
+
+```sh
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-west-2
+```
+
+### Section `source`:
+
+- `type`: this field must be set to the literal value `S3`
+- `bucket`: bucket name
+- `items_per_batch`: sets the maximum number of keys returned in the response
+
