@@ -6,7 +6,11 @@ _Oura_ follows a Cardano chain and outputs events. Each event contains data abou
 
 A consumer aggregating a sequence of multiple events will notice redundant / duplicated data. For example, the "block number" value will appear repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor "consumption ergonomics" over "data normalization".
 
-## Available Events
+## Available Events (ParseCbor Filter)
+
+When the filter [ParseCbor](/oura/v2/filters/parse_cbor) is enabled, the events will use the [UTxORPC](https://utxorpc.org/cardano) data structures.
+
+## Available Events (Legacy V1 Filter)
 
 The following list represent the already implemented events. These data structures are represented as an `enum` at the code level.
 
