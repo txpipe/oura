@@ -5,24 +5,24 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::Duration;
 
-use serde::Deserialize;
-use oura::framework::IntersectConfig;
 use anyhow::Result;
 use futures_util::SinkExt;
-use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
-use oura::sinks::Config::FileRotate;
-use serde_json::{json, Value};
-use tokio::net::TcpListener;
-use oura::sources::Config::Hydra;
-use oura::daemon::{run_daemon, ConfigRoot};
 use gasket::daemon::Daemon;
 use goldenfile::Mint;
+use oura::daemon::{run_daemon, ConfigRoot};
+use oura::framework::IntersectConfig;
+use oura::sinks::Config::FileRotate;
+use oura::sources::hydra::{HydraMessage, HydraMessagePayload};
+use oura::sources::Config::Hydra;
+use port_selector::random_free_port;
+use serde::Deserialize;
+use serde_json::{json, Value};
 use std::io::Write;
 use tempfile::NamedTempFile;
+use tokio::net::TcpListener;
 use tokio::runtime::Runtime;
 use tokio::time;
 use tokio_tungstenite::accept_async;
-use port_selector::random_free_port;
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -475,17 +475,22 @@ fn hydra_oura_stdout_scenario_2() {
 
 #[test]
 fn hydra_restore_from_intersection_success() {
-    let scenario= fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
+    let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     let intersect = IntersectConfig::Point(
         6,
-        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
+        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string(),
     );
     let events = oura_events_from_mock_chain(scenario, intersect);
 
     assert_ne!(events.len(), 0);
-    assert_eq!(events[0].point, json!({"slot": 7, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}));
+    assert_eq!(
+        events[0].point,
+        json!({"slot": 7, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"})
+    );
     for e in events {
-        if e.point == json!({"slot": 6, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}) {
+        if e.point
+            == json!({"slot": 6, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"})
+        {
             panic!("only events /after/ the intersection should be emitted");
         }
     }
@@ -496,7 +501,7 @@ fn hydra_restore_from_intersection_tip() {
     let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     let intersect = IntersectConfig::Point(
         11,
-        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
+        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string(),
     );
     let events = oura_events_from_mock_chain(scenario, intersect);
     assert_eq!(events, vec![]);
@@ -507,11 +512,14 @@ fn hydra_restore_from_intersection_point_with_dummy_hash_and_shared_slot_1() {
     let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     let intersect = IntersectConfig::Point(
         2,
-        "00000000000000000000000000000000000000000000000000000000".to_string()
+        "00000000000000000000000000000000000000000000000000000000".to_string(),
     );
     let events = oura_events_from_mock_chain(scenario, intersect);
     // It appears the Greetings and HeadIsInitializing messages share the same seq / slot.
-    assert_eq!(events[0].point, json!({"slot": 2, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}))
+    assert_eq!(
+        events[0].point,
+        json!({"slot": 2, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"})
+    )
 }
 
 #[test]
@@ -519,18 +527,21 @@ fn hydra_restore_from_intersection_point_with_shared_slot_2() {
     let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
     let intersect = IntersectConfig::Point(
         2,
-        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string()
+        "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab".to_string(),
     );
     let events = oura_events_from_mock_chain(scenario, intersect);
-    assert_eq!(events[0].point, json!({"slot": 3, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"}))
+    assert_eq!(
+        events[0].point,
+        json!({"slot": 3, "hash": "84e657e3dd5241caac75b749195f78684023583736cc08b2896290ab"})
+    )
 }
 
 #[test]
 fn hydra_restore_from_intersection_failure() {
     let scenario = fs::read_to_string("tests/hydra/scenario_1.txt").unwrap();
-    let bad_intersect= IntersectConfig::Point(
+    let bad_intersect = IntersectConfig::Point(
         6,
-        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffff".to_string()
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffff".to_string(),
     );
     let events = oura_events_from_mock_chain(scenario, bad_intersect);
     assert_eq!(events, vec![]);
@@ -568,7 +579,10 @@ fn oura_output_from_mock_chain(scenario: String, intersect: IntersectConfig) -> 
     })
 }
 
-fn oura_events_from_mock_chain(scenario: String, intersect: IntersectConfig) -> Vec<JsonApplyChainEvent> {
+fn oura_events_from_mock_chain(
+    scenario: String,
+    intersect: IntersectConfig,
+) -> Vec<JsonApplyChainEvent> {
     oura_output_from_mock_chain(scenario, intersect)
         .lines()
         .map(|line| serde_json::from_str(line).expect("Invalid JSON line"))
@@ -610,9 +624,8 @@ async fn mock_hydra_node(server: TcpListener, mock_data: String) {
 
     let (tx, _rx) = mpsc::channel();
     let (stream, _) = server.accept().await.unwrap();
-    let _ = tokio::spawn(handle_connection(stream, mock_data , tx));
+    let _ = tokio::spawn(handle_connection(stream, mock_data, tx));
 }
-
 
 fn test_config(tmp_output_file: &NamedTempFile, ws_url: &String) -> ConfigRoot {
     let mut config = ConfigRoot::new(&Some(PathBuf::from("tests/daemon.toml"))).unwrap();
