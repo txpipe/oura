@@ -77,7 +77,7 @@ mithril-client = { version = "^0.8", optional = true, features = ["fs"] }
 miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
 redis = { version = "0.27.6", optional = true }
-utxorpc = { version = "0.9.0", optional = true }
+utxorpc = { version = "0.10.0", optional = true }
 tungstenite = { version = "0.24.0", optional = true }
 tokio-tungstenite = { version = "0.24.0", optional = true }
 futures-util = { version = "0.3", optional = true }
