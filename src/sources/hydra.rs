@@ -63,8 +63,7 @@ impl<'de> Deserialize<'de> for HydraMessage {
 
         let head_id = head_id_str
             .map(|s| {
-                hex::decode(s)
-                    .map_err(|_e| serde::de::Error::custom(format!("Expected hex-encoded headId")))
+                hex::decode(s).map_err(|_e| serde::de::Error::custom("Expected hex-encoded headId"))
             })
             .transpose()?;
 
@@ -107,7 +106,7 @@ where
 
     let msg = TxValidJson::deserialize(deserializer)?;
     let cbor = hex::decode(msg.transaction.cbor_hex)
-        .map_err(|_e| serde::de::Error::custom(format!("Expected hex-encoded cbor")))?;
+        .map_err(|_e| serde::de::Error::custom("Expected hex-encoded cbor"))?;
 
     Ok(cbor)
 }
@@ -147,7 +146,7 @@ impl Worker {
         let point = msg.pseudo_point();
         match &self.intersect {
             WorkerIntersect::SkipUntil(slot, hash) => {
-                let target = Point::Specific(slot.clone(), hash.clone());
+                let target = Point::Specific(*slot, hash.clone());
                 debug!(
                     "Skipping message {} before (or at) requested intersection {}",
                     point.slot_or_default(),
@@ -182,17 +181,15 @@ impl Worker {
         stage.ops_count.inc(1);
 
         // Apply CborTx events for any txs
-        match next.payload {
-            HydraMessagePayload::TxValid { tx } => {
-                let evt = ChainEvent::Apply(point.clone(), Record::CborTx(tx));
-                stage.output.send(evt.into()).await.or_panic()?;
-                stage.ops_count.inc(1);
+        if let HydraMessagePayload::TxValid { tx } = next.payload {
+            let evt = ChainEvent::Apply(point.clone(), Record::CborTx(tx));
+            stage.output.send(evt.into()).await.or_panic()?;
+            stage.ops_count.inc(1);
 
-                stage.current_slot.set(point.slot_or_default() as i64);
-                stage.ops_count.inc(1);
-            }
-            _ => (),
-        };
+            stage.current_slot.set(point.slot_or_default() as i64);
+            stage.ops_count.inc(1);
+        }
+
         Ok(())
     }
 }
@@ -209,7 +206,7 @@ fn intersect_from_config(intersect: &IntersectConfig) -> WorkerIntersect {
         IntersectConfig::Point(slot, hash_str) => {
             info!("intersecting specific point");
             let hash = hex::decode(hash_str).expect("valid hex hash");
-            WorkerIntersect::SkipUntil(slot.clone(), hash)
+            WorkerIntersect::SkipUntil(*slot, hash)
         }
         IntersectConfig::Breadcrumbs(_) => {
             panic!("intersecting breadcrumbs not currently supported with hydra as source")
