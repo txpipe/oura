@@ -19,3 +19,5 @@ install-updater = true
 tap = "txpipe/homebrew-tap"
 # Publish jobs to run in CI
 publish-jobs = ["homebrew"]
+# don't check/regenerate ci scripts (release.yml)
+allow-dirty = ["ci"]
