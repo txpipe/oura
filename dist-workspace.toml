@@ -21,3 +21,6 @@ tap = "txpipe/homebrew-tap"
 publish-jobs = ["homebrew"]
 # don't check/regenerate ci scripts (release.yml)
 allow-dirty = ["ci"]
+
+[dist.github-custom-runners]
+global = "ubuntu-latest"
