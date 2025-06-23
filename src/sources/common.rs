@@ -166,6 +166,9 @@ pub struct RetryPolicy {
 
     #[serde(default = "RetryPolicy::default_max_backoff")]
     pub connection_max_backoff: u32,
+
+    #[serde(default = "RetryPolicy::default_memory")]
+    pub memory: u64,
 }
 
 impl RetryPolicy {
@@ -175,6 +178,10 @@ impl RetryPolicy {
 
     fn default_max_backoff() -> u32 {
         60
+    }
+
+    fn default_memory() -> u64 {
+        10
     }
 }
 
@@ -205,6 +212,7 @@ pub fn setup_multiplexer(
                 backoff_unit: Duration::from_secs(1),
                 backoff_factor: 2,
                 max_backoff: Duration::from_secs(policy.connection_max_backoff as u64),
+                memory: Duration::from_secs(policy.memory),
             },
         ),
         None => setup_multiplexer_attempt(bearer, address),
