@@ -1,5 +1,5 @@
 use gasket::framework::{AsWorkError, WorkerError};
-use pallas::ledger::primitives::babbage::MintedDatumOption;
+use pallas::ledger::primitives::conway::DatumOption;
 use pallas::ledger::traverse::{MultiEraBlock, MultiEraInput, MultiEraOutput, MultiEraTx};
 use pallas::network::miniprotocols::Point;
 
@@ -66,7 +66,7 @@ impl EventWriter<'_> {
             }
         }
 
-        if let Some(MintedDatumOption::Data(datum)) = &output.datum() {
+        if let Some(DatumOption::Data(datum)) = &output.datum() {
             child.append_from(PlutusDatumRecord::from(&datum.0))?;
         }
 
