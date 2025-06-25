@@ -23,8 +23,8 @@ hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
 # kafka = auto feature flag
 
 [dependencies]
-pallas = { version = "0.32", features = ["hardano"] }
-# pallas = { path = "../pallas/pallas", features = ["hardano"] }
+# pallas = { version = "0.32", features = ["hardano"] }
+pallas = { path = "../pallas/pallas", features = ["hardano"] }
 # pallas = { git = "https://github.com/txpipe/pallas", features = ["hardano"] }
 
 gasket = { version = "^0.7", features = ["derive"] }
