@@ -9,7 +9,7 @@
 </div>
 
 > **Warning**
-> `main` branch is now tracking **V2**. This new version is a complete overhaul of the processing pipeline, multiple breaking changes. If you're looking for **V1**, you can switch to the long-term support branch named `lts/v1`
+> The `main` branch is now tracking **V2**, a complete overhaul of the processing pipeline with multiple breaking changes. V1 is now considered legacy and will only receive critical security updates. We strongly encourage all users to migrate to V2 for the latest features, performance improvements, and ongoing support. For information on V1, please refer to the `lts/v1` branch.
 
 ## Introduction
 
@@ -17,19 +17,11 @@ We have tools to "explore" the Cardano blockchain, which are useful when you kno
 
 _Oura_ is a rust-native implementation of a pipeline that connects to the tip of a Cardano node through a combination of _Ouroboros_ mini-protocol (using either a unix socket or tcp bearer), filters the events that match a particular pattern and then submits a succinct, self-contained payload to pluggable observers called "sinks".
 
-Check our [documentation](https://txpipe.github.io/oura) for detailed information on how to start working with _Oura_.
+Check our [documentation](https://docs.txpipe.io/oura/v2) for detailed information on how to start working with _Oura_.
 
 ## Etymology
 
 The name of the tool is inspired by the `tail` command available in unix-like systems which is used to display the tail end of a text file or piped data. Cardano's consensus protocol name, _Ouroboros_, is a reference to the ancient symbol depicting a serpent or dragon eating its own tail, which means "tail eating". "Oura" is the ancient greek word for "tail".
-
-## Terminal Output Demo
-
-In this terminal recording we get to see a few mins of live output from a testnet node connected to the terminal sink.
-
-![Terminal Demo](assets/demo.svg)
-
-[watch full asciicast](https://asciinema.org/a/453455)
 
 ## Under the Hood
 
@@ -76,34 +68,37 @@ Oura is in its essence just a pipeline for processing events. Each stage of the 
   - Parsed Txs (structured objects with all tx data)
   - Generic JSON (any kind of JSON values)
 - Sources
-  - chain-sync from local node
-  - chain-sync + block-fetch from remote relay node
-  - S3 bucket with block data
-  - Kafka topic with block data 
+  - Node-to-client (n2c)
+  - Node-to-node (n2n)
+  - S3
+  - Hydra
+  - Mithril
+  - Utxorpc
 - Sinks
-  - Kafka topic
-  - Elasticsearch index / data stream
-  - Rotating log files with compression
-  - Redis streams
-  - AWS SQS queue
-  - AWS Lambda call
-  - AWS S3 objects
-  - GCP PubSub
+  - AWS Lambda
+  - AWS S3
+  - AWS SQS
+  - Elasticsearch
+  - File Rotate
   - GCP Cloud Function
-  - Azure Sinks
-  - webhook (http post)
-  - terminal (append-only, tail-like)
+  - GCP PubSub
+  - Kafka
+  - RabbitMQ
+  - Redis
+  - SQL Databases
+  - Stdout
+  - Webhook
+  - Terminal
 - Filters
-  - Parse block / tx CBOR 
-  - Split block into txs
-  - Select Txs by matching rules (address, metadata, policies, etc)
-  - Enrich tx data with related inputs
-  - Custom Typescript code (uses Deno)
-  - Custom WASM plugin
-  - Rollback buffer with compensating actions
+  - Into JSON
+  - Parse CBOR
+  - Rollback Buffer
+  - Split Block
+  - Wasm Plugin
+  - Select
+  - Legacy V1
 - Other
   - stateful chain cursor to recover from restarts
-  - buffer stage to hold blocks until they reach a certain depth
   - pipeline metrics to track the progress and performance
 
 ## Known Limitations
