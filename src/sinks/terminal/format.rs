@@ -1,7 +1,9 @@
 use std::fmt::{Display, Write};
 
 use crossterm::style::{Attribute, Color, Stylize};
+use pallas::ledger::traverse as trv;
 use pallas::network::miniprotocols::Point;
+use tracing::error;
 use unicode_truncate::UnicodeTruncateStr;
 
 use crate::{framework::legacy_v1::*, framework::*};
@@ -9,14 +11,112 @@ use crate::{framework::legacy_v1::*, framework::*};
 pub struct LogLine {
     prefix: &'static str,
     color: Color,
+    content: String,
     tx_idx: Option<usize>,
     block_num: Option<u64>,
-    content: String,
     max_width: Option<usize>,
 }
 
+#[allow(dead_code)]
 impl LogLine {
-    fn new_raw(
+    pub fn new(prefix: &'static str, color: Color) -> Self {
+        Self {
+            prefix,
+            color,
+            content: String::default(),
+            tx_idx: None,
+            block_num: None,
+            max_width: None,
+        }
+    }
+
+    pub fn handle(
+        source: &Record,
+        max_width: Option<usize>,
+        adahandle_policy: &Option<String>,
+    ) -> LogLine {
+        match source {
+            Record::OuraV1Event(evt) => LogLine::handle_legacy_v1(
+                evt,
+                max_width,
+                adahandle_policy.as_deref().unwrap_or_default(),
+            ),
+            Record::CborBlock(cbor) => {
+                let mut log = LogLine::new("BLOCK", Color::Magenta);
+                log.max_width = max_width;
+
+                match trv::MultiEraBlock::decode(cbor) {
+                    Ok(block) => {
+                        let slot = block.slot();
+                        let hash = block.hash().to_string();
+
+                        log.content = format!("slot: {slot}, hash: {hash}");
+                        log.block_num = Some(block.number());
+                    }
+                    Err(error) => error!(?error),
+                }
+
+                log
+            }
+            Record::CborTx(cbor) => {
+                let mut log = LogLine::new("TX", Color::DarkBlue);
+                log.max_width = max_width;
+
+                match trv::MultiEraTx::decode(cbor) {
+                    Ok(tx) => {
+                        let hash = tx.hash().to_string();
+                        log.content = format!("hash: {hash}");
+                    }
+                    Err(error) => error!(?error),
+                }
+
+                log
+            }
+            Record::ParsedBlock(block) => {
+                let mut log = LogLine::new("BLOCK", Color::Magenta);
+                log.max_width = max_width;
+
+                if let Some(header) = block.header.as_ref() {
+                    let slot = header.slot;
+                    let hash = hex::encode(header.hash.clone());
+                    log.content = format!("slot: {slot}, hash: {hash}");
+                    log.block_num = Some(header.height);
+                }
+
+                log
+            }
+            Record::ParsedTx(tx) => {
+                let mut log = LogLine::new("TX", Color::DarkBlue);
+
+                log.max_width = max_width;
+                let hash = hex::encode(tx.hash.clone());
+                log.content = format!("hash: {hash}");
+
+                log
+            }
+            Record::GenericJson(_json) => {
+                todo!("GenericJson not implemented yet")
+            }
+        }
+    }
+
+    pub fn reset(point: Point) -> LogLine {
+        let mut log = LogLine::new("RESET", Color::DarkRed);
+
+        match point {
+            Point::Origin => {
+                log.content = "origin".to_string();
+            }
+            Point::Specific(slot, hash) => {
+                let hash = hex::encode(hash);
+                log.content = format!("slot: {slot}, hash: {hash}");
+            }
+        }
+
+        log
+    }
+
+    fn from_legacy_v1(
         source: &legacy_v1::Event,
         prefix: &'static str,
         color: Color,
@@ -33,7 +133,7 @@ impl LogLine {
         }
     }
 
-    pub fn new_from_legacy_v1(
+    fn handle_legacy_v1(
         source: &legacy_v1::Event,
         max_width: Option<usize>,
         adahandle_policy: &str,
@@ -48,7 +148,7 @@ impl LogLine {
                 hash,
                 number,
                 ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                     source,
                     "BLOCK",
                     Color::Magenta,
@@ -70,7 +170,7 @@ impl LogLine {
                 hash,
                 number,
                 ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "ENDBLK",
                 Color::DarkMagenta,
@@ -83,21 +183,21 @@ impl LogLine {
                 ttl,
                 hash,
                 ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "TX",
                 Color::DarkBlue,
                 max_width,
                 format!("{{ total_output: {total_output}, fee: {fee}, hash: {hash}, ttl: {ttl:?} }}"),
             ),
-            EventData::TransactionEnd(TransactionRecord { hash, .. }) => LogLine::new_raw(
+            EventData::TransactionEnd(TransactionRecord { hash, .. }) => LogLine::from_legacy_v1(
                 source,
                 "ENDTX",
                 Color::DarkBlue,
                 max_width,
                 format!("{{ hash: {hash} }}"),
             ),
-            EventData::TxInput(TxInputRecord { tx_id, index }) => LogLine::new_raw(
+            EventData::TxInput(TxInputRecord { tx_id, index }) => LogLine::from_legacy_v1(
                 source,
                 "STXI",
                 Color::Blue,
@@ -106,7 +206,7 @@ impl LogLine {
             ),
             EventData::TxOutput(TxOutputRecord {
                 address, amount, ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "UTXO",
                 Color::Blue,
@@ -118,7 +218,7 @@ impl LogLine {
                 asset,
                 asset_ascii,
                 ..
-            }) if policy == adahandle_policy => LogLine::new_raw(
+            }) if policy == adahandle_policy => LogLine::from_legacy_v1(
                 source,
                 "$HNDL",
                 Color::DarkGreen,
@@ -135,7 +235,7 @@ impl LogLine {
                 asset_ascii,
                 amount,
                 ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "ASSET",
                 Color::Green,
@@ -145,7 +245,7 @@ impl LogLine {
                     policy, asset_ascii.as_deref().unwrap_or(asset), amount
                 ),
             ),
-            EventData::Metadata(MetadataRecord { label, content }) => LogLine::new_raw(
+            EventData::Metadata(MetadataRecord { label, content }) => LogLine::from_legacy_v1(
                 source,
                 "META",
                 Color::Yellow,
@@ -156,7 +256,7 @@ impl LogLine {
                 policy,
                 asset,
                 quantity,
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "MINT",
                 Color::DarkGreen,
@@ -164,63 +264,63 @@ impl LogLine {
                 format!(
                     "{{ policy: {policy}, asset: {asset}, quantity: {quantity} }}"),
             ),
-            EventData::NativeScript { policy_id, script } => LogLine::new_raw(
+            EventData::NativeScript { policy_id, script } => LogLine::from_legacy_v1(
                 source,
                 "NATIVE",
                 Color::White,
                 max_width,
                 format!("{{ policy: {policy_id}, script: {script} }}"),
             ),
-            EventData::PlutusScript { hash, .. } => LogLine::new_raw(
+            EventData::PlutusScript { hash, .. } => LogLine::from_legacy_v1(
                 source,
                 "PLUTUS",
                 Color::White,
                 max_width,
                 format!("{{ hash: {hash} }}"),
             ),
-            EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => LogLine::new_raw(
+            EventData::PlutusDatum(PlutusDatumRecord { datum_hash, .. }) => LogLine::from_legacy_v1(
                 source,
                 "DATUM",
                 Color::White,
                 max_width,
                 format!("{{ hash: {datum_hash} }}"),
             ),
-            EventData::PlutusRedeemer(PlutusRedeemerRecord { purpose, input_idx, .. }) => LogLine::new_raw(
+            EventData::PlutusRedeemer(PlutusRedeemerRecord { purpose, input_idx, .. }) => LogLine::from_legacy_v1(
                 source,
                 "REDEEM",
                 Color::White,
                 max_width,
                 format!("{{ purpose: {purpose}, input: {input_idx} }}"),
             ),
-            EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine::new_raw(
+            EventData::PlutusWitness(PlutusWitnessRecord { script_hash, .. }) => LogLine::from_legacy_v1(
                 source,
                 "WITNESS",
                 Color::White,
                 max_width,
                 format!("{{ plutus script: {script_hash} }}"),
             ),
-            EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => LogLine::new_raw(
+            EventData::NativeWitness(NativeWitnessRecord { policy_id, .. }) => LogLine::from_legacy_v1(
                 source,
                 "WITNESS",
                 Color::White,
                 max_width,
                 format!("{{ native policy: {policy_id} }}"),
             ),
-            EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => LogLine::new_raw(
+            EventData::VKeyWitness(VKeyWitnessRecord { vkey_hex, .. }) => LogLine::from_legacy_v1(
                 source,
                 "WITNESS",
                 Color::White,
                 max_width,
                 format!("{{ vkey: {vkey_hex} }}"),
             ),
-            EventData::StakeRegistration { credential } => LogLine::new_raw(
+            EventData::StakeRegistration { credential } => LogLine::from_legacy_v1(
                 source,
                 "STAKE+",
                 Color::Magenta,
                 max_width,
                 format!("{{ credential: {credential:?} }}"),
             ),
-            EventData::StakeDeregistration { credential } => LogLine::new_raw(
+            EventData::StakeDeregistration { credential } => LogLine::from_legacy_v1(
                 source,
                 "STAKE-",
                 Color::DarkMagenta,
@@ -230,7 +330,7 @@ impl LogLine {
             EventData::StakeDelegation {
                 credential,
                 pool_hash,
-            } => LogLine::new_raw(
+            } => LogLine::from_legacy_v1(
                 source,
                 "DELE",
                 Color::Magenta,
@@ -248,7 +348,7 @@ impl LogLine {
                 relays: _,
                 pool_metadata,
                 pool_metadata_hash: _,
-            } => LogLine::new_raw(
+            } => LogLine::from_legacy_v1(
                 source,
                 "POOL+",
                 Color::Magenta,
@@ -256,14 +356,14 @@ impl LogLine {
                 format!(
                     "{{ operator: {operator}, pledge: {pledge}, cost: {cost}, margin: {margin}, metadata: {pool_metadata:?} }}"),
             ),
-            EventData::PoolRetirement { pool, epoch } => LogLine::new_raw(
+            EventData::PoolRetirement { pool, epoch } => LogLine::from_legacy_v1(
                 source,
                 "POOL-",
                 Color::DarkMagenta,
                 max_width,
                 format!("{{ pool: {pool}, epoch: {epoch} }}"),
             ),
-            EventData::GenesisKeyDelegation { } => LogLine::new_raw(
+            EventData::GenesisKeyDelegation { } => LogLine::from_legacy_v1(
                 source,
                 "GENESIS",
                 Color::Magenta,
@@ -275,7 +375,7 @@ impl LogLine {
                 from_treasury,
                 to_stake_credentials,
                 to_other_pot,
-            } => LogLine::new_raw(
+            } => LogLine::from_legacy_v1(
                 source,
                 "MOVE",
                 Color::Magenta,
@@ -286,14 +386,14 @@ impl LogLine {
             EventData::RollBack {
                 block_slot,
                 block_hash,
-            } => LogLine::new_raw(
+            } => LogLine::from_legacy_v1(
                 source,
                 "RLLBCK",
                 Color::Red,
                 max_width,
                 format!("{{ slot: {block_slot}, hash: {block_hash} }}"),
             ),
-            EventData::Collateral { tx_id, index } => LogLine::new_raw(
+            EventData::Collateral { tx_id, index } => LogLine::from_legacy_v1(
                 source,
                 "COLLAT",
                 Color::Blue,
@@ -306,7 +406,7 @@ impl LogLine {
                 name,
                 image,
                 ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "CIP25",
                 Color::DarkYellow,
@@ -323,7 +423,7 @@ impl LogLine {
                 voting_key,
                 stake_pub,
                 ..
-            }) => LogLine::new_raw(
+            }) => LogLine::from_legacy_v1(
                 source,
                 "CIP15",
                 Color::DarkYellow,
@@ -331,40 +431,6 @@ impl LogLine {
                 format!("{{ voting key: {voting_key}, stake pub: {stake_pub} }}"),
             ),
         }
-    }
-
-    pub fn new_apply(
-        source: &Record,
-        max_width: Option<usize>,
-        adahandle_policy: &Option<String>,
-    ) -> LogLine {
-        match source {
-            Record::OuraV1Event(evt) => LogLine::new_from_legacy_v1(
-                evt,
-                max_width,
-                adahandle_policy.as_deref().unwrap_or_default(),
-            ),
-            _ => todo!(),
-        }
-    }
-
-    pub fn new_undo(
-        source: &Record,
-        max_width: Option<usize>,
-        adahandle_policy: &Option<String>,
-    ) -> LogLine {
-        match source {
-            Record::OuraV1Event(evt) => LogLine::new_from_legacy_v1(
-                evt,
-                max_width,
-                adahandle_policy.as_deref().unwrap_or_default(),
-            ),
-            _ => todo!(),
-        }
-    }
-
-    pub fn new_reset(_point: Point) -> LogLine {
-        todo!()
     }
 }
 
