@@ -1,0 +1,13 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[sink]
+type = "Zeromq"
+url = "tcp://localhost:5555"

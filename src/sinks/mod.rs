@@ -14,6 +14,9 @@ pub mod webhook;
 #[cfg(feature = "rabbitmq")]
 mod rabbitmq;
 
+#[cfg(feature = "zeromq")]
+mod zeromq;
+
 #[cfg(feature = "kafka")]
 mod kafka;
 
@@ -51,6 +54,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "rabbitmq")]
     Rabbitmq(rabbitmq::Stage),
+
+    #[cfg(feature = "zeromq")]
+    Zeromq(zeromq::Stage),
 
     #[cfg(feature = "kafka")]
     Kafka(kafka::Stage),
@@ -93,6 +99,9 @@ impl Bootstrapper {
             #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(p) => &mut p.input,
 
+            #[cfg(feature = "zeromq")]
+            Bootstrapper::Zeromq(p) => &mut p.input,
+
             #[cfg(feature = "kafka")]
             Bootstrapper::Kafka(p) => &mut p.input,
 
@@ -134,6 +143,9 @@ impl Bootstrapper {
             #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(p) => &mut p.cursor,
 
+            #[cfg(feature = "zeromq")]
+            Bootstrapper::Zeromq(p) => &mut p.cursor,
+
             #[cfg(feature = "kafka")]
             Bootstrapper::Kafka(p) => &mut p.cursor,
 
@@ -174,6 +186,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "rabbitmq")]
             Bootstrapper::Rabbitmq(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "zeromq")]
+            Bootstrapper::Zeromq(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "kafka")]
             Bootstrapper::Kafka(x) => gasket::runtime::spawn_stage(x, policy),
@@ -218,6 +233,9 @@ pub enum Config {
     #[cfg(feature = "rabbitmq")]
     Rabbitmq(rabbitmq::Config),
 
+    #[cfg(feature = "zeromq")]
+    Zeromq(zeromq::Config),
+
     #[cfg(feature = "kafka")]
     Kafka(kafka::Config),
 
@@ -258,6 +276,9 @@ impl Config {
 
             #[cfg(feature = "rabbitmq")]
             Config::Rabbitmq(c) => Ok(Bootstrapper::Rabbitmq(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "zeromq")]
+            Config::Zeromq(c) => Ok(Bootstrapper::Zeromq(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "kafka")]
             Config::Kafka(c) => Ok(Bootstrapper::Kafka(c.bootstrapper(ctx)?)),
