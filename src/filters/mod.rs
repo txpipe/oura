@@ -14,6 +14,7 @@ pub mod split_block;
 #[cfg(feature = "wasm")]
 pub mod wasm_plugin;
 
+#[allow(clippy::large_enum_variant)]
 pub enum Bootstrapper {
     Noop(noop::Stage),
     SplitBlock(split_block::Stage),
