@@ -3,17 +3,21 @@ use oura::daemon::{run_daemon, ConfigRoot, MetricsConfig};
 use oura::framework::*;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, Level};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use crate::console;
 
 fn setup_tracing() {
-    tracing::subscriber::set_global_default(
-        tracing_subscriber::FmtSubscriber::builder()
-            .with_max_level(tracing::Level::DEBUG)
-            .finish(),
-    )
-    .unwrap();
+    let env_filter = EnvFilter::builder()
+        .with_default_directive(Level::INFO.into())
+        .with_env_var("RUST_LOG")
+        .from_env_lossy();
+
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(env_filter)
+        .init();
 }
 
 async fn serve_prometheus(

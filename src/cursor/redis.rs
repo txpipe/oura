@@ -117,10 +117,10 @@ pub struct Config {
 impl Config {
     pub fn initial_load(&self) -> Result<Breadcrumbs, Error> {
         let client = redis::Client::open(self.url.clone())
-            .map_err(|err| Error::Custom(format!("Unable to connect to Redis: {}", err)))?;
+            .map_err(|err| Error::Custom(format!("Unable to connect to Redis: {err}")))?;
         let mut conn = client
             .get_connection()
-            .map_err(|err| Error::Custom(format!("Unable to establish connection: {}", err)))?;
+            .map_err(|err| Error::Custom(format!("Unable to establish connection: {err}")))?;
 
         let max_breadcrumbs = self.max_breadcrumbs.unwrap_or(DEFAULT_MAX_BREADCRUMBS);
 

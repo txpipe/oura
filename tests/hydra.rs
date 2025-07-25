@@ -560,14 +560,14 @@ fn oura_output_from_mock_chain(scenario: String, intersect: IntersectConfig) -> 
     let rt = Runtime::new().unwrap();
     rt.block_on(async move {
         let port: u16 = random_free_port().unwrap();
-        let addr: String = format!("127.0.0.1:{}", port);
-        let url: String = format!("ws://{}", addr);
+        let addr: String = format!("127.0.0.1:{port}");
+        let url: String = format!("ws://{addr}");
         let server = TcpListener::bind(&addr).await.unwrap();
         let output_file = NamedTempFile::new().unwrap();
         let mut config = test_config(&output_file, &url);
         config.intersect = intersect;
 
-        println!("WebSocket server starting on {}", url);
+        println!("WebSocket server starting on {url}");
 
         tokio::spawn(async move { run_oura(config) });
         let _ = mock_hydra_node(server, scenario).await;
@@ -596,7 +596,7 @@ fn hydra_oura_stdout_test(scenario_name: String, golden_name: String) {
     let mut mint = Mint::new("tests/hydra");
     let mut golden = mint.new_goldenfile(golden_name.clone()).unwrap();
 
-    let scenario = fs::read_to_string(format!("tests/hydra/{}", scenario_name)).unwrap();
+    let scenario = fs::read_to_string(format!("tests/hydra/{scenario_name}")).unwrap();
     let output = oura_output_from_mock_chain(scenario, IntersectConfig::Origin);
 
     golden.write_all(output.as_bytes()).unwrap();
