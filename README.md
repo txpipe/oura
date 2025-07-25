@@ -2,9 +2,15 @@
     <img src="assets/logo.svg" alt="Oura" width="500">
     <hr />
         <h2 align="center" style="border-bottom: none">The tail of Cardano</h2>
-        <img alt="GitHub" src="https://img.shields.io/github/license/txpipe/oura" />
-        <img alt="Crates.io" src="https://img.shields.io/crates/v/oura" />
-        <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/txpipe/oura/validate.yml" />
+        <a href="https://github.com/txpipe/oura/blob/main/LICENSE">
+           <img alt="GitHub" src="https://img.shields.io/github/license/txpipe/oura" />
+        </a>
+        <a href="https://crates.io/crates/oura">
+           <img alt="Crates.io" src="https://img.shields.io/crates/v/oura" />
+        </a>
+        <a href="https://github.com/txpipe/oura/actions/workflows/validate.yml">
+            <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/txpipe/oura/validate.yml" />
+        </a>
     <hr/>
 </div>
 
