@@ -1,5 +1,4 @@
 use gasket::framework::*;
-use google_cloud_default::WithAuthExt;
 use google_cloud_googleapis::pubsub::v1::PubsubMessage;
 use google_cloud_pubsub::client::{Client, ClientConfig};
 
