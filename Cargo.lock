@@ -2688,6 +2688,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "gasket"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37057b6b0b48bb9bdcd4c2bc8ec51090a6cd754744caf28d44b813584473be3a"
+dependencies = [
+ "async-trait",
+ "crossbeam",
+ "serde",
+ "signal-hook",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
 name = "gasket-derive"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2700,11 +2716,11 @@ dependencies = [
 
 [[package]]
 name = "gasket-prometheus"
-version = "0.7.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8582f2a30cebd31ebc3d88ce3eeeb96cf9f8d466e79f233474b52d67f4373f5c"
+checksum = "dd8d7a641a093b1c56db5ea9de3f50493766be650aca3d5d4528905fbf52ab3d"
 dependencies = [
- "gasket",
+ "gasket 0.9.0",
  "prometheus_exporter_base",
 ]
 
@@ -4409,7 +4425,7 @@ dependencies = [
  "file-rotate",
  "futures",
  "futures-util",
- "gasket",
+ "gasket 0.7.0",
  "gasket-prometheus",
  "goldenfile",
  "google-cloud-googleapis",
