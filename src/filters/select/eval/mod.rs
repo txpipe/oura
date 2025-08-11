@@ -557,6 +557,7 @@ impl Predicate {
         Predicate::AllOf(p.into_iter().map(StringOrStruct).collect())
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn not(p: Self) -> Self {
         Predicate::Not(Box::new(StringOrStruct(p)))
     }
