@@ -14,7 +14,7 @@ authors = ["Santiago Carmuega <santiago@carmuega.me>"]
 wasm = ["extism"]
 aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
 sql = ["sqlx"]
-gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "google-cloud-default", "jsonwebtoken"]
+gcp = ["google-cloud-pubsub", "google-cloud-googleapis",  "jsonwebtoken"]
 rabbitmq = ["lapin"]
 u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
@@ -33,18 +33,17 @@ gasket-prometheus = { version = "^0.7" }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git", features = ["derive"] }
 
 hex = "0.4.3"
-net2 = "0.2.37"
 bech32 = "0.9.1"
 clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
 crossterm = "0.26"
 merge = "0.1.0"
-regex = "1.10.3"
+regex = "1.10.5"
 handlebars = "^5.1"
 config = { version = "0.13.2", default-features = false, features = ["toml", "yaml", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
-strum = "0.24"
+strum = "0.26"
 strum_macros = "0.25"
 unicode-truncate = "0.2.0"
 thiserror = "1.0.39"
@@ -61,10 +60,9 @@ murmur3 = { version = "0.5.2", optional = true }
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 lapin = { version = "2.2.1", optional = true }
 kafka = { version = "0.10.0", optional = true }
-google-cloud-pubsub = { version = "0.16.0", optional = true }
-google-cloud-googleapis = { version = "0.10.0", optional = true }
-google-cloud-default = { version = "0.4.0", optional = true, features = ["pubsub"] }
-jsonwebtoken = { version = "8.3.0", optional = true }
+google-cloud-pubsub = { version = "0.30.0", optional = true }
+google-cloud-googleapis = { version = "0.16.1", optional = true }
+jsonwebtoken = { version = "9.3.1", optional = true }
 futures = { version = "0.3.28", optional = true }
 sqlx = { version = "0.7", features = ["runtime-tokio", "tls-native-tls", "any", "sqlite", "postgres"], optional = true }
 aws-config = { version = "^1.1", optional = true }
