@@ -21,9 +21,9 @@ mod testing;
 pub use address::*;
 pub use assets::*;
 pub use bytes::*;
+pub use cip14::*;
 pub use metadata::*;
-
-pub use self::serde_ext::{FromBech32, StringOrStruct};
+pub use serde_ext::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MatchOutcome {
@@ -557,6 +557,7 @@ impl Predicate {
         Predicate::AllOf(p.into_iter().map(StringOrStruct).collect())
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn not(p: Self) -> Self {
         Predicate::Not(Box::new(StringOrStruct(p)))
     }
