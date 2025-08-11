@@ -55,7 +55,7 @@ impl<'a> EventWriter<'a> {
         self.append(source.into())
     }
 
-    pub fn child_writer(&mut self, mut extra_context: EventContext) -> EventWriter {
+    pub fn child_writer(&mut self, mut extra_context: EventContext) -> EventWriter<'_> {
         extra_context.merge(self.context.clone());
 
         EventWriter {
