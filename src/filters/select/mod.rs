@@ -6,7 +6,7 @@ use crate::framework::*;
 
 use self::eval::{MatchOutcome, Predicate, StringOrStruct};
 
-mod eval;
+pub mod eval;
 
 #[derive(Stage)]
 #[stage(name = "select", unit = "ChainEvent", worker = "Worker")]
