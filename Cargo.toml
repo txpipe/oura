@@ -16,6 +16,7 @@ aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
 sql = ["sqlx"]
 gcp = ["google-cloud-pubsub", "google-cloud-googleapis",  "jsonwebtoken"]
 rabbitmq = ["lapin"]
+zeromq = ["zmq"]
 u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
 hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
@@ -80,6 +81,7 @@ tungstenite = { version = "0.24.0", optional = true }
 tokio-tungstenite = { version = "0.24.0", optional = true }
 futures-util = { version = "0.3", optional = true }
 bytes = { version = "1.7.2", optional = true }
+zmq = { version = "0.10.0", optional = true }
 
 [dev-dependencies]
 goldenfile = "1.7.3"
