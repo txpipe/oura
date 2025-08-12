@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use gasket::framework::*;
 use pallas::network::miniprotocols::{chainsync, Point};
 use serde::Deserialize;
-use tracing::{debug, info};
+use tracing::info;
 
 use crate::framework::*;
 
@@ -58,12 +58,12 @@ impl gasket::framework::Worker<Stage> for Worker {
             }
             ChainEvent::Undo(point, record) => match self.buffer.roll_back(point) {
                 chainsync::RollbackEffect::Handled => {
-                    debug!(?point, "handled rollback within buffer");
+                    info!(?point, "handled rollback within buffer");
                     self.events
                         .retain(|x, _| x.slot_or_default() <= point.slot_or_default());
                 }
                 chainsync::RollbackEffect::OutOfScope => {
-                    debug!("rollback out of buffer scope, sending event down the pipeline");
+                    info!("rollback out of buffer scope, sending event down the pipeline");
                     self.events.clear();
                     stage
                         .output
@@ -73,7 +73,18 @@ impl gasket::framework::Worker<Stage> for Worker {
                 }
             },
             ChainEvent::Reset(point) => {
-                self.events.clear();
+                match self.buffer.roll_back(point) {
+                    chainsync::RollbackEffect::Handled => {
+                        info!(?point, "handled reset rollback within buffer");
+                        self.events
+                            .retain(|x, _| x.slot_or_default() < point.slot_or_default());
+                    }
+                    chainsync::RollbackEffect::OutOfScope => {
+                        info!("reset rollback out of buffer scope");
+                        self.events.clear();
+                    }
+                };
+
                 stage
                     .output
                     .send(ChainEvent::reset(point.clone()))
