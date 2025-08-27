@@ -121,6 +121,7 @@ impl mithril_client::feedback::FeedbackReceiver for Feedback {
             mithril_client::feedback::MithrilEvent::CertificateChainValidated { .. } => {
                 info!("certificate chain validation completed");
             }
+            _ => {}
         }
     }
 }
@@ -130,7 +131,7 @@ async fn fetch_snapshot(config: &Config, feedback: Arc<Feedback>) -> MithrilResu
         .add_feedback_receiver(feedback)
         .build()?;
 
-    let snapshots = client.snapshot().list().await?;
+    let snapshots = client.cardano_database().list().await?;
 
     let last_digest = snapshots
         .first()
@@ -139,7 +140,7 @@ async fn fetch_snapshot(config: &Config, feedback: Arc<Feedback>) -> MithrilResu
         .as_ref();
 
     let snapshot = client
-        .snapshot()
+        .cardano_database()
         .get(last_digest)
         .await?
         .ok_or(MithrilError::msg("no snapshot available"))?;
@@ -147,11 +148,11 @@ async fn fetch_snapshot(config: &Config, feedback: Arc<Feedback>) -> MithrilResu
     let target_directory = Path::new(&config.snapshot_download_dir);
 
     client
-        .snapshot()
+        .cardano_database()
         .download_unpack(&snapshot, target_directory)
         .await?;
 
-    if let Err(e) = client.snapshot().add_statistics(&snapshot).await {
+    if let Err(e) = client.cardano_database().add_statistics(&snapshot).await {
         warn!("failed incrementing snapshot download statistics: {:?}", e);
     }
 
