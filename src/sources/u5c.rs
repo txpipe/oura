@@ -165,10 +165,10 @@ pub struct Stage {
 
 #[derive(Deserialize)]
 pub struct Config {
-    url: String,
-    metadata: HashMap<String, String>,
+    pub url: String,
+    pub metadata: HashMap<String, String>,
     #[serde(default)]
-    use_parsed_blocks: bool,
+    pub use_parsed_blocks: bool,
 }
 
 impl Config {

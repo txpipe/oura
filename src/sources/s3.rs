@@ -120,8 +120,8 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize)]
 pub struct Config {
-    bucket: String,
-    items_per_batch: u32,
+    pub bucket: String,
+    pub items_per_batch: u32,
 }
 
 impl Config {
