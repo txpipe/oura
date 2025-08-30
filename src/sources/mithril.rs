@@ -328,10 +328,10 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Deserialize, Clone)]
 pub struct Config {
-    aggregator: String,
-    genesis_key: String,
-    snapshot_download_dir: String,
-    skip_validation: bool,
+    pub aggregator: String,
+    pub genesis_key: String,
+    pub snapshot_download_dir: String,
+    pub skip_validation: bool,
 }
 
 impl Config {

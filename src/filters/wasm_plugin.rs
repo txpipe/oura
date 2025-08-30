@@ -91,7 +91,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
 #[derive(Default, Deserialize)]
 pub struct Config {
-    path: String,
+    pub path: String,
 }
 
 impl Config {
