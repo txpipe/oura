@@ -6,6 +6,8 @@ use crate::framework::*;
 //#[cfg(target_family = "unix")]
 //pub mod n2c;
 
+pub mod eth;
+
 pub mod n2c;
 pub mod n2n;
 
@@ -26,6 +28,9 @@ pub enum Bootstrapper {
 
     #[cfg(target_family = "unix")]
     N2C(n2c::Stage),
+
+    #[cfg(feature = "eth")]
+    Ethereum(eth::Stage),
 
     #[cfg(feature = "hydra")]
     Hydra(hydra::Stage),
@@ -48,6 +53,9 @@ impl Bootstrapper {
             #[cfg(target_family = "unix")]
             Bootstrapper::N2C(p) => &mut p.output,
 
+            #[cfg(feature = "eth")]
+            Bootstrapper::Ethereum(p) => &mut p.output,
+
             #[cfg(feature = "hydra")]
             Bootstrapper::Hydra(p) => &mut p.output,
 
@@ -68,6 +76,9 @@ impl Bootstrapper {
 
             #[cfg(target_family = "unix")]
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "eth")]
+            Bootstrapper::Ethereum(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "hydra")]
             Bootstrapper::Hydra(x) => gasket::runtime::spawn_stage(x, policy),
@@ -92,6 +103,9 @@ pub enum Config {
     #[cfg(target_family = "unix")]
     N2C(n2c::Config),
 
+    #[cfg(feature = "eth")]
+    Ethereum(eth::Config),
+
     #[cfg(feature = "hydra")]
     Hydra(hydra::Config),
 
@@ -112,6 +126,9 @@ impl Config {
 
             #[cfg(target_family = "unix")]
             Config::N2C(c) => Ok(Bootstrapper::N2C(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "eth")]
+            Config::Ethereum(c) => Ok(Bootstrapper::Ethereum(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "hydra")]
             Config::Hydra(c) => Ok(Bootstrapper::Hydra(c.bootstrapper(ctx)?)),
