@@ -1,3 +1,4 @@
+use alloy::eips::BlockId;
 use alloy::providers::fillers::{
     BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller,
 };
@@ -47,7 +48,12 @@ impl gasket::framework::Worker<Stage> for Worker {
     }
 
     async fn execute(&mut self, header: &Header, _stage: &mut Stage) -> Result<(), WorkerError> {
-        dbg!(header);
+        debug!(hash = header.hash.to_string(), "chain sync roll forward");
+
+        let block_id = BlockId::hash(header.hash);
+        if let Some(block) = self.provider.get_block(block_id).await.or_retry()? {
+            dbg!(block);
+        }
 
         Ok(())
     }
