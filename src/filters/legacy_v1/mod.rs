@@ -39,7 +39,7 @@ gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let mut buffer = Vec::new();
 
     match unit {
-        ChainEvent::Apply(point, Record::CborBlock(cbor)) => {
+        ChainEvent::Apply(point, Record::Cardano(cardano::Record::CborBlock(cbor))) => {
             let mut writer = EventWriter::new(
                 point.clone(),
                 &stage.output,
@@ -89,9 +89,13 @@ pub struct Config {
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let chain_config = match &ctx.chain {
+            Chain::Cardano(chain_config) => chain_config.clone(),
+        };
+
         let stage = Stage {
             config: self,
-            genesis: ctx.chain.clone().into(),
+            genesis: chain_config.into(),
             ops_count: Default::default(),
             input: Default::default(),
             output: Default::default(),

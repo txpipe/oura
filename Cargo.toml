@@ -20,7 +20,7 @@ zeromq = ["zmq"]
 u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
 hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
-eth = ["alloy", "futures-util"]
+eth = ["futures-util"]
 # elasticsearch = auto feature flag
 # kafka = auto feature flag
 
@@ -84,8 +84,8 @@ futures-util = { version = "0.3", optional = true }
 bytes = { version = "1.7.2", optional = true }
 zmq = { version = "0.10.0", optional = true }
 
-# TODO: add feature
-alloy = { version = "1.0.30", features = ["full"], optional = true }
+# TODO(p): add feature
+alloy = { version = "1.0.30", features = ["full"] }
 
 [dev-dependencies]
 goldenfile = "1.7.3"

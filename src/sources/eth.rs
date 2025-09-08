@@ -47,12 +47,17 @@ impl gasket::framework::Worker<Stage> for Worker {
         Ok(WorkSchedule::Idle)
     }
 
-    async fn execute(&mut self, header: &Header, _stage: &mut Stage) -> Result<(), WorkerError> {
+    async fn execute(&mut self, header: &Header, stage: &mut Stage) -> Result<(), WorkerError> {
         debug!(hash = header.hash.to_string(), "chain sync roll forward");
 
         let block_id = BlockId::hash(header.hash);
         if let Some(block) = self.provider.get_block(block_id).await.or_retry()? {
-            dbg!(block);
+            let event = ChainEvent::Apply(
+                // TODO(p): add support multi chain Point
+                pallas::network::miniprotocols::Point::Origin,
+                Record::Ethereum(ethereum::Record::ParsedBlock(block)),
+            );
+            stage.output.send(event.into()).await.or_panic()?;
         }
 
         Ok(())

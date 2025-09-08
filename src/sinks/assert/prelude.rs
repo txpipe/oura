@@ -1,4 +1,4 @@
-use crate::framework::legacy_v1::{BlockRecord, Event};
+use crate::framework::cardano::legacy_v1::{BlockRecord, Event};
 
 #[derive(Default, Debug, Clone)]
 pub(crate) struct State {

@@ -21,7 +21,7 @@ use pallas::ledger::traverse::{
 use pallas::network::miniprotocols::Point;
 use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
 
-use crate::framework::legacy_v1::*;
+use crate::framework::cardano::legacy_v1::*;
 
 use super::EventWriter;
 
