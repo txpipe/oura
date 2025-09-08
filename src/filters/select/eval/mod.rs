@@ -605,12 +605,15 @@ fn eval_block(block: &ParsedBlock, predicate: &Predicate) -> MatchOutcome {
 
 pub fn eval(record: &Record, predicate: &Predicate) -> MatchOutcome {
     match record {
-        Record::ParsedTx(x) => eval_tx(x, predicate),
-        Record::ParsedBlock(x) => eval_block(x, predicate),
-        _ => {
-            warn!("The select filter is valid only with ParsedTx & ParsedBlock records");
-            MatchOutcome::Uncertain
-        }
+        Record::Cardano(record) => match record {
+            cardano::Record::ParsedTx(x) => eval_tx(x, predicate),
+            cardano::Record::ParsedBlock(x) => eval_block(x, predicate),
+            _ => {
+                warn!("The select filter is valid only with ParsedTx & ParsedBlock records");
+                MatchOutcome::Uncertain
+            }
+        },
+        Record::Ethereum(_record) => todo!(),
     }
 }
 

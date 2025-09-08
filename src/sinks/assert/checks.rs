@@ -1,4 +1,4 @@
-use crate::framework::legacy_v1::{Era, EventData};
+use crate::framework::cardano::legacy_v1::{Era, EventData};
 
 use super::prelude::*;
 

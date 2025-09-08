@@ -6,10 +6,11 @@ use crate::framework::*;
 //#[cfg(target_family = "unix")]
 //pub mod n2c;
 
-pub mod eth;
-
 pub mod n2c;
 pub mod n2n;
+
+#[cfg(feature = "eth")]
+pub mod eth;
 
 #[cfg(feature = "hydra")]
 pub mod hydra;
