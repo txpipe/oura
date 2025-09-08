@@ -119,7 +119,7 @@ impl Worker {
 
                 let evt = ChainEvent::Apply(
                     pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
-                    Record::CborBlock(block),
+                    Record::Cardano(cardano::Record::CborBlock(block)),
                 );
 
                 stage.output.send(evt.into()).await.or_panic()?;
@@ -225,10 +225,14 @@ pub struct Config {
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let chain_config = match &ctx.chain {
+            Chain::Cardano(chain_config) => chain_config.clone(),
+        };
+
         let stage = Stage {
             config: self,
             breadcrumbs: ctx.breadcrumbs.clone(),
-            chain: ctx.chain.clone().into(),
+            chain: chain_config.into(),
             intersect: ctx.intersect.clone(),
             output: Default::default(),
             ops_count: Default::default(),

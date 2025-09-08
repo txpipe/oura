@@ -3,7 +3,7 @@ use pallas::ledger::primitives::babbage::MintedDatumOption;
 use pallas::ledger::traverse::{MultiEraBlock, MultiEraInput, MultiEraOutput, MultiEraTx};
 use pallas::network::miniprotocols::Point;
 
-use crate::framework::legacy_v1::*;
+use crate::framework::cardano::legacy_v1::*;
 use crate::framework::Error as OuraError;
 
 use super::EventWriter;

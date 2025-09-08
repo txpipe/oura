@@ -2,7 +2,7 @@ use clap::{Parser, ValueEnum};
 use oura::{
     daemon::{run_daemon, ConfigRoot},
     filters,
-    framework::{ChainConfig, Error, IntersectConfig},
+    framework::{cardano, Chain, Error, IntersectConfig},
     sinks, sources,
 };
 use tracing::{info, Level};
@@ -19,7 +19,7 @@ pub fn run(args: &Args) -> Result<(), Error> {
         .with(env_filter)
         .init();
 
-    let chain = args.magic.clone().unwrap_or_default().into();
+    let chain = Chain::Cardano(args.magic.clone().unwrap_or_default().into());
     let intersect = parse_since(args.since.clone())?;
     let bearer = args.bearer.clone().unwrap_or_default();
     let source = match bearer {
@@ -95,7 +95,7 @@ pub struct Args {
     bearer: Option<Bearer>,
 
     #[arg(long)]
-    magic: Option<Chain>,
+    magic: Option<DumpChain>,
 
     /// point in the chain to start reading from, expects format `slot,hex-hash`
     #[arg(long)]
@@ -115,20 +115,21 @@ enum Bearer {
 }
 
 #[derive(ValueEnum, Clone, Default)]
-enum Chain {
+enum DumpChain {
     #[default]
     Mainnet,
     Testnet,
     PreProd,
     Preview,
 }
-impl From<Chain> for ChainConfig {
-    fn from(value: Chain) -> Self {
+// TODO(p): add support multchain
+impl From<DumpChain> for cardano::ChainConfig {
+    fn from(value: DumpChain) -> Self {
         match value {
-            Chain::Mainnet => ChainConfig::Mainnet,
-            Chain::Testnet => ChainConfig::Testnet,
-            Chain::PreProd => ChainConfig::PreProd,
-            Chain::Preview => ChainConfig::Preview,
+            DumpChain::Mainnet => cardano::ChainConfig::Mainnet,
+            DumpChain::Testnet => cardano::ChainConfig::Testnet,
+            DumpChain::PreProd => cardano::ChainConfig::PreProd,
+            DumpChain::Preview => cardano::ChainConfig::Preview,
         }
     }
 }
