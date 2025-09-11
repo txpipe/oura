@@ -36,7 +36,7 @@ gasket-prometheus = { version = "^0.7" }
 hex = "0.4.3"
 bech32 = "0.9.1"
 clap = { version = "4.2.7", features = ["derive"] }
-env_logger = "0.10.0"
+env_logger = "0.11.8"
 crossterm = "0.26"
 merge = "0.1.0"
 regex = "1.10.5"
