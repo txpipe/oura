@@ -4,22 +4,43 @@ title: Binary Releases
 
 Oura can be run as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.
 
-## MacOS
+## Install via shell script
 
-Use the following command to download and install _Oura's_ binary release for MacOS:
-
-```sh
-curl --silent --location https://git.io/JD2iH | \
-    tar xz -C /tmp && mv /tmp/oura /usr/local/bin
-```
-
-## GNU/Linux
-
-Use the following command to download and install _Oura's_ binary release for GNU/Linux:
+You can run the following command line script to install Oura on supported systems (Mac / Linux)
 
 ```sh
-curl --silent --location https://git.io/JD2ix | \
-    tar xz -C /tmp && mv /tmp/oura /usr/local/bin
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/txpipe/oura/releases/latest/download/oura-installer.sh | sh
 ```
 
-Check the [latest release](https://github.com/txpipe/oura/releases/latest) for more binary download options.
+## Install via powershell script
+
+You can use Powershell to install Oura on Windows systems.
+
+```sh
+powershell -c "irm https://github.com/txpipe/oura/releases/latest/download/oura-installer.ps1 | iex"
+```
+
+## Install via Homebrew
+
+You can use Homebrew to install the latest version of Oura in supported systems (Mac / Linux)
+
+```sh
+brew install txpipe/tap/oura
+```
+
+## Install via NPM
+
+You can use NPM to install the latest version of Oura in supported systems (Mac / Linux)
+
+```sh
+npm install @txpipe/oura
+```
+
+## Download Binaries
+
+|  File  | Platform |
+|--------|----------|
+| [oura-aarch64-apple-darwin.tar.xz](https://github.com/txpipe/oura/releases/latest/download/oura-aarch64-apple-darwin.tar.xz) | Apple Silicon macOS |
+| [oura-x86_64-pc-windows-msvc.zip](https://github.com/txpipe/oura/releases/latest/download/oura-x86_64-pc-windows-msvc.zip) | x64 Windows |
+| [oura-x86_64-unknown-linux-gnu.tar.xz](https://github.com/txpipe/oura/releases/latest/download/oura-x86_64-unknown-linux-gnu.tar.xz) | x64 Linux |
+| [oura-aarch64-unknown-linux-gnu.tar.xz](https://github.com/txpipe/oura/releases/latest/download/oura-aarch64-unknown-linux-gnu.tar.xz) | ARM64 Linux |
