@@ -29,7 +29,7 @@ pallas = { version = "0.33", features = ["hardano"] }
 # pallas = { git = "https://github.com/txpipe/pallas", features = ["hardano"] }
 
 gasket = { version = "^0.7", features = ["derive"] }
-gasket-prometheus = { version = "^0.7" }
+gasket-prometheus = { version = "^0.9" }
 # gasket = { path = "../../construkts/gasket-rs/gasket", features = ["derive"] }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git", features = ["derive"] }
 
