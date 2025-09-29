@@ -8,13 +8,13 @@ homepage = "https://github.com/txpipe/oura"
 documentation = "https://docs.rs/oura"
 license = "Apache-2.0"
 readme = "README.md"
-authors = ["Santiago Carmuega <santiago@carmuega.me>"]
+authors = ["TxPipe <hello@txpipe.io>"]
 
 [features]
 wasm = ["extism"]
 aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
 sql = ["sqlx"]
-gcp = ["google-cloud-pubsub", "google-cloud-googleapis",  "jsonwebtoken"]
+gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "jsonwebtoken"]
 rabbitmq = ["lapin"]
 zeromq = ["zmq"]
 u5c = ["utxorpc", "futures"]
@@ -50,7 +50,7 @@ unicode-truncate = "0.2.0"
 thiserror = "1.0.39"
 indicatif = "0.17.8"
 tracing = "0.1.37"
-tracing-subscriber = {version = "0.3.18", features = ["env-filter"]}
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 anyhow = "1.0.77"
 file-rotate = { version = "0.7.5" }
 reqwest = { version = "0.11", features = ["json", "multipart"] }
@@ -92,3 +92,10 @@ port-selector = "0.1.6"
 [profile.dist]
 inherits = "release"
 lto = "thin"
+
+[workspace.metadata.release]
+push = false
+publish = false
+tag-name = "v{{version}}"
+pre-release-commit-message = "release: v{{version}}"
+pre-release-hook = ["git", "cliff", "-o", "CHANGELOG.md", "--tag", "{{version}}"]
