@@ -45,10 +45,10 @@ impl From<&Stage> for Worker {
 
 gasket::impl_splitter!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
     let output = unit.clone().try_map_record_to_many(|r| match r {
-        Record::CborBlock(cbor) => {
+        Record::Cardano(cardano::Record::CborBlock(cbor)) => {
             let out = map_block_to_tx(Cow::Borrowed(&cbor))?
                 .into_iter()
-                .map(|tx| Record::CborTx(tx.into()))
+                .map(|tx| Record::Cardano(cardano::Record::CborTx(tx.into())))
                 .collect();
 
             Ok(out)

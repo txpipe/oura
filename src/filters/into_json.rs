@@ -26,7 +26,11 @@ impl From<&Stage> for Worker {
 }
 
 gasket::impl_mapper!(|_worker: Worker, stage: Stage, unit: ChainEvent| => {
-    let out = unit.clone().map_record(|r| Record::GenericJson(JsonValue::from(r)));
+    let out = unit.clone().map_record(|r| match r {
+        Record::Cardano(record) => Record::Cardano(cardano::Record::GenericJson(JsonValue::from(record))),
+        x => x,
+    });
+
     stage.ops_count.inc(1);
     out
 });

@@ -16,7 +16,7 @@ pub struct ConfigRoot {
     pub sink: sinks::Config,
     pub intersect: IntersectConfig,
     pub finalize: Option<FinalizeConfig>,
-    pub chain: Option<ChainConfig>,
+    pub chain: Option<Chain>,
     pub retries: Option<gasket::retries::Policy>,
     pub cursor: Option<cursor::Config>,
     pub metrics: Option<MetricsConfig>,

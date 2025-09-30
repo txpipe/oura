@@ -1,4 +1,4 @@
-use crate::framework::legacy_v1::*;
+use crate::framework::cardano::legacy_v1::*;
 use crate::framework::*;
 
 use gasket::framework::WorkerError;
@@ -42,7 +42,10 @@ impl<'a> EventWriter<'a> {
             fingerprint: None,
         };
 
-        let msg = ChainEvent::Apply(self.point.clone(), Record::OuraV1Event(evt));
+        let msg = ChainEvent::Apply(
+            self.point.clone(),
+            Record::Cardano(cardano::Record::OuraV1Event(evt)),
+        );
         self.buffer.push(msg);
 
         Ok(())

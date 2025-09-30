@@ -16,8 +16,10 @@ pub use pallas::interop::utxorpc::spec::cardano::Tx as ParsedTx;
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;
 
+pub mod cardano;
+pub mod ethereum;
+
 pub mod errors;
-pub mod legacy_v1;
 
 pub use errors::*;
 
@@ -66,62 +68,35 @@ impl Breadcrumbs {
 }
 
 #[derive(Deserialize, Clone)]
-#[serde(tag = "type", rename_all = "lowercase")]
-pub enum ChainConfig {
-    Mainnet,
-    Testnet,
-    PreProd,
-    Preview,
-    Custom(GenesisValues),
+pub enum Chain {
+    Cardano(cardano::ChainConfig),
 }
-
-impl Default for ChainConfig {
+impl Default for Chain {
     fn default() -> Self {
-        Self::Mainnet
+        Self::Cardano(Default::default())
     }
 }
 
-impl From<ChainConfig> for GenesisValues {
-    fn from(other: ChainConfig) -> Self {
-        match other {
-            ChainConfig::Mainnet => GenesisValues::mainnet(),
-            ChainConfig::Testnet => GenesisValues::testnet(),
-            ChainConfig::PreProd => GenesisValues::preprod(),
-            ChainConfig::Preview => GenesisValues::preview(),
-            ChainConfig::Custom(x) => x,
+#[derive(Debug, Clone)]
+pub enum Record {
+    Cardano(cardano::Record),
+    Ethereum(ethereum::Record),
+}
+impl From<Record> for JsonValue {
+    fn from(value: Record) -> Self {
+        match value {
+            Record::Cardano(record) => record.into(),
+            Record::Ethereum(record) => record.into(),
         }
     }
 }
 
 pub struct Context {
-    pub chain: ChainConfig,
+    pub chain: Chain,
     pub intersect: IntersectConfig,
     pub finalize: Option<FinalizeConfig>,
     pub current_dir: PathBuf,
     pub breadcrumbs: Breadcrumbs,
-}
-
-#[derive(Debug, Clone)]
-pub enum Record {
-    CborBlock(Vec<u8>),
-    CborTx(Vec<u8>),
-    GenericJson(JsonValue),
-    OuraV1Event(legacy_v1::Event),
-    ParsedTx(ParsedTx),
-    ParsedBlock(ParsedBlock),
-}
-
-impl From<Record> for JsonValue {
-    fn from(value: Record) -> Self {
-        match value {
-            Record::CborBlock(x) => json!({ "hex": hex::encode(x) }),
-            Record::CborTx(x) => json!({ "hex": hex::encode(x) }),
-            Record::ParsedBlock(x) => json!(x),
-            Record::ParsedTx(x) => json!(x),
-            Record::OuraV1Event(x) => json!(x),
-            Record::GenericJson(x) => x,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]

@@ -6,7 +6,7 @@ use pallas::network::miniprotocols::Point;
 use tracing::error;
 use unicode_truncate::UnicodeTruncateStr;
 
-use crate::{framework::legacy_v1::*, framework::*};
+use crate::{framework::cardano::legacy_v1::*, framework::*};
 
 pub struct LogLine {
     prefix: &'static str,
@@ -31,72 +31,75 @@ impl LogLine {
     }
 
     pub fn handle(
-        source: &Record,
+        record: &Record,
         max_width: Option<usize>,
         adahandle_policy: &Option<String>,
     ) -> LogLine {
-        match source {
-            Record::OuraV1Event(evt) => LogLine::handle_legacy_v1(
-                evt,
-                max_width,
-                adahandle_policy.as_deref().unwrap_or_default(),
-            ),
-            Record::CborBlock(cbor) => {
-                let mut log = LogLine::new("BLOCK", Color::Magenta);
-                log.max_width = max_width;
+        match record {
+            Record::Cardano(record) => match record {
+                cardano::Record::OuraV1Event(evt) => LogLine::handle_legacy_v1(
+                    evt,
+                    max_width,
+                    adahandle_policy.as_deref().unwrap_or_default(),
+                ),
+                cardano::Record::CborBlock(cbor) => {
+                    let mut log = LogLine::new("BLOCK", Color::Magenta);
+                    log.max_width = max_width;
 
-                match trv::MultiEraBlock::decode(cbor) {
-                    Ok(block) => {
-                        let slot = block.slot();
-                        let hash = block.hash().to_string();
+                    match trv::MultiEraBlock::decode(cbor) {
+                        Ok(block) => {
+                            let slot = block.slot();
+                            let hash = block.hash().to_string();
 
+                            log.content = format!("slot: {slot}, hash: {hash}");
+                            log.block_num = Some(block.number());
+                        }
+                        Err(error) => error!(?error),
+                    }
+
+                    log
+                }
+                cardano::Record::CborTx(cbor) => {
+                    let mut log = LogLine::new("TX", Color::DarkBlue);
+                    log.max_width = max_width;
+
+                    match trv::MultiEraTx::decode(cbor) {
+                        Ok(tx) => {
+                            let hash = tx.hash().to_string();
+                            log.content = format!("hash: {hash}");
+                        }
+                        Err(error) => error!(?error),
+                    }
+
+                    log
+                }
+                cardano::Record::ParsedBlock(block) => {
+                    let mut log = LogLine::new("BLOCK", Color::Magenta);
+                    log.max_width = max_width;
+
+                    if let Some(header) = block.header.as_ref() {
+                        let slot = header.slot;
+                        let hash = hex::encode(header.hash.clone());
                         log.content = format!("slot: {slot}, hash: {hash}");
-                        log.block_num = Some(block.number());
+                        log.block_num = Some(header.height);
                     }
-                    Err(error) => error!(?error),
+
+                    log
                 }
+                cardano::Record::ParsedTx(tx) => {
+                    let mut log = LogLine::new("TX", Color::DarkBlue);
 
-                log
-            }
-            Record::CborTx(cbor) => {
-                let mut log = LogLine::new("TX", Color::DarkBlue);
-                log.max_width = max_width;
+                    log.max_width = max_width;
+                    let hash = hex::encode(tx.hash.clone());
+                    log.content = format!("hash: {hash}");
 
-                match trv::MultiEraTx::decode(cbor) {
-                    Ok(tx) => {
-                        let hash = tx.hash().to_string();
-                        log.content = format!("hash: {hash}");
-                    }
-                    Err(error) => error!(?error),
+                    log
                 }
-
-                log
-            }
-            Record::ParsedBlock(block) => {
-                let mut log = LogLine::new("BLOCK", Color::Magenta);
-                log.max_width = max_width;
-
-                if let Some(header) = block.header.as_ref() {
-                    let slot = header.slot;
-                    let hash = hex::encode(header.hash.clone());
-                    log.content = format!("slot: {slot}, hash: {hash}");
-                    log.block_num = Some(header.height);
+                cardano::Record::GenericJson(_json) => {
+                    todo!("GenericJson not implemented yet")
                 }
-
-                log
-            }
-            Record::ParsedTx(tx) => {
-                let mut log = LogLine::new("TX", Color::DarkBlue);
-
-                log.max_width = max_width;
-                let hash = hex::encode(tx.hash.clone());
-                log.content = format!("hash: {hash}");
-
-                log
-            }
-            Record::GenericJson(_json) => {
-                todo!("GenericJson not implemented yet")
-            }
+            },
+            Record::Ethereum(_record) => todo!(),
         }
     }
 
@@ -117,7 +120,7 @@ impl LogLine {
     }
 
     fn from_legacy_v1(
-        source: &legacy_v1::Event,
+        source: &cardano::legacy_v1::Event,
         prefix: &'static str,
         color: Color,
         max_width: Option<usize>,
@@ -134,7 +137,7 @@ impl LogLine {
     }
 
     fn handle_legacy_v1(
-        source: &legacy_v1::Event,
+        source: &cardano::legacy_v1::Event,
         max_width: Option<usize>,
         adahandle_policy: &str,
     ) -> LogLine {

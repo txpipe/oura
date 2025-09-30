@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 use pallas::ledger::primitives::alonzo::Metadatum;
 
 use super::EventWriter;
-use crate::framework::legacy_v1::*;
+use crate::framework::cardano::legacy_v1::*;
 
 fn extract_json_property<'a>(json: &'a JsonValue, key: &str) -> Option<&'a JsonValue> {
     json.as_object().and_then(|x| x.get(key))
