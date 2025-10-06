@@ -92,7 +92,7 @@ pub struct Args {
     bearer: Option<Bearer>,
 
     #[arg(long)]
-    magic: Option<WathcChain>,
+    magic: Option<WatchChain>,
 
     /// point in the chain to start reading from, expects format `slot,hex-hash`
     #[arg(long)]
@@ -116,20 +116,20 @@ pub enum Bearer {
 }
 
 #[derive(ValueEnum, Clone, Default)]
-pub enum WathcChain {
+pub enum WatchChain {
     #[default]
     Mainnet,
     Testnet,
     PreProd,
     Preview,
 }
-impl From<WathcChain> for cardano::ChainConfig {
-    fn from(value: WathcChain) -> Self {
+impl From<WatchChain> for cardano::ChainConfig {
+    fn from(value: WatchChain) -> Self {
         match value {
-            WathcChain::Mainnet => cardano::ChainConfig::Mainnet,
-            WathcChain::Testnet => cardano::ChainConfig::Testnet,
-            WathcChain::PreProd => cardano::ChainConfig::PreProd,
-            WathcChain::Preview => cardano::ChainConfig::Preview,
+            WatchChain::Mainnet => cardano::ChainConfig::Mainnet,
+            WatchChain::Testnet => cardano::ChainConfig::Testnet,
+            WatchChain::PreProd => cardano::ChainConfig::PreProd,
+            WatchChain::Preview => cardano::ChainConfig::Preview,
         }
     }
 }
