@@ -55,7 +55,7 @@ impl gasket::framework::Worker<Stage> for Worker {
             let event = ChainEvent::Apply(
                 // TODO(p): add support multi chain Point
                 pallas::network::miniprotocols::Point::Origin,
-                Record::Ethereum(ethereum::Record::ParsedBlock(block)),
+                Record::Ethereum(ethereum::Record::ParsedBlock(Box::new(block))),
             );
             stage.output.send(event.into()).await.or_panic()?;
         }
