@@ -136,9 +136,11 @@ pub struct Config {
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let Chain::Cardano(chain_config) = &ctx.chain;
+
         let stage = Stage {
             config: self,
-            genesis: ctx.chain.clone().into(),
+            genesis: chain_config.clone().into(),
             ops_count: Default::default(),
             latest_block: Default::default(),
             input: Default::default(),

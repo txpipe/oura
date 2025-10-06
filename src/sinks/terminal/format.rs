@@ -97,8 +97,8 @@ impl LogLine {
                 }
             },
             Record::Ethereum(_record) => todo!(),
-            Record::Bitcoin(record) => todo!(),
-            Record::Substrate(record) => todo!(),
+            Record::Bitcoin(_record) => todo!(),
+            Record::Substrate(_record) => todo!(),
             Record::GenericJson(_json) => {
                 todo!("GenericJson not implemented yet")
             }

@@ -3,7 +3,7 @@ use serde_json::{json, Value as JsonValue};
 
 #[derive(Debug, Clone)]
 pub enum Record {
-    ParsedBlock(Block),
+    ParsedBlock(Box<Block>),
     RawBlock(Vec<u8>),
 }
 
