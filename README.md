@@ -15,7 +15,7 @@
 </div>
 
 > **Warning**
-> The `main` branch is now tracking **V2**, a complete overhaul of the processing pipeline with multiple breaking changes. V1 is now considered legacy and will only receive critical security updates. We strongly encourage all users to migrate to V2 for the latest features, performance improvements, and ongoing support. For information on V1, please refer to the `lts/v1` branch.
+> Branch `v3` tracks the next major of Oura, focusing on a multi-chain pipeline to accommodate Bitcoin, Ethereum and Substrate chains alongside Cardano. For the production-ready version of Oura (v2), please refer to the `main` branch.
 
 ## Introduction
 
