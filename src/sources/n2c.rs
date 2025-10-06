@@ -103,8 +103,10 @@ impl Worker {
 
                 debug!(slot, %hash, "chain sync roll forward");
 
-                let evt =
-                    ChainEvent::Apply(point.clone(), Record::Cardano(cardano::Record::CborBlock(cbor.to_vec())));
+                let evt = ChainEvent::Apply(
+                    point.clone(),
+                    Record::Cardano(cardano::Record::CborBlock(cbor.to_vec())),
+                );
 
                 stage.output.send(evt.into()).await.or_panic()?;
 
