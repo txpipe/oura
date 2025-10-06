@@ -1,9 +1,9 @@
-use alloy::rpc::types::Block;
 use serde_json::{json, Value as JsonValue};
 
 #[derive(Debug, Clone)]
 pub enum Record {
-    ParsedBlock(Block),
+    // Scaffold placeholder for now
+    ParsedBlock(()),
     RawBlock(Vec<u8>),
 }
 

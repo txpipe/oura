@@ -95,11 +95,13 @@ impl LogLine {
 
                     log
                 }
-                cardano::Record::GenericJson(_json) => {
-                    todo!("GenericJson not implemented yet")
-                }
             },
             Record::Ethereum(_record) => todo!(),
+            Record::Bitcoin(record) => todo!(),
+            Record::Substrate(record) => todo!(),
+            Record::GenericJson(_json) => {
+                todo!("GenericJson not implemented yet")
+            }
         }
     }
 

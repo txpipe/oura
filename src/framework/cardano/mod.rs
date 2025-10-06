@@ -42,7 +42,6 @@ impl From<ChainConfig> for GenesisValues {
 pub enum Record {
     CborBlock(Vec<u8>),
     CborTx(Vec<u8>),
-    GenericJson(JsonValue),
     OuraV1Event(legacy_v1::Event),
     ParsedTx(ParsedTx),
     ParsedBlock(ParsedBlock),
@@ -56,7 +55,6 @@ impl From<Record> for JsonValue {
             Record::ParsedBlock(x) => json!(x),
             Record::ParsedTx(x) => json!(x),
             Record::OuraV1Event(x) => json!(x),
-            Record::GenericJson(x) => x,
         }
     }
 }

@@ -5,6 +5,8 @@ use serde::Deserialize;
 
 use crate::framework::*;
 
+pub type CardanoRecord = cardano::Record;
+
 #[derive(Stage)]
 #[stage(name = "filter-wasm", unit = "ChainEvent", worker = "Worker")]
 pub struct Stage {
@@ -18,23 +20,20 @@ pub struct Stage {
 }
 
 impl Stage {
-    fn map_record(&mut self, r: Record) -> Result<Vec<Record>, Error> {
+    fn map_cardano_record(&mut self, r: CardanoRecord) -> Result<Vec<Record>, Error> {
         let extism::convert::Json::<serde_json::Value>(output) = match r {
-            Record::CborBlock(x) => self.plugin.call("map_cbor_block", x).unwrap(),
-            Record::CborTx(x) => self.plugin.call("map_cbor_tx", x).unwrap(),
-            Record::ParsedTx(x) => self
+            CardanoRecord::CborBlock(x) => self.plugin.call("map_cbor_block", x).unwrap(),
+            CardanoRecord::CborTx(x) => self.plugin.call("map_cbor_tx", x).unwrap(),
+            CardanoRecord::ParsedTx(x) => self
                 .plugin
                 .call("map_u5c_tx", extism::convert::Json(x))
                 .unwrap(),
-            Record::ParsedBlock(x) => self
+            CardanoRecord::ParsedBlock(x) => self
                 .plugin
                 .call("map_u5c_block", extism::convert::Json(x))
                 .unwrap(),
-            Record::GenericJson(x) => self
-                .plugin
-                .call("map_json", extism::convert::Json(x))
-                .unwrap(),
-            Record::OuraV1Event(x) => self
+
+            CardanoRecord::OuraV1Event(x) => self
                 .plugin
                 .call("map_json", extism::convert::Json(x))
                 .unwrap(),
@@ -47,6 +46,13 @@ impl Stage {
         };
 
         Ok(output)
+    }
+
+    fn map_record(&mut self, r: Record) -> Result<Vec<Record>, Error> {
+        match r {
+            Record::Cardano(x) => self.map_cardano_record(x),
+            x => Ok(vec![x]),
+        }
     }
 }
 

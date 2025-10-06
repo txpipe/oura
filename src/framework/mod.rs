@@ -16,8 +16,10 @@ pub use pallas::interop::utxorpc::spec::cardano::Tx as ParsedTx;
 // we use GenesisValues from Pallas as our ChainConfig
 pub use pallas::ledger::traverse::wellknown::GenesisValues;
 
+pub mod bitcoin;
 pub mod cardano;
 pub mod ethereum;
+pub mod substrate;
 
 pub mod errors;
 
@@ -79,14 +81,20 @@ impl Default for Chain {
 
 #[derive(Debug, Clone)]
 pub enum Record {
+    GenericJson(JsonValue),
     Cardano(cardano::Record),
     Ethereum(ethereum::Record),
+    Bitcoin(bitcoin::Record),
+    Substrate(substrate::Record),
 }
 impl From<Record> for JsonValue {
     fn from(value: Record) -> Self {
         match value {
+            Record::GenericJson(x) => x,
             Record::Cardano(record) => record.into(),
             Record::Ethereum(record) => record.into(),
+            Record::Bitcoin(record) => record.into(),
+            Record::Substrate(record) => record.into(),
         }
     }
 }

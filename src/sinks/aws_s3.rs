@@ -41,7 +41,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         }
 
         let cbor = match record.unwrap() {
-            Record::CborBlock(cbor) => Ok(cbor),
+            Record::Cardano(cardano::Record::CborBlock(cbor)) => Ok(cbor),
             _ => Err(Error::config(String::from("Invalid configuration daemon"))),
         }
         .or_panic()?;

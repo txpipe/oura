@@ -109,7 +109,10 @@ impl gasket::framework::Worker<Stage> for Worker {
 
             let body = object.body.collect().await.or_retry()?;
 
-            let event = ChainEvent::Apply(point, Record::CborBlock(body.into_bytes().to_vec()));
+            let event = ChainEvent::Apply(
+                point,
+                Record::Cardano(cardano::Record::CborBlock(body.into_bytes().to_vec())),
+            );
 
             stage.output.send(event.into()).await.or_panic()?;
         }
