@@ -3,7 +3,7 @@ use pallas::ledger::primitives::alonzo::Metadatum;
 use serde_json::Value as JsonValue;
 use tracing::warn;
 
-use crate::framework::legacy_v1::CIP25AssetRecord;
+use crate::framework::cardano::legacy_v1::CIP25AssetRecord;
 
 use super::EventWriter;
 

@@ -103,7 +103,10 @@ impl Worker {
 
                 debug!(slot, %hash, "chain sync roll forward");
 
-                let evt = ChainEvent::Apply(point.clone(), Record::CborBlock(cbor.to_vec()));
+                let evt = ChainEvent::Apply(
+                    point.clone(),
+                    Record::Cardano(cardano::Record::CborBlock(cbor.to_vec())),
+                );
 
                 stage.output.send(evt.into()).await.or_panic()?;
 
@@ -200,10 +203,14 @@ pub struct Config {
 
 impl Config {
     pub fn bootstrapper(self, ctx: &Context) -> Result<Stage, Error> {
+        let chain_config = match &ctx.chain {
+            Chain::Cardano(chain_config) => chain_config.clone(),
+        };
+
         let stage = Stage {
             config: self,
             breadcrumbs: ctx.breadcrumbs.clone(),
-            chain: ctx.chain.clone().into(),
+            chain: chain_config.into(),
             intersect: ctx.intersect.clone(),
             output: Default::default(),
             ops_count: Default::default(),

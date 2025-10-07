@@ -32,9 +32,9 @@ impl Worker {
         let parsed = block.parsed.as_ref().ok_or(WorkerError::Panic)?;
 
         let record = if stage.config.use_parsed_blocks {
-            Record::ParsedBlock(parsed.clone())
+            Record::Cardano(cardano::Record::ParsedBlock(parsed.clone()))
         } else {
-            Record::CborBlock(block.native.to_vec())
+            Record::Cardano(cardano::Record::CborBlock(block.native.to_vec()))
         };
 
         let point = parsed

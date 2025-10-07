@@ -33,8 +33,8 @@ impl HydraMessage {
     /// As a first implementation, we'll treat the msg seq number
     /// as a slot number, and the head id as a block hash.
     ///
-    /// This means all points on the same chain will share the same block hash, but hopefully
-    /// this shouldn't matter.
+    /// This means all points on the same chain will share the same block hash,
+    /// but hopefully this shouldn't matter.
     fn pseudo_point(&self) -> Point {
         Point::Specific(self.seq, self.head_id_or_default())
     }
@@ -182,7 +182,8 @@ impl Worker {
 
         // Apply CborTx events for any txs
         if let HydraMessagePayload::TxValid { tx } = next.payload {
-            let evt = ChainEvent::Apply(point.clone(), Record::CborTx(tx));
+            let evt =
+                ChainEvent::Apply(point.clone(), Record::Cardano(cardano::Record::CborTx(tx)));
             stage.output.send(evt.into()).await.or_panic()?;
             stage.ops_count.inc(1);
 

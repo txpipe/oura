@@ -2,6 +2,7 @@ use gasket::framework::*;
 use serde::Deserialize;
 use tracing::{debug, error, info, warn};
 
+use crate::framework::cardano::legacy_v1;
 use crate::framework::*;
 
 use self::checks::*;
@@ -89,7 +90,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         }
 
         let event = match record.unwrap() {
-            Record::OuraV1Event(event) => Ok(event),
+            Record::Cardano(cardano::Record::OuraV1Event(event)) => Ok(event),
             _ => Err(Error::config(String::from("Only legacy_v1 events"))),
         }
         .or_panic()?;

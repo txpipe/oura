@@ -315,7 +315,8 @@ impl gasket::framework::Worker<Stage> for Worker {
                 .collect();
 
             for (point, block) in blocks {
-                let event = ChainEvent::Apply(point, Record::CborBlock(block));
+                let event =
+                    ChainEvent::Apply(point, Record::Cardano(cardano::Record::CborBlock(block)));
                 stage.output.send(event.into()).await.or_panic()?;
             }
         }
