@@ -4,7 +4,7 @@ use gasket::framework::*;
 use serde::{Deserialize};
 use serde_json::Value;
 use tokio::time::sleep;
-use tracing::debug;
+use tracing::{debug, info};
 use bitcoind_async_client::{traits::Reader, Client};
 use corepc_types::bitcoin::{Block, BlockHash};
 
@@ -48,6 +48,7 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn schedule(&mut self, _: &mut Stage) -> Result<WorkSchedule<Value>, WorkerError> {
         debug!("Scheduling next work unit...");
 
+        info!("awaiting next block (blocking)");
         loop {
             let blockchain_info = self.rpc_client.get_blockchain_info().await.map_err(|e| {
                 debug!("Failed to fetch blockchain info from RPC: {}", e);
@@ -66,6 +67,7 @@ impl gasket::framework::Worker<Stage> for Worker {
         }
 
         // Get Block info
+        info!("requesting next block");
         let block = self.rpc_client.get_block(&self.last_block_hash).await.map_err(|e| {
             debug!("Failed to fetch block from RPC: {}", e);
             WorkerError::Panic
