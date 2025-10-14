@@ -12,6 +12,9 @@ pub mod n2n;
 #[cfg(feature = "eth")]
 pub mod eth;
 
+#[cfg(feature = "btc")]
+pub mod btc;
+
 #[cfg(feature = "hydra")]
 pub mod hydra;
 
@@ -32,6 +35,9 @@ pub enum Bootstrapper {
 
     #[cfg(feature = "eth")]
     Ethereum(eth::Stage),
+
+    #[cfg(feature = "btc")]
+    Bitcoin(btc::Stage),
 
     #[cfg(feature = "hydra")]
     Hydra(hydra::Stage),
@@ -57,6 +63,9 @@ impl Bootstrapper {
             #[cfg(feature = "eth")]
             Bootstrapper::Ethereum(p) => &mut p.output,
 
+            #[cfg(feature = "btc")]
+            Bootstrapper::Bitcoin(p) => &mut p.output,
+
             #[cfg(feature = "hydra")]
             Bootstrapper::Hydra(p) => &mut p.output,
 
@@ -80,6 +89,9 @@ impl Bootstrapper {
 
             #[cfg(feature = "eth")]
             Bootstrapper::Ethereum(x) => gasket::runtime::spawn_stage(x, policy),
+
+            #[cfg(feature = "btc")]
+            Bootstrapper::Bitcoin(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "hydra")]
             Bootstrapper::Hydra(x) => gasket::runtime::spawn_stage(x, policy),
@@ -107,6 +119,9 @@ pub enum Config {
     #[cfg(feature = "eth")]
     Ethereum(eth::Config),
 
+    #[cfg(feature = "btc")]
+    Bitcoin(btc::Config),
+
     #[cfg(feature = "hydra")]
     Hydra(hydra::Config),
 
@@ -130,6 +145,9 @@ impl Config {
 
             #[cfg(feature = "eth")]
             Config::Ethereum(c) => Ok(Bootstrapper::Ethereum(c.bootstrapper(ctx)?)),
+
+            #[cfg(feature = "btc")]
+            Config::Bitcoin(c) => Ok(Bootstrapper::Bitcoin(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "hydra")]
             Config::Hydra(c) => Ok(Bootstrapper::Hydra(c.bootstrapper(ctx)?)),

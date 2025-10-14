@@ -21,6 +21,7 @@ u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
 hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
 eth = ["futures-util"]
+btc = ["bitcoind-async-client", "corepc-types"]
 # elasticsearch = auto feature flag
 # kafka = auto feature flag
 
@@ -83,9 +84,11 @@ tokio-tungstenite = { version = "0.24.0", optional = true }
 futures-util = { version = "0.3", optional = true }
 bytes = { version = "1.7.2", optional = true }
 zmq = { version = "0.10.0", optional = true }
+bitcoind-async-client = { version = "0.6.0", optional = true }
+corepc-types = { version = "0.10.1", optional = true }
 
 # TODO(p): add feature
-alloy = { version = "1.0.30", features = ["full"] }
+alloy = { version = "1.0.38", features = ["full"] }
 
 [dev-dependencies]
 goldenfile = "1.7.3"
