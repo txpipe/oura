@@ -1,0 +1,48 @@
+---
+title: UtxoRPC
+sidebar:
+  label: UtxoRPC
+  order: 3
+---
+
+The UtxoRPC(U5C) source uses gRPC to fetch blocks and receive blocks from a Dolos node.
+
+This source requires building oura using the feature `u5c` enabled.
+
+```sh
+cargo build --release --features=u5c
+```
+
+## Configuration
+
+The following snippet shows an example of how to set up a typical UtxoRPC source:
+
+```toml
+[source]
+type = "U5C"
+url = "https://<hostname>"
+use_parsed_blocks = false # optional
+
+[source.metadata] # optional
+"key": "value"
+```
+
+### Section `source`:
+
+- `type`: this field must be set to the literal value `U5C`
+- `url`: A string contains Dolos gRPC url
+- `use_parsed_blocks`: An optional field, enable parsing blocks from bytes to struct directly in the source.
+- `source.metadata`: An optional field, hash map that will be included in gRPC metadata connection.
+
+## Examples
+
+Connecting to a remote Dolos node in preprod through gRPC using Demeter:
+
+```toml
+[source]
+type = "U5C"
+url = "https://preprod.utxorpc-v0.demeter.run"
+
+[source.metadata] # optional
+"dmtr-api-key" = "YOUR DEMETER API KEY"
+```

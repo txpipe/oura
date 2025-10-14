@@ -1,0 +1,109 @@
+---
+title: Watch
+---
+
+The `watch` mode provides a quick way to tail the latest events from blockchain networks. It supports both Cardano and Bitcoin blockchains, each with their own subcommands and connection methods.
+
+The output is colorized by type of event and dynamically truncated to fit the width of the terminal. The speed of the output lines is throttled to facilitate visual inspection of each event, otherwise, all events for a block would be output simultaneously.
+
+## Usage
+
+The watch command now includes subcommands for different blockchain networks:
+
+### Cardano
+
+To watch Cardano blockchain events:
+
+```
+oura watch cardano [OPTIONS] <socket>
+```
+
+- `<socket>`: specifies how to connect to the Cardano node. It can either be a tcp address (`<host>:<port>` syntax) or a file path pointing to the location of the unix socket.
+
+#### Cardano Options
+
+- `--bearer <bearer>`: an option that specifies the type of bearer to use. Possible values are `tcp` and `unix`. If omitted, the value `tcp` is used as default.
+- `--magic <magic>`: the magic number of the network you're connecting to. Possible values are `mainnet`, `testnet`, `preview`, `preprod` or a numeric value. If omitted, the value `mainnet` is used as default.
+- `--since <slot>,<hash>`: an option to specify from which point in the chain _Oura_ should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (`<slot>,<hash>`). If omitted, _Oura_ will start reading from the tail (tip) of the node.
+- `--throttle`: milliseconds to wait between output lines (for easier reading).
+- `--wrap`: indicates that long output text should break and continue in the following line. If omitted, lines will be truncated to fit in the available terminal width.
+
+### Bitcoin
+
+To watch Bitcoin blockchain events:
+
+```
+oura watch bitcoin [OPTIONS] <rpc_host>
+```
+
+- `<rpc_host>`: the Bitcoin RPC server URL to connect to.
+
+## Bitcoin Options
+
+- `--interval <seconds>`: polling interval in seconds for checking new blocks.
+- `--user <username>`: RPC server username for authentication.
+- `--password <password>`: RPC server password for authentication.
+- `--throttle`: milliseconds to wait between output lines (for easier reading).
+- `--wrap`: indicates that long output text should break and continue in the following line.
+
+## Examples
+
+### Cardano Examples
+
+#### Watch Live Data From A Remote Relay Node
+
+```sh
+oura watch cardano relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp
+```
+
+#### Watch Live Data From A Local Node Via Unix Socket
+
+```sh
+oura watch cardano /opt/cardano/cnode/sockets/node0.socket --bearer unix
+```
+
+#### Watch Live Data From The Tip Of A Local Testnet Node
+
+```sh
+oura watch cardano /opt/cardano/cnode/sockets/node0.socket --bearer unix --magic testnet
+```
+
+#### Watch Data Starting At A Particular Block
+
+```sh
+oura watch cardano relays-new.cardano-mainnet.iohk.io:3001 \
+    --bearer tcp \
+    --since 49159253,d034a2d0e4c3076f57368ed59319010c265718f0923057f8ff914a3b6bfd1314
+```
+
+#### Watch Live Data From the "Preview" testnet
+
+```sh
+oura watch cardano preview-node.world.dev.cardano.org:30002 --bearer tcp --magic preview
+```
+
+#### Watch Live Data From the "Pre-Production" testnet
+
+```sh
+oura watch cardano preprod-node.world.dev.cardano.org:30000 --bearer tcp --magic preprod
+```
+
+### Bitcoin Examples
+
+#### Watch Live Data From A Local Bitcoin Node
+
+```sh
+oura watch bitcoin http://localhost:8332 --user myuser --password mypassword
+```
+
+#### Watch Bitcoin With Custom Polling Interval
+
+```sh
+oura watch bitcoin http://localhost:8332 --interval 60 --user myuser --password mypassword
+```
+
+#### Watch Bitcoin With Output Throttling
+
+```sh
+oura watch bitcoin http://localhost:8332 --throttle 1000 --wrap
+```
