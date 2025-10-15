@@ -1,0 +1,15 @@
+[source]
+type = "ethereum-rpc"
+url = "wss://ethereum-rpc.publicnode.com"
+
+[intersect]
+type = "Tip"
+
+[sink]
+# type = "Stdout"
+type = "FileRotate"
+output_path = "/tmp/oura-eth/mainnet"
+output_format = "JSONL"
+max_bytes_per_file = 1_000_000
+max_total_files = 10
+compress_files = false

@@ -34,7 +34,7 @@ pub enum Bootstrapper {
     N2C(n2c::Stage),
 
     #[cfg(feature = "eth")]
-    Ethereum(eth::Stage),
+    EthereumRpc(eth::Stage),
 
     #[cfg(feature = "btc")]
     BitcoinRpc(btc::Stage),
@@ -61,7 +61,7 @@ impl Bootstrapper {
             Bootstrapper::N2C(p) => &mut p.output,
 
             #[cfg(feature = "eth")]
-            Bootstrapper::Ethereum(p) => &mut p.output,
+            Bootstrapper::EthereumRpc(p) => &mut p.output,
 
             #[cfg(feature = "btc")]
             Bootstrapper::BitcoinRpc(p) => &mut p.output,
@@ -88,7 +88,7 @@ impl Bootstrapper {
             Bootstrapper::N2C(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "eth")]
-            Bootstrapper::Ethereum(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::EthereumRpc(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "btc")]
             Bootstrapper::BitcoinRpc(x) => gasket::runtime::spawn_stage(x, policy),
@@ -117,7 +117,8 @@ pub enum Config {
     N2C(n2c::Config),
 
     #[cfg(feature = "eth")]
-    Ethereum(eth::Config),
+    #[serde(rename = "ethereum-rpc")]
+    EthereumRpc(eth::Config),
 
     #[cfg(feature = "btc")]
     #[serde(rename = "bitcoin-rpc")]
@@ -145,7 +146,7 @@ impl Config {
             Config::N2C(c) => Ok(Bootstrapper::N2C(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "eth")]
-            Config::Ethereum(c) => Ok(Bootstrapper::Ethereum(c.bootstrapper(ctx)?)),
+            Config::EthereumRpc(c) => Ok(Bootstrapper::EthereumRpc(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "btc")]
             Config::BitcoinRpc(c) => Ok(Bootstrapper::BitcoinRpc(c.bootstrapper(ctx)?)),
