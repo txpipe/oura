@@ -37,7 +37,7 @@ pub enum Bootstrapper {
     Ethereum(eth::Stage),
 
     #[cfg(feature = "btc")]
-    Bitcoin(btc::Stage),
+    BitcoinRpc(btc::Stage),
 
     #[cfg(feature = "hydra")]
     Hydra(hydra::Stage),
@@ -64,7 +64,7 @@ impl Bootstrapper {
             Bootstrapper::Ethereum(p) => &mut p.output,
 
             #[cfg(feature = "btc")]
-            Bootstrapper::Bitcoin(p) => &mut p.output,
+            Bootstrapper::BitcoinRpc(p) => &mut p.output,
 
             #[cfg(feature = "hydra")]
             Bootstrapper::Hydra(p) => &mut p.output,
@@ -91,7 +91,7 @@ impl Bootstrapper {
             Bootstrapper::Ethereum(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "btc")]
-            Bootstrapper::Bitcoin(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::BitcoinRpc(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "hydra")]
             Bootstrapper::Hydra(x) => gasket::runtime::spawn_stage(x, policy),
@@ -120,7 +120,8 @@ pub enum Config {
     Ethereum(eth::Config),
 
     #[cfg(feature = "btc")]
-    Bitcoin(btc::Config),
+    #[serde(rename = "bitcoin-rpc")]
+    BitcoinRpc(btc::Config),
 
     #[cfg(feature = "hydra")]
     Hydra(hydra::Config),
@@ -147,7 +148,7 @@ impl Config {
             Config::Ethereum(c) => Ok(Bootstrapper::Ethereum(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "btc")]
-            Config::Bitcoin(c) => Ok(Bootstrapper::Bitcoin(c.bootstrapper(ctx)?)),
+            Config::BitcoinRpc(c) => Ok(Bootstrapper::BitcoinRpc(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "hydra")]
             Config::Hydra(c) => Ok(Bootstrapper::Hydra(c.bootstrapper(ctx)?)),

@@ -1,5 +1,5 @@
 [source]
-type = "Bitcoin"
+type = "bitcoin-rpc"
 rpc_url = "https://bitcoin-rpc.publicnode.com"
 rpc_interval = 30
 

@@ -19,7 +19,7 @@ pub fn run(args: &Args) -> Result<(), Error> {
         .with(env_filter)
         .init();
 
-    let source = sources::Config::Bitcoin(sources::btc::Config {
+    let source = sources::Config::BitcoinRpc(sources::btc::Config {
         rpc_url: args.rpc_host.clone(),
         rpc_user: args.user.clone(),
         rpc_password: args.password.clone(),
