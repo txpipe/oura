@@ -1,0 +1,59 @@
+---
+title: Legacy V1 filter
+sidebar: 
+  label: Legacy V1
+---
+
+Transforms the block data to the Oura V1 data structure. This filter is ideal for compatibility with systems that are using Oura V1 and want to migrate without much work.
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "LegacyV1"
+include_block_end_events = false
+include_transaction_details = false
+include_transaction_end_events = false
+include_block_details = false
+include_block_cbor = false
+```
+
+### Section `LegacyV1`
+
+- `type`: the literal value `LegacyV1`.
+- `include_block_end_events`: if enabled, the source will output an event signaling the end of a block, duplicating all of the data already sent in the corresponding block start event. Default value is `false`.
+- `include_transaction_details`: if enabled, each transaction event payload will contain an nested version of all of the details of the transaction (inputs, outputs, mint, assets, metadata, etc). Useful when the pipeline needs to process the tx as a unit, instead of handling each sub-object as an independent event. Default value is `false`.
+- `include_transaction_end_events`: if enabled, the source will output an event signaling the end of a transaction, duplicating all of the data already sent in the corresponding transaction start event. Defaul value is `false`.
+- `include_block_cbor`: if enabled, the block event will include the raw, unaltered cbor content received from the node, formatted as an hex string. Useful when some custom cbor decoding is required. Default value is `false`.
+- `include_block_details`: If enabled, will be added the basic details of each transaction. Default value is `false`.
+
+## Examples
+
+Below is an example of the data that will be sent to the sink with all settings disabled.
+
+```json
+{
+  "event": "apply",
+  "point": {
+    "slot": 100110525,
+    "hash": "c808fc4142c5f10a2a6d0922edbd23972100d7d22e2255206bd05e968cc045f1"
+  },
+  "record": {
+    "context": {
+      "block_hash": "c808fc4142c5f10a2a6d0922edbd23972100d7d22e2255206bd05e968cc045f1",
+      "block_number": 9142145,
+      "slot": 100110525,
+      "timestamp": 1691676816,
+      "tx_idx": 6,
+      "tx_hash": "4329140c6711f2197c8c81bfff4b75fb95892375050dafda30ba146476ca3d65",
+      "input_idx": null,
+      "output_idx": null,
+      "output_address": null,
+      "certificate_idx": null
+    },
+    ...
+  }
+}
+```

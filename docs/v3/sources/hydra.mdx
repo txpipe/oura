@@ -1,0 +1,25 @@
+---
+title: Hydra
+sidebar:
+  label: Hydra
+---
+
+The Hydra fetch blocks and receive blocks from hydra.
+
+This source requires building oura using the feature `hydra` enabled.
+
+## Configuration
+
+The following snippet shows an example of how to set up a Hydra source:
+
+```toml
+[source]
+type = "Hydra"
+ws_url = "ws://127.0.0.1:4001"
+```
+
+### Section `source`:
+
+- `type`: this field must be set to the literal value `Hydra`
+- `ws_url`: websocket hydra server
+

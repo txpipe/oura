@@ -1,0 +1,75 @@
+---
+title: Bitcoin RPC
+sidebar:
+  label: Bitcoin
+---
+
+The Bitcoin RPC source connects to a Bitcoin Core node via JSON-RPC to fetch block data. It polls the node at regular intervals to detect new blocks and streams them through the Oura pipeline.
+
+## Configuration
+
+The following snippet shows an example of how to set up a Bitcoin RPC source:
+
+```toml
+[source]
+type = "Bitcoin"
+rpc_url = "http://localhost:8332"
+rpc_user = "myuser"
+rpc_password = "mypassword"
+rpc_interval = 30
+```
+
+### Section `source`:
+
+- `type`: this field must be set to the literal value `Bitcoin`.
+- `rpc_url`: the URL of the Bitcoin RPC server (required).
+- `rpc_user`: username for RPC authentication (optional).
+- `rpc_password`: password for RPC authentication (optional).
+- `rpc_interval`: polling interval in seconds to check for new blocks (optional, defaults to 30).
+
+## Authentication
+
+The Bitcoin RPC source supports optional authentication. If your Bitcoin node requires authentication, provide both `rpc_user` and `rpc_password`. For public nodes that don't require authentication, you can omit these fields.
+
+## Examples
+
+### Local Bitcoin Node with Authentication
+
+```toml
+[source]
+type = "Bitcoin"
+rpc_url = "http://localhost:8332"
+rpc_user = "bitcoinrpc"
+rpc_password = "mypassword123"
+rpc_interval = 30
+```
+
+### Public Bitcoin Node without Authentication
+
+```toml
+[source]
+type = "Bitcoin"
+rpc_url = "http://public-bitcoin-node.example.com:8332"
+rpc_interval = 60
+```
+
+### Bitcoin Testnet Node
+
+```toml
+[source]
+type = "Bitcoin"
+rpc_url = "http://localhost:18332"
+rpc_user = "testuser"
+rpc_password = "testpass"
+rpc_interval = 30
+```
+
+## Output Events
+
+The Bitcoin source produces `ChainEvent::Apply` events containing parsed Bitcoin block data. Each event includes:
+
+- Block hash and height information
+- Complete block structure with transactions
+- Timestamp and other block metadata
+
+The events follow the same pattern as other Oura sources, allowing them to be processed by standard filters and sinks in the pipeline.
