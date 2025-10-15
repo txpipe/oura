@@ -2,7 +2,7 @@
 title: Watch
 ---
 
-The `watch` mode provides a quick way to tail the latest events from blockchain networks. It supports both Cardano and Bitcoin blockchains, each with their own subcommands and connection methods.
+The `watch` mode provides a quick way to tail the latest events from blockchain networks. It supports Cardano, Bitcoin, and Ethereum blockchains, each with their own subcommands and connection methods.
 
 The output is colorized by type of event and dynamically truncated to fit the width of the terminal. The speed of the output lines is throttled to facilitate visual inspection of each event, otherwise, all events for a block would be output simultaneously.
 
@@ -38,11 +38,26 @@ oura watch bitcoin [OPTIONS] <rpc_host>
 
 - `<rpc_host>`: the Bitcoin RPC server URL to connect to.
 
-## Bitcoin Options
+#### Bitcoin Options
 
 - `--interval <seconds>`: polling interval in seconds for checking new blocks.
 - `--user <username>`: RPC server username for authentication.
 - `--password <password>`: RPC server password for authentication.
+- `--throttle`: milliseconds to wait between output lines (for easier reading).
+- `--wrap`: indicates that long output text should break and continue in the following line.
+
+### Ethereum
+
+To watch Ethereum blockchain events:
+
+```
+oura watch ethereum [OPTIONS] <url>
+```
+
+- `<url>`: the Ethereum WebSocket RPC URL to connect to.
+
+#### Ethereum Options
+
 - `--throttle`: milliseconds to wait between output lines (for easier reading).
 - `--wrap`: indicates that long output text should break and continue in the following line.
 
@@ -106,4 +121,30 @@ oura watch bitcoin http://localhost:8332 --interval 60 --user myuser --password 
 
 ```sh
 oura watch bitcoin http://localhost:8332 --throttle 1000 --wrap
+```
+
+### Ethereum Examples
+
+#### Watch Live Data From A Local Ethereum Node
+
+```sh
+oura watch ethereum ws://localhost:8546
+```
+
+#### Watch Ethereum Mainnet via PublicNode
+
+```sh
+oura watch ethereum wss://ethereum-rpc.publicnode.com
+```
+
+#### Watch Ethereum With Output Throttling
+
+```sh
+oura watch ethereum ws://localhost:8546 --throttle 1000 --wrap
+```
+
+#### Watch Ethereum Sepolia Testnet
+
+```sh
+oura watch ethereum wss://ethereum-sepolia-rpc.publicnode.com
 ```

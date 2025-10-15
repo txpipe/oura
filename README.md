@@ -39,7 +39,12 @@ The data pipeline is implemented by the [Gasket](https://github.com/construkts/g
 
 ### CLI to Watch Live Transactions
 
-You can run `oura watch cardano <socket>` to print Cardano transaction data into the terminal from the tip of a local or remote node, or `oura watch bitcoin <rpc_host>` to watch Bitcoin blockchain events. These commands are useful as debugging tools for developers or if you're just curious to see what's going on in the network (for example, to see airdrops as they happen or oracles posting new information).
+You can run:
+- `oura watch cardano <socket>` to print Cardano transaction data into the terminal from the tip of a local or remote node
+- `oura watch bitcoin <rpc_host>` to watch Bitcoin blockchain events
+- `oura watch ethereum <url>` to watch Ethereum blockchain events via WebSocket.
+
+These commands are useful as debugging tools for developers or if you're just curious to see what's going on in the network (for example, to see airdrops as they happen or oracles posting new information).
 
 ### As a Bridge to Other Persistence Mechanisms
 
