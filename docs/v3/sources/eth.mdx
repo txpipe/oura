@@ -1,0 +1,97 @@
+---
+title: Ethereum RPC
+---
+
+The Ethereum RPC source connects to an Ethereum node via WebSocket RPC to subscribe to new block headers and fetch complete block data. It uses real-time subscriptions to detect new blocks as they are mined and streams them through the Oura pipeline.
+
+## Configuration
+
+The following snippet shows an example of how to set up an Ethereum WebSocket source:
+
+```toml
+[source]
+type = "ethereum-rpc"
+url = "ws://localhost:8546"
+```
+
+### Section `source`:
+
+- `type`: this field must be set to the literal value `ethereum-rpc`.
+- `url`: the WebSocket URL of the Ethereum RPC endpoint (required). Must use `ws://` or `wss://` protocol.
+
+## Connection Methods
+
+The Ethereum source supports connections to:
+
+- **Local Ethereum nodes** via WebSocket (e.g., Geth, Erigon, Nethermind)
+- **Remote RPC providers** like Infura, Alchemy, or QuickNode
+- **Testnet nodes** (Sepolia, Holesky, etc.)
+
+## Examples
+
+### Local Ethereum Node
+
+```toml
+[source]
+type = "ethereum-rpc"
+url = "ws://localhost:8546"
+```
+
+### Ethereum Mainnet via PublicNode
+
+```toml
+[source]
+type = "ethereum-rpc"
+url = "wss://ethereum-rpc.publicnode.com"
+```
+
+### Ethereum Sepolia Testnet
+
+```toml
+[source]
+type = "ethereum-rpc"
+url = "wss://ethereum-sepolia-rpc.publicnode.com"
+```
+
+### Local Ethereum Node with Secure WebSocket
+
+```toml
+[source]
+type = "ethereum-rpc"
+url = "wss://localhost:8546"
+```
+
+## How It Works
+
+The Ethereum source operates using a subscription-based approach:
+
+1. **Subscription**: Connects to the Ethereum node via WebSocket and subscribes to new block headers using the `eth_subscribe` method with `newHeads` parameter.
+
+2. **Header Reception**: Receives block headers in real-time as new blocks are mined and added to the chain.
+
+3. **Block Fetching**: For each header received, fetches the complete block data including all transactions using the `eth_getBlockByHash` method.
+
+4. **Event Generation**: Converts the block data into Oura's internal `ChainEvent::Apply` format for processing by filters and sinks.
+
+## Output Events
+
+The Ethereum source produces `ChainEvent::Apply` events containing parsed Ethereum block data. Each event includes:
+
+- Block header information (number, hash, timestamp, difficulty, etc.)
+- Complete transaction list with all transaction details
+- Gas usage and limits
+- Miner/validator information
+- Block rewards and fees
+
+The events follow the same pattern as other Oura sources, allowing them to be processed by standard filters and sinks in the pipeline.
+
+## Provider Features
+
+The source uses the Alloy library with the following provider fillers enabled:
+
+- **Gas Filler**: Automatically estimates gas for transactions
+- **Blob Gas Filler**: Handles EIP-4844 blob gas calculations
+- **Nonce Filler**: Manages transaction nonces
+- **Chain ID Filler**: Sets the appropriate chain ID for transactions
+
+These fillers ensure complete and accurate block data is captured and processed.

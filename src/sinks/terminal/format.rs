@@ -97,7 +97,36 @@ impl LogLine {
                 }
             },
             #[cfg(feature = "eth")]
-            Record::Ethereum(_record) => todo!(),
+            Record::Ethereum(record) => match record {
+                ethereum::Record::ParsedBlock(block) => {
+                    let mut log = LogLine::new("BLOCK", Color::Magenta);
+                    log.max_width = max_width;
+
+                    let height = block.header.number;
+                    let hash = hex::encode(block.header.hash.to_vec());
+                    let tx_count = block.transactions.len();
+                    let timestamp = block.header.timestamp;
+                    let size = block.header.size();
+
+                    log.content = format!(
+                        "{{ height: {}, hash: {}, size: {}, tx_count: {}, timestamp: {} }}",
+                        height,
+                        hash,
+                        size,
+                        tx_count,
+                        timestamp,
+                    );
+                    log.block_num = Some(height as u64);
+
+                    log
+                },
+                _ => {
+                    let mut log = LogLine::new("RECORD", Color::Magenta);
+                    log.max_width = max_width;
+                    log.content = "Other Ethereum record type".to_string();
+                    log
+                },
+            },
             #[cfg(feature = "btc")]
             Record::Bitcoin(record) => match record {
                 bitcoin::Record::ParsedBlock(block) => {

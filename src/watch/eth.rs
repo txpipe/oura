@@ -19,11 +19,8 @@ pub fn run(args: &Args) -> Result<(), Error> {
         .with(env_filter)
         .init();
 
-    let source = sources::Config::BitcoinRpc(sources::btc::Config {
-        rpc_url: args.rpc_host.clone(),
-        rpc_user: args.user.clone(),
-        rpc_password: args.password.clone(),
-        rpc_interval: args.interval,
+    let source = sources::Config::EthereumRpc(sources::eth::Config {
+        url: args.url.clone(),
     });
 
     let sink = sinks::Config::Terminal(sinks::terminal::Config {
@@ -57,20 +54,8 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
 #[derive(Parser, Clone)]
 pub struct Args {
-    /// Bitcoin RPC server
-    rpc_host: String,
-
-    /// Polling interval in seconds
-    #[arg(long)]
-    interval: Option<u64>,
-
-    /// RPC server username
-    #[arg(long)]
-    user: Option<String>,
-
-    /// RPC server password
-    #[arg(long)]
-    password: Option<String>,
+    /// Ethereum WS RPC url
+    url: String,
 
     /// milliseconds to wait between output lines (for easier reading)
     #[arg(long)]

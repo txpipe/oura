@@ -5,16 +5,15 @@ use alloy::providers::fillers::{
 use alloy::providers::{Identity, Provider, ProviderBuilder, RootProvider, WsConnect};
 use alloy::pubsub::SubscriptionStream;
 use alloy::rpc::types::Header;
-use futures_util::stream::Take;
 use futures_util::StreamExt;
 use gasket::framework::*;
 use serde::Deserialize;
-use tracing::debug;
+use tracing::{debug, info};
 
 use crate::framework::*;
 
 pub struct Worker {
-    stream: Take<SubscriptionStream<Header>>,
+    stream: SubscriptionStream<Header>,
     provider: FillProvider<
         JoinFill<
             Identity,
@@ -34,12 +33,13 @@ impl gasket::framework::Worker<Stage> for Worker {
 
         let subscription = provider.subscribe_blocks().await.or_panic()?;
 
-        let stream = subscription.into_stream().take(2);
+        let stream = subscription.into_stream();
 
         Ok(Self { stream, provider })
     }
 
     async fn schedule(&mut self, _: &mut Stage) -> Result<WorkSchedule<Header>, WorkerError> {
+        info!("awaiting next block (blocking)");
         if let Some(header) = self.stream.next().await {
             return Ok(WorkSchedule::Unit(header));
         }
@@ -51,10 +51,13 @@ impl gasket::framework::Worker<Stage> for Worker {
         debug!(hash = header.hash.to_string(), "chain sync roll forward");
 
         let block_id = BlockId::hash(header.hash);
+        info!("requesting next block");
         if let Some(block) = self.provider.get_block(block_id).await.or_retry()? {
             let event = ChainEvent::Apply(
-                // TODO(p): add support multi chain Point
-                pallas::network::miniprotocols::Point::Origin,
+                pallas::network::miniprotocols::Point::Specific(
+                    block.header.number,
+                    block.header.hash.to_vec(),
+                ),
                 Record::Ethereum(ethereum::Record::ParsedBlock(Box::new(block))),
             );
             stage.output.send(event.into()).await.or_panic()?;
@@ -65,7 +68,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 }
 
 #[derive(Stage)]
-#[stage(name = "source-utxorpc", unit = "Header", worker = "Worker")]
+#[stage(name = "source", unit = "Header", worker = "Worker")]
 pub struct Stage {
     config: Config,
 

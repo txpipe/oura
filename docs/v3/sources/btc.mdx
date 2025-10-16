@@ -1,7 +1,5 @@
 ---
 title: Bitcoin RPC
-sidebar:
-  label: Bitcoin
 ---
 
 The Bitcoin RPC source connects to a Bitcoin Core node via JSON-RPC to fetch block data. It polls the node at regular intervals to detect new blocks and streams them through the Oura pipeline.
@@ -12,7 +10,7 @@ The following snippet shows an example of how to set up a Bitcoin RPC source:
 
 ```toml
 [source]
-type = "Bitcoin"
+type = "bitcoin-rpc"
 rpc_url = "http://localhost:8332"
 rpc_user = "myuser"
 rpc_password = "mypassword"
@@ -21,7 +19,7 @@ rpc_interval = 30
 
 ### Section `source`:
 
-- `type`: this field must be set to the literal value `Bitcoin`.
+- `type`: this field must be set to the literal value `bitcoin-rpc`.
 - `rpc_url`: the URL of the Bitcoin RPC server (required).
 - `rpc_user`: username for RPC authentication (optional).
 - `rpc_password`: password for RPC authentication (optional).
@@ -37,7 +35,7 @@ The Bitcoin RPC source supports optional authentication. If your Bitcoin node re
 
 ```toml
 [source]
-type = "Bitcoin"
+type = "bitcoin-rpc"
 rpc_url = "http://localhost:8332"
 rpc_user = "bitcoinrpc"
 rpc_password = "mypassword123"
@@ -48,7 +46,7 @@ rpc_interval = 30
 
 ```toml
 [source]
-type = "Bitcoin"
+type = "bitcoin-rpc"
 rpc_url = "http://public-bitcoin-node.example.com:8332"
 rpc_interval = 60
 ```
@@ -57,7 +55,7 @@ rpc_interval = 60
 
 ```toml
 [source]
-type = "Bitcoin"
+type = "bitcoin-rpc"
 rpc_url = "http://localhost:18332"
 rpc_user = "testuser"
 rpc_password = "testpass"

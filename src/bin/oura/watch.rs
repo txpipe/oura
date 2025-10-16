@@ -3,6 +3,9 @@ use oura::watch::cardano;
 #[cfg(feature = "btc")]
 use oura::watch::btc;
 
+#[cfg(feature = "eth")]
+use oura::watch::eth;
+
 use clap::{Parser, Subcommand};
 use oura::framework::Error;
 
@@ -12,6 +15,9 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
         #[cfg(feature = "btc")]
         WatchCommand::Bitcoin(btc_args) => btc::run(btc_args),
+        
+        #[cfg(feature = "eth")]
+        WatchCommand::Ethereum(eth_args) => eth::run(eth_args),
     }
 }
 
@@ -30,4 +36,8 @@ pub enum WatchCommand {
     /// Watch Bitcoin blockchain
     #[cfg(feature = "btc")]
     Bitcoin(btc::Args),
+
+    /// Watch Ethereum blockchain
+    #[cfg(feature = "eth")]
+    Ethereum(eth::Args),
 }
