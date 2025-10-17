@@ -158,7 +158,33 @@ impl LogLine {
                     log
                 }
             },
-            Record::Substrate(_record) => todo!(),
+            #[cfg(feature = "substrate")]
+            Record::Substrate(record) => match record {
+                substrate::Record::ParsedBlock(block) => {
+                    let mut log = LogLine::new("BLOCK", Color::Magenta);
+                    log.max_width = max_width;
+
+                    let height = block.header.number;
+                    let hash = block.header.hash.clone();
+                    let tx_count = block.extrinsics_count;
+
+                    log.content = format!(
+                        "{{ height: {}, hash: {}, tx_count: {} }}",
+                        height,
+                        hash,
+                        tx_count,
+                    );
+                    log.block_num = Some(height as u64);
+
+                    log
+                }
+                _ => {
+                    let mut log = LogLine::new("RECORD", Color::Magenta);
+                    log.max_width = max_width;
+                    log.content = "Other Bitcoin record type".to_string();
+                    log
+                }
+            },
             Record::GenericJson(_json) => {
                 todo!("GenericJson not implemented yet")
             }
