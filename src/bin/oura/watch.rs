@@ -6,6 +6,9 @@ use oura::watch::btc;
 #[cfg(feature = "eth")]
 use oura::watch::eth;
 
+#[cfg(feature = "substrate")]
+use oura::watch::substrate;
+
 use clap::{Parser, Subcommand};
 use oura::framework::Error;
 
@@ -18,6 +21,9 @@ pub fn run(args: &Args) -> Result<(), Error> {
         
         #[cfg(feature = "eth")]
         WatchCommand::Ethereum(eth_args) => eth::run(eth_args),
+
+        #[cfg(feature = "substrate")]
+        WatchCommand::Substrate(substrate_args) => substrate::run(substrate_args),
     }
 }
 
@@ -40,4 +46,8 @@ pub enum WatchCommand {
     /// Watch Ethereum blockchain
     #[cfg(feature = "eth")]
     Ethereum(eth::Args),
+
+    /// Watch Substrate blockchain
+    #[cfg(feature = "substrate")]
+    Substrate(substrate::Args),
 }
