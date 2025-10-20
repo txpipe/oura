@@ -23,6 +23,8 @@ pub mod bitcoin;
 
 #[cfg(feature = "eth")]
 pub mod ethereum;
+
+#[cfg(feature = "substrate")]
 pub mod substrate;
 
 pub mod errors;
@@ -93,6 +95,8 @@ pub enum Record {
     
     #[cfg(feature = "btc")]
     Bitcoin(bitcoin::Record),
+
+    #[cfg(feature = "substrate")]
     Substrate(substrate::Record),
 }
 impl From<Record> for JsonValue {
@@ -104,6 +108,7 @@ impl From<Record> for JsonValue {
             Record::Ethereum(record) => record.into(),
             #[cfg(feature = "btc")]
             Record::Bitcoin(record) => record.into(),
+            #[cfg(feature = "substrate")]
             Record::Substrate(record) => record.into(),
         }
     }

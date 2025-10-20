@@ -2,7 +2,7 @@
 title: Watch
 ---
 
-The `watch` mode provides a quick way to tail the latest events from blockchain networks. It supports Cardano, Bitcoin, and Ethereum blockchains, each with their own subcommands and connection methods.
+The `watch` mode provides a quick way to tail the latest events from blockchain networks. It supports Cardano, Bitcoin, Ethereum, and Substrate blockchains, each with their own subcommands and connection methods.
 
 The output is colorized by type of event and dynamically truncated to fit the width of the terminal. The speed of the output lines is throttled to facilitate visual inspection of each event, otherwise, all events for a block would be output simultaneously.
 
@@ -57,6 +57,21 @@ oura watch ethereum [OPTIONS] <url>
 - `<url>`: the Ethereum WebSocket RPC URL to connect to.
 
 #### Ethereum Options
+
+- `--throttle`: milliseconds to wait between output lines (for easier reading).
+- `--wrap`: indicates that long output text should break and continue in the following line.
+
+### Substrate
+
+To watch Substrate blockchain events:
+
+```
+oura watch substrate [OPTIONS] <url>
+```
+
+- `<url>`: the Substrate WebSocket RPC URL to connect to.
+
+#### Substrate Options
 
 - `--throttle`: milliseconds to wait between output lines (for easier reading).
 - `--wrap`: indicates that long output text should break and continue in the following line.
@@ -147,4 +162,36 @@ oura watch ethereum ws://localhost:8546 --throttle 1000 --wrap
 
 ```sh
 oura watch ethereum wss://ethereum-sepolia-rpc.publicnode.com
+```
+
+### Substrate Examples
+
+#### Watch Live Data From A Local Polkadot Node
+
+```sh
+oura watch substrate ws://localhost:9944
+```
+
+#### Watch Polkadot Mainnet via OnFinality
+
+```sh
+oura watch substrate wss://polkadot.api.onfinality.io/public-ws
+```
+
+#### Watch Substrate With Output Throttling
+
+```sh
+oura watch substrate ws://localhost:9944 --throttle 1000 --wrap
+```
+
+#### Watch Kusama Network
+
+```sh
+oura watch substrate wss://kusama-rpc.polkadot.io
+```
+
+#### Watch Westend Testnet
+
+```sh
+oura watch substrate wss://westend-rpc.polkadot.io
 ```
