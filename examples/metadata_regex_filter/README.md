@@ -17,14 +17,20 @@ The example uses the `Select` filter with a regex pattern for metadata text valu
 ```toml
 [[filters]]
 type = "Select"
-skip_uncertain = true
+skip_uncertain = false
 
-[filters.predicate.match.tx]
-metadata = [{
-    label = 674,                              # CIP-20 message label
-    value = { text = { regex = "(?i)hello.*world" } }  # Case-insensitive regex
-}]
+[filters.predicate.match.metadata]
+label = 674
+
+[filters.predicate.match.metadata.value.text]
+regex = "testing regex"
 ```
+
+### How it works
+
+- **Recursive search**: The pattern automatically searches through nested structures (arrays, maps)
+- **Substring match**: `regex = "testing regex"` matches if the text contains "testing regex" anywhere
+- **Case-sensitive by default**: Use `(?i)` prefix for case-insensitive matching
 
 ## Regex Pattern Examples
 
@@ -53,6 +59,48 @@ value = { text = { regex = "\\{.*\"action\".*\\}" } }
 ```bash
 oura daemon --config ./daemon.toml
 ```
+
+### Example Output
+
+When a matching transaction is found, Oura outputs:
+
+```json
+{
+  "event": "apply",
+  "point": {
+    "hash": "ed6e69806786b4d51044f66671690d6290e426aa6361d0ddc45a3b6c2b0015c2",
+    "slot": 105563197
+  },
+  "record": {
+    "auxiliary": {
+      "metadata": [
+        {
+          "label": "674",
+          "value": {
+            "map": {
+              "pairs": [
+                {
+                  "key": {"text": "msg"},
+                  "value": {
+                    "array": {
+                      "items": [{"text": "testing regex"}]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "hash": "Cci9gZHpdWf93uK/hQ6xIokOl5X+Do7ttMdu+en4wnw=",
+    "fee": "171045",
+    "successful": true
+  }
+}
+```
+
+✅ **Verified on preprod testnet** - Successfully filtered transactions with metadata label 674 containing "testing regex"
 
 ## Use Cases
 

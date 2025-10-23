@@ -234,9 +234,15 @@ impl PatternOf<&[u8]> for TextPattern {
 
 impl PatternOf<&Metadatum> for TextPattern {
     fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
+        use pallas::interop::utxorpc::spec::cardano::metadatum::Metadatum as M;
+
         match subject.metadatum.as_ref() {
-            Some(pallas::interop::utxorpc::spec::cardano::metadatum::Metadatum::Text(subject)) => {
-                self.is_match(subject.as_str())
+            Some(M::Text(text)) => self.is_match(text.as_str()),
+            Some(M::Array(array)) => self.is_any_match(array.items.iter()),
+            Some(M::Map(map)) => {
+                let key_matches = self.is_any_match(map.pairs.iter().filter_map(|p| p.key.as_ref()));
+                let value_matches = self.is_any_match(map.pairs.iter().filter_map(|p| p.value.as_ref()));
+                key_matches + value_matches
             }
             _ => MatchOutcome::Negative,
         }

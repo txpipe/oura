@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum MetadatumPattern {
     Text(TextPattern),
     Int(NumericPattern<i64>),

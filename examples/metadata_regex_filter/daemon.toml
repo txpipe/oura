@@ -1,6 +1,9 @@
+[chain]
+type = "preprod"
+
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["preprod-node.world.dev.cardano.org:30000"]
 
 [intersect]
 type = "Tip"
@@ -13,13 +16,13 @@ type = "ParseCbor"
 
 [[filters]]
 type = "Select"
-skip_uncertain = true
+skip_uncertain = false
 
-[filters.predicate.match.tx]
-metadata = [{
-    label = 674,
-    value = { text = { regex = "(?i)hello.*world" } }
-}]
+[filters.predicate.match.metadata]
+label = 674
+
+[filters.predicate.match.metadata.value.text]
+regex = "testing regex"
 
 [sink]
 type = "Stdout"
