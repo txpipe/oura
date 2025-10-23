@@ -92,3 +92,91 @@ assets = ["asset17jd78wukhtrnmjh3fngzasxm8rck0l2r4hhyyt"]
 datum = "datum1httkxyxp8x0dlpdt3k6cwng5pxj3j"
 ```
 
+## Metadata Filtering
+
+Match transactions with specific metadata labels (simple)
+
+```toml
+predicate = "#674"  # CIP-20 message label
+```
+
+Match transactions with metadata containing exact text
+
+```toml
+[filters.predicate.match.tx]
+metadata = [{
+    label = 674,
+    value = { text = { exact = "Hello World" } }
+}]
+```
+
+Match transactions with metadata containing regex pattern
+
+```toml
+[filters.predicate.match.tx]
+metadata = [{
+    label = 674,
+    value = { text = { regex = "(?i)hello.*world" } }  # Case-insensitive
+}]
+```
+
+### Regex Pattern Examples
+
+Case-insensitive matching:
+```toml
+value = { text = { regex = "(?i)urgent" } }
+```
+
+Match specific keywords:
+```toml
+value = { text = { regex = "\\b(buy|sell|trade)\\b" } }
+```
+
+Match URLs:
+```toml
+value = { text = { regex = "https?://[^\\s]+" } }
+```
+
+Match structured data:
+```toml
+value = { text = { regex = "\\{.*\"action\":\"transfer\".*\\}" } }
+```
+
+### Common Use Cases
+
+**Filter CIP-20 messages from your dApp:**
+```toml
+[filters.predicate.match.tx]
+metadata = [{
+    label = 674,
+    value = { text = { regex = "^MyApp:" } }
+}]
+```
+
+**Monitor NFT metadata updates:**
+```toml
+[filters.predicate.match.tx]
+metadata = [{
+    label = 721,
+    value = { text = { regex = ".*name.*" } }
+}]
+```
+
+**Watch for specific transaction types:**
+```toml
+[filters.predicate]
+all = [
+    "#674",
+    {
+        "match": {
+            "tx": {
+                "metadata": [{
+                    "label": 674,
+                    "value": { "text": { "regex": "(?i)payment|donation" } }
+                }]
+            }
+        }
+    }
+]
+```
+
