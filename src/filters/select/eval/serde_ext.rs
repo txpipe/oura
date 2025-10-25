@@ -106,3 +106,26 @@ pub trait FromBech32: Sized {
             .ok_or_else(|| anyhow::anyhow!("bech32 hrp '{}' is not compatible for this type", hrp))
     }
 }
+
+/// Serde serialization/deserialization helpers for regex patterns.
+pub mod regex_pattern {
+    use regex::Regex;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    /// Serializes a Regex as its string representation.
+    pub fn serialize<S>(regex: &Regex, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(regex.as_str())
+    }
+
+    /// Deserializes a string into a Regex.
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Regex, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Regex::new(&s).map_err(serde::de::Error::custom)
+    }
+}
