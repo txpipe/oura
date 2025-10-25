@@ -122,6 +122,7 @@ mod tests {
         assert_eq!(positives, Vec::<usize>::new());
     }
 
+    /// Tests regex pattern construction and basic matching.
     #[test]
     fn regex_text_value_match() {
         use regex::Regex;

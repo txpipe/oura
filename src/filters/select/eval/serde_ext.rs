@@ -107,10 +107,12 @@ pub trait FromBech32: Sized {
     }
 }
 
+/// Serde serialization/deserialization helpers for regex patterns.
 pub mod regex_pattern {
     use regex::Regex;
     use serde::{Deserialize, Deserializer, Serializer};
 
+    /// Serializes a Regex as its string representation.
     pub fn serialize<S>(regex: &Regex, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -118,6 +120,7 @@ pub mod regex_pattern {
         serializer.serialize_str(regex.as_str())
     }
 
+    /// Deserializes a string into a Regex.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Regex, D::Error>
     where
         D: Deserializer<'de>,
