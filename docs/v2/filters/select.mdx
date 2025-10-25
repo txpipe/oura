@@ -100,7 +100,7 @@ Match any tx that holds a particular metadata label
 predicate = "#674"
 ```
 
-Match transactions with metadata containing regex pattern (recursively searches arrays and maps)
+Match transactions with metadata containing a regex pattern (recursively searches arrays and maps — including map keys and values — and matches only text metadatum)
 
 ```toml
 [filters.predicate.match.metadata]

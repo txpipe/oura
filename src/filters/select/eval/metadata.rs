@@ -145,4 +145,41 @@ mod tests {
         }
     }
 
+    #[test]
+    fn regex_text_value_matches_metadatum() {
+        use pallas::interop::utxorpc::spec::cardano::metadatum;
+        use regex::Regex;
+
+        let text_pattern = TextPattern::Regex(Regex::new(r"Hello World").unwrap());
+
+        let text_metadatum = Metadatum {
+            metadatum: metadatum::Metadatum::Text("Hello World".to_string()).into(),
+        };
+        assert_eq!(
+            text_pattern.is_match(&text_metadatum),
+            MatchOutcome::Positive
+        );
+
+        let no_match = Metadatum {
+            metadatum: metadatum::Metadatum::Text("Goodbye".to_string()).into(),
+        };
+        assert_eq!(text_pattern.is_match(&no_match), MatchOutcome::Negative);
+
+        let int_metadatum = Metadatum {
+            metadatum: metadatum::Metadatum::Int(42).into(),
+        };
+        assert_eq!(
+            text_pattern.is_match(&int_metadatum),
+            MatchOutcome::Negative
+        );
+
+        let bytes_metadatum = Metadatum {
+            metadatum: metadatum::Metadatum::Bytes(vec![0xFF, 0xFE, 0xFD].into()).into(),
+        };
+        assert_eq!(
+            text_pattern.is_match(&bytes_metadatum),
+            MatchOutcome::Negative
+        );
+    }
+
 }

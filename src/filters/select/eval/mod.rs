@@ -658,6 +658,40 @@ mod tests {
     }
 
     #[test]
+    fn text_pattern_equality() {
+        use regex::Regex;
+
+        let pattern1 = TextPattern::Regex(Regex::new(r"test").unwrap());
+        let pattern2 = TextPattern::Regex(Regex::new(r"test").unwrap());
+        let pattern3 = TextPattern::Regex(Regex::new(r"different").unwrap());
+
+        assert_eq!(pattern1, pattern2);
+        assert_ne!(pattern1, pattern3);
+    }
+
+    #[test]
+    fn text_pattern_matches_utf8_bytes() {
+        use regex::Regex;
+
+        let pattern = TextPattern::Regex(Regex::new(r"hello").unwrap());
+
+        let utf8_bytes = b"hello world";
+        assert_eq!(pattern.is_match(&utf8_bytes[..]), MatchOutcome::Positive);
+
+        let utf8_no_match = b"goodbye";
+        assert_eq!(
+            pattern.is_match(&utf8_no_match[..]),
+            MatchOutcome::Negative
+        );
+
+        let invalid_utf8 = vec![0xFF, 0xFE, 0xFD];
+        assert_eq!(
+            pattern.is_match(&invalid_utf8[..]),
+            MatchOutcome::Uncertain
+        );
+    }
+
+    #[test]
     fn deser_predicate() {
         serde_json::from_str::<StringOrStruct<Predicate>>("\"addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x\"").unwrap();
 
