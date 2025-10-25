@@ -657,6 +657,7 @@ mod tests {
         assert!(matches!(pattern, Pattern::Metadata(..)));
     }
 
+    /// Tests PartialEq implementation for TextPattern.
     #[test]
     fn text_pattern_equality() {
         use regex::Regex;
@@ -669,6 +670,7 @@ mod tests {
         assert_ne!(pattern1, pattern3);
     }
 
+    /// Tests TextPattern matching against UTF-8 and invalid byte slices.
     #[test]
     fn text_pattern_matches_utf8_bytes() {
         use regex::Regex;

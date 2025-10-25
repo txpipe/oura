@@ -145,6 +145,7 @@ mod tests {
         }
     }
 
+    /// Tests regex pattern matching against different metadatum types.
     #[test]
     fn regex_text_value_matches_metadatum() {
         use pallas::interop::utxorpc::spec::cardano::metadatum;
