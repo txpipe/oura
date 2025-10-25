@@ -197,7 +197,6 @@ impl PatternOf<u64> for CoinPattern {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum TextPattern {
-    Exact(String),
     #[serde(with = "serde_ext::regex_pattern")]
     Regex(regex::Regex),
 }
@@ -205,9 +204,7 @@ pub enum TextPattern {
 impl PartialEq for TextPattern {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (TextPattern::Exact(a), TextPattern::Exact(b)) => a == b,
             (TextPattern::Regex(a), TextPattern::Regex(b)) => a.as_str() == b.as_str(),
-            _ => false,
         }
     }
 }
@@ -215,7 +212,6 @@ impl PartialEq for TextPattern {
 impl PatternOf<&str> for TextPattern {
     fn is_match(&self, subject: &str) -> MatchOutcome {
         match self {
-            TextPattern::Exact(x) => MatchOutcome::if_equal(x.as_str(), subject),
             TextPattern::Regex(x) => MatchOutcome::if_true(x.is_match(subject)),
         }
     }

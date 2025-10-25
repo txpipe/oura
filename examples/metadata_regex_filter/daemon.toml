@@ -22,7 +22,7 @@ skip_uncertain = false
 label = 674
 
 [filters.predicate.match.metadata.value.text]
-regex = "testing regex"
+regex = "Hello World"
 
 [sink]
 type = "Stdout"

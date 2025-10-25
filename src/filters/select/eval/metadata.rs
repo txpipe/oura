@@ -129,21 +129,20 @@ mod tests {
         let pattern = MetadataPattern {
             label: Some(674),
             value: Some(MetadatumPattern::Text(TextPattern::Regex(
-                Regex::new(r"(?i)hello.*world").unwrap(),
+                Regex::new(r"testing regex").unwrap(),
             ))),
         };
 
-        // Test exact text pattern as well
-        let exact_pattern = MetadataPattern {
-            label: Some(674),
-            value: Some(MetadatumPattern::Text(TextPattern::Exact(
-                "test message".to_string(),
-            ))),
-        };
-
-        // These tests would need actual test vectors with metadata
-        // For now, we're verifying the pattern structure is valid
         assert!(pattern.label.is_some());
-        assert!(exact_pattern.value.is_some());
+        assert!(pattern.value.is_some());
+
+        if let Some(MetadatumPattern::Text(TextPattern::Regex(regex))) = &pattern.value {
+            assert!(regex.is_match("testing regex"));
+            assert!(regex.is_match("this contains testing regex inside"));
+            assert!(!regex.is_match("no match here"));
+        } else {
+            panic!("Expected Text(Regex) pattern");
+        }
     }
+
 }
