@@ -34,7 +34,7 @@ gasket-prometheus = { version = "^0.7" }
 # gasket = { git = "https://github.com/construkts/gasket-rs.git", features = ["derive"] }
 
 hex = "0.4.3"
-bech32 = "0.9.1"
+bech32 = "0.11.0"
 clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
 crossterm = "0.26"

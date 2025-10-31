@@ -4645,7 +4645,7 @@ dependencies = [
  "aws-sdk-s3",
  "aws-sdk-sqs",
  "aws-types",
- "bech32 0.9.1",
+ "bech32 0.11.0",
  "bytes",
  "clap",
  "config",
