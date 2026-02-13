@@ -1,0 +1,28 @@
+[chain]
+type = "preprod"
+
+[source]
+type = "N2N"
+peers = ["preprod-node.world.dev.cardano.org:30000"]
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "Select"
+skip_uncertain = false
+
+[filters.predicate.match.metadata]
+label = 674
+
+[filters.predicate.match.metadata.value.text]
+regex = "Hello World"
+
+[sink]
+type = "Stdout"

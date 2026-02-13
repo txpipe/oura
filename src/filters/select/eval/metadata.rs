@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum MetadatumPattern {
     Text(TextPattern),
     Int(NumericPattern<i64>),
@@ -120,4 +121,67 @@ mod tests {
         ));
         assert_eq!(positives, Vec::<usize>::new());
     }
+
+    /// Tests regex pattern construction and basic matching.
+    #[test]
+    fn regex_text_value_match() {
+        use regex::Regex;
+
+        let pattern = MetadataPattern {
+            label: Some(674),
+            value: Some(MetadatumPattern::Text(TextPattern::Regex(
+                Regex::new(r"testing regex").unwrap(),
+            ))),
+        };
+
+        assert!(pattern.label.is_some());
+        assert!(pattern.value.is_some());
+
+        if let Some(MetadatumPattern::Text(TextPattern::Regex(regex))) = &pattern.value {
+            assert!(regex.is_match("testing regex"));
+            assert!(regex.is_match("this contains testing regex inside"));
+            assert!(!regex.is_match("no match here"));
+        } else {
+            panic!("Expected Text(Regex) pattern");
+        }
+    }
+
+    /// Tests regex pattern matching against different metadatum types.
+    #[test]
+    fn regex_text_value_matches_metadatum() {
+        use pallas::interop::utxorpc::spec::cardano::metadatum;
+        use regex::Regex;
+
+        let text_pattern = TextPattern::Regex(Regex::new(r"Hello World").unwrap());
+
+        let text_metadatum = Metadatum {
+            metadatum: metadatum::Metadatum::Text("Hello World".to_string()).into(),
+        };
+        assert_eq!(
+            text_pattern.is_match(&text_metadatum),
+            MatchOutcome::Positive
+        );
+
+        let no_match = Metadatum {
+            metadatum: metadatum::Metadatum::Text("Goodbye".to_string()).into(),
+        };
+        assert_eq!(text_pattern.is_match(&no_match), MatchOutcome::Negative);
+
+        let int_metadatum = Metadatum {
+            metadatum: metadatum::Metadatum::Int(42).into(),
+        };
+        assert_eq!(
+            text_pattern.is_match(&int_metadatum),
+            MatchOutcome::Negative
+        );
+
+        let bytes_metadatum = Metadatum {
+            metadatum: metadatum::Metadatum::Bytes(vec![0xFF, 0xFE, 0xFD].into()).into(),
+        };
+        assert_eq!(
+            text_pattern.is_match(&bytes_metadatum),
+            MatchOutcome::Negative
+        );
+    }
+
 }

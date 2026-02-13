@@ -92,3 +92,22 @@ assets = ["asset17jd78wukhtrnmjh3fngzasxm8rck0l2r4hhyyt"]
 datum = "datum1httkxyxp8x0dlpdt3k6cwng5pxj3j"
 ```
 
+## Metadata Filtering
+
+Match any tx that holds a particular metadata label
+
+```toml
+predicate = "#674"
+```
+
+Match transactions with metadata containing a regex pattern (recursively searches arrays and maps — including map keys and values — and matches only text metadatum)
+
+```toml
+[filters.predicate.match.metadata]
+label = 674
+
+[filters.predicate.match.metadata.value.text]
+regex = "(?i)hello.*world"  # Case-insensitive
+```
+
+

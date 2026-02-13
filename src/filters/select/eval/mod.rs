@@ -194,16 +194,29 @@ impl PatternOf<u64> for CoinPattern {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum TextPattern {
     Exact(String),
-    // TODO: Regex
+    #[serde(with = "serde_ext::regex_pattern")]
+    Regex(regex::Regex),
+}
+
+impl PartialEq for TextPattern {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (TextPattern::Exact(a), TextPattern::Exact(b)) => a.eq(b),
+            (TextPattern::Regex(a), TextPattern::Regex(b)) => a.as_str() == b.as_str(),
+            _ => false,
+        }
+    }
 }
 
 impl PatternOf<&str> for TextPattern {
     fn is_match(&self, subject: &str) -> MatchOutcome {
         match self {
-            TextPattern::Exact(x) => MatchOutcome::if_equal(x.as_str(), subject),
+            TextPattern::Exact(x) => MatchOutcome::if_true(x.eq(subject)),
+            TextPattern::Regex(x) => MatchOutcome::if_true(x.is_match(subject)),
         }
     }
 }
@@ -221,9 +234,17 @@ impl PatternOf<&[u8]> for TextPattern {
 
 impl PatternOf<&Metadatum> for TextPattern {
     fn is_match(&self, subject: &Metadatum) -> MatchOutcome {
+        use pallas::interop::utxorpc::spec::cardano::metadatum::Metadatum as M;
+
         match subject.metadatum.as_ref() {
-            Some(pallas::interop::utxorpc::spec::cardano::metadatum::Metadatum::Text(subject)) => {
-                self.is_match(subject.as_str())
+            Some(M::Text(text)) => self.is_match(text.as_str()),
+            Some(M::Array(array)) => self.is_any_match(array.items.iter()),
+            Some(M::Map(map)) => {
+                let key_matches =
+                    self.is_any_match(map.pairs.iter().filter_map(|p| p.key.as_ref()));
+                let value_matches =
+                    self.is_any_match(map.pairs.iter().filter_map(|p| p.value.as_ref()));
+                key_matches + value_matches
             }
             _ => MatchOutcome::Negative,
         }
@@ -640,6 +661,48 @@ mod tests {
 
         let pattern = Pattern::from_str("#8888").unwrap();
         assert!(matches!(pattern, Pattern::Metadata(..)));
+    }
+
+    /// Tests PartialEq implementation for TextPattern.
+    #[test]
+    fn text_pattern_equality() {
+        use regex::Regex;
+
+        let pattern1 = TextPattern::Regex(Regex::new(r"test").unwrap());
+        let pattern2 = TextPattern::Regex(Regex::new(r"test").unwrap());
+        let pattern3 = TextPattern::Regex(Regex::new(r"different").unwrap());
+        let pattern4 = TextPattern::Exact("test".to_string());
+        let pattern5 = TextPattern::Exact("test".to_string());
+
+        assert_eq!(pattern1, pattern2);
+        assert_ne!(pattern1, pattern3);
+        assert_eq!(pattern4, pattern5);
+        assert_ne!(pattern1, pattern4);
+    }
+
+    #[test]
+    fn text_pattern_exact_match() {
+        let pattern = TextPattern::Exact("hello".to_string());
+
+        assert_eq!(pattern.is_match("hello"), MatchOutcome::Positive);
+        assert_eq!(pattern.is_match("hello world"), MatchOutcome::Negative);
+    }
+
+    /// Tests TextPattern matching against UTF-8 and invalid byte slices.
+    #[test]
+    fn text_pattern_matches_utf8_bytes() {
+        use regex::Regex;
+
+        let pattern = TextPattern::Regex(Regex::new(r"hello").unwrap());
+
+        let utf8_bytes = b"hello world";
+        assert_eq!(pattern.is_match(&utf8_bytes[..]), MatchOutcome::Positive);
+
+        let utf8_no_match = b"goodbye";
+        assert_eq!(pattern.is_match(&utf8_no_match[..]), MatchOutcome::Negative);
+
+        let invalid_utf8 = vec![0xFF, 0xFE, 0xFD];
+        assert_eq!(pattern.is_match(&invalid_utf8[..]), MatchOutcome::Uncertain);
     }
 
     #[test]
