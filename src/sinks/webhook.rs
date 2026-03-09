@@ -64,12 +64,24 @@ impl gasket::framework::Worker<Stage> for Worker {
                     .header("x-oura-chainsync-point", point_header)
                     .json(&body)
             }
+            ChainEvent::Reset(_) => {
+                let body = serde_json::json!({
+                    "event": "reset",
+                    "point": match &point {
+                        Point::Origin => serde_json::Value::from("origin"),
+                        Point::Specific(slot, hash) => serde_json::json!({
+                            "slot": slot,
+                            "hash": hex::encode(hash),
+                        }),
+                    }
+                });
 
-            ChainEvent::Reset(_) => self
-                .client
-                .post(&stage.config.url)
-                .header("x-oura-chainsync-action", "reset")
-                .header("x-oura-chainsync-point", point_header),
+                self.client
+                    .post(&stage.config.url)
+                    .header("x-oura-chainsync-action", "reset")
+                    .header("x-oura-chainsync-point", point_header)
+                    .json(&body)
+            }
         }
         .build()
         .or_panic()?;
