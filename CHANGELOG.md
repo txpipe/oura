@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-05-05
+
+### 🚀 Features
+
+- Add recursive regex pattern matching for metadata filtering (#914)
+
+### 📚 Documentation
+
+- Improve install instructions (#908)
+
+### ⚙️ Miscellaneous Tasks
+
+- Include npm installer in release
+- Bump pallas to 0.35 for van Rossem compatibility (#922)
+
 ## [2.0.0] - 2025-09-29
 
 ### 🚀 Features
@@ -15,6 +30,10 @@ All notable changes to this project will be documented in this file.
 
 - Make select filter artifacs public for library mode (#892)
 - Support reset events in rollback buffer (#894)
+
+### 💼 Other
+
+- V2.0.0
 
 ### 🚜 Refactor
 
@@ -30,6 +49,7 @@ All notable changes to this project will be documented in this file.
 - Update readme for v2 release (#880)
 - Update readme badges (#881)
 - Tidy up release procedure
+- Force rust version to unify OS builds
 
 ## [2.0.0-beta.0] - 2025-04-18
 
