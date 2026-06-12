@@ -1,6 +1,6 @@
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["relay.cnode-m1.demeter.run:3000"]
 
 [chain]
 type = "mainnet"

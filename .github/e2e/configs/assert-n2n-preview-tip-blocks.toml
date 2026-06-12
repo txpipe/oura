@@ -1,6 +1,6 @@
 [source]
 type = "N2N"
-peers = ["preview-node.world.dev.cardano.org:30002"]
+peers = ["relay.cnode-m1.demeter.run:3002"]
 
 [chain]
 type = "preview"
