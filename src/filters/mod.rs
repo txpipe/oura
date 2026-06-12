@@ -10,6 +10,7 @@ pub mod parse_cbor;
 pub mod rollback_buffer;
 pub mod select;
 pub mod split_block;
+pub mod work_stats;
 
 #[cfg(feature = "wasm")]
 pub mod wasm_plugin;
@@ -23,6 +24,7 @@ pub enum Bootstrapper {
     ParseCbor(parse_cbor::Stage),
     Select(select::Stage),
     RollbackBuffer(rollback_buffer::Stage),
+    WorkStats(work_stats::Stage),
 
     #[cfg(feature = "wasm")]
     WasmPlugin(wasm_plugin::Stage),
@@ -38,6 +40,7 @@ impl Bootstrapper {
             Bootstrapper::ParseCbor(p) => &mut p.input,
             Bootstrapper::Select(p) => &mut p.input,
             Bootstrapper::RollbackBuffer(p) => &mut p.input,
+            Bootstrapper::WorkStats(p) => &mut p.input,
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(p) => &mut p.input,
@@ -53,6 +56,7 @@ impl Bootstrapper {
             Bootstrapper::ParseCbor(p) => &mut p.output,
             Bootstrapper::Select(p) => &mut p.output,
             Bootstrapper::RollbackBuffer(p) => &mut p.output,
+            Bootstrapper::WorkStats(p) => &mut p.output,
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(p) => &mut p.output,
@@ -68,6 +72,7 @@ impl Bootstrapper {
             Bootstrapper::ParseCbor(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::Select(x) => gasket::runtime::spawn_stage(x, policy),
             Bootstrapper::RollbackBuffer(x) => gasket::runtime::spawn_stage(x, policy),
+            Bootstrapper::WorkStats(x) => gasket::runtime::spawn_stage(x, policy),
 
             #[cfg(feature = "wasm")]
             Bootstrapper::WasmPlugin(x) => gasket::runtime::spawn_stage(x, policy),
@@ -85,6 +90,7 @@ pub enum Config {
     ParseCbor(parse_cbor::Config),
     Select(select::Config),
     RollbackBuffer(rollback_buffer::Config),
+    WorkStats(work_stats::Config),
 
     #[cfg(feature = "wasm")]
     WasmPlugin(wasm_plugin::Config),
@@ -100,6 +106,7 @@ impl Config {
             Config::ParseCbor(c) => Ok(Bootstrapper::ParseCbor(c.bootstrapper(ctx)?)),
             Config::Select(c) => Ok(Bootstrapper::Select(c.bootstrapper(ctx)?)),
             Config::RollbackBuffer(c) => Ok(Bootstrapper::RollbackBuffer(c.bootstrapper(ctx)?)),
+            Config::WorkStats(c) => Ok(Bootstrapper::WorkStats(c.bootstrapper(ctx)?)),
 
             #[cfg(feature = "wasm")]
             Config::WasmPlugin(c) => Ok(Bootstrapper::WasmPlugin(c.bootstrapper(ctx)?)),
