@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::ops::Deref as _;
 use tracing::warn;
 
-use pallas::ledger::primitives::babbage::{MintedDatumOption, NetworkId};
+use pallas::ledger::primitives::babbage::{DatumOption, NetworkId};
 use pallas::ledger::primitives::{
     alonzo::{
         self as alonzo, Certificate, InstantaneousRewardSource, InstantaneousRewardTarget,
@@ -153,12 +153,12 @@ impl EventWriter<'_> {
                 .collect::<Vec<_>>()
                 .into(),
             datum_hash: match &output.datum() {
-                Some(MintedDatumOption::Hash(x)) => Some(x.to_string()),
-                Some(MintedDatumOption::Data(x)) => Some(x.original_hash().to_hex()),
+                Some(DatumOption::Hash(x)) => Some(x.to_string()),
+                Some(DatumOption::Data(x)) => Some(x.original_hash().to_hex()),
                 None => None,
             },
             inline_datum: match &output.datum() {
-                Some(MintedDatumOption::Data(x)) => Some(PlutusDatumRecord::from(x.deref())),
+                Some(DatumOption::Data(x)) => Some(PlutusDatumRecord::from(x.deref())),
                 _ => None,
             },
         }
@@ -491,14 +491,8 @@ impl EventWriter<'_> {
                 reward_account: reward_account.to_hex(),
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
-                pool_metadata: match pool_metadata {
-                    Some(x) => Some(x.url.clone()),
-                    _ => None,
-                },
-                pool_metadata_hash: match pool_metadata {
-                    Some(x) => Some(x.hash.clone().to_hex()),
-                    _ => None,
-                },
+                pool_metadata: pool_metadata.as_ref().map(|x| x.url.clone()),
+                pool_metadata_hash: pool_metadata.as_ref().map(|x| x.hash.clone().to_hex()),
             },
             Certificate::PoolRetirement(pool, epoch) => EventData::PoolRetirement {
                 pool: pool.to_hex(),
