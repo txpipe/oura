@@ -204,22 +204,32 @@ fn read_blocks_with_config(
     immutable_path: &Path,
     config: &IntersectConfig,
 ) -> Result<
-    Box<dyn Iterator<Item = pallas::interop::hardano::storage::immutable::FallibleBlock> + Send + Sync>,
+    Box<
+        dyn Iterator<Item = pallas::interop::hardano::storage::immutable::FallibleBlock>
+            + Send
+            + Sync,
+    >,
     WorkerError,
 > {
     let starting_points =
         get_starting_points(immutable_path, config).map_err(|_| WorkerError::Panic)?;
 
     for point in starting_points {
-        match pallas::interop::hardano::storage::immutable::read_blocks_from_point(immutable_path, point) {
+        match pallas::interop::hardano::storage::immutable::read_blocks_from_point(
+            immutable_path,
+            point,
+        ) {
             Ok(iter) => return Ok(iter),
             Err(_) => continue,
         }
     }
 
     // If all points fail (or if the list was empty), try from Origin
-    pallas::interop::hardano::storage::immutable::read_blocks_from_point(immutable_path, Point::Origin)
-        .map_err(|_| WorkerError::Panic)
+    pallas::interop::hardano::storage::immutable::read_blocks_from_point(
+        immutable_path,
+        Point::Origin,
+    )
+    .map_err(|_| WorkerError::Panic)
 }
 
 #[derive(Stage)]

@@ -200,9 +200,9 @@ impl PatternOf<u64> for CoinPattern {
 fn big_int_to_u64(value: Option<&BigInt>) -> u64 {
     match value.and_then(|x| x.big_int.as_ref()) {
         Some(big_int::BigInt::Int(x)) => (*x).try_into().unwrap_or_default(),
-        Some(big_int::BigInt::BigUInt(bytes)) => bytes
-            .iter()
-            .fold(0u64, |acc, b| acc.saturating_mul(256).saturating_add(*b as u64)),
+        Some(big_int::BigInt::BigUInt(bytes)) => bytes.iter().fold(0u64, |acc, b| {
+            acc.saturating_mul(256).saturating_add(*b as u64)
+        }),
         Some(big_int::BigInt::BigNInt(_)) | None => 0,
     }
 }
@@ -328,7 +328,9 @@ impl PatternOf<&TxOutput> for OutputPattern {
     fn is_match(&self, subject: &TxOutput) -> MatchOutcome {
         let a = self.address.is_match(subject.address.as_ref());
 
-        let b = self.lovelace.is_match(big_int_to_u64(subject.coin.as_ref()));
+        let b = self
+            .lovelace
+            .is_match(big_int_to_u64(subject.coin.as_ref()));
 
         let c = self
             .assets
@@ -371,7 +373,9 @@ impl PatternOf<&TxInput> for InputPattern {
 
         let a = self.address.is_match(as_output.address.as_ref());
 
-        let b = self.lovelace.is_match(big_int_to_u64(as_output.coin.as_ref()));
+        let b = self
+            .lovelace
+            .is_match(big_int_to_u64(as_output.coin.as_ref()));
 
         let c = self
             .assets
