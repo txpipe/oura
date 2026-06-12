@@ -59,7 +59,7 @@ impl PatternOf<(&PolicyId, &Asset)> for AssetPattern {
 
         let d = self.name_text.is_match(subject_asset.name.as_ref());
 
-        let e = self.coin.is_match(subject_asset.output_coin);
+        let e = self.coin.is_match(asset_quantity_to_u64(subject_asset));
 
         MatchOutcome::fold_all_of([a, b, c, d, e].into_iter())
     }

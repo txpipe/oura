@@ -183,7 +183,7 @@ fn get_starting_points(
     config: &IntersectConfig,
 ) -> Result<Vec<Point>, Box<dyn std::error::Error>> {
     match config {
-        IntersectConfig::Tip => pallas::storage::hardano::immutable::get_tip(dir)?
+        IntersectConfig::Tip => pallas::interop::hardano::storage::immutable::get_tip(dir)?
             .map_or(Ok(vec![Point::Origin]), |point| Ok(vec![point])),
         IntersectConfig::Origin => Ok(vec![Point::Origin]),
         IntersectConfig::Point(slot, hash) => {
@@ -204,21 +204,21 @@ fn read_blocks_with_config(
     immutable_path: &Path,
     config: &IntersectConfig,
 ) -> Result<
-    Box<dyn Iterator<Item = pallas::storage::hardano::immutable::FallibleBlock> + Send + Sync>,
+    Box<dyn Iterator<Item = pallas::interop::hardano::storage::immutable::FallibleBlock> + Send + Sync>,
     WorkerError,
 > {
     let starting_points =
         get_starting_points(immutable_path, config).map_err(|_| WorkerError::Panic)?;
 
     for point in starting_points {
-        match pallas::storage::hardano::immutable::read_blocks_from_point(immutable_path, point) {
+        match pallas::interop::hardano::storage::immutable::read_blocks_from_point(immutable_path, point) {
             Ok(iter) => return Ok(iter),
             Err(_) => continue,
         }
     }
 
     // If all points fail (or if the list was empty), try from Origin
-    pallas::storage::hardano::immutable::read_blocks_from_point(immutable_path, Point::Origin)
+    pallas::interop::hardano::storage::immutable::read_blocks_from_point(immutable_path, Point::Origin)
         .map_err(|_| WorkerError::Panic)
 }
 

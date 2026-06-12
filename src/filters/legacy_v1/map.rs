@@ -1,5 +1,4 @@
 use gasket::framework::AsWorkError;
-use pallas::codec::utils::Nullable;
 use pallas::ledger::primitives::conway;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
@@ -108,18 +107,18 @@ fn relay_to_string(relay: &Relay) -> String {
     match relay {
         Relay::SingleHostAddr(port, ipv4, ipv6) => {
             let ip = match (ipv6, ipv4) {
-                (_, Nullable::Some(x)) => ip_string_from_bytes(x.as_ref()),
-                (Nullable::Some(x), _) => ip_string_from_bytes(x.as_ref()),
+                (_, Some(x)) => ip_string_from_bytes(x.as_ref()),
+                (Some(x), _) => ip_string_from_bytes(x.as_ref()),
                 _ => "".to_string(),
             };
 
             match port {
-                Nullable::Some(port) => format!("{ip}:{port}"),
+                Some(port) => format!("{ip}:{port}"),
                 _ => ip,
             }
         }
         Relay::SingleHostName(port, host) => match port {
-            Nullable::Some(port) => format!("{host}:{port}"),
+            Some(port) => format!("{host}:{port}"),
             _ => host.clone(),
         },
         Relay::MultiHostName(host) => host.clone(),
@@ -493,11 +492,11 @@ impl EventWriter<'_> {
                 pool_owners: pool_owners.iter().map(|p| p.to_hex()).collect(),
                 relays: relays.iter().map(relay_to_string).collect(),
                 pool_metadata: match pool_metadata {
-                    Nullable::Some(x) => Some(x.url.clone()),
+                    Some(x) => Some(x.url.clone()),
                     _ => None,
                 },
                 pool_metadata_hash: match pool_metadata {
-                    Nullable::Some(x) => Some(x.hash.clone().to_hex()),
+                    Some(x) => Some(x.hash.clone().to_hex()),
                     _ => None,
                 },
             },

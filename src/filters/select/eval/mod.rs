@@ -1,7 +1,7 @@
 use std::{ops::Deref, str::FromStr};
 
 use pallas::interop::utxorpc::spec::cardano::{
-    Asset, AuxData, Metadata, Metadatum, Multiasset, TxInput, TxOutput,
+    asset, big_int, Asset, AuxData, BigInt, Metadata, Metadatum, Multiasset, TxInput, TxOutput,
 };
 use serde::{Deserialize, Serialize};
 use tracing::warn;
@@ -194,6 +194,29 @@ impl PatternOf<u64> for CoinPattern {
     }
 }
 
+/// Best-effort conversion of a u5c `BigInt` into a `u64` for numeric matching.
+/// Lovelace and native-asset quantities fit in `u64` in practice; the arbitrary-precision
+/// byte variants are folded big-endian and saturated, and negative values clamp to `0`.
+fn big_int_to_u64(value: Option<&BigInt>) -> u64 {
+    match value.and_then(|x| x.big_int.as_ref()) {
+        Some(big_int::BigInt::Int(x)) => (*x).try_into().unwrap_or_default(),
+        Some(big_int::BigInt::BigUInt(bytes)) => bytes
+            .iter()
+            .fold(0u64, |acc, b| acc.saturating_mul(256).saturating_add(*b as u64)),
+        Some(big_int::BigInt::BigNInt(_)) | None => 0,
+    }
+}
+
+/// Extracts the numeric quantity of a u5c `Asset` (output or mint coin) as a `u64`.
+fn asset_quantity_to_u64(asset: &Asset) -> u64 {
+    match asset.quantity.as_ref() {
+        Some(asset::Quantity::OutputCoin(x)) | Some(asset::Quantity::MintCoin(x)) => {
+            big_int_to_u64(Some(x))
+        }
+        None => 0,
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum TextPattern {
@@ -305,7 +328,7 @@ impl PatternOf<&TxOutput> for OutputPattern {
     fn is_match(&self, subject: &TxOutput) -> MatchOutcome {
         let a = self.address.is_match(subject.address.as_ref());
 
-        let b = self.lovelace.is_match(subject.coin);
+        let b = self.lovelace.is_match(big_int_to_u64(subject.coin.as_ref()));
 
         let c = self
             .assets
@@ -348,7 +371,7 @@ impl PatternOf<&TxInput> for InputPattern {
 
         let a = self.address.is_match(as_output.address.as_ref());
 
-        let b = self.lovelace.is_match(as_output.coin);
+        let b = self.lovelace.is_match(big_int_to_u64(as_output.coin.as_ref()));
 
         let c = self
             .assets
