@@ -66,6 +66,12 @@ jobs:
             kind: aws
           - name: aws-sqs-10-blocks
             kind: aws
+          - name: u5c-mainnet-tip-blocks
+            kind: u5c
+          - name: u5c-preprod-tip-blocks
+            kind: u5c
+          - name: u5c-preview-tip-blocks
+            kind: u5c
 
     # n2c relies on a Demeter `dmtrcli` port-forward that is still being finalized,
     # so allow those legs to fail without failing the whole suite.
@@ -108,6 +114,11 @@ jobs:
           TEST_NAME: ${{ matrix.name }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
           KIND: ${{ matrix.kind }}
+          # utxorpc (u5c) legs resolve their dmtr-api-key from these via envsubst;
+          # empty/unused for the other kinds.
+          DMTR_UTXORPC_KEY_MAINNET: ${{ secrets.DMTR_UTXORPC_KEY_MAINNET }}
+          DMTR_UTXORPC_KEY_PREPROD: ${{ secrets.DMTR_UTXORPC_KEY_PREPROD }}
+          DMTR_UTXORPC_KEY_PREVIEW: ${{ secrets.DMTR_UTXORPC_KEY_PREVIEW }}
         run: .github/e2e/scripts/run-test.sh
 
       - name: Stop dmtrcli tunnel (n2c)
