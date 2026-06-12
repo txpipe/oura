@@ -281,24 +281,15 @@ impl IntersectConfig {
 /// Optional configuration to stop processing new blocks after processing:
 ///   1. a block with the given hash
 ///   2. the first block on or after a given absolute slot
-///   3. TODO: a total of X blocks
-#[derive(Deserialize, Debug, Clone)]
+///   3. a total of X blocks
+#[derive(Deserialize, Debug, Clone, Default)]
 pub struct FinalizeConfig {
-    until_hash: Option<String>,
-    max_block_slot: Option<u64>,
-    // max_block_quantity: Option<u64>,
+    pub until_hash: Option<String>,
+    pub max_block_slot: Option<u64>,
+    pub max_block_quantity: Option<u64>,
 }
 
-pub fn should_finalize(
-    config: &Option<FinalizeConfig>,
-    last_point: &Point,
-    // block_count: u64,
-) -> bool {
-    let config = match config {
-        Some(x) => x,
-        None => return false,
-    };
-
+pub fn should_finalize(config: &FinalizeConfig, last_point: &Point, block_count: u64) -> bool {
     if let Some(expected) = &config.until_hash {
         if let Point::Specific(_, current) = last_point {
             return expected == &hex::encode(current);
@@ -311,11 +302,59 @@ pub fn should_finalize(
         }
     }
 
-    // if let Some(max) = config.max_block_quantity {
-    //     if block_count >= max {
-    //         return true;
-    //     }
-    // }
+    if let Some(max) = config.max_block_quantity {
+        if block_count >= max {
+            return true;
+        }
+    }
 
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(slot: u64, hash_hex: &str) -> Point {
+        Point::Specific(slot, hex::decode(hash_hex).unwrap())
+    }
+
+    #[test]
+    fn empty_policy_never_finalizes() {
+        let cfg = FinalizeConfig::default();
+        assert!(!should_finalize(&cfg, &point(100, "abcd"), 0));
+        assert!(!should_finalize(&cfg, &point(100, "abcd"), 1_000_000));
+    }
+
+    #[test]
+    fn max_block_quantity_finalizes_at_or_after_count() {
+        let cfg = FinalizeConfig {
+            max_block_quantity: Some(20),
+            ..Default::default()
+        };
+        assert!(!should_finalize(&cfg, &point(100, "abcd"), 19));
+        assert!(should_finalize(&cfg, &point(100, "abcd"), 20));
+        assert!(should_finalize(&cfg, &point(100, "abcd"), 21));
+    }
+
+    #[test]
+    fn max_block_slot_finalizes_at_or_after_slot() {
+        let cfg = FinalizeConfig {
+            max_block_slot: Some(500),
+            ..Default::default()
+        };
+        assert!(!should_finalize(&cfg, &point(499, "abcd"), 0));
+        assert!(should_finalize(&cfg, &point(500, "abcd"), 0));
+        assert!(should_finalize(&cfg, &point(501, "abcd"), 0));
+    }
+
+    #[test]
+    fn until_hash_finalizes_on_matching_hash() {
+        let cfg = FinalizeConfig {
+            until_hash: Some("abcd".to_string()),
+            ..Default::default()
+        };
+        assert!(should_finalize(&cfg, &point(100, "abcd"), 0));
+        assert!(!should_finalize(&cfg, &point(100, "beef"), 999));
+    }
 }
