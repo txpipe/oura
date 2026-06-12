@@ -1,0 +1,23 @@
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Point"
+value = [50030552, "5a091e9831bc0fcd6e6bdb2877036bb260abb4e19195517e4153fb041f956df5"]
+
+[[filters]]
+type = "WorkStats"
+max_block_quantity = 500
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "AwsS3"
+region = "us-west-2"
+bucket = "oura-e2e"
+prefix = "${TEST_NAME}-${GITHUB_RUN_NUMBER}/"
