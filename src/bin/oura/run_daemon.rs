@@ -64,15 +64,49 @@ pub fn run(args: &Args) -> Result<(), Error> {
     let prometheus = tokio_rt.spawn(serve_prometheus(daemon.clone(), metrics));
     let tui = tokio_rt.spawn(console::render(daemon.clone(), args.tui));
 
-    daemon.block();
+    // `block`/`teardown` consume the `Daemon`, but it's shared via `Arc` with the
+    // prometheus + tui tasks, so we drive the stop loop over `&self` ourselves.
+    while !daemon.should_stop() {
+        std::thread::sleep(std::time::Duration::from_millis(1500));
+    }
 
     info!("oura is stopping");
 
-    daemon.teardown();
     prometheus.abort();
     tui.abort();
 
-    Ok(())
+    // Capture *why* the pipeline stopped before tearing down (teardown ends every
+    // stage). A stage that reached `Ended` means a finalization filter completed
+    // gracefully — only such filters self-end, so other stages erroring out as a
+    // teardown side effect don't confuse this. Any other stop with no `Ended`
+    // stage is a crashed/stalled stage, unless the user sent a termination signal.
+    use gasket::runtime::{StagePhase, TetherState};
+    let finalized = daemon.tethers().any(|tether| {
+        matches!(
+            tether.check_state(),
+            TetherState::Alive(StagePhase::Ended) | TetherState::Finished(StagePhase::Ended)
+        )
+    });
+    let terminated = daemon.is_terminated();
+
+    // wait for the aborted tasks to drop their `Arc` clones so we can reclaim
+    // sole ownership and tear the stages down gracefully.
+    tokio_rt.block_on(async {
+        let _ = prometheus.await;
+        let _ = tui.await;
+    });
+
+    if let Ok(daemon) = Arc::try_unwrap(daemon) {
+        daemon.teardown();
+    }
+
+    if finalized || terminated {
+        Ok(())
+    } else {
+        Err(Error::custom(
+            "pipeline stopped before finalizing (a stage crashed or stalled)",
+        ))
+    }
 }
 
 #[derive(clap::Args)]
