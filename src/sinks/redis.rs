@@ -86,11 +86,6 @@ pub struct Stage {
     latest_block: gasket::metrics::Gauge,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-pub enum StreamStrategy {
-    ByBlock,
-}
-
 #[derive(Default, Debug, Deserialize)]
 pub struct Config {
     pub url: String,

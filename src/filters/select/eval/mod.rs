@@ -728,7 +728,7 @@ mod tests {
         let utf8_no_match = b"goodbye";
         assert_eq!(pattern.is_match(&utf8_no_match[..]), MatchOutcome::Negative);
 
-        let invalid_utf8 = vec![0xFF, 0xFE, 0xFD];
+        let invalid_utf8 = [0xFF, 0xFE, 0xFD];
         assert_eq!(pattern.is_match(&invalid_utf8[..]), MatchOutcome::Uncertain);
     }
 

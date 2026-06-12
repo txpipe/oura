@@ -65,20 +65,15 @@ impl Breadcrumbs {
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Default)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum ChainConfig {
+    #[default]
     Mainnet,
     Testnet,
     PreProd,
     Preview,
     Custom(GenesisValues),
-}
-
-impl Default for ChainConfig {
-    fn default() -> Self {
-        Self::Mainnet
-    }
 }
 
 impl From<ChainConfig> for GenesisValues {
