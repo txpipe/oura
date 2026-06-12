@@ -96,67 +96,20 @@ jobs:
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 3600
 
-      # --- n2c: expose a node socket via Demeter dmtrcli ----------------------
-      # PLACEHOLDER: the exact dmtrcli auth/port-forward invocation must be
-      # confirmed against the real CLI. These legs are continue-on-error.
+      # n2c reaches a Demeter-managed node socket via a dmtrcli port-forward.
       - name: Set up dmtrcli node socket (n2c)
         if: matrix.kind == 'n2c'
         env:
           DMTR_API_KEY: ${{ secrets.DMTR_API_KEY }}
-        run: |
-          set -euo pipefail
-          curl -fsSL https://raw.githubusercontent.com/demeter-run/cli/main/install.sh | sh
-          mkdir -p "${RUNNER_TEMP}/sockets"
-          dmtrcli auth login --api-key "${DMTR_API_KEY}"
-          # Forward the managed Cardano node's n2c socket onto the runner host.
-          dmtrcli ports tunnel \
-            --unix-socket "${RUNNER_TEMP}/sockets/node0.socket" &
-          echo "DMTR_TUNNEL_PID=$!" >> "$GITHUB_ENV"
-          # Wait for the socket to appear before starting oura.
-          for i in $(seq 1 30); do
-            if [ -S "${RUNNER_TEMP}/sockets/node0.socket" ]; then break; fi
-            sleep 2
-          done
+        run: .github/e2e/scripts/setup-dmtr-socket.sh
 
-      # --- run the test --------------------------------------------------------
       - name: Run ${{ matrix.name }}
         env:
           TEST_NAME: ${{ matrix.name }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
           KIND: ${{ matrix.kind }}
-        run: |
-          set -euo pipefail
-
-          # Resolve placeholders (e.g. the s3 prefix) into the final config.
-          envsubst < ".github/e2e/configs/${TEST_NAME}.toml" > "${RUNNER_TEMP}/daemon.toml"
-          echo "----- resolved daemon.toml -----"
-          cat "${RUNNER_TEMP}/daemon.toml"
-          echo "--------------------------------"
-
-          docker_args=(
-            --rm
-            -e RUST_LOG=warn
-            -v "${RUNNER_TEMP}/daemon.toml:/etc/oura/daemon.toml:ro"
-          )
-
-          if [ "$KIND" = "aws" ]; then
-            docker_args+=(
-              -e AWS_ACCESS_KEY_ID
-              -e AWS_SECRET_ACCESS_KEY
-              -e AWS_SESSION_TOKEN
-              -e AWS_REGION
-              -e AWS_DEFAULT_REGION
-            )
-          fi
-
-          if [ "$KIND" = "n2c" ]; then
-            docker_args+=( -v "${RUNNER_TEMP}/sockets:/opt/cardano/cnode/sockets" )
-          fi
-
-          # oura self-terminates via [source.finalize]; the Assert sink panics on a
-          # bad block (non-zero exit). `timeout` guards against a hang (exit 124).
-          timeout 1800 docker run "${docker_args[@]}" "$TARGET_IMAGE" daemon
+        run: .github/e2e/scripts/run-test.sh
 
       - name: Stop dmtrcli tunnel (n2c)
         if: always() && matrix.kind == 'n2c'
-        run: kill "${DMTR_TUNNEL_PID}" 2>/dev/null || true
+        run: .github/e2e/scripts/stop-dmtr-tunnel.sh
