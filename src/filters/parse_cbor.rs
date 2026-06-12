@@ -15,6 +15,10 @@ impl interop::LedgerContext for NoOpContext {
     fn get_utxos(&self, _refs: &[interop::TxoRef]) -> Option<interop::UtxoMap> {
         None
     }
+
+    fn get_slot_timestamp(&self, _slot: u64) -> Option<u64> {
+        None
+    }
 }
 
 #[derive(Default, Stage)]
