@@ -17,6 +17,15 @@ enum Oura {
 }
 
 fn main() {
+    // The U5C source connects over TLS via tonic/rustls. In builds that pull
+    // more than one rustls crypto provider (e.g. `aws` brings in aws-lc-rs
+    // alongside ring), rustls has no process-default provider and panics on the
+    // first TLS handshake. Install one explicitly before anything uses TLS.
+    #[cfg(feature = "u5c")]
+    {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+    }
+
     let args = Oura::parse();
 
     let result = match args {

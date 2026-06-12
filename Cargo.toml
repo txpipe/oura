@@ -17,7 +17,7 @@ sql = ["sqlx"]
 gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "jsonwebtoken"]
 rabbitmq = ["lapin"]
 zeromq = ["zmq"]
-u5c = ["utxorpc", "futures"]
+u5c = ["utxorpc", "futures", "rustls"]
 mithril = ["mithril-client"]
 hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
 # elasticsearch = auto feature flag
@@ -76,6 +76,8 @@ miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
 redis = { version = "0.27.6", optional = true }
 utxorpc = { version = "0.14.0", optional = true }
+# only used to install a default rustls CryptoProvider for the u5c TLS path
+rustls = { version = "0.23", default-features = false, features = ["ring"], optional = true }
 tungstenite = { version = "0.24.0", optional = true }
 tokio-tungstenite = { version = "0.24.0", optional = true }
 futures-util = { version = "0.3", optional = true }
