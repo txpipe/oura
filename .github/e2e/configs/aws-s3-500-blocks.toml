@@ -13,9 +13,6 @@ value = [50030552, "5a091e9831bc0fcd6e6bdb2877036bb260abb4e19195517e4153fb041f95
 type = "WorkStats"
 max_block_quantity = 500
 
-[[filters]]
-type = "ParseCbor"
-
 [sink]
 type = "AwsS3"
 region = "us-west-2"
