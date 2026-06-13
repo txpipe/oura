@@ -20,3 +20,5 @@ result
 .env*
 google_credentials.json
 oura.toml
+# macOS
+.DS_Store
