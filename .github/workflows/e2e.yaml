@@ -6,18 +6,20 @@ name: e2e
 env:
   REGISTRY: ghcr.io
   TARGET_IMAGE: ghcr.io/txpipe/oura-e2e:${{ github.sha }}
-  CLUSTER: m1-prod-6x3kk4
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -28,88 +30,80 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          # e2e only runs on the GitHub-hosted linux/amd64 runners, so we skip
+          # the armv7 cross-build that the release pipeline produces.
           platforms: linux/amd64
           push: true
           tags: ${{ env.TARGET_IMAGE }}
-
-  prepare:
-    needs: ["build"]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: us-west-2
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ClusterAdminRole
-          role-session-name: Github-e2e-Rollout
-          role-duration-seconds: 1200
-
-      - uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.23.6"
-
-      - name: Login to EKS
-        run: aws eks update-kubeconfig --name ${CLUSTER}
-
-      - name: Create Namespace
-        run: kubectl create namespace e2e-${GITHUB_RUN_NUMBER}
-
-      - name: Create Service Account
-        working-directory: .github/e2e
-        env:
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-        run: envsubst < serviceaccount.yaml | kubectl apply -n e2e-${GITHUB_RUN_NUMBER} -f -
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   test:
-    needs: ["prepare"]
+    needs: ["build"]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      id-token: write # mint the GitHub OIDC token for AWS role assumption
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: assert-n2c-preview-origin-blocks
-          - name: assert-n2c-preview-tip-blocks
           - name: assert-n2n-mainnet-origin-blocks
+            kind: n2n
           - name: assert-n2n-mainnet-tip-blocks
+            kind: n2n
           - name: assert-n2n-preview-origin-blocks
+            kind: n2n
           - name: assert-n2n-preview-tip-blocks
+            kind: n2n
           - name: aws-lambda-10-blocks
+            kind: aws
           - name: aws-s3-500-blocks
+            kind: aws
           - name: aws-sqs-10-blocks
+            kind: aws
+          - name: u5c-mainnet-tip-blocks
+            kind: u5c
+          - name: u5c-preprod-tip-blocks
+            kind: u5c
+          - name: u5c-preview-tip-blocks
+            kind: u5c
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull image
+        run: docker pull "$TARGET_IMAGE"
+
+      # --- AWS credentials (s3 / sqs / lambda sinks) ---------------------------
+      # Keyless via GitHub OIDC: the runner mints an OIDC token and assumes
+      # OuraE2ETest with AssumeRoleWithWebIdentity (no static secrets). Requires
+      # an IAM OIDC provider for token.actions.githubusercontent.com and a trust
+      # policy on OuraE2ETest allowing this repo.
+      - name: Configure AWS credentials
+        if: matrix.kind == 'aws'
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ClusterAdminRole
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/OuraE2ETest
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 3600
 
-      - uses: azure/setup-kubectl@v4
-        with:
-          version: "v1.23.6"
-
-      - name: Login to EKS
-        run: aws eks update-kubeconfig --name ${CLUSTER}
-
-      - name: Rollout Job
-        working-directory: .github/e2e
+      - name: Run ${{ matrix.name }}
         env:
           TEST_NAME: ${{ matrix.name }}
-        run: |+
-          envsubst < ${TEST_NAME}.yaml | kubectl apply -n e2e-${GITHUB_RUN_NUMBER} -f -
-
-      - name: Wait for Completion
-        env:
-          TEST_NAME: ${{ matrix.name }}
-        run: |+
-          kubectl wait --for=condition=complete --timeout=1800s job ${TEST_NAME} -n e2e-${GITHUB_RUN_NUMBER}
-          kubectl get job ${TEST_NAME} -o jsonpath={.status.succeeded} -n e2e-${GITHUB_RUN_NUMBER}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          # utxorpc (u5c) legs resolve their dmtr-api-key from these via envsubst;
+          # empty/unused for the other kinds.
+          DMTR_UTXORPC_KEY_MAINNET: ${{ secrets.DMTR_UTXORPC_KEY_MAINNET }}
+          DMTR_UTXORPC_KEY_PREPROD: ${{ secrets.DMTR_UTXORPC_KEY_PREPROD }}
+          DMTR_UTXORPC_KEY_PREVIEW: ${{ secrets.DMTR_UTXORPC_KEY_PREVIEW }}
+        run: .github/e2e/scripts/run-test.sh

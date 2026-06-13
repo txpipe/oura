@@ -1,0 +1,25 @@
+[source]
+type = "N2N"
+peers = ["relay.cnode-m1.demeter.run:3000"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Point"
+value = [50030552, "5a091e9831bc0fcd6e6bdb2877036bb260abb4e19195517e4153fb041f956df5"]
+
+[[filters]]
+type = "WorkStats"
+max_block_quantity = 10
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "AwsSqs"
+region = "us-west-2"
+queue_url = "https://sqs.us-west-2.amazonaws.com/295114534192/oura-e2e"

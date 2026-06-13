@@ -76,6 +76,9 @@ miette = { version = "7.2.0", features = ["fancy"] }
 itertools = "0.12.1"
 redis = { version = "0.27.6", optional = true }
 utxorpc = { version = "0.14.0", optional = true }
+# used to install a process-default rustls CryptoProvider so multi-provider
+# builds (any combination of TLS features) don't panic on the first handshake
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
 tungstenite = { version = "0.24.0", optional = true }
 tokio-tungstenite = { version = "0.24.0", optional = true }
 futures-util = { version = "0.3", optional = true }
