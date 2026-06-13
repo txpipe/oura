@@ -44,6 +44,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      id-token: write # mint the GitHub OIDC token for AWS role assumption
     strategy:
       fail-fast: false
       matrix:
@@ -83,13 +84,15 @@ jobs:
         run: docker pull "$TARGET_IMAGE"
 
       # --- AWS credentials (s3 / sqs / lambda sinks) ---------------------------
+      # Keyless via GitHub OIDC: the runner mints an OIDC token and assumes
+      # OuraE2ETest with AssumeRoleWithWebIdentity (no static secrets). Requires
+      # an IAM OIDC provider for token.actions.githubusercontent.com and a trust
+      # policy on OuraE2ETest allowing this repo.
       - name: Configure AWS credentials
         if: matrix.kind == 'aws'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-west-2
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/OuraE2ETest
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 3600
