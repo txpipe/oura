@@ -34,8 +34,4 @@ if [ "$KIND" = "aws" ]; then
   )
 fi
 
-if [ "$KIND" = "n2c" ]; then
-  docker_args+=(-v "${RUNNER_TEMP}/sockets:/opt/cardano/cnode/sockets")
-fi
-
 timeout 1800 docker run "${docker_args[@]}" "$TARGET_IMAGE" daemon

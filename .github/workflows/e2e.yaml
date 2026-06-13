@@ -48,10 +48,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: assert-n2c-preview-origin-blocks
-            kind: n2c
-          - name: assert-n2c-preview-tip-blocks
-            kind: n2c
           - name: assert-n2n-mainnet-origin-blocks
             kind: n2n
           - name: assert-n2n-mainnet-tip-blocks
@@ -72,10 +68,6 @@ jobs:
             kind: u5c
           - name: u5c-preview-tip-blocks
             kind: u5c
-
-    # n2c relies on a Demeter `dmtrcli` port-forward that is still being finalized,
-    # so allow those legs to fail without failing the whole suite.
-    continue-on-error: ${{ matrix.kind == 'n2c' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -102,13 +94,6 @@ jobs:
           role-session-name: Github-e2e-Rollout
           role-duration-seconds: 3600
 
-      # n2c reaches a Demeter-managed node socket via a dmtrcli port-forward.
-      - name: Set up dmtrcli node socket (n2c)
-        if: matrix.kind == 'n2c'
-        env:
-          DMTR_API_KEY: ${{ secrets.DMTR_API_KEY }}
-        run: .github/e2e/scripts/setup-dmtr-socket.sh
-
       - name: Run ${{ matrix.name }}
         env:
           TEST_NAME: ${{ matrix.name }}
@@ -120,7 +105,3 @@ jobs:
           DMTR_UTXORPC_KEY_PREPROD: ${{ secrets.DMTR_UTXORPC_KEY_PREPROD }}
           DMTR_UTXORPC_KEY_PREVIEW: ${{ secrets.DMTR_UTXORPC_KEY_PREVIEW }}
         run: .github/e2e/scripts/run-test.sh
-
-      - name: Stop dmtrcli tunnel (n2c)
-        if: always() && matrix.kind == 'n2c'
-        run: .github/e2e/scripts/stop-dmtr-tunnel.sh
