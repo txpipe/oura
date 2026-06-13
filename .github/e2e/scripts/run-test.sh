@@ -7,8 +7,7 @@
 # the Assert sink panics on a bad block (non-zero); `timeout` guards a hang (124).
 #
 # Expects in the environment (set by the workflow):
-#   TEST_NAME, KIND, GITHUB_RUN_NUMBER, RUNNER_TEMP, TARGET_IMAGE
-# For aws legs, the AWS_* credentials must already be exported.
+#   TEST_NAME, GITHUB_RUN_NUMBER, RUNNER_TEMP, TARGET_IMAGE
 
 set -euo pipefail
 
@@ -24,14 +23,9 @@ docker_args=(
   -v "${RUNNER_TEMP}/daemon.toml:/etc/oura/daemon.toml:ro"
 )
 
-if [ "$KIND" = "aws" ]; then
-  docker_args+=(
-    -e AWS_ACCESS_KEY_ID
-    -e AWS_SECRET_ACCESS_KEY
-    -e AWS_SESSION_TOKEN
-    -e AWS_REGION
-    -e AWS_DEFAULT_REGION
-  )
-fi
+# forward any AWS_* env the workflow exported (the OIDC step, on aws legs)
+for var in $(compgen -e | grep '^AWS_' || true); do
+  docker_args+=(-e "$var")
+done
 
 timeout 1800 docker run "${docker_args[@]}" "$TARGET_IMAGE" daemon

@@ -101,7 +101,6 @@ jobs:
         env:
           TEST_NAME: ${{ matrix.name }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
-          KIND: ${{ matrix.kind }}
           # utxorpc (u5c) legs resolve their dmtr-api-key from these via envsubst;
           # empty/unused for the other kinds.
           DMTR_UTXORPC_KEY_MAINNET: ${{ secrets.DMTR_UTXORPC_KEY_MAINNET }}
