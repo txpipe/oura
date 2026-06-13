@@ -61,18 +61,38 @@ pub fn run(args: &Args) -> Result<(), Error> {
         .build()
         .unwrap();
 
-    let prometheus = tokio_rt.spawn(serve_prometheus(daemon.clone(), metrics));
-    let tui = tokio_rt.spawn(console::render(daemon.clone(), args.tui));
+    // detached: dropping a tokio `JoinHandle` doesn't abort the task; both keep
+    // running until the runtime is dropped below.
+    tokio_rt.spawn(serve_prometheus(daemon.clone(), metrics));
+    tokio_rt.spawn(console::render(daemon.clone(), args.tui));
 
-    daemon.block();
+    // The daemon is shared via `Arc` with the prometheus + tui tasks, so we poll
+    // its stop condition over `&self` instead of letting `block` consume it. The
+    // `StopReason` tells us why the pipeline stopped so we can pick an exit code.
+    let reason = loop {
+        if let Some(reason) = daemon.stop_reason() {
+            break reason;
+        }
 
-    info!("oura is stopping");
+        std::thread::sleep(std::time::Duration::from_millis(1500));
+    };
 
-    daemon.teardown();
-    prometheus.abort();
-    tui.abort();
+    info!(%reason, "oura is stopping");
 
-    Ok(())
+    // Dropping the runtime cancels the prometheus + tui tasks and waits for their
+    // futures to drop, releasing their `Arc` clones so we can reclaim sole
+    // ownership and tear the stages down gracefully.
+    drop(tokio_rt);
+
+    Arc::try_unwrap(daemon)
+        .expect("runtime tasks released their daemon clones")
+        .teardown();
+
+    if reason.is_graceful() {
+        Ok(())
+    } else {
+        Err(Error::custom(format!("pipeline stopped: {reason}")))
+    }
 }
 
 #[derive(clap::Args)]
