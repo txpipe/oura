@@ -38,4 +38,4 @@ reset_template = "DELETE FROM events WHERE slot > {{point.slot}}"
 Each template is rendered with the following data context:
 
 - `point`: the chain point. For a specific point this is an object with `slot` (number) and `hash` (hex string). For the chain origin it is `null`.
-- `record`: the event payload (omitted for `reset` events). The shape depends on the record type produced by the preceding filters (e.g. raw CBOR hex, a parsed transaction, or a legacy v1 event).
+- `record`: the event payload. For `reset` events this value is `null`. The shape for non-reset events depends on the record type produced by the preceding filters (e.g. raw CBOR hex, a parsed transaction, or a legacy v1 event).

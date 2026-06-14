@@ -4,7 +4,7 @@ sidebar:
   label: ZeroMQ
 ---
 
-A sink that publishes each event over a [ZeroMQ](https://zeromq.org/) socket. The sink opens a `PUSH` socket and connects it to the configured address; each event is json-encoded and sent as a single message. A downstream `PULL` socket can then consume the stream of events.
+A sink that publishes chain events over a [ZeroMQ](https://zeromq.org/) socket. The sink opens a `PUSH` socket and connects it to the configured address; each event that carries a record is json-encoded and sent as a single message. Events without a record (such as resets) are skipped and not published. A downstream `PULL` socket can then consume the stream of events.
 
 This sink requires Oura to be built with the `zeromq` feature.
 
