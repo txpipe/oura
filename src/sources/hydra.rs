@@ -220,7 +220,12 @@ impl gasket::framework::Worker<Stage> for Worker {
         debug!("connecting to hydra WebSocket");
 
         let url = &stage.config.ws_url;
-        let (socket, _) = connect_async(url).await.expect("Can't connect");
+        let (socket, _) = connect_async(url)
+            .await
+            .inspect_err(|err| {
+                error!(%err, %url, "failed to connect to hydra WebSocket");
+            })
+            .or_restart()?;
         let worker = Self {
             socket,
             intersect: intersect_from_config(&stage.intersect),
