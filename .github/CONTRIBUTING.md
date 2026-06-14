@@ -33,7 +33,7 @@ type = "Stdout"
 
 chain peers
 
-**Mainnet** `relays-new.cardano-mainnet.iohk.io:3001`
+**Mainnet** `backbone.mainnet.cardanofoundation.org:3001`
 **Preprod** `preprod-node.world.dev.cardano.org:30000`
 **Preview** `preview-node.world.dev.cardano.org:30002`
 

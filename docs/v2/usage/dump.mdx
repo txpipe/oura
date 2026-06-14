@@ -30,17 +30,17 @@ oura dump [OPTIONS] <socket>
 ### Dump Data From A Remote Relay Node into Stdout
 
 ```sh
-oura dump relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp
+oura dump backbone.mainnet.cardanofoundation.org:3001 --bearer tcp
 ```
 
 ### Dump Data From A Remote Relay Node into Rotating Files
 
 ```sh
-oura dump relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp --output ./mainnet-logs
+oura dump backbone.mainnet.cardanofoundation.org:3001 --bearer tcp --output ./mainnet-logs
 ```
 
 ### Pipe Data From A Remote Relay Node into a new Shell Command
 
 ```sh
-oura dump relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp | grep block
+oura dump backbone.mainnet.cardanofoundation.org:3001 --bearer tcp | grep block
 ```
