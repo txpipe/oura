@@ -2,11 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-06-14
+
+### 🚀 Features
+
+- Add work_stats filter with finalization policy (#928)
+- Bump gasket to 0.11 and derive exit code from StopReason (#930)
+
+### 🐛 Bug Fixes
+
+- Bump pallas + utxorpc to utxorpc-spec 0.19 (#921) (#924)
+- Bump aws-lc-sys/aws-lc-rs for new MSVC compatibility (#926)
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix legacy lint warnings (#925)
+- Migrate e2e tests from EKS/Kubernetes to GitHub runners (#927)
+- Realign CI/release/publish workflows (#932)
+- Add Docker build/publish workflow on push to main (#933)
+- Build e2e image via the production native-build path (#934)
+- Build e2e image on ubuntu-22.04 to match runtime glibc (#935)
+- Smoke-test the pushed docker image (#936)
+
 ## [2.0.1] - 2026-05-05
 
 ### 🚀 Features
 
 - Add recursive regex pattern matching for metadata filtering (#914)
+
+### 💼 Other
+
+- V2.0.1
 
 ### 📚 Documentation
 
