@@ -15,7 +15,7 @@ When running in daemon mode, Oura provides 4 different strategies for finding th
 
 The default strategy use by Oura is `Tip`, unless an alternative option is specified via configuration.
 
-You can also define a finalizing point by providing a block hash at which oura will stop reading from the the chain and exit gracefully.
+You can also have Oura stop reading from the chain and exit gracefully once it reaches a given block hash, slot, or block count. This is configured through the [Work Stats filter](/oura/v2/filters/work_stats); see [finalize options](/oura/v2/advanced/finalize_options) for details.
 
 ## Configuration
 
