@@ -100,6 +100,7 @@ jobs:
         run: mv .github/image/bin/oura-Linux-x86_64 .github/image/bin/oura-Linux-amd64
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .github/image
@@ -107,3 +108,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      # Basic smoke test: run the image we just pushed and make sure the binary
+      # actually executes. Pulling by digest selects the amd64 variant on this
+      # runner, which catches runtime breakage like a glibc mismatch against the
+      # debian:12-slim base.
+      - name: Smoke test
+        run: docker run --rm ghcr.io/txpipe/oura@${{ steps.build.outputs.digest }} --version
