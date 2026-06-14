@@ -1,35 +1,47 @@
-# WASM Basic
+# WASM plugin filter
 
-This example shows how to build a custom Oura plugin using Golang.
+Run a custom WASM filter built in Go. The plugin under `./extract_fee` extracts the fee value
+of each transaction, so the events printed to stdout are the per-transaction fees.
 
-The code under `./extract_fee` contains the Golang source code for the plugin. The scope of this very basic plugin is to extract the fee value of each transaction.
+## Pipeline
 
-## Requirements
+```mermaid
+flowchart LR
+  src[N2N source] --> f1[SplitBlock] --> f2[ParseCbor] --> f3[WasmPlugin] --> sink[Stdout sink]
+```
 
-- [tinygo](https://tinygo.org/getting-started/install/)
+- **Source** — `N2N`: mainnet relay, starting from the `Point` in `[intersect]`.
+- **Filters**
+  - `SplitBlock`: breaks each block into individual transactions.
+  - `ParseCbor`: decodes the raw transaction CBOR into structured records.
+  - `WasmPlugin`: loads `./extract_fee/plugin.wasm` and transforms each record (here,
+    extracting the fee).
+- **Sink** — `Stdout`: prints the plugin's output.
 
-> While the core Go toolchain has support to target WebAssembly, we find tinygo to work well for plug-in code.
+## Prerequisites
 
-## Procedure
+- Built with the `wasm` feature.
+- [tinygo](https://tinygo.org/getting-started/install/) to compile the plugin.
 
-1. Build the plugin
+> The core Go toolchain can target WebAssembly, but tinygo works well for plugin code. The Go
+> code uses the [extism](https://github.com/extism) plugin system; see the
+> [go-pdk docs](https://github.com/extism/go-pdk) for more.
 
-Run the following command from inside the `./extract_fee` directory to compile the Golang source into a WASM module using tinigo.
+## Setup
+
+Build the plugin from inside `./extract_fee` — this produces the `plugin.wasm` that
+`daemon.toml` already points at:
 
 ```sh
+cd extract_fee
 tinygo build -o plugin.wasm -target wasi main.go
 ```
 
-The Golang code relies on a plugin system called [extism](https://github.com/extism) that provides several extra features which are not reflected in this example. To read more about how to use Extism in go, refer to the [official docs](https://github.com/extism/go-pdk).
-
-1. Run Oura using the plugin
-
-Run Oura using the `daemon.toml` config in this example that already points to the compiled WASM module generated in the previous step.
+## Run
 
 ```sh
-cargo run --features wasm --bin oura -- daemon --config ./daemon.toml
+cd examples/wasm_basic
+cargo run --features wasm --bin oura -- daemon --config daemon.toml
 ```
 
-> Note that wasm plugins require the Cargo feature flag named `wasm`
-
-You should notice that the events piped in stdout show numbers that represent the fees of each transaction processed.
+(or `oura daemon --config daemon.toml` with a binary built with the `wasm` feature.)
