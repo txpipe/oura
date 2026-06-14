@@ -9,7 +9,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pin to 22.04 (glibc 2.35) to match docker.yml: a binary built on 24.04
+    # links GLIBC_2.39, which the debian:12-slim runtime image (glibc 2.36)
+    # can't satisfy.
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
