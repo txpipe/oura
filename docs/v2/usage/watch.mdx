@@ -29,7 +29,7 @@ oura watch [OPTIONS] <socket>
 ### Watch Live Data From A Remote Relay Node
 
 ```sh
-oura watch relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp
+oura watch backbone.mainnet.cardanofoundation.org:3001 --bearer tcp
 ```
 
 ### Watch Live Data From A Local Node Via Unix Socket
@@ -47,7 +47,7 @@ oura watch /opt/cardano/cnode/sockets/node0.socket --bearer unix --magic testnet
 ### Watch Data Starting At A Particular Block
 
 ```sh
-oura watch relays-new.cardano-mainnet.iohk.io:3001 \
+oura watch backbone.mainnet.cardanofoundation.org:3001 \
     --bearer tcp \
     --since 49159253,d034a2d0e4c3076f57368ed59319010c265718f0923057f8ff914a3b6bfd1314
 ```
