@@ -1,0 +1,20 @@
+---
+title: Into JSON filter
+sidebar:
+  label: Into JSON
+---
+
+The `into_json` filter converts each record flowing through the pipeline into a generic JSON record. It is useful when a downstream sink expects JSON regardless of the original record type (raw CBOR, parsed transaction/block, or a legacy v1 event).
+
+The JSON produced mirrors the serde representation of the incoming record, so the exact shape depends on the filters placed before it (for example, running `ParseCbor` first yields the UTxO RPC parsed representation, while `LegacyV1` yields the v1 event schema).
+
+## Configuration
+
+Adding the following section to the daemon config file will enable the filter as part of the pipeline:
+
+```toml
+[[filters]]
+type = "IntoJson"
+```
+
+This filter takes no additional options.

@@ -6,9 +6,39 @@ _Oura_ follows a Cardano chain and outputs events. Each event contains data abou
 
 A consumer aggregating a sequence of multiple events will notice redundant / duplicated data. For example, the "block number" value will appear repeated in the context of every event of the same block. This behavior is intended, making each event a self-contained record is an architectural decision. We favor "consumption ergonomics" over "data normalization".
 
+## Pipeline Data Model
+
+Internally, every unit that flows through an Oura v2 pipeline is a `ChainEvent` that wraps a chain `point` and (except for resets) a `Record`. When a sink serializes an event to JSON, it uses the following envelope:
+
+```json
+{
+  "event": "apply",
+  "point": { "slot": 0, "hash": "" },
+  "record": { }
+}
+```
+
+- `event`: the kind of chain event — one of:
+  - `apply`: a block/tx was applied to the chain.
+  - `undo`: a block/tx was rolled back.
+  - `reset`: the pipeline reset to the given `point` (carries no `record`).
+- `point`: the chain position, with `slot` (number) and `hash` (hex string). The chain origin is represented as a null/empty point.
+- `record`: the payload. Its shape depends on which filters ran before the sink (see below).
+
+The `record` is one of the following variants, determined by the source and the filters in the pipeline:
+
+| Record       | Produced by                                  | Shape                                                                 |
+| :----------- | :------------------------------------------- | :------------------------------------------------------------------- |
+| CBOR block   | sources, by default                          | `{ "hex": "<cbor-hex>" }` — the raw block CBOR.                       |
+| CBOR tx      | [Split Block](/oura/v2/filters/split_block)  | `{ "hex": "<cbor-hex>" }` — the raw transaction CBOR.                 |
+| Parsed block | [ParseCbor](/oura/v2/filters/parse_cbor)     | a [UTxORPC](https://utxorpc.org/cardano) `Block`.                     |
+| Parsed tx    | [ParseCbor](/oura/v2/filters/parse_cbor)     | a [UTxORPC](https://utxorpc.org/cardano) `Tx`.                        |
+| Generic JSON | [Into JSON](/oura/v2/filters/into_json)      | an arbitrary JSON value.                                             |
+| Legacy v1    | [LegacyV1](/oura/v2/filters/legacy_v1)       | a v1-style event (see _Available Events (Legacy V1 Filter)_ below).  |
+
 ## Available Events (ParseCbor Filter)
 
-When the filter [ParseCbor](/oura/v2/filters/parse_cbor) is enabled, the events will use the [UTxORPC](https://utxorpc.org/cardano) data structures.
+When the [ParseCbor](/oura/v2/filters/parse_cbor) filter is enabled, records use the [UTxORPC](https://utxorpc.org/cardano) data structures: a `CborBlock` becomes a parsed `Block` and a `CborTx` becomes a parsed `Tx`. Refer to the [UTxORPC Cardano spec](https://utxorpc.org/cardano) for the complete field-level schema of those structures.
 
 ## Available Events (Legacy V1 Filter)
 

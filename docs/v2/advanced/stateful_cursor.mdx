@@ -16,9 +16,9 @@ Although valid, the workaround described above is very inefficient. If the fixed
 
 ## Feature
 
-Oura implements an optional stateful cursor that receives notifications from the sink stage of the pipeline to continuously track the current position of the chain. At certain checkpoints (every 10 secs by default), the position is persisted onto the file system at a configurable location.
+Oura implements an optional stateful cursor that receives notifications from the sink stage of the pipeline to continuously track the current position of the chain. At certain checkpoints (every 10 secs by default), the position is persisted onto the configured backend.
 
-Assuming that a restart occurs and the cursor feature is enabled, the process will attempt to locate and load the persisted value and instruct the source stage to begin reading chain data from the last known position. 
+Assuming that a restart occurs and the cursor feature is enabled, the process will attempt to locate and load the persisted value and instruct the source stage to begin reading chain data from the last known position.
 
 ## Configuration
 
@@ -27,9 +27,45 @@ The _cursor_ feature is a configurable setting available when running in daemon 
 ```toml
 [cursor]
 type = "File"
-path = "/var/oura/cursor"
+path = "./cursor.json"
+max_breadcrumbs = 10
+flush_interval = 10
 ```
 
 - `[cursor]`: The presence of this section in the toml file indicates Oura to enable the _cursor_ feature.
-- `type`: The type of persistence backend to use for storing the state of the cursor. The only available option at the moment is `File`, which stores the cursor in the file system.
-- `path`: The location of the cursor file within the file system. Default value is `var/oura/cursor`.
+- `type`: The type of persistence backend to use for storing the state of the cursor. Available options are `Memory` (the default if no `[cursor]` section is present), `File`, and `Redis`.
+
+### Backend: `Memory`
+
+Keeps the cursor breadcrumbs in memory only; the position is **not** persisted across restarts. This is the default behavior when no `[cursor]` section is configured. It takes no extra fields:
+
+```toml
+[cursor]
+type = "Memory"
+```
+
+### Backend: `File`
+
+Stores the cursor in a JSON file on the local file system.
+
+- `path` (optional): The location of the cursor file within the file system. Default value is `./cursor.json` (relative to the working directory).
+- `max_breadcrumbs` (optional): The number of recent chain positions to retain (used to recover across rollbacks). Default value is `10`.
+- `flush_interval` (optional): How often, in seconds, the position is flushed to disk. Default value is `10`.
+
+### Backend: `Redis`
+
+Stores the cursor in a Redis instance (requires the `redis` feature). 
+
+```toml
+[cursor]
+type = "Redis"
+url = "redis://localhost:6379"
+key = "oura-cursor"
+max_breadcrumbs = 10
+flush_interval = 10
+```
+
+- `url`: The Redis connection URL.
+- `key`: The Redis key under which the cursor state is stored.
+- `max_breadcrumbs` (optional): The number of recent chain positions to retain. Default value is `10`.
+- `flush_interval` (optional): How often, in seconds, the position is flushed to Redis. Default value is `10`.
