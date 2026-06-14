@@ -23,6 +23,11 @@ hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
 # elasticsearch = auto feature flag
 # kafka = auto feature flag
 
+# Features enabled in the cargo-dist released binaries (installers, archives).
+# u5c (utxorpc) ships by default; ~+2.2 MB stripped over the base binary.
+[package.metadata.dist]
+features = ["u5c"]
+
 [dependencies]
 pallas = { version = "1.1", features = ["hardano"] }
 # pallas = { path = "../pallas/pallas", features = ["hardano"] }
