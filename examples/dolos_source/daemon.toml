@@ -1,6 +1,10 @@
 [source]
 type = "U5C"
-url = "https://50051-romantic-calmness-b55bqg.us1.demeter.run"
+url = "http://localhost:50051"
+# Extra gRPC headers sent with every request. Required field (use an empty table for a
+# local, unauthenticated Dolos). For a hosted endpoint such as Demeter, pass the API key:
+# metadata = { "dmtr-api-key" = "dmtr_..." }
+metadata = {}
 
 [intersect]
 type = "Tip"

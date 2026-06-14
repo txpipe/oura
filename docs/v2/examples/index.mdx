@@ -53,7 +53,7 @@ Some examples need more than the `daemon.toml`. Check the example's folder befor
 | [`n2c_source`](https://github.com/txpipe/oura/tree/main/examples/n2c_source) | Node-to-Client source over a unix socket → Stdout | docker compose · run from repo root |
 | [`hydra`](https://github.com/txpipe/oura/tree/main/examples/hydra) | Hydra head source over a WebSocket → Stdout | needs a running Hydra node |
 | [`mithril`](https://github.com/txpipe/oura/tree/main/examples/mithril) | Mithril snapshot bootstrap with a `Breadcrumbs` intersect | downloads `./snapshot` |
-| [`dolos_source`](https://github.com/txpipe/oura/tree/main/examples/dolos_source) | UTxO RPC (U5C) source against a Dolos/Demeter endpoint | hosted endpoint |
+| [`dolos_source`](https://github.com/txpipe/oura/tree/main/examples/dolos_source) | UTxO RPC (U5C) source against a Dolos/Demeter endpoint | needs a running Dolos (or a hosted U5C endpoint) |
 
 ## Filters & pipelines
 
@@ -119,7 +119,7 @@ A few complete pipelines, taken verbatim from the examples above.
 ```toml
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["backbone.mainnet.cardanofoundation.org:3001"]
 
 [intersect]
 type = "Point"
@@ -149,7 +149,7 @@ under `./output/`.
 ```toml
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["backbone.mainnet.cardanofoundation.org:3001"]
 
 [intersect]
 type = "Point"
