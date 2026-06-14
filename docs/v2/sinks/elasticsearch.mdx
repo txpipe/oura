@@ -8,7 +8,7 @@ A sink that outputs events into an Elasticsearch server. Each event is json-enco
 
 ```toml
 [sink]
-type = "Elastic"
+type = "ElasticSearch"
 url = "https://localhost:9200"
 index = "oura.sink.v0.mainnet"
 
@@ -20,7 +20,7 @@ password = "my very secret stuff"
 
 ### Section: `sink`
 
-- `type`: the literal value `Elastic`.
+- `type`: the literal value `ElasticSearch`.
 - `url`: the location of the Elasticsearch's API
 - `index`: the name of the index (or data stream) to store the event documents
 - `idempotency` (optional): flag that if enabled will force idempotent calls to ES (to avoid duplicates)

@@ -2,23 +2,34 @@
 title: Finalize Options
 ---
 
-Advanced options for instructing Oura to stop on a chain point. If you'd like it to only sync a specific section of the chain, you can also instruct oura to stop syncing when it reaches a specific block hash by defining a `[finalize]` config.
+Advanced options for instructing Oura to stop on a chain point. If you'd like it to only sync a specific section of the chain, you can instruct Oura to stop syncing once it reaches a specific block hash, slot, or block count.
+
+There is no top-level `[finalize]` block in v2. Finalization is configured through the [Work Stats filter](/oura/v2/filters/work_stats), which counts blocks as they pass through and stops the pipeline once a configured condition is met.
 
 ## Configuration
 
-To modify the default behavior the daemon mode uses, a section named `[finalize]` needs to be added to the `daemon.toml` file.
+Add a `WorkStats` filter to the `[[filters]]` chain in your `daemon.toml` and set any of the stopping conditions:
 
 ```toml
-[finalize]
+[[filters]]
+type = "WorkStats"
 until_hash = <BlockHash>
 max_block_slot = <SlotNumber>
+max_block_quantity = <BlockCount>
 ```
+
+- `until_hash` (optional): stop once the block with this hash has been processed.
+- `max_block_slot` (optional): stop once a block at or beyond this slot number has been processed.
+- `max_block_quantity` (optional): stop after this many blocks have been processed.
+
+The pipeline stops as soon as any configured condition is met.
 
 ## Examples
 
-The following example show how to configure Oura to stop sync on Byron era
+The following example shows how to configure Oura to stop syncing on the Byron era
 
 ```toml
-[finalize]
+[[filters]]
+type = "WorkStats"
 until_hash = "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de"
 ```

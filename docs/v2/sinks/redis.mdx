@@ -19,13 +19,15 @@ Example configuration that sends all events into a single stream named `mystream
 type = "Redis"
 url = "redis://localhost:6379"
 stream_name = "mystream"
+stream_max_length = 100000
 ```
 
 ### Section: `sink`
 
 - `type`: the literal value `Redis`.
 - `url`: the redis server in the format `redis://[<username>][:<password>]@<hostname>[:port][/<db>]`
-- `stream_name` : the name of the redis stream for StreamStrategy `None`, default is "oura" if not specified
+- `stream_name` (optional): the name of the redis stream, default is `oura-sink` if not specified
+- `stream_max_length` (optional): if set, caps the stream to this many entries (using `XADD ... MAXLEN`), discarding the oldest entries as new ones arrive. If omitted, the stream grows unbounded.
 
 ## Conventions
 

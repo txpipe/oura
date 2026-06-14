@@ -10,11 +10,10 @@ The sink expect a 200 reponse code for each HTTP call. If found, the process wil
 
 ```toml
 [sink]
-type = "Webhook"
+type = "WebHook"
 url = "https://endpoint:5000/events"
 authorization = "user:pass"
 timeout = 30000
-error_policy = "Continue"
 
 [sink.headers]
 extra_header_1 = "abc"
@@ -23,7 +22,7 @@ extra_header_2 = "123"
 
 ### Section: `sink`
 
-- `type`: the literal value `Webhook`.
+- `type`: the literal value `WebHook`.
 - `url`: url of your remote endpoint (needs to accept POST method)
 - `authorization` (optional): value to add as the 'Authorization' HTTP header
 - `headers` (optional): key-value map of extra headers to pass in each HTTP call

@@ -11,8 +11,12 @@ A sink that implements a _Kafka_ producer. Each event is json-encoded and sent a
 type = "Kafka"
 brokers = ["kafka-broker-0:9092"]
 topic = "cardano-events"
+ack_timeout_secs = 5
+paritioning = "Random"
 ```
 
 - `type`: the literal value `Kafka`.
 - `brokers`: indicates the location of the _Kafka_ brokers within the network. Several hostname:port pairs can be added to the array for a "cluster" scenario.
 - `topic` this field indicates which _Kafka_ topic to use to send the outbound messages.
+- `ack_timeout_secs` (optional): the timeout, in seconds, to wait for the broker to acknowledge a produced message.
+- `paritioning` (optional): the strategy used to assign each message to a partition. Available values are `ByBlock` (messages from the same block share a partition key) and `Random`. Default value is `Random`. (Note: the config key is spelled `paritioning` to match the field name in the codebase.)

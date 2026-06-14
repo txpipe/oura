@@ -33,12 +33,10 @@ The _metrics_ feature is a configurable setting available when running in daemon
 
 [metrics]
 address = "0.0.0.0:9186"
-endpoint = "/metrics"
 ```
 
 - `[metrics]` section needs to be present to enable the feature. Absence of the section will not expose any HTTP endpoints.
-- `address`: The address at which the HTTP server will be listening for request. Expected format is `<ip>:<port>`. Use the IP value `0.0.0.0` to allow connections on any of the available IP address of the network interface. Default value is `0.0.0.0:9186`.
-- `endpoint`: The path at which the metrics will be exposed. Default value is `/metrics`.
+- `address` (optional): The address at which the HTTP server will be listening for request. Expected format is `<ip>:<port>`. Use the IP value `0.0.0.0` to allow connections on any of the available IP address of the network interface. Default value is `0.0.0.0:9186`.
 
 ## Usage
 

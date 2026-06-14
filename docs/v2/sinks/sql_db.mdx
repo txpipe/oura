@@ -1,0 +1,41 @@
+---
+title: SQL Database
+sidebar:
+  label: SQL Database
+---
+
+A sink that executes a SQL statement against a relational database for each event. It is built on top of [sqlx](https://github.com/launchbadge/sqlx)'s `Any` driver, so it can target SQLite, PostgreSQL or MySQL depending on the connection string.
+
+For every event, the sink renders a [Handlebars](https://handlebarsjs.com/) template into a SQL statement and executes it. There are three independent templates, one for each kind of chain event:
+
+- `apply`: rendered when a block/tx is applied to the chain.
+- `undo`: rendered when a block/tx is rolled back.
+- `reset`: rendered when the pipeline resets to a given point (no record is available, only the point).
+
+This sink requires Oura to be built with the `sql` feature.
+
+## Configuration
+
+```toml
+[sink]
+type = "SqlDb"
+connection = "sqlite::memory:"
+apply_template = "INSERT INTO events (slot, data) VALUES ({{point.slot}}, '{{record}}')"
+undo_template = "DELETE FROM events WHERE slot = {{point.slot}}"
+reset_template = "DELETE FROM events WHERE slot > {{point.slot}}"
+```
+
+### Section: `sink`
+
+- `type`: the literal value `SqlDb`.
+- `connection`: the database connection string passed to sqlx (e.g. `sqlite::memory:`, `sqlite://./oura.db`, `postgres://user:pass@host/db`).
+- `apply_template`: a Handlebars template rendered to a SQL statement for `apply` events.
+- `undo_template`: a Handlebars template rendered to a SQL statement for `undo` events.
+- `reset_template`: a Handlebars template rendered to a SQL statement for `reset` events.
+
+## Template Data
+
+Each template is rendered with the following data context:
+
+- `point`: the chain point. For a specific point this is an object with `slot` (number) and `hash` (hex string). For the chain origin it is `null`.
+- `record`: the event payload. For `reset` events this value is `null`. The shape for non-reset events depends on the record type produced by the preceding filters (e.g. raw CBOR hex, a parsed transaction, or a legacy v1 event).
