@@ -16,6 +16,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Build the binary and image the same way docker.yml does, so e2e
+      # exercises the production image (.github/image/Dockerfile) rather than a
+      # separate from-source build. e2e only runs on linux/amd64, so we build
+      # just that target.
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Share the cache the docker.yml build populates from main so e2e
+          # dispatches restore a warm cache instead of compiling cold.
+          shared-key: docker-x86_64-unknown-linux-gnu
+
+      - name: Run cargo build
+        run: cargo build --target x86_64-unknown-linux-gnu --all-features --locked --release
+
+      - name: Stage binary for image
+        run: |
+          mkdir -p .github/image/bin
+          mv target/x86_64-unknown-linux-gnu/release/oura .github/image/bin/oura-Linux-amd64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -29,14 +55,10 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
-          # e2e only runs on the GitHub-hosted linux/amd64 runners, so we skip
-          # the armv7 cross-build that the release pipeline produces.
+          context: .github/image
           platforms: linux/amd64
           push: true
           tags: ${{ env.TARGET_IMAGE }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   test:
     needs: ["build"]
