@@ -1,0 +1,210 @@
+---
+title: Examples
+---
+
+The _Oura_ repository ships a collection of ready-to-run configurations under the
+[`examples/`](https://github.com/txpipe/oura/tree/main/examples) directory. Each one is a
+complete `daemon.toml` wiring a source, an optional filter chain, and a sink, so you can see
+how the pieces fit together end-to-end rather than one component at a time.
+
+## Running an example
+
+Most examples reference companion files and relative paths, so run them **from inside their
+own directory** rather than from the repository root:
+
+```sh
+cd examples/<name>
+oura daemon --config daemon.toml
+```
+
+Running from the repository root would scatter relative output and state (`./output`,
+`./snapshot`, cursor and database files) in the wrong place and break the path-based
+examples.
+
+Examples that target an optional sink or filter (`kafka`, `redis`, `rabbitmq`, `zeromq`,
+`elasticsearch`, the AWS and GCP sinks, `SqlDb`, `WasmPlugin`, …) require _Oura_ to be built
+with the matching cargo feature. See [Install from source](/oura/v2/installation/from_source)
+for the feature flags, or use a Docker image that bundles them.
+
+## Companion files & setup
+
+Some examples need more than the `daemon.toml`. Check the example's folder before running:
+
+- **Backing service via `docker-compose`** — start it first from the example directory
+  (`docker compose up -d`): `kafka`, `redis`, `rabbitmq`, `elasticsearch`, `postgresql`,
+  `redis_cursor`, `n2c_source`.
+- **Build step** — `wasm_basic` loads `./extract_fee/plugin.wasm`; the Go plugin under
+  `extract_fee/` must be built first (see its README).
+- **Relative output/state created in the working directory** — `into_json`, `parse_cbor` and
+  `file_rotate` write to `./output/`; `mithril` downloads to `./snapshot/`; `file_cursor`
+  writes `my_cursor.json`; `sqlite` writes `./mydatabase.db` and ships an `init.sql` and a
+  `Makefile`.
+- **Has its own README with extra steps** — `metadata_regex_filter`, `postgresql`,
+  `redis_cursor`, `wasm_basic`.
+
+> The `n2c_source` example sets `socket_path = "examples/n2c_source/node/node.socket"`, a path
+> written relative to the **repository root** (unlike the others). Run it from the repo root or
+> edit the path to point at your node socket.
+
+## Sources
+
+| Example | What it shows | Setup |
+| :------ | :------------ | :---- |
+| [`n2c_source`](https://github.com/txpipe/oura/tree/main/examples/n2c_source) | Node-to-Client source over a unix socket → Stdout | docker compose · run from repo root |
+| [`hydra`](https://github.com/txpipe/oura/tree/main/examples/hydra) | Hydra head source over a WebSocket → Stdout | needs a running Hydra node |
+| [`mithril`](https://github.com/txpipe/oura/tree/main/examples/mithril) | Mithril snapshot bootstrap with a `Breadcrumbs` intersect | downloads `./snapshot` |
+| [`dolos_source`](https://github.com/txpipe/oura/tree/main/examples/dolos_source) | UTxO RPC (U5C) source against a Dolos/Demeter endpoint | hosted endpoint |
+
+## Filters & pipelines
+
+| Example | What it shows | Setup |
+| :------ | :------------ | :---- |
+| [`select`](https://github.com/txpipe/oura/tree/main/examples/select) | `SplitBlock` → `ParseCbor` → `Select` by address → Stdout | — |
+| [`metadata_regex_filter`](https://github.com/txpipe/oura/tree/main/examples/metadata_regex_filter) | `Select` matching a metadata label + regex (preprod) → Stdout | see README |
+| [`parse_cbor`](https://github.com/txpipe/oura/tree/main/examples/parse_cbor) | `SplitBlock` → `ParseCbor` → JSONL file output | writes `./output` |
+| [`into_json`](https://github.com/txpipe/oura/tree/main/examples/into_json) | `ParseCbor` → `IntoJson` → compressed JSONL file output | writes `./output` |
+| [`wasm_basic`](https://github.com/txpipe/oura/tree/main/examples/wasm_basic) | Custom `WasmPlugin` filter loaded from a `.wasm` file | build step · `wasm` feature · README |
+
+## Sinks
+
+| Example | What it shows | Setup |
+| :------ | :------------ | :---- |
+| [`stdout`](https://github.com/txpipe/oura/tree/main/examples/stdout) | Legacy v1 events printed to standard output | — |
+| [`webhook_basics`](https://github.com/txpipe/oura/tree/main/examples/webhook_basics) | `WebHook` sink posting events over HTTP | needs an HTTP endpoint |
+| [`kafka`](https://github.com/txpipe/oura/tree/main/examples/kafka) | `Kafka` sink with `ByBlock` partitioning | docker compose · `kafka` feature |
+| [`rabbitmq`](https://github.com/txpipe/oura/tree/main/examples/rabbitmq) | `Rabbitmq` sink | docker compose · `rabbitmq` feature |
+| [`zeromq`](https://github.com/txpipe/oura/tree/main/examples/zeromq) | `Zeromq` PUSH socket sink | `zeromq` feature |
+| [`elasticsearch`](https://github.com/txpipe/oura/tree/main/examples/elasticsearch) | `ElasticSearch` sink | docker compose · `elasticsearch` feature |
+| [`redis`](https://github.com/txpipe/oura/tree/main/examples/redis) | `Redis` streams sink | docker compose · `redis` feature |
+| [`sqlite`](https://github.com/txpipe/oura/tree/main/examples/sqlite) | `SqlDb` sink writing raw CBOR into SQLite | writes `./mydatabase.db` · `sql` feature |
+| [`postgresql`](https://github.com/txpipe/oura/tree/main/examples/postgresql) | `SqlDb` sink targeting PostgreSQL | docker compose · README · `sql` feature |
+| [`file_rotate`](https://github.com/txpipe/oura/tree/main/examples/file_rotate) | `FileRotate` sink writing rotated, compressed JSONL | writes `./output` |
+| [`aws_lambda`](https://github.com/txpipe/oura/tree/main/examples/aws_lambda) | `AwsLambda` sink invoking a function per event | AWS credentials · `aws` feature |
+| [`aws_s3`](https://github.com/txpipe/oura/tree/main/examples/aws_s3) | `AwsS3` sink writing objects | AWS credentials · `aws` feature |
+| [`aws_sqs`](https://github.com/txpipe/oura/tree/main/examples/aws_sqs) | `AwsSqs` sink enqueueing messages | AWS credentials · `aws` feature |
+| [`gcp_pubsub`](https://github.com/txpipe/oura/tree/main/examples/gcp_pubsub) | `GcpPubSub` sink publishing to a topic | GCP credentials · `gcp` feature |
+| [`gcp_cloudfunction`](https://github.com/txpipe/oura/tree/main/examples/gcp_cloudfunction) | `GcpCloudFunction` sink calling a function | GCP credentials · `gcp` feature |
+| [`assert`](https://github.com/txpipe/oura/tree/main/examples/assert) | `Assert` sink used for testing/validation | — |
+
+## Cursors
+
+| Example | What it shows | Setup |
+| :------ | :------------ | :---- |
+| [`file_cursor`](https://github.com/txpipe/oura/tree/main/examples/file_cursor) | Persisting pipeline progress to a `File` cursor | writes `my_cursor.json` |
+| [`redis_cursor`](https://github.com/txpipe/oura/tree/main/examples/redis_cursor) | Persisting pipeline progress to a `Redis` cursor | docker compose · README · `redis` feature |
+
+## Observability
+
+| Example | What it shows | Setup |
+| :------ | :------------ | :---- |
+| [`metrics`](https://github.com/txpipe/oura/tree/main/examples/metrics) | Exposing a Prometheus metrics endpoint via the `[metrics]` block | — |
+
+## As a library
+
+The [`examples/lib`](https://github.com/txpipe/oura/tree/main/examples/lib) project shows how
+to embed _Oura_ in a Rust application with custom stages — a custom filter plus a custom sink
+that persists events into SQLite. See its README for the `sqlx-cli` setup, and the
+[Library usage](/oura/v2/usage/library) page for the API overview.
+
+## Selected recipes
+
+A few complete pipelines, taken verbatim from the examples above.
+
+### Select transactions by address
+
+`SplitBlock` breaks each block into individual transactions, `ParseCbor` decodes them, and
+`Select` keeps only the ones touching a given address. See the
+[Select filter](/oura/v2/filters/select).
+
+```toml
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Point"
+value = [37225013, "65b3d40e6114e05b662ddde737da63bbab05b86d476148614e82cde98462a6f5"]
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "Select"
+skip_uncertain = true
+predicate = "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
+
+[sink]
+type = "Stdout"
+```
+
+### Stream parsed transactions to JSONL files
+
+`IntoJson` turns the parsed records into JSON, and the
+[FileRotate sink](/oura/v2/sinks/file_rotate) writes them to rotated, compressed JSONL files
+under `./output/`.
+
+```toml
+[source]
+type = "N2N"
+peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+
+[intersect]
+type = "Point"
+value = [4493860, "ce7f821d2140419fea1a7900cf71b0c0a0e94afbb1f814a6717cff071c3b6afc"]
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "IntoJson"
+
+[sink]
+type = "FileRotate"
+max_total_files = 5
+output_format = "JSONL"
+output_path = "./output/logs.jsonl"
+max_bytes_per_file = 5_000_000
+compress_files = true
+```
+
+### Match a metadata label with a regex
+
+A [Select filter](/oura/v2/filters/select) predicate can match on transaction metadata — here,
+label `674` whose text matches a regular expression.
+
+```toml
+[chain]
+type = "preprod"
+
+[source]
+type = "N2N"
+peers = ["preprod-node.world.dev.cardano.org:30000"]
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "Select"
+skip_uncertain = false
+
+[filters.predicate.match.metadata]
+label = 674
+
+[filters.predicate.match.metadata.value.text]
+regex = "Hello World"
+
+[sink]
+type = "Stdout"
+```
