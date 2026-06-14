@@ -15,7 +15,7 @@ The entry-point of the image points to _Oura_ executable. You can pass the same 
 
 ```
 docker run -it ghcr.io/txpipe/oura:latest \
-    watch relays-new.cardano-mainnet.iohk.io:3001 \
+    watch backbone.mainnet.cardanofoundation.org:3001 \
     --bearer tcp
 ```
 

@@ -45,7 +45,7 @@ Connecting to a remote Cardano node in mainnet through tcp sockets:
 ```toml
 [source]
 type = "N2N"
-address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
+address = ["Tcp", "backbone.mainnet.cardanofoundation.org:3001"]
 magic = "mainnet"
 ```
 
@@ -54,7 +54,7 @@ Connecting to a remote Cardano node in testnet through tcp sockets:
 ```toml
 [source]
 type = "N2N"
-address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
+address = ["Tcp", "backbone.mainnet.cardanofoundation.org:3001"]
 magic = "testnet"
 ```
 
@@ -63,7 +63,7 @@ Start reading from a particular point in the chain:
 ```toml
 [source]
 type = "N2C"
-address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
+address = ["Tcp", "backbone.mainnet.cardanofoundation.org:3001"]
 magic = "mainnet"
 
 [source.intersect]
@@ -76,7 +76,7 @@ Include all details inside the transaction events:
 ```toml
 [source]
 type = "N2N"
-address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
+address = ["Tcp", "backbone.mainnet.cardanofoundation.org:3001"]
 magic = "mainnet"
 
 

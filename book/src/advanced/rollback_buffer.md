@@ -31,7 +31,7 @@ The min depth is a configurable setting available when running in daemon mode. H
 ```toml
 [source]
 type = "N2N"
-address = ["Tcp", "relays-new.cardano-mainnet.iohk.io:3001"]
+address = ["Tcp", "backbone.mainnet.cardanofoundation.org:3001"]
 magic = "mainnet"
 min_depth = 6
 ```
