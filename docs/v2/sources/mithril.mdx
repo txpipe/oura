@@ -2,17 +2,22 @@
 title: Mithril
 sidebar:
   label: Mithril
+  order: 5
 ---
 
-Connect to Mithril Server and download a snapshot of the chain.
+The Mithril source downloads a certified snapshot of the chain from a
+[Mithril](https://mithril.network/) aggregator and replays it into the pipeline. It's the
+fastest way to bootstrap historical chain data — instead of syncing block by block from a
+node, you fetch a verified snapshot in one go.
 
-This source requires building oura using the feature `mithril` enabled.
+:::caution[Requires a custom build]
+Mithril isn't in the default binary (it pulls a heavy C-crypto toolchain). Build Oura with
+the `mithril` feature — see [Install from source](/oura/v2/installation/from_source).
+:::
 
 ## Configuration
 
-The following snippet shows an example of how to set up a Mithril source:
-
-```toml
+```toml title="daemon.toml"
 [source]
 type = "Mithril"
 aggregator = "https://aggregator.pre-release-preview.api.mithril.network/aggregator"
@@ -21,11 +26,15 @@ snapshot_download_dir = "./snapshot"
 skip_validation = false
 ```
 
-### Section `source`:
+- `type` (required): the literal value `Mithril`.
+- `aggregator` (required): the URL of the Mithril aggregator to fetch from.
+- `genesis_key` (required): the genesis verification key used to validate the snapshot.
+- `snapshot_download_dir` (required): a writable directory where the snapshot is stored.
+- `skip_validation` (optional, default = `false`): set to `true` to skip verifying the
+  snapshot against the certificate chain — faster, but you lose Mithril's integrity guarantee.
 
-- `type`: this field must be set to the literal value `Mithril`
-- `aggregator`: url to fetch data from the aggregator
-- `genesis_key`: genesis verification key
-- `snapshot_download_dir`: the directory to persist snapshot, must have read/write access to it 
-- `skip_validation`: validate the chain snapshot
-
+:::tip
+A Mithril snapshot is a fast way to *catch up*, not to follow the tip. A common pattern is to
+bootstrap from a snapshot and then keep following the chain from a node — see the
+[`mithril` example](/oura/v2/examples) for a `Breadcrumbs` intersect that does exactly that.
+:::

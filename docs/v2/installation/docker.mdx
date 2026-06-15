@@ -47,9 +47,13 @@ Images are published to `ghcr.io/txpipe/oura` under several tags, each following
 
 ## Versioned Images
 
-It is highly recommended to use a fixed image version in production environments to avoid the effects of new features being included in each release.
+:::caution
+Pin a fixed image version in production. `latest` tracks the `main` branch (not releases), so
+it can change under you on any push — avoid it outside of local experimentation.
+:::
 
-To use a versioned image, replace the `latest` tag by the desired version with the `v` prefix. For example, to pin the `v2.1.0` release, use the following image:
+To use a versioned image, replace the `latest` tag with the desired version, prefixed with
+`v`. For example, to pin the `v2.1.0` release:
 
 ```
 ghcr.io/txpipe/oura:v2.1.0

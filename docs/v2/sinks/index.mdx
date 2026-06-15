@@ -1,0 +1,86 @@
+---
+title: Sinks
+sidebar:
+  label: Overview
+  order: 0
+---
+
+A **sink** is the last stage of a pipeline — it takes each processed event and delivers it
+somewhere. Which sink you pick comes down to where your data needs to land: a terminal, a
+file, a message broker, a cloud service, or a database. Most sinks json-encode each event and
+send it on; the exceptions are noted below.
+
+## Which sink should I use?
+
+**Console** — quick, no dependencies.
+
+| Sink | What it does |
+| :--- | :----------- |
+| [Stdout](/oura/v2/sinks/stdout) | writes raw events to standard output, ready to pipe into other tools |
+| [Terminal](/oura/v2/sinks/terminal) | prints a human-readable, colorized feed |
+
+**Files**
+
+| Sink | What it does |
+| :--- | :----------- |
+| [File Rotate](/oura/v2/sinks/file_rotate) | appends events to rotating, optionally compressed, files on disk |
+
+**Messaging & streaming**
+
+| Sink | What it does |
+| :--- | :----------- |
+| [Kafka](/oura/v2/sinks/kafka) | publishes to a Kafka topic _(custom build)_ |
+| [Redis](/oura/v2/sinks/redis) | appends to a Redis Stream |
+| [RabbitMQ](/oura/v2/sinks/rabbitmq) | publishes to a RabbitMQ exchange |
+| [ZeroMQ](/oura/v2/sinks/zeromq) | pushes over a ZeroMQ socket _(custom build)_ |
+
+**Cloud**
+
+| Sink | What it does |
+| :--- | :----------- |
+| [AWS SQS](/oura/v2/sinks/aws_sqs) | enqueues a message per event (FIFO or Standard) |
+| [AWS Lambda](/oura/v2/sinks/aws_lambda) | invokes a Lambda function per event |
+| [AWS S3](/oura/v2/sinks/aws_s3) | stores raw CBOR blocks as S3 objects |
+| [GCP Pub/Sub](/oura/v2/sinks/gcp_pubsub) | publishes to a Pub/Sub topic |
+| [GCP Cloud Functions](/oura/v2/sinks/gcp_cloudfunction) | calls a Cloud Function per event |
+
+**Databases & search**
+
+| Sink | What it does |
+| :--- | :----------- |
+| [SQL Database](/oura/v2/sinks/sql_db) | runs a templated SQL statement per event (SQLite / Postgres / MySQL) |
+| [Elasticsearch](/oura/v2/sinks/elasticsearch) | indexes events into an Elasticsearch index or data stream |
+
+:::note
+Every sink above ships in the default binary except **Kafka** and **ZeroMQ**, which need a
+[custom build](/oura/v2/installation/from_source).
+:::
+
+## Cloud credentials
+
+The AWS and GCP sinks don't take credentials in their config. Instead they rely on the
+standard credential discovery built into each cloud's SDK, so the same setup works whether
+you run Oura on your laptop, in a container, or on a managed instance.
+
+### AWS credentials
+
+The AWS sinks ([SQS](/oura/v2/sinks/aws_sqs), [Lambda](/oura/v2/sinks/aws_lambda),
+[S3](/oura/v2/sinks/aws_s3)) honor the standard AWS SDK provider chain. Oura uses the first
+source that resolves:
+
+- the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables
+- a Web Identity Token from the environment or container (including EKS)
+- ECS container credentials (IAM roles for tasks)
+- entries in `~/.aws/` (the shared credentials file)
+- the EC2 Instance Metadata Service (IAM roles attached to an instance)
+
+Use whichever fits your deployment. See the [AWS credentials documentation](https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html)
+for the full details.
+
+### Google Cloud credentials
+
+The GCP sinks ([Pub/Sub](/oura/v2/sinks/gcp_pubsub),
+[Cloud Functions](/oura/v2/sinks/gcp_cloudfunction)) resolve credentials in this order:
+
+- if `GOOGLE_APPLICATION_CREDENTIALS` is set, the JSON key file at that path is used
+- otherwise, when running on GCP, credentials are read from the metadata server

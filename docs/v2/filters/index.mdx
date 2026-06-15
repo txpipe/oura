@@ -1,0 +1,42 @@
+---
+title: Filters
+sidebar:
+  label: Overview
+  order: 0
+---
+
+**Filters** sit between the source and the sink. Each one receives the events produced by the
+previous stage, then transforms, decodes, or drops them before passing the result along. You
+can chain as many as you like — they run top to bottom, in the order they appear in your
+config. (For where filters fit in the bigger picture, see [How it works](/oura/v2/how_it_works).)
+
+## The typical pipeline shape
+
+A source emits raw CBOR blocks. From there, most pipelines compose a few filters to get the
+data into a useful shape. A very common chain is:
+
+```
+SplitBlock → ParseCbor → Select → sink
+```
+
+That is: break each block into its transactions, decode them into structured records, then
+keep only the ones you care about.
+
+## Which filter does what?
+
+| Filter | What it does | Notes |
+| :----- | :----------- | :---- |
+| [Split Block](/oura/v2/filters/split_block) | breaks a block into one event per transaction | run it first when you want tx-level processing |
+| [Parse CBOR](/oura/v2/filters/parse_cbor) | decodes raw CBOR into structured blocks/txs ([UTxORPC](https://utxorpc.org/cardano)) | required before `Select` and most downstream logic |
+| [Select](/oura/v2/filters/select) | keeps only events matching a predicate (address, asset, datum, metadata…) | needs `ParseCbor` earlier in the chain |
+| [Into JSON](/oura/v2/filters/into_json) | converts any record into generic JSON | handy for sinks that just want JSON |
+| [Legacy V1](/oura/v2/filters/legacy_v1) | reshapes records into the Oura v1 event schema | for compatibility with v1 consumers |
+| [Rollback Buffer](/oura/v2/filters/rollback_buffer) | holds blocks until they're _N_ deep, absorbing shallow rollbacks | trades a little latency for fewer rollback events |
+| [Work Stats](/oura/v2/filters/work_stats) | tracks progress and can stop the pipeline at a target | this is how [finalization](/oura/v2/advanced/finalize_options) works in v2 |
+| [Wasm](/oura/v2/filters/wasm) | runs your own plugin compiled to WebAssembly | for custom logic in any WASM language |
+
+:::tip
+The shape of the `record` each filter produces is documented in the
+[Data Dictionary](/oura/v2/reference/data_dictionary) — a quick way to know what a sink will
+actually receive given your filter chain.
+:::

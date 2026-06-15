@@ -1,14 +1,16 @@
 ---
 title: File Rotate
+sidebar:
+  order: 20
 ---
 
-A sink that saves events into the file system. Each event is json-encoded and appended to the of a text file. Files are rotated once they reach a certain size. Optionally, old files can be automatically compressed once they have rotated.
+Saves events to the local file system as JSON, one event per line. Files are rotated once they
+reach a size limit, and old files can be compressed automatically. Reach for it when you want
+a durable, on-disk log of chain data without standing up a database or broker.
 
 ## Configuration
 
-Example sink section config
-
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "FileRotate"
 output_path = "/var/oura/mainnet"
@@ -18,11 +20,15 @@ max_total_files = 10
 compress_files = true
 ```
 
-### Section: `sink`
+- `type` (required): the literal value `FileRotate`.
+- `output_path` (required): the path-like prefix for the output log files.
+- `output_format` (optional): the serialization format. The only option at the moment is
+  `JSONL` (JSON, one object per line).
+- `max_bytes_per_file` (optional): the size a file may reach before it's rotated.
+- `max_total_files` (optional): how many files to keep before the oldest are deleted.
+- `compress_files` (optional): when `true`, rotated files are gzip-compressed.
 
-- `type`: the literal value `FileRotate`.
-- `output_path`: the path-like prefix for the output log files
-- `output_format` (optional): specified the type of syntax to use for the serialization of the events. Only available option at the moment is `JSONL` (json + line break)
-- `max_bytes_per_file` (optional): the max amount of bytes to add in a file before rotating it
-- `max_total_files` (optional): the max amount of files to keep in the file system before start deleting the old ones
-- `compress_files` (optional): a boolean indicating if the rotated files should be compressed.
+:::caution
+On a busy network this sink can produce a lot of data. Set `max_total_files` (and ideally
+`compress_files`) so the logs are bounded — otherwise they'll grow until they fill the disk.
+:::
