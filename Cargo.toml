@@ -13,39 +13,55 @@ authors = ["TxPipe <hello@txpipe.io>"]
 [features]
 wasm = ["extism"]
 aws = ["aws-config", "aws-types", "aws-sdk-sqs", "aws-sdk-lambda", "aws-sdk-s3"]
-sql = ["sqlx"]
+sql = ["sqlx", "handlebars"]
 gcp = ["google-cloud-pubsub", "google-cloud-googleapis", "jsonwebtoken"]
 rabbitmq = ["lapin"]
 zeromq = ["zmq"]
 u5c = ["utxorpc", "futures"]
 mithril = ["mithril-client"]
 hydra = ["tungstenite", "tokio-tungstenite", "futures-util", "bytes"]
+# kafka's only TLS backend is openssl-sys; pull vendored OpenSSL alongside it so
+# `--features kafka` (and `--all-features`) build on targets without a system
+# OpenSSL (e.g. windows-msvc). Not part of the default/release bundle.
+kafka = ["dep:kafka", "openssl"]
 # elasticsearch = auto feature flag
-# kafka = auto feature flag
 
 # Features enabled in the cargo-dist released binaries (installers, archives).
-# u5c (utxorpc) ships by default; ~+2.2 MB stripped over the base binary.
+# "Batteries included": every integration that builds cleanly across all release
+# targets (incl. windows-msvc) ships by default, so consumers rarely need to
+# compile a custom flavor. The bundle is fully pure-Rust TLS (rustls, no system
+# OpenSSL). Measured stripped size (dist profile): ~37 MB.
+#
+# Kept OUT of the default binary (require a source build) because each needs a
+# special build environment incompatible with portable cross-target releases:
+#   - kafka: its only TLS backend is openssl-sys; would force vendored OpenSSL
+#            (and NASM on windows-msvc) into every release build
+#   - zeromq: links a system libzmq (no vendored build)
+#   - mithril: pulls gmp-mpfr-sys (GMP C lib); unsupported on windows-msvc
+#   - wasm: extism/wasmtime; pure-Rust but ~+14 MB and itself a plugin runtime
 [package.metadata.dist]
-features = ["u5c"]
+features = ["u5c", "elasticsearch", "hydra", "redis", "rabbitmq", "sql", "gcp", "aws"]
 
 [dependencies]
 pallas = { version = "1.1", features = ["hardano"] }
 # pallas = { path = "../pallas/pallas", features = ["hardano"] }
 # pallas = { git = "https://github.com/txpipe/pallas", features = ["hardano"] }
 
-gasket = { version = "^0.11", features = ["derive"] }
-gasket-prometheus = { version = "^0.11" }
+# 0.11.1 replaced gasket-prometheus's prometheus_exporter_base exporter (and its
+# legacy TLS/HTTP stack) with a lightweight metrics endpoint.
+gasket = { version = "0.11.1", features = ["derive"] }
+gasket-prometheus = { version = "0.11.1" }
 # gasket = { path = "../../construkts/gasket-rs/gasket", features = ["derive"] }
 
 hex = "0.4.3"
-bech32 = "0.9.1"
+bech32 = "0.11"
 clap = { version = "4.2.7", features = ["derive"] }
 env_logger = "0.10.0"
 crossterm = "0.26"
 merge = "0.1.0"
 regex = "1.10.5"
-handlebars = "^5.1"
-config = { version = "0.13.2", default-features = false, features = ["toml", "yaml", "json"] }
+handlebars = { version = "^5.1", optional = true }
+config = { version = "0.13.2", default-features = false, features = ["toml", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
 strum = "0.26"
@@ -57,19 +73,21 @@ tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 anyhow = "1.0.77"
 file-rotate = { version = "0.7.5" }
-reqwest = { version = "0.11", features = ["json", "multipart"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "multipart", "rustls-tls"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
 async-trait = "0.1.68"
-elasticsearch = { version = "8.5.0-alpha.1", optional = true }
+elasticsearch = { version = "8.5.0-alpha.1", optional = true, default-features = false, features = ["rustls-tls"] }
 murmur3 = { version = "0.5.2", optional = true }
+# vendored OpenSSL, enabled only by the `kafka` feature (and `--all-features`);
+# lets kafka's openssl-sys build without a system OpenSSL. See the `kafka` feature.
 openssl = { version = "0.10", optional = true, features = ["vendored"] }
 lapin = { version = "2.2.1", optional = true }
 kafka = { version = "0.10.0", optional = true }
-google-cloud-pubsub = { version = "0.30.0", optional = true }
+google-cloud-pubsub = { version = "0.30.0", optional = true, default-features = false, features = ["auth", "rustls-tls"] }
 google-cloud-googleapis = { version = "0.16.1", optional = true }
 jsonwebtoken = { version = "9.3.1", optional = true }
 futures = { version = "0.3.28", optional = true }
-sqlx = { version = "0.8", features = ["runtime-tokio", "tls-native-tls", "any", "sqlite", "postgres"], optional = true }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls-ring", "any", "sqlite", "postgres"], optional = true }
 aws-config = { version = "^1.8", optional = true }
 aws-types = { version = "^1.3", optional = true }
 aws-sdk-s3 = { version = "^1.1", optional = true }
@@ -78,7 +96,7 @@ aws-sdk-lambda = { version = "^1.9", optional = true }
 extism = { version = "1.2.0", optional = true }
 mithril-client = { version = "^0.12.11", optional = true, features = ["fs"] }
 miette = { version = "7.2.0", features = ["fancy"] }
-itertools = "0.12.1"
+itertools = "0.14.0"
 redis = { version = "0.27.6", optional = true }
 utxorpc = { version = "0.14.0", optional = true }
 # used to install a process-default rustls CryptoProvider so multi-provider
