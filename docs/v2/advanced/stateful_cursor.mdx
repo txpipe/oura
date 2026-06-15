@@ -25,7 +25,8 @@ and resumes the source from there.
 Add a top-level `[cursor]` section to enable the feature, and pick a backend with `type`:
 
 <Tabs syncKey="cursor-backend">
-  <TabItem label="Memory">
+<TabItem label="Memory">
+
 Keeps the cursor in memory only — the position is **not** persisted across restarts. This is
 the default when no `[cursor]` section is present, and takes no extra fields.
 
@@ -33,8 +34,10 @@ the default when no `[cursor]` section is present, and takes no extra fields.
 [cursor]
 type = "Memory"
 ```
-  </TabItem>
-  <TabItem label="File">
+
+</TabItem>
+<TabItem label="File">
+
 Stores the cursor in a JSON file on the local file system.
 
 ```toml title="daemon.toml"
@@ -51,8 +54,10 @@ flush_interval = 10
   recover across rollbacks.
 - `flush_interval` (optional, default = `10`): how often, in seconds, the position is written
   to disk.
-  </TabItem>
-  <TabItem label="Redis">
+
+</TabItem>
+<TabItem label="Redis">
+
 Stores the cursor in a Redis instance — handy when running multiple environments or ephemeral
 containers.
 
@@ -70,5 +75,6 @@ flush_interval = 10
 - `max_breadcrumbs` (optional, default = `10`): how many recent positions to retain.
 - `flush_interval` (optional, default = `10`): how often, in seconds, the position is flushed
   to Redis.
-  </TabItem>
+
+</TabItem>
 </Tabs>
