@@ -2,56 +2,58 @@
 title: Binary Releases
 ---
 
-Oura can be run as a standalone executable. Follow the instructions for your particular OS / Platform to install a local copy from our Github pre-built releases.
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Oura ships as a standalone executable. Grab a pre-built release for your platform below — no
+toolchain or compilation required.
 
 ## What's included
 
-The pre-built binaries are **batteries-included**: every integration that builds cleanly across all release targets ships by default, so you rarely need to compile a custom build.
+The pre-built binaries are **batteries-included**: every integration that builds cleanly
+across all release targets ships by default, so you rarely need a custom build.
 
 - **Sources:** node-to-node (`n2n`), node-to-client (`n2c`), UTxO RPC (`u5c`), Hydra (`hydra`), AWS S3 (`aws`)
 - **Sinks:** terminal, stdout, file rotate, webhook, Elasticsearch, Redis, RabbitMQ, SQL (SQLite / Postgres), AWS (SQS / Lambda / S3), GCP (Pub/Sub / Cloud Functions)
 - **Filters:** all built-in filters (select, split block, JSON, legacy v1, etc.)
 
-A few integrations are left out to keep the binary lean and free of system/C dependencies, and require a [source build](/v2/installation/from_source):
+A few integrations are left out to keep the binary lean and free of system/C dependencies. They
+require a [source build](/oura/v2/installation/from_source):
 
 - **`kafka`** — its only TLS backend is OpenSSL; bundling it would pull a vendored OpenSSL build into the otherwise pure-Rust-TLS binary
 - **`zeromq`** — dynamically links a system `libzmq` at runtime, so it can't ship in a portable prebuilt binary
 - **`mithril`** — pulls a heavy GMP/blst C-crypto toolchain that significantly increases binary size and build time
 - **`wasm`** — the WASM plugin runtime (large, and itself a plugin host)
 
-## Install via shell script
+## Install
 
-You can run the following command line script to install Oura on supported systems (Mac / Linux)
+Pick the method that suits your platform:
 
-```sh
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/txpipe/oura/releases/latest/download/oura-installer.sh | sh
-```
+<Tabs syncKey="install-method">
+  <TabItem label="Shell (Mac / Linux)">
+    ```sh
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/txpipe/oura/releases/latest/download/oura-installer.sh | sh
+    ```
+  </TabItem>
+  <TabItem label="PowerShell (Windows)">
+    ```sh
+    powershell -c "irm https://github.com/txpipe/oura/releases/latest/download/oura-installer.ps1 | iex"
+    ```
+  </TabItem>
+  <TabItem label="Homebrew">
+    ```sh
+    brew install txpipe/tap/oura
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```sh
+    npm install -g @txpipe/oura
+    ```
+  </TabItem>
+</Tabs>
 
-## Install via powershell script
+## Download binaries
 
-You can use Powershell to install Oura on Windows systems.
-
-```sh
-powershell -c "irm https://github.com/txpipe/oura/releases/latest/download/oura-installer.ps1 | iex"
-```
-
-## Install via Homebrew
-
-You can use Homebrew to install the latest version of Oura in supported systems (Mac / Linux)
-
-```sh
-brew install txpipe/tap/oura
-```
-
-## Install via NPM
-
-You can use NPM to install the latest version of Oura in supported systems (Mac / Linux)
-
-```sh
-npm install -g @txpipe/oura
-```
-
-## Download Binaries
+Prefer to grab the archive yourself? Download the build for your platform:
 
 |  File  | Platform |
 |--------|----------|

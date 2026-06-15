@@ -1,27 +1,35 @@
 ---
 title: Parse CBOR filter
-sidebar: 
+sidebar:
   label: Parse CBOR
+  order: 2
 ---
 
-The `parse_cbor` filter aims to map cbor blocks to structured blocks and cbor transactions to structured transactions.
+The `ParseCbor` filter decodes raw CBOR into structured records, so downstream stages get
+something far easier to work with than a hex blob. It's a prerequisite for most real
+processing — notably the [Select](/oura/v2/filters/select) filter. The records follow the
+[UTxORPC](https://utxorpc.org/cardano) schema.
 
-- When the record received in the stage is CborBlock, the filter will decode and map it to ParsedBlock, which is passed to the next stage.
-- When the record received in the stage is CborTx, the filter will decode and map it to ParsedTx, which is passed to the next stage. This will only happen when the record received in the stage is CborTx and therefore requires to enable the [split_cbor](/oura/v2/filters/split_block) filter before for the stage to receive the CborTx format.
-- Else, parse_cbor will ignore and pass the record to the next stage.
+It adapts to whatever it receives:
+
+- a **CborBlock** is decoded into a structured `Block`.
+- a **CborTx** is decoded into a structured `Tx`. This requires the
+  [SplitBlock](/oura/v2/filters/split_block) filter earlier in the chain to produce the
+  `CborTx` records.
+- anything else is passed through untouched.
 
 ## Configuration
 
-Adding the following section to the daemon config file will enable the filter as part of the pipeline:
-
-```toml
+```toml title="daemon.toml"
 [[filters]]
 type = "ParseCbor"
 ```
 
+This filter takes no additional options.
+
 ## Examples
 
-Below is an example of the data that will be sent to the sink when the filter received a CborBlock record.
+From a `CborBlock`, the next stage receives a structured block:
 
 ```json
 {
@@ -37,7 +45,8 @@ Below is an example of the data that will be sent to the sink when the filter re
 }
 ```
 
-Below is an example of the data that will be sent to the sink when the filter received a CborTx record. A block can contain many transactions, so the sink will receive an event for each transaction.
+From a `CborTx` (when `SplitBlock` ran first), it receives one structured transaction per
+event:
 
 ```json
 {

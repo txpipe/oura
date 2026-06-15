@@ -25,6 +25,13 @@ oura dump [OPTIONS] <socket>
 - `--since <slot>,<hash>`: an option to specify from which point in the chain _Oura_ should start reading from. The point is referenced by passing the slot of the block followed by a comma and the hash of the block (`<slot>,<hash>`). If omitted, _Oura_ will start reading from the tail (tip) of the node.
 - `--output <path-like>`: an option to specify an output file prefix for storing the log files. Logs are rotated, so a timestamp will be added as a suffix to the final filename. If omitted, data will be sent to stdout.
 
+:::tip
+`--magic` accepts `mainnet`, `preprod`, `preview`, `testnet`, or a raw numeric magic. For
+`--since`, find a block's `<slot>,<hash>` in any chain explorer — or omit it to start from the
+tip. See the [watch command](/oura/v2/usage/watch) for the same options with a live, colorized
+view.
+:::
+
 ## Examples
 
 ### Dump Data From A Remote Relay Node into Stdout

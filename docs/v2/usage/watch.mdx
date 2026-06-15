@@ -24,6 +24,12 @@ oura watch [OPTIONS] <socket>
 - `--throttle`: milliseconds to wait between output lines (for easier reading).
 - `--wrap`: indicates that long output text should break and continue in the following line. If omitted, lines will be truncated to fit in the available terminal width.
 
+:::tip
+`--magic` accepts `mainnet`, `preprod`, `preview`, `testnet`, or a raw numeric magic for a
+custom network. For `--since`, the `<slot>,<hash>` of any block is shown by chain explorers
+(e.g. [Cardanoscan](https://cardanoscan.io/)) — or just omit it to start from the tip.
+:::
+
 ## Examples
 
 ### Watch Live Data From A Remote Relay Node

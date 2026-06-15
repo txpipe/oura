@@ -1,12 +1,22 @@
 ---
 title: Kafka
+sidebar:
+  order: 30
 ---
 
-A sink that implements a _Kafka_ producer. Each event is json-encoded and sent as a message to a single Kafka topic.
+Publishes each event as a json-encoded message to an [Apache Kafka](https://kafka.apache.org/)
+topic. A solid choice when you're already running Kafka and want chain data flowing into your
+existing stream-processing setup. For a full walkthrough, see the
+[Cardano → Kafka guide](/oura/v2/guides/cardano_2_kafka).
+
+:::caution[Requires a custom build]
+Kafka isn't in the default binary (its TLS backend pulls in OpenSSL). Build Oura with the
+`kafka` feature — see [Install from source](/oura/v2/installation/from_source).
+:::
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "Kafka"
 brokers = ["kafka-broker-0:9092"]
@@ -15,8 +25,15 @@ ack_timeout_secs = 5
 paritioning = "Random"
 ```
 
-- `type`: the literal value `Kafka`.
-- `brokers`: indicates the location of the _Kafka_ brokers within the network. Several hostname:port pairs can be added to the array for a "cluster" scenario.
-- `topic` this field indicates which _Kafka_ topic to use to send the outbound messages.
-- `ack_timeout_secs` (optional): the timeout, in seconds, to wait for the broker to acknowledge a produced message.
-- `paritioning` (optional): the strategy used to assign each message to a partition. Available values are `ByBlock` (messages from the same block share a partition key) and `Random`. Default value is `Random`. (Note: the config key is spelled `paritioning` to match the field name in the codebase.)
+- `type` (required): the literal value `Kafka`.
+- `brokers` (required): the Kafka brokers to connect to. Add several `hostname:port` pairs for
+  a cluster.
+- `topic` (required): the Kafka topic to publish messages to.
+- `ack_timeout_secs` (optional): how long, in seconds, to wait for the broker to acknowledge a
+  message.
+- `paritioning` (optional, default = `Random`): how messages are assigned to partitions —
+  `ByBlock` (messages from the same block share a partition key) or `Random`.
+
+:::note
+The config key really is spelled `paritioning`, to match the field name in the codebase.
+:::

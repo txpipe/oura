@@ -21,10 +21,11 @@ Running from the repository root would scatter relative output and state (`./out
 `./snapshot`, cursor and database files) in the wrong place and break the path-based
 examples.
 
-Examples that target an optional sink or filter (`kafka`, `redis`, `rabbitmq`, `zeromq`,
-`elasticsearch`, the AWS and GCP sinks, `SqlDb`, `WasmPlugin`, …) require _Oura_ to be built
-with the matching cargo feature. See [Install from source](/oura/v2/installation/from_source)
-for the feature flags, or use a Docker image that bundles them.
+Most examples run on the default binary as-is. Only a few target an integration that isn't
+bundled — the `kafka` and `zeromq` sinks, the `mithril` source, and the `WasmPlugin` filter —
+and those need a build with the matching cargo feature. See
+[Install from source](/oura/v2/installation/from_source) for the feature flags, or use a Docker
+image that bundles them.
 
 ## Companion files & setup
 

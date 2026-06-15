@@ -2,15 +2,20 @@
 title: Work Stats filter
 sidebar:
   label: Work Stats
+  order: 7
 ---
 
-The `work_stats` filter tracks pipeline progress as events pass through it and can optionally finalize (stop) the pipeline once a configured stopping point is reached. It passes events through unchanged, so it can be placed anywhere in the filter chain.
+The `WorkStats` filter tracks pipeline progress as events pass through, and can optionally stop
+the pipeline once a target is reached. It passes events through unchanged, so you can drop it
+anywhere in the filter chain.
 
-This filter is how finalization is configured in v2 (see [finalize options](/oura/v2/advanced/finalize_options) for the conceptual overview): the pipeline stops as soon as any configured condition is met.
+This is also how **finalization** is configured in v2 (see
+[finalize options](/oura/v2/advanced/finalize_options) for the concept): the pipeline exits
+gracefully as soon as any configured condition is met.
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [[filters]]
 type = "WorkStats"
 until_hash = "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de"

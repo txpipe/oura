@@ -1,57 +1,75 @@
 ---
 title: Select Filter
-sidebar: 
+sidebar:
   label: Select
+  order: 3
 ---
 
-The `select` filter makes it possible to filter data that make sense for your cases. 
+The `Select` filter keeps only the events that match a **predicate** and drops the rest — so a
+sink downstream sees just the transactions you care about (by address, asset, datum, or
+metadata). It's the workhorse for "tell me when _X_ happens on chain".
 
-The select filter requires [ParseCbor](/oura/v2/filters/parse_cbor) filter enabled to work.
+:::note
+`Select` works on structured records, so it needs the
+[ParseCbor](/oura/v2/filters/parse_cbor) filter earlier in the chain (usually preceded by
+[SplitBlock](/oura/v2/filters/split_block) for tx-level matching).
+:::
 
 ## Configuration
 
-Adding the following section to the daemon config file will enable the filter as part of the pipeline:
-
-```toml
+```toml title="daemon.toml"
 [[filters]]
 type = "Select"
 skip_uncertain = true
 predicate = <match>
 ```
 
-## Examples
+- `type` (required): the literal value `Select`.
+- `skip_uncertain` (required): when `true`, events that can't be conclusively evaluated against
+  the predicate are dropped rather than kept.
+- `predicate` (required): the match expression — see the patterns below.
 
-Match any tx that interacts with this particular address
+## Simple predicates
+
+The simplest predicate is a single string that matches any transaction touching a given
+entity.
+
+Match a transaction that interacts with an address:
 
 ```toml
 predicate = "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
 ```
 
-Match any tx that interacts with this particular stake address
+Match a stake address:
 
 ```toml
 predicate = "stake178phkx6acpnf78fuvxn0mkew3l0fd058hzquvz7w36x4gtcccycj5"
 ```
 
-Match any tx that interacts with this particular asset
+Match an asset:
 
 ```toml
 predicate = "asset17jd78wukhtrnmjh3fngzasxm8rck0l2r4hhyyt"
 ```
 
-Match any tx that holds a particular datum
+Match a datum:
 
 ```toml
 predicate = "datum1httkxyxp8x0dlpdt3k6cwng5pxj3j"
 ```
 
-Match any tx that holds a particular metadata label
+Match a metadata label (prefix the label with `#`):
 
 ```toml
 predicate = "#127"
 ```
 
-Match any tx that interacts with any of these particular address
+## Combining predicates
+
+Use `any` (match if _any_ entry matches) or `all` (match only if _every_ entry matches) to
+compose simple predicates.
+
+Match a transaction touching **any** of these addresses:
 
 ```toml
 [filters.predicate]
@@ -62,7 +80,7 @@ any = [
 ]
 ```
 
-Match any tx that interacts with all of these particular address simultaneously
+Match a transaction touching **all** of these at once:
 
 ```toml
 [filters.predicate]
@@ -72,7 +90,8 @@ all = [
 ]
 ```
 
-Match any tx that simultanously interacts with a particlar address, holds a particular asset and present a particular metadata label
+Mix entity types — here, an address that simultaneously holds an asset and carries a metadata
+label:
 
 ```toml
 [filters.predicate]
@@ -83,7 +102,7 @@ all = [
 ]
 ```
 
-Match tx that has an output that simultaneously points to a particular address and contains a particular asset
+Match against a single output's contents (address, assets, and datum together):
 
 ```toml
 [filters.predicate.match.output]
@@ -92,22 +111,21 @@ assets = ["asset17jd78wukhtrnmjh3fngzasxm8rck0l2r4hhyyt"]
 datum = "datum1httkxyxp8x0dlpdt3k6cwng5pxj3j"
 ```
 
-## Metadata Filtering
+## Metadata patterns
 
-Match any tx that holds a particular metadata label
+Match any transaction carrying a metadata label:
 
 ```toml
 predicate = "#674"
 ```
 
-Match transactions with metadata containing a regex pattern (recursively searches arrays and maps — including map keys and values — and matches only text metadatum)
+Match on the *content* of metadata with a regular expression. The match recurses through
+arrays and maps (including map keys and values) and applies only to text metadata:
 
 ```toml
 [filters.predicate.match.metadata]
 label = 674
 
 [filters.predicate.match.metadata.value.text]
-regex = "(?i)hello.*world"  # Case-insensitive
+regex = "(?i)hello.*world"  # case-insensitive
 ```
-
-

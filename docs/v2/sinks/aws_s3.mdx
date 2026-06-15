@@ -1,18 +1,21 @@
 ---
 title: AWS S3
+sidebar:
+  order: 42
 ---
 
-A sink that saves the CBOR content of the blocks as S3 object.
+Stores the raw CBOR of each block as an object in an [AWS S3](https://aws.amazon.com/s3/)
+bucket. It's the go-to sink for archiving chain data: write blocks to a bucket once, then
+replay them later with the [S3 source](/oura/v2/sources/s3) — no node required.
 
-The sink will process each input event in sequence and according to the configuration in daemon.toml it will save in S3 the block in CBOR format.
-
-The location where the object will be saved can be configured by adding value in the prefix field, for example `mainnet/`
-
-Authentication against AWS is built-in in the SDK library and follows the common chain of providers (env vars, ~/.aws, etc).
+:::note
+Authentication uses the standard AWS provider chain — no credentials go in the config. See
+[AWS credentials](/oura/v2/sinks/#aws-credentials) for the supported options.
+:::
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "AwsS3"
 region = "us-west-2"
@@ -20,31 +23,15 @@ bucket = "my-bucket"
 prefix = "mainnet/"
 ```
 
-### Section: `sink`
+- `type` (required): the literal value `AwsS3`.
+- `region` (required): the AWS region where the bucket lives.
+- `bucket` (required): the bucket to store blocks in.
+- `prefix` (optional): a prefix prepended to each object's key, e.g. `mainnet/`.
 
-- `type`: the literal value `AwsS3`.
-- `region`: The AWS region where the bucket is located.
-- `bucket`: The name of the bucket to store the blocks.
-- `prefix`: A prefix to prepend on each object's key.
+Each object is keyed by the slot number of the block it contains (under `prefix`, if set) and
+stored with content type `application/cbor`.
 
-IMPORTANT: Only the cbor block format is supported.
-
-## Naming Convention
-
-The name of the object and the slot number in which it was processed.
-
-## Content Encoding
-
-- `application/cbor`
-
-## AWS Credentials
-
-The sink needs valid AWS credentials to interact with the cloud service. The majority of the SDKs and libraries that interact with AWS follow the same approach to access these credentials from a chain of possible providers:
-
-- Credentials stored as the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
-- A Web Identity Token credentials from the environment or container (including EKS)
-- ECS credentials (IAM roles for tasks)
-- As entries in the credentials file in the .aws directory in your home directory (~/.aws/)
-- From the EC2 Instance Metadata Service (IAM Roles attached to an instance)
-
-Oura, by mean of the Rust AWS SDK lib, will honor the above chain of providers. Use any of the above that fits your particular scenario. Please refer to AWS' documentation for more detail.
+:::caution[CBOR blocks only]
+This sink stores the raw CBOR block, so the pipeline must feed it CBOR blocks — don't place
+filters like `ParseCbor` or `IntoJson` before it.
+:::

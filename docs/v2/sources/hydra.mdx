@@ -2,24 +2,20 @@
 title: Hydra
 sidebar:
   label: Hydra
+  order: 4
 ---
 
-The Hydra fetch blocks and receive blocks from hydra.
-
-This source requires building oura using the feature `hydra` enabled.
+The Hydra source connects to a [Hydra](https://hydra.family/head-protocol/) head over a
+**WebSocket** and streams its events into the pipeline. Use it to observe activity on a Hydra
+Layer 2 head with the same tooling you'd use for the main chain.
 
 ## Configuration
 
-The following snippet shows an example of how to set up a Hydra source:
-
-```toml
+```toml title="daemon.toml"
 [source]
 type = "Hydra"
 ws_url = "ws://127.0.0.1:4001"
 ```
 
-### Section `source`:
-
-- `type`: this field must be set to the literal value `Hydra`
-- `ws_url`: websocket hydra server
-
+- `type` (required): the literal value `Hydra`.
+- `ws_url` (required): the WebSocket URL of the Hydra node's API.
