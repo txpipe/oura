@@ -32,12 +32,14 @@ kafka = ["dep:kafka", "openssl"]
 # compile a custom flavor. The bundle is fully pure-Rust TLS (rustls, no system
 # OpenSSL). Measured stripped size (dist profile): ~37 MB.
 #
-# Kept OUT of the default binary (require a source build) because each needs a
-# special build environment incompatible with portable cross-target releases:
-#   - kafka: its only TLS backend is openssl-sys; would force vendored OpenSSL
-#            (and NASM on windows-msvc) into every release build
-#   - zeromq: links a system libzmq (no vendored build)
-#   - mithril: pulls gmp-mpfr-sys (GMP C lib); unsupported on windows-msvc
+# Kept OUT of the default binary (available via a source build) to keep the
+# release lean and free of system/C dependencies:
+#   - kafka: its only TLS backend is openssl-sys; bundling it would pull a
+#            vendored OpenSSL build into the otherwise pure-Rust-TLS binary
+#   - zeromq: dynamically links a system libzmq (a runtime dependency), so it
+#             can't ship in a portable prebuilt binary
+#   - mithril: builds everywhere, but pulls a heavy GMP/blst C-crypto toolchain
+#              (gmp-mpfr-sys, blst, rug) that bloats binary size and build time
 #   - wasm: extism/wasmtime; pure-Rust but ~+14 MB and itself a plugin runtime
 [package.metadata.dist]
 features = ["u5c", "elasticsearch", "hydra", "redis", "rabbitmq", "sql", "gcp", "aws"]
