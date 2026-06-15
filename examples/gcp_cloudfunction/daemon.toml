@@ -13,5 +13,8 @@ type = "ParseCbor"
 
 [sink]
 type = "GcpCloudFunction"
-url = "https://REGION-PROJECT_ID.cloudfunctions.net/FUNCTION_NAME"
-authentication = true
+# Posts events to the bundled echo server (see README). For a real Cloud Function, use its
+# trigger URL (https://REGION-PROJECT_ID.cloudfunctions.net/FUNCTION_NAME) and set
+# authentication = true so Oura attaches a Google-issued identity token.
+url = "http://localhost:8080"
+authentication = false

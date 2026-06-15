@@ -1,0 +1,15 @@
+version: "3"
+services:
+  # LocalStack emulates AWS locally, so the example runs without a real AWS account.
+  # The init script under ./localstack provisions the queue Oura writes to.
+  localstack:
+    image: localstack/localstack:3
+    container_name: localstack-sqs
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      # Path-style queue URLs, so the queue_url in daemon.toml is deterministic.
+      - SQS_ENDPOINT_STRATEGY=path
+    volumes:
+      - ./localstack:/etc/localstack/init/ready.d

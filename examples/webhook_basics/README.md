@@ -20,11 +20,27 @@ See the [WebHook sink docs](../../docs/v2/sinks/webhook.mdx).
 
 ## Prerequisites
 
-- An HTTP endpoint to receive the requests. Edit `url` in `daemon.toml` to point at it.
+- An HTTP endpoint to receive the requests at the `url` in `daemon.toml`
+  (default `http://localhost:8080`).
+
+The included `docker-compose.yml` starts a small echo server on `:8080` that logs every
+request it receives, so the example runs standalone:
+
+```sh
+docker compose up -d
+```
+
+To post to your own endpoint instead, skip the compose step and edit `url` in `daemon.toml`.
 
 ## Run
 
 ```sh
 cd examples/webhook_basics
 oura daemon --config daemon.toml
+```
+
+Watch the events arrive at the receiver:
+
+```sh
+docker compose logs -f webhook
 ```

@@ -8,8 +8,8 @@ type = "mainnet"
 [intersect]
 type = "Tip"
 
-[[filters]]
-type = "ParseCbor"
+# The AwsS3 sink stores the raw block CBOR, so the block must reach it unparsed
+# (no ParseCbor / SplitBlock filter).
 
 [sink]
 type = "AwsS3"
