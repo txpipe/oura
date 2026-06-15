@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-06-15
+
+### 📚 Documentation
+
+- Align v2 docs with actual implementation (#937)
+- Add Examples showcase, and make the examples runnable (#939)
+- Replace dead mainnet relay in v2 docs and CONTRIBUTING (#940)
+- Add per-example READMEs and slim the examples showcase (#943)
+- Correct opt-in build notes for kafka and mithril (#945)
+- Make cloud-sink examples runnable standalone via docker-compose (#947)
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove the broken pool_metadata example (#941)
+- Slim dependencies and ship a batteries-included default binary (#944)
+- Update cargo-dist, drop self-updater and PR release dry-run (#946)
+
 ## [2.1.0] - 2026-06-14
 
 ### 🚀 Features
@@ -13,6 +30,10 @@ All notable changes to this project will be documented in this file.
 
 - Bump pallas + utxorpc to utxorpc-spec 0.19 (#921) (#924)
 - Bump aws-lc-sys/aws-lc-rs for new MSVC compatibility (#926)
+
+### 💼 Other
+
+- V2.1.0
 
 ### ⚙️ Miscellaneous Tasks
 
