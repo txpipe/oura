@@ -4,7 +4,7 @@ members = ["cargo:."]
 # Config for 'dist'
 [dist]
 # The preferred dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.29.0"
+cargo-dist-version = "0.30.3"
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
@@ -16,7 +16,10 @@ install-path = "CARGO_HOME"
 # The preferred Rust toolchain to use in CI (rustup toolchain syntax)
 rust-toolchain-version = "1.89"
 # Whether to install an updater program
-install-updater = true
+install-updater = false
+# Don't run the release dry-run on pull requests; only fire on version tags.
+# (PR validation lives in ci.yml.)
+pr-run-mode = "skip"
 # A GitHub repo to push Homebrew formulas to
 tap = "txpipe/homebrew-tap"
 # Publish jobs to run in CI
