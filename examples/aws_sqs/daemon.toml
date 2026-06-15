@@ -17,5 +17,7 @@ type = "ParseCbor"
 [sink]
 type = "AwsSqs"
 region = "us-east-1"
-queue_url = "https://sqs.us-east-1.amazonaws.com/*****/my-queue"
+# Points at the queue created by the bundled LocalStack (see README). For a real
+# AWS queue, use its URL: https://sqs.<region>.amazonaws.com/<account-id>/my-queue
+queue_url = "http://localhost.localstack.cloud:4566/queue/us-east-1/000000000000/my-queue"
 group_id = "my_group"

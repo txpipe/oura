@@ -1,0 +1,26 @@
+version: "3"
+services:
+  # Google's Pub/Sub emulator, so the example runs without a real GCP project.
+  # Oura targets it via the PUBSUB_EMULATOR_HOST env var (see README).
+  pubsub:
+    image: google/cloud-sdk:emulators
+    container_name: pubsub-emulator
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=local-project
+    ports:
+      - "8085:8085"
+
+  # Creates the topic Oura publishes to (plus a subscription so you can read the
+  # messages back), then exits.
+  init:
+    image: curlimages/curl
+    depends_on:
+      - pubsub
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until curl -s -o /dev/null http://pubsub:8085; do sleep 1; done
+        curl -s -X PUT http://pubsub:8085/v1/projects/local-project/topics/my-topic
+        curl -s -X PUT http://pubsub:8085/v1/projects/local-project/subscriptions/my-sub \
+          -H 'Content-Type: application/json' \
+          -d '{"topic":"projects/local-project/topics/my-topic"}'

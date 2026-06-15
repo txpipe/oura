@@ -1,0 +1,11 @@
+version: "3"
+services:
+  webhook:
+    # Echoes every received request (method, headers, body) to the container logs,
+    # so you can watch the events Oura posts with `docker compose logs -f`.
+    image: mendhak/http-https-echo:31
+    container_name: webhook-echo
+    environment:
+      - HTTP_PORT=8080
+    ports:
+      - "8080:8080"

@@ -1,0 +1,11 @@
+version: "3"
+services:
+  # A Cloud Function is just an HTTP endpoint, so this echo server stands in for one,
+  # logging every request Oura posts. It lets the example run without a GCP project.
+  function:
+    image: mendhak/http-https-echo:31
+    container_name: cloudfunction-echo
+    environment:
+      - HTTP_PORT=8080
+    ports:
+      - "8080:8080"
