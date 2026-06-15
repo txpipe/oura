@@ -1,5 +1,7 @@
 ---
 title: Dump
+sidebar:
+  order: 2
 ---
 
 The `dump` mode provides a quick way to tail the latest events from the blockchain and outputs raw data into stdout or the file system. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is formatted using JSONL (json, one-line per event). This command is intended mainly as quick persistence mechanism of blockchain data, such as keeping a log of blocks / transactions. It can also be used for "piping" stdout into other shell commands.
