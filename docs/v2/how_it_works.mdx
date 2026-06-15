@@ -11,11 +11,11 @@ batches.
 
 ```mermaid
 flowchart LR
-    node([Cardano node]) -->|Ouroboros mini-protocols| source[Source]
+    cnode([Cardano node]) -->|Ouroboros mini-protocols| source[Source]
     source --> f1[Filter] --> f2[Filter] --> sink[Sink]
     sink --> dest([Destination])
-    sink -.reports position.-> cursor[(Cursor)]
-    cursor -.restores on restart.-> source
+    sink -. reports position .-> cursor[(Cursor)]
+    cursor -. restores on restart .-> source
 ```
 
 ## The pipeline
