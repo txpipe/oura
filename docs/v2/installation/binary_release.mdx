@@ -12,11 +12,11 @@ The pre-built binaries are **batteries-included**: every integration that builds
 - **Sinks:** terminal, stdout, file rotate, webhook, Elasticsearch, Redis, RabbitMQ, SQL (SQLite / Postgres), AWS (SQS / Lambda / S3), GCP (Pub/Sub / Cloud Functions)
 - **Filters:** all built-in filters (select, split block, JSON, legacy v1, etc.)
 
-Only integrations that need a special build environment are left out and require a [source build](/v2/installation/from_source):
+A few integrations are left out to keep the binary lean and free of system/C dependencies, and require a [source build](/v2/installation/from_source):
 
-- **`kafka`** — its only TLS backend is OpenSSL (a system C library), unlike the rest of the binary which is pure-Rust TLS
-- **`zeromq`** — links a system `libzmq`
-- **`mithril`** — pulls the GMP C library, which is unsupported on Windows (MSVC)
+- **`kafka`** — its only TLS backend is OpenSSL; bundling it would pull a vendored OpenSSL build into the otherwise pure-Rust-TLS binary
+- **`zeromq`** — dynamically links a system `libzmq` at runtime, so it can't ship in a portable prebuilt binary
+- **`mithril`** — pulls a heavy GMP/blst C-crypto toolchain that significantly increases binary size and build time
 - **`wasm`** — the WASM plugin runtime (large, and itself a plugin host)
 
 ## Install via shell script

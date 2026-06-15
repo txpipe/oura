@@ -29,11 +29,12 @@ cargo install --path . --features kafka,mithril
 
 | Feature | Prerequisite |
 |---------|--------------|
-| `kafka` | OpenSSL (its only TLS backend); your platform's OpenSSL dev libraries |
+| `kafka` | builds a vendored OpenSSL (its only TLS backend): a C compiler and Perl |
 | `zeromq` | a system `libzmq` (install via your OS package manager) |
-| `mithril` | a GMP toolchain; **not supported on Windows MSVC** |
+| `mithril` | none, but builds a heavy GMP/blst C-crypto toolchain (slow build) |
 | `wasm` | none (pure Rust), but adds a large WASM runtime |
 
 :::note
-Avoid `--all-features`: it enables `zeromq` and `mithril`, which fail without the prerequisites above.
+`--all-features` requires a system `libzmq` (for `zeromq`) and builds mithril's
+heavy C-crypto toolchain, so it is slow and best avoided unless you need it.
 :::
