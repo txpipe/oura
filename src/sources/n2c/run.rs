@@ -266,6 +266,12 @@ pub fn do_chainsync(
                 .map(|x| x.chainsync_max_backoff as u64)
                 .map(Duration::from_secs)
                 .unwrap_or_else(|| Duration::from_secs(60)),
+            memory: config
+                .retry_policy
+                .as_ref()
+                .map(|x| x.memory)
+                .map(Duration::from_secs)
+                .unwrap_or_else(|| Duration::from_secs(10)),
         },
     )
 }
