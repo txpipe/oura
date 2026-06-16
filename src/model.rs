@@ -132,6 +132,7 @@ pub struct TxOutputRecord {
     pub assets: Option<Vec<OutputAssetRecord>>,
     pub datum_hash: Option<String>,
     pub inline_datum: Option<PlutusDatumRecord>,
+    pub reference_script: Option<String>,
 }
 
 impl From<TxOutputRecord> for EventData {

@@ -4,12 +4,12 @@ use pallas_primitives::conway::{
     AuxiliaryData, Certificate, Coin, MintedBlock, MintedDatumOption,
     MintedPostAlonzoTransactionOutput, MintedTransactionBody, MintedTransactionOutput,
     MintedWitnessSet, Multiasset, NetworkId, RedeemerTag, RedeemersKey, RedeemersValue,
-    RewardAccount, Value,
+    RewardAccount, ScriptRef, Value,
 };
 
 use pallas_crypto::hash::Hash;
 use pallas_primitives::ToCanonicalJson as _;
-use pallas_traverse::OriginalHash;
+use pallas_traverse::{ComputeHash, OriginalHash};
 
 use crate::model::{
     BlockRecord, Era, MintRecord, OutputAssetRecord, PlutusRedeemerRecord, TransactionRecord,
@@ -84,6 +84,14 @@ impl EventWriter {
                 Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)?),
                 _ => None,
             },
+            reference_script: output.script_ref.as_ref().map(|x| {
+                match ScriptRef::from(x.0.clone()) {
+                    ScriptRef::NativeScript(script) => script.compute_hash().to_hex(),
+                    ScriptRef::PlutusV1Script(script) => script.compute_hash().to_hex(),
+                    ScriptRef::PlutusV2Script(script) => script.compute_hash().to_hex(),
+                    ScriptRef::PlutusV3Script(script) => script.compute_hash().to_hex(),
+                }
+            }),
         })
     }
 

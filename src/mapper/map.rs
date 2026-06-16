@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use pallas_codec::utils::KeepRaw;
 use pallas_crypto::hash::Hash;
 use pallas_primitives::alonzo::MintedWitnessSet;
-use pallas_primitives::babbage::MintedDatumOption;
+use pallas_primitives::babbage::{MintedDatumOption, ScriptRef};
 use pallas_traverse::{ComputeHash, OriginalHash};
 
 use pallas_primitives::{
@@ -178,6 +178,7 @@ impl EventWriter {
             assets: self.collect_asset_records(&output.amount).into(),
             datum_hash: output.datum_hash.map(|hash| hash.to_string()),
             inline_datum: None,
+            reference_script: None,
         })
     }
 
@@ -200,6 +201,13 @@ impl EventWriter {
                 Some(MintedDatumOption::Data(x)) => Some(self.to_plutus_datum_record(x)?),
                 _ => None,
             },
+            reference_script: output.script_ref.as_ref().map(|x| {
+                match ScriptRef::from(x.0.clone()) {
+                    ScriptRef::NativeScript(script) => script.compute_hash().to_hex(),
+                    ScriptRef::PlutusV1Script(script) => script.compute_hash().to_hex(),
+                    ScriptRef::PlutusV2Script(script) => script.compute_hash().to_hex(),
+                }
+            }),
         })
     }
 
