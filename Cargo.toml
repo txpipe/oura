@@ -45,7 +45,7 @@ kafka = ["dep:kafka", "openssl"]
 features = ["u5c", "elasticsearch", "hydra", "redis", "rabbitmq", "sql", "gcp", "aws"]
 
 [dependencies]
-pallas = { version = "1.1", features = ["hardano"] }
+pallas = { version = "1.2", features = ["hardano"] }
 # pallas = { path = "../pallas/pallas", features = ["hardano"] }
 # pallas = { git = "https://github.com/txpipe/pallas", features = ["hardano"] }
 
