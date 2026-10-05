@@ -91,7 +91,6 @@ impl From<ChainConfig> for GenesisValues {
 pub struct Context {
     pub chain: ChainConfig,
     pub intersect: IntersectConfig,
-    pub finalize: Option<FinalizeConfig>,
     pub current_dir: PathBuf,
     pub breadcrumbs: Breadcrumbs,
 }
