@@ -2,9 +2,12 @@
   description = "A Nix flake for building oura";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, flake-utils, rust-overlay, ... }:
@@ -14,18 +17,25 @@
         pkgs = import nixpkgs {
           inherit system overlays;
         };
+        rustToolchain =
+          pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+
+        rustPlatform = pkgs.makeRustPlatform {
+          cargo = rustToolchain;
+          rustc = rustToolchain;
+        };
       in {
-        packages.oura = pkgs.rustPlatform.buildRustPackage rec {
+        packages.oura = pkgs.rustPlatform.buildRustPackage {
           name = "oura";
           src = self;
           cargoLock = {
             lockFile = ./Cargo.lock;
-            outputHashes = {
-              "pallas-0.23.0" = "7deb0f9c183c39d24499f123b17372394385a159ee6380df72fc27335cfa28e8"; 
-            };
           };
         };
-        defaultPackage = self.packages.oura;
+        packages.default = self.packages.${system}.oura;
+        devShells.default = pkgs.mkShell {
+          packages = [ rustToolchain ];
+        };
       }
     );
 }
