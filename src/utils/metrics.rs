@@ -2,7 +2,6 @@
 
 use prometheus_exporter::prometheus::{register_counter, register_int_gauge, Counter, IntGauge};
 
-use merge::Merge;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -20,11 +19,6 @@ pub struct Config {
 pub struct Tip {
     pub block: u64,
     pub slot: u64,
-}
-
-#[derive(Default, Merge, Clone)]
-pub(crate) struct ChainState {
-    pub tip: Option<Tip>,
 }
 
 pub(crate) struct Provider {
