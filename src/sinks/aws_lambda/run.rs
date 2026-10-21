@@ -1,4 +1,4 @@
-use aws_sdk_lambda::{types::Blob, Client};
+use aws_sdk_lambda::{primitives::Blob, Client};
 use serde_json::json;
 use std::sync::Arc;
 

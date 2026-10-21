@@ -1,4 +1,4 @@
-use aws_sdk_s3::{types::ByteStream, Client};
+use aws_sdk_s3::{primitives::ByteStream, Client};
 use std::sync::Arc;
 
 use crate::{
