@@ -2,7 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2026-10-21
+
+### 🐛 Bug Fixes
+
+- *(deps)* Move the aws and elasticsearch sinks off rustls 0.21 (#960)
+
+### 📚 Documentation
+
+- Revamp v2 docs — friendlier prose, navigation, and new guide pages (#950)
+- Fix MDX/Mermaid build errors in v2 docs (#951)
+- Reorder v2 sidebar, split examples, add quickstart install tabs (#952)
+
 ## [2.2.0] - 2026-06-15
+
+### 💼 Other
+
+- V2.2.0
 
 ### 📚 Documentation
 
@@ -377,19 +393,28 @@ All notable changes to this project will be documented in this file.
 
 ### 🚀 Features
 
+- Allow json & yaml as configuration file formats (#347)
+- Remove e1 prefix from reward account (#379)
 - Add shortcuts for 'preview' and 'pre-prod' networks (#385)
 - *(webhook)* Allow self-signed certificates (#390)
 
 ### 🐛 Bug Fixes
 
+- Honor config field that toggles compression (#358)
+- Move cursor only after side-effect (#364)
 - *(elastic)* Don't panic on ID conflicts (#391)
 
 ### 📚 Documentation
 
+- Add custom network config instructions (#362)
+- Add redis streams documentation to book index (#363)
+- Expand Redis sink section (#366)
+- Update metadata-based selection predicates (#380)
 - Describe 'retry policy' mechanism (#392)
 
 ### ⚙️ Miscellaneous Tasks
 
+- Add all features flag in from source docs (#377)
 - Fix formatting issues (#388)
 
 ## [1.5.2] - 2022-08-02
@@ -400,32 +425,15 @@ All notable changes to this project will be documented in this file.
 
 ## [1.5.1] - 2022-07-04
 
-### 🚀 Features
-
-- Allow json & yaml as configuration file formats (#347)
-- Remove e1 prefix from reward account (#379)
-
 ### 🐛 Bug Fixes
 
-- Honor config field that toggles compression (#358)
-- Move cursor only after side-effect (#364)
 - Fix n2n babbage header parsing (#355)
-
-### 📚 Documentation
-
-- Add custom network config instructions (#362)
-- Add redis streams documentation to book index (#363)
-- Expand Redis sink section (#366)
-- Update metadata-based selection predicates (#380)
-
-### ⚙️ Miscellaneous Tasks
-
-- Add all features flag in from source docs (#377)
 
 ## [1.5.0] - 2022-07-03
 
 ### 🚀 Features
 
+- Introduce Redis Streams sink (#253)
 - Retry whole chainsync operation when possible (#332)
 - Add a nix flake (#335)
 - Add metadata hash to pool registration event (#336)
@@ -433,6 +441,7 @@ All notable changes to this project will be documented in this file.
 
 ### 🐛 Bug Fixes
 
+- Allow integer values in magic args (#320)
 - Accommodate partial features build (#333)
 - Add default values for retry policies (#352)
 - Decode block wrappers correctly (#353)
@@ -441,11 +450,20 @@ All notable changes to this project will be documented in this file.
 
 - Unify retry mechanism across sinks (#302)
 
+### 📚 Documentation
+
+- Fix typo in daemon example (#294)
+- Improve "data dictionary" section (#297)
+- Add guide on connecting to custom networks (#306)
+
+### ⚙️ Miscellaneous Tasks
+
+- Fix lint warnings across the board (#310)
+
 ## [1.4.3] - 2022-06-08
 
 ### 🐛 Bug Fixes
 
-- Allow integer values in magic args (#320)
 - Add missing details in tx record (#321)
 
 ### 📚 Documentation
@@ -466,37 +484,37 @@ All notable changes to this project will be documented in this file.
 
 ## [1.4.1] - 2022-05-10
 
-### 🚀 Features
-
-- Introduce Redis Streams sink (#253)
-
 ### 🐛 Bug Fixes
 
 - Relax CIP15 requirements and log level (#290)
-
-### 📚 Documentation
-
-- Fix typo in daemon example (#294)
-- Improve "data dictionary" section (#297)
-- Add guide on connecting to custom networks (#306)
-
-### ⚙️ Miscellaneous Tasks
-
-- Fix lint warnings across the board (#310)
 
 ## [1.4.0] - 2022-05-09
 
 ### 🚀 Features
 
+- Add option to include tx details in block events (#231)
+- Add custom terminal format for ADA Handle assets (#232)
+- Add native scripts (#241)
+- Introduce GCP PubSub sink (#237)
 - Emit witness events (#262)
 - *(CIP15)* Add CIP-0015 parser (#124)
 
+### 🐛 Bug Fixes
+
+- Ensure aws feature builds ok in isolation (#230)
+- Missing fields in NativeScript fingerprint (#246)
+
 ### 📚 Documentation
 
+- Fixed typos (#226)
+- Fix typo in README (#239)
+- Add [source.finalize] doc and example (#258)
+- Fix typo in CONTRIBUTING.md (#259)
 - Add automated changelog (#286)
 
 ### ⚙️ Miscellaneous Tasks
 
+- Fix linting issues (#244)
 - Add min-depth to e2e tests (#272)
 - Workaround github / kubectl / eks issue
 - Fix github / kubectl / eks issue
@@ -509,29 +527,12 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.1] - 2022-04-16
 
-### 🚀 Features
-
-- Add option to include tx details in block events (#231)
-- Add custom terminal format for ADA Handle assets (#232)
-- Add native scripts (#241)
-- Introduce GCP PubSub sink (#237)
-
 ### 🐛 Bug Fixes
 
-- Ensure aws feature builds ok in isolation (#230)
-- Missing fields in NativeScript fingerprint (#246)
 - Update Pallas to deal with metadata overflows
-
-### 📚 Documentation
-
-- Fixed typos (#226)
-- Fix typo in README (#239)
-- Add [source.finalize] doc and example (#258)
-- Fix typo in CONTRIBUTING.md (#259)
 
 ### ⚙️ Miscellaneous Tasks
 
-- Fix linting issues (#244)
 - Fix lint warnings
 
 ## [1.3.0] - 2022-03-25
@@ -704,11 +705,19 @@ All notable changes to this project will be documented in this file.
 - CIP25 json key naming
 - Log & continue on mapper errors (#53)
 
+### 💼 Other
+
+- Enable dependabot
+
 ### 📚 Documentation
 
 - Add testdrive example for Elasticsearch setup (#54)
 - Add testdrive example for webhook setup (#55)
 - *(webhook)* Add webhook sink configuration docs (#62)
+
+### 🎨 Styling
+
+- Fix whitespaces
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -765,10 +774,6 @@ All notable changes to this project will be documented in this file.
 
 - *(node)* Handle non-map metadata structures (#12)
 
-### 💼 Other
-
-- Enable dependabot
-
 ### 📚 Documentation
 
 - Move docker instructions to mdbook
@@ -777,7 +782,6 @@ All notable changes to this project will be documented in this file.
 
 ### 🎨 Styling
 
-- Fix whitespaces
 - Fix whitespaces (#17)
 
 ### ⚙️ Miscellaneous Tasks
