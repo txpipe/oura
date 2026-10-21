@@ -56,11 +56,6 @@ jobs:
         run: |
           sudo apt-get install pkg-config libssl-dev
 
-      - name: Prev Build | Get Dependencies [MacOS]
-        if: matrix.os == 'macOS-latest'
-        run: |
-          brew install openssl@1.1
-
       - name: Setup | Checkout
         uses: actions/checkout@v3
 
