@@ -1,4 +1,5 @@
-use aws_sdk_sqs::{Client, Region, RetryConfig};
+use aws_config::{retry::RetryConfig, BehaviorVersion, Region};
+use aws_sdk_sqs::Client;
 use serde::Deserialize;
 
 use crate::{
@@ -24,14 +25,15 @@ impl SinkProvider for WithUtils<Config> {
         let explicit_region = self.inner.region.to_owned();
 
         let aws_config = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
             .build()?
             .block_on(
-                aws_config::from_env()
+                aws_config::defaults(BehaviorVersion::latest())
                     .region(Region::new(explicit_region))
                     .load(),
             );
 
-        let retry_config = RetryConfig::new()
+        let retry_config = RetryConfig::standard()
             .with_max_attempts(self.inner.max_retries.unwrap_or(DEFAULT_MAX_RETRIES));
 
         let sqs_config = aws_sdk_sqs::config::Builder::from(&aws_config)
