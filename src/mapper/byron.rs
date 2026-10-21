@@ -52,6 +52,7 @@ impl EventWriter {
             assets: None,
             datum_hash: None,
             inline_datum: None,
+            reference_script: None,
         })
     }
 
