@@ -41,27 +41,50 @@ impl gasket::framework::Worker<Stage> for Worker {
 
     async fn execute(&mut self, unit: &ChainEvent, stage: &mut Stage) -> Result<(), WorkerError> {
         let point = unit.point().clone();
-        let record = unit.record().cloned();
-
-        if record.is_none() {
-            return Ok(());
-        }
-
-        let body = serde_json::Value::from(record.unwrap());
 
         let point_header = match &point {
             Point::Origin => String::from("origin"),
             Point::Specific(a, b) => format!("{a},{}", hex::encode(b)),
         };
 
-        let request = self
-            .client
-            .post(&stage.config.url)
-            .header("x-oura-chainsync-action", "apply")
-            .header("x-oura-chainsync-point", point_header)
-            .json(&body)
-            .build()
-            .or_panic()?;
+        let request = match unit {
+            ChainEvent::Apply(_, record) => {
+                let body = serde_json::Value::from(record.clone());
+                self.client
+                    .post(&stage.config.url)
+                    .header("x-oura-chainsync-action", "apply")
+                    .header("x-oura-chainsync-point", point_header)
+                    .json(&body)
+            }
+            ChainEvent::Undo(_, record) => {
+                let body = serde_json::Value::from(record.clone());
+                self.client
+                    .post(&stage.config.url)
+                    .header("x-oura-chainsync-action", "undo")
+                    .header("x-oura-chainsync-point", point_header)
+                    .json(&body)
+            }
+            ChainEvent::Reset(_) => {
+                let body = serde_json::json!({
+                    "event": "reset",
+                    "point": match &point {
+                        Point::Origin => serde_json::Value::from("origin"),
+                        Point::Specific(slot, hash) => serde_json::json!({
+                            "slot": slot,
+                            "hash": hex::encode(hash),
+                        }),
+                    }
+                });
+
+                self.client
+                    .post(&stage.config.url)
+                    .header("x-oura-chainsync-action", "reset")
+                    .header("x-oura-chainsync-point", point_header)
+                    .json(&body)
+            }
+        }
+        .build()
+        .or_panic()?;
 
         self.client
             .execute(request)
