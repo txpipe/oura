@@ -46,7 +46,6 @@ pub fn run(args: &Args) -> Result<(), Error> {
         filters: Some(vec![filter]),
         sink,
         intersect,
-        finalize: None,
         chain: Some(chain),
         retries: None,
         cursor: None,

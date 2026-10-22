@@ -15,7 +15,6 @@ pub struct ConfigRoot {
     pub filters: Option<Vec<filters::Config>>,
     pub sink: sinks::Config,
     pub intersect: IntersectConfig,
-    pub finalize: Option<FinalizeConfig>,
     pub chain: Option<ChainConfig>,
     pub retries: Option<gasket::retries::Policy>,
     pub cursor: Option<cursor::Config>,
@@ -94,14 +93,12 @@ fn connect_stages(
 pub fn run_daemon(config: ConfigRoot) -> Result<Daemon, Error> {
     let chain = config.chain.unwrap_or_default();
     let intersect = config.intersect;
-    let finalize = config.finalize;
     let current_dir = std::env::current_dir().unwrap();
     let cursor = config.cursor.unwrap_or_default();
     let breadcrumbs = cursor.initial_load()?;
     let ctx = Context {
         chain,
         intersect,
-        finalize,
         current_dir,
         breadcrumbs,
     };
