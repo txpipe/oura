@@ -32,3 +32,20 @@ extra_header_2 = "123"
 - `allow_invalid_certs` (optional): skip TLS certificate validation — handy for self-signed
   certs.
 - `timeout` (optional, default = `30000`): the HTTP response timeout, in milliseconds.
+
+## Rollbacks
+
+Every request says what happened in two headers:
+
+- `x-oura-chainsync-action`: `apply`, `undo` or `reset`.
+- `x-oura-chainsync-point`: `slot,hash`, or `origin`.
+
+`apply` and `undo` requests carry the event's record as the body. An `undo` means that record
+is no longer on the chain. A `reset` carries the point to go back to:
+
+```json
+{ "event": "reset", "point": { "slot": 42, "hash": "abcd" } }
+```
+
+A consumer that keeps state should discard anything after that point. A reset to the start of
+the chain has `"point": "origin"`.
