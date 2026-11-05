@@ -67,7 +67,7 @@ jobs:
     name: Protocol compatibility (next Pallas)
     runs-on: ubuntu-latest
     env:
-      PALLAS_NEXT: 1.5.0-alpha.1
+      PALLAS_NEXT: 1.5.0-rc.1
       RUSTFLAGS: --cfg pallas_next
     steps:
       - uses: actions/checkout@v4
