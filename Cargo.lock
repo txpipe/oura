@@ -4390,7 +4390,7 @@ dependencies = [
 
 [[package]]
 name = "oura"
-version = "2.2.1"
+version = "2.3.0"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -2,11 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-11-05
+
+### 🚀 Features
+
+- *(webhook)* Implement http request for reset action (#920)
+
+### 🐛 Bug Fixes
+
+- *(kafka)* Accept the correctly spelled partitioning key (#961)
+- *(legacy_v1)* Report the Conway era on block events (#963)
+
+### 📚 Documentation
+
+- Add a guide to integrating Oura (#966)
+- Add llms.txt (#969)
+- Add AGENTS.md (#968)
+- List the protocol versions Oura is tested against (#967)
+
+### ⚡ Performance
+
+- *(n2n)* Fetch blocks in batches while catching up (#970)
+
+### 🧪 Testing
+
+- Run real blocks at each protocol version through the filters (#964)
+
+### ⚙️ Miscellaneous Tasks
+
+- Test Dijkstra blocks against the next Pallas release (#965)
+- Check the build on macOS (#972)
+- Build the macOS release on macos-15 (#973)
+- Remove unused top-level finalize configuration (#955)
+- Update cargo-dist to 0.34.0 (#974)
+- Bump checkout and artifact actions in the hand-written workflows (#975)
+
 ## [2.2.1] - 2026-10-21
 
 ### 🐛 Bug Fixes
 
 - *(deps)* Move the aws and elasticsearch sinks off rustls 0.21 (#960)
+
+### 💼 Other
+
+- V2.2.1
 
 ### 📚 Documentation
 
