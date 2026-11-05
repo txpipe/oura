@@ -63,7 +63,6 @@ fn context() -> Context {
     Context {
         chain: ChainConfig::default(),
         intersect: IntersectConfig::Origin,
-        finalize: None,
         current_dir: std::env::temp_dir(),
         breadcrumbs: Breadcrumbs::from_points(vec![], 1),
     }

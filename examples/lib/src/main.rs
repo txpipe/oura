@@ -40,7 +40,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ctx = Context {
         chain,
         intersect,
-        finalize: None,
         current_dir,
         breadcrumbs,
     };
