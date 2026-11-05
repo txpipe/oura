@@ -63,6 +63,27 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo test --all-features --locked
 
+  protocol-next:
+    name: Protocol compatibility (next Pallas)
+    runs-on: ubuntu-latest
+    env:
+      PALLAS_NEXT: 1.5.0-alpha.1
+      RUSTFLAGS: --cfg pallas_next
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-protocol-next
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo add pallas@=$PALLAS_NEXT --features hardano,unstable
+      - run: cargo test --test protocol_compat
+
   check:
     name: Check (windows)
     runs-on: windows-latest
