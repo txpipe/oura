@@ -1,10 +1,10 @@
 use gasket::framework::*;
 use serde::Deserialize;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 use pallas::ledger::traverse::MultiEraHeader;
 use pallas::network::facades::PeerClient;
-use pallas::network::miniprotocols::chainsync::{self, HeaderContent, NextResponse};
+use pallas::network::miniprotocols::chainsync::{HeaderContent, NextResponse};
 use pallas::network::miniprotocols::Point;
 
 use crate::framework::*;
@@ -12,7 +12,7 @@ use crate::framework::*;
 #[derive(Stage)]
 #[stage(
     name = "source",
-    unit = "NextResponse<HeaderContent>",
+    unit = "Vec<NextResponse<HeaderContent>>",
     worker = "Worker"
 )]
 pub struct Stage {
@@ -91,48 +91,110 @@ async fn intersect_from_breadcrumbs(
     Ok(())
 }
 
+/// How many blocks to fetch in one request while catching up.
+const MAX_BATCH: usize = 50;
+
+/// How far behind the tip, in slots, the source has to be to batch. Closer than
+/// this, blocks are delivered as soon as their header arrives.
+const MIN_BATCH_DISTANCE: u64 = 3600;
+
+fn should_extend_batch(len: usize, slot: u64, tip_slot: u64) -> bool {
+    len < MAX_BATCH && tip_slot.saturating_sub(slot) >= MIN_BATCH_DISTANCE
+}
+
+fn can_extend_batch(batch: &[NextResponse<HeaderContent>]) -> Result<bool, WorkerError> {
+    let Some(NextResponse::RollForward(header, tip)) = batch.last() else {
+        return Ok(false);
+    };
+
+    let slot = to_traverse(header)?.slot();
+
+    Ok(should_extend_batch(
+        batch.len(),
+        slot,
+        tip.0.slot_or_default(),
+    ))
+}
+
+fn to_point(header: &HeaderContent) -> Result<Point, WorkerError> {
+    let header = to_traverse(header)?;
+
+    Ok(Point::Specific(header.slot(), header.hash().to_vec()))
+}
+
 pub struct Worker {
     peer_session: PeerClient,
 }
 
 impl Worker {
-    async fn process_next(
+    /// Fetches every block in the run at once, before sending any, so a retry
+    /// can't deliver a block twice.
+    async fn process_forwards(
+        &mut self,
+        stage: &mut Stage,
+        run: &[NextResponse<HeaderContent>],
+    ) -> Result<(), WorkerError> {
+        let mut points = Vec::with_capacity(run.len());
+
+        for next in run {
+            if let NextResponse::RollForward(header, _) = next {
+                points.push(to_point(header)?);
+            }
+        }
+
+        let (Some(first), Some(last)) = (points.first(), points.last()) else {
+            return Ok(());
+        };
+
+        debug!(?first, ?last, "fetching blocks");
+
+        let blockfetch = self.peer_session.blockfetch();
+
+        let blocks = if points.len() == 1 {
+            vec![blockfetch.fetch_single(first.clone()).await.or_retry()?]
+        } else {
+            blockfetch
+                .fetch_range((first.clone(), last.clone()))
+                .await
+                .or_retry()?
+        };
+
+        if blocks.len() != points.len() {
+            warn!(
+                expected = points.len(),
+                received = blocks.len(),
+                "peer returned an unexpected number of blocks"
+            );
+            return Err(WorkerError::Retry);
+        }
+
+        for ((point, block), next) in points.into_iter().zip(blocks).zip(run) {
+            stage
+                .output
+                .send(ChainEvent::Apply(point.clone(), Record::CborBlock(block)).into())
+                .await
+                .or_panic()?;
+
+            if let NextResponse::RollForward(_, tip) = next {
+                stage.chain_tip.set(tip.0.slot_or_default() as i64);
+            }
+
+            stage.current_slot.set(point.slot_or_default() as i64);
+            stage.breadcrumbs.track(point);
+            stage.ops_count.inc(1);
+        }
+
+        Ok(())
+    }
+
+    async fn process_other(
         &mut self,
         stage: &mut Stage,
         next: &NextResponse<HeaderContent>,
     ) -> Result<(), WorkerError> {
         match next {
-            NextResponse::RollForward(header, tip) => {
-                let header = to_traverse(header).or_panic()?;
-                let slot = header.slot();
-                let hash = header.hash();
-                let point = Point::Specific(slot, hash.to_vec());
-
-                debug!(slot, %hash, "chain sync roll forward");
-
-                let block = self
-                    .peer_session
-                    .blockfetch()
-                    .fetch_single(point.clone())
-                    .await
-                    .or_retry()?;
-
-                let evt = ChainEvent::Apply(
-                    pallas::network::miniprotocols::Point::Specific(slot, hash.to_vec()),
-                    Record::CborBlock(block),
-                );
-
-                stage.output.send(evt.into()).await.or_panic()?;
-
-                stage.breadcrumbs.track(point);
-
-                stage.chain_tip.set(tip.0.slot_or_default() as i64);
-                stage.current_slot.set(slot as i64);
-                stage.ops_count.inc(1);
-
-                Ok(())
-            }
-            chainsync::NextResponse::RollBackward(point, tip) => {
+            NextResponse::RollForward(..) => Ok(()),
+            NextResponse::RollBackward(point, tip) => {
                 match &point {
                     Point::Origin => debug!("rollback to origin"),
                     Point::Specific(slot, _) => debug!(slot, "rollback"),
@@ -153,7 +215,7 @@ impl Worker {
 
                 Ok(())
             }
-            chainsync::NextResponse::Await => {
+            NextResponse::Await => {
                 info!("chain-sync reached the tip of the chain");
                 Ok(())
             }
@@ -192,7 +254,7 @@ impl gasket::framework::Worker<Stage> for Worker {
     async fn schedule(
         &mut self,
         _stage: &mut Stage,
-    ) -> Result<WorkSchedule<NextResponse<HeaderContent>>, WorkerError> {
+    ) -> Result<WorkSchedule<Vec<NextResponse<HeaderContent>>>, WorkerError> {
         let client = self.peer_session.chainsync();
 
         let next = match client.has_agency() {
@@ -206,15 +268,34 @@ impl gasket::framework::Worker<Stage> for Worker {
             }
         };
 
-        Ok(WorkSchedule::Unit(next))
+        let mut batch = vec![next];
+
+        while client.has_agency() && can_extend_batch(&batch)? {
+            batch.push(client.request_next().await.or_restart()?);
+        }
+
+        Ok(WorkSchedule::Unit(batch))
     }
 
     async fn execute(
         &mut self,
-        unit: &NextResponse<HeaderContent>,
+        unit: &Vec<NextResponse<HeaderContent>>,
         stage: &mut Stage,
     ) -> Result<(), WorkerError> {
-        self.process_next(stage, unit).await
+        let forwards = unit
+            .iter()
+            .take_while(|next| matches!(next, NextResponse::RollForward(..)))
+            .count();
+
+        let (run, rest) = unit.split_at(forwards);
+
+        self.process_forwards(stage, run).await?;
+
+        for next in rest {
+            self.process_other(stage, next).await?;
+        }
+
+        Ok(())
     }
 }
 
@@ -238,5 +319,37 @@ impl Config {
         };
 
         Ok(stage)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn batches_while_far_behind_the_tip() {
+        assert!(should_extend_batch(1, 1000, 1000 + MIN_BATCH_DISTANCE));
+    }
+
+    #[test]
+    fn stops_batching_near_the_tip() {
+        assert!(!should_extend_batch(1, 1000, 1000 + MIN_BATCH_DISTANCE - 1));
+        assert!(!should_extend_batch(1, 1000, 500));
+    }
+
+    #[test]
+    fn stops_at_the_batch_limit() {
+        assert!(!should_extend_batch(MAX_BATCH, 1000, u64::MAX));
+    }
+
+    #[test]
+    fn nothing_extends_a_batch_after_a_rollback_or_await() {
+        let rollback = NextResponse::RollBackward(
+            Point::Origin,
+            pallas::network::miniprotocols::chainsync::Tip(Point::Origin, 0),
+        );
+
+        assert!(!can_extend_batch(&[rollback]).unwrap());
+        assert!(!can_extend_batch(&[NextResponse::Await]).unwrap());
     }
 }
