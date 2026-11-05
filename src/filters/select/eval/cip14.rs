@@ -1,4 +1,3 @@
-use bech32::{FromBase32, ToBase32};
 use pallas::crypto::hash::Hash;
 use pallas::crypto::hash::Hasher;
 
@@ -12,16 +11,15 @@ pub fn compute_hash(policy_id: &[u8], asset_name: &[u8]) -> Hash<20> {
 #[allow(dead_code)]
 pub fn fingerprint(policy_id: &[u8], asset_name: &[u8]) -> anyhow::Result<String> {
     let hash = compute_hash(policy_id, asset_name);
-    let base32 = hash.to_base32();
-    let x = bech32::encode("asset", base32, bech32::Variant::Bech32)?;
+    let hrp = bech32::Hrp::parse("asset")?;
+    let x = bech32::encode::<bech32::Bech32>(hrp, hash.as_ref())?;
     Ok(x)
 }
 
 #[allow(dead_code)]
 pub fn read_hash(bech32: &str) -> anyhow::Result<Vec<u8>> {
-    let (_, datapart, _) = bech32::decode(bech32)?;
-    let x = Vec::<u8>::from_base32(&datapart)?;
-    Ok(x)
+    let (_, datapart) = bech32::decode(bech32)?;
+    Ok(datapart)
 }
 
 #[cfg(test)]

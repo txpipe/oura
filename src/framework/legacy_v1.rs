@@ -25,6 +25,7 @@ pub enum Era {
     Mary,
     Alonzo,
     Babbage,
+    Conway,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]

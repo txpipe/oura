@@ -55,11 +55,10 @@ pub fn run(args: &Args) -> Result<(), Error> {
 
     let daemon = run_daemon(config)?;
 
+    // `block` consumes the daemon and tears the stages down on stop.
     daemon.block();
 
     info!("oura is stopping");
-
-    daemon.teardown();
 
     Ok(())
 }

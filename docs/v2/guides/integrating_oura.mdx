@@ -1,0 +1,88 @@
+---
+title: Integrating Oura
+sidebar:
+  order: 2
+---
+
+This guide is for developers and coding agents wiring Oura into a project. A pipeline is one
+`daemon.toml` with a source, any number of filters, and a sink.
+
+## A working pipeline
+
+This follows mainnet from the tip through a public relay and writes each parsed transaction to
+a JSON Lines file:
+
+```toml title="daemon.toml"
+[source]
+type = "N2N"
+peers = ["backbone.cardano.iog.io:3001"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[sink]
+type = "FileRotate"
+output_path = "./events"
+output_format = "JSONL"
+max_bytes_per_file = 5000000
+max_total_files = 1
+```
+
+Run it with `oura daemon --config daemon.toml`. The first line is a `reset` event at the
+intersection point; `apply` events follow as new blocks arrive.
+
+## Choosing a source
+
+| you have | use |
+|---|---|
+| Network access to any relay, no node of your own | [`N2N`](/oura/v2/sources/n2n) |
+| A local node's socket | [`N2C`](/oura/v2/sources/n2c) |
+| A UTxO RPC endpoint | [`U5C`](/oura/v2/sources/utxorpc) |
+| A Hydra head | [`Hydra`](/oura/v2/sources/hydra) |
+| Blocks stored in S3 | [`S3`](/oura/v2/sources/s3) |
+| A historical backfill from a snapshot | [`Mithril`](/oura/v2/sources/mithril) |
+
+`[intersect]` sets where reading starts: `Tip`, `Origin`, a specific `Point`, or `Breadcrumbs`.
+Add a [cursor](/oura/v2/advanced/stateful_cursor) so a restart resumes where it stopped.
+
+## Choosing filters
+
+The `N2N` and `N2C` sources emit raw block CBOR, so those pipelines start by decoding it:
+
+| you want | filters |
+|---|---|
+| Parsed blocks | `ParseCbor` |
+| Parsed transactions | `SplitBlock`, then `ParseCbor` |
+| Only transactions matching a pattern | `SplitBlock`, `ParseCbor`, then [`Select`](/oura/v2/filters/select) |
+| The v1 event schema | [`LegacyV1`](/oura/v2/filters/legacy_v1) |
+| Protection from rollbacks | [`RollbackBuffer`](/oura/v2/filters/rollback_buffer) |
+| Your own logic | [`WasmPlugin`](/oura/v2/filters/wasm), in a build with the `wasm` feature |
+
+Filters run in the order they're listed. `Select` matches on parsed data, so it goes after
+`ParseCbor`.
+
+## Choosing a sink
+
+See [the full list of sinks](/oura/v2/sinks). `Stdout` and `FileRotate` are in every build and
+are the simplest way to check a pipeline. Several others need a build with a Cargo feature, or
+the Docker image, as noted on each sink's page.
+
+## Handling rollbacks
+
+The chain tip can reorganize. Sinks receive `reset` events along with `apply` events, and a
+consumer that keeps state has to undo anything after the reset point. If the consumer can't,
+add [`RollbackBuffer`](/oura/v2/filters/rollback_buffer) to the pipeline.
+
+## Using Oura as a library
+
+The `oura` crate exposes the same stages. See
+[the library example](https://github.com/txpipe/oura/tree/main/examples/lib).

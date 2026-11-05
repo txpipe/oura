@@ -1,0 +1,16 @@
+[source]
+type = "U5C"
+url = "https://cardano-preprod.utxorpc-m1.demeter.run"
+
+[source.metadata]
+"dmtr-api-key" = "${DMTR_UTXORPC_KEY_PREPROD}"
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "WorkStats"
+max_block_quantity = 3
+
+[sink]
+type = "Noop"

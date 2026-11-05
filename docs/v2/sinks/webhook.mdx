@@ -1,32 +1,34 @@
 ---
 title: Webhook
+sidebar:
+  order: 34
 ---
 
-A sink that outputs each event as an HTTP call to a remote endpoint. Each event is json-encoded and sent as the body of a request using `POST` method.
+Sends each event as an HTTP `POST` to a remote endpoint, with the json-encoded event as the
+request body. A flexible, dependency-free way to push chain data into any service that can
+accept an HTTP call.
 
-The sink expect a 200 reponse code for each HTTP call. If found, the process will continue with the next message. If an error occurs (either at the tcp or http level), the sink will apply the corresponding retry logic as specified in the configuration.
+The sink expects a `200` response for each call: on success it moves to the next event; on
+failure (at the TCP or HTTP level) it applies the configured [retry policy](/oura/v2/advanced/retry_policy).
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
-type = "Webhook"
+type = "WebHook"
 url = "https://endpoint:5000/events"
 authorization = "user:pass"
 timeout = 30000
-error_policy = "Continue"
 
 [sink.headers]
 extra_header_1 = "abc"
 extra_header_2 = "123"
 ```
 
-### Section: `sink`
-
-- `type`: the literal value `Webhook`.
-- `url`: url of your remote endpoint (needs to accept POST method)
-- `authorization` (optional): value to add as the 'Authorization' HTTP header
-- `headers` (optional): key-value map of extra headers to pass in each HTTP call
-- `allow_invalid_certs` (optional): a flag to skip TLS cert validation (usually for self-signed certs).
-- `timeout` (optional): the timeout value for the HTTP response in milliseconds. Default value is `30000`.
-
+- `type` (required): the literal value `WebHook`.
+- `url` (required): your endpoint's URL (must accept `POST`).
+- `authorization` (optional): a value to send as the `Authorization` header.
+- `headers` (optional): a key-value map of extra headers to send with each call.
+- `allow_invalid_certs` (optional): skip TLS certificate validation — handy for self-signed
+  certs.
+- `timeout` (optional, default = `30000`): the HTTP response timeout, in milliseconds.

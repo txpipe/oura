@@ -183,5 +183,4 @@ mod tests {
             MatchOutcome::Negative
         );
     }
-
 }

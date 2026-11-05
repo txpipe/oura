@@ -2,24 +2,29 @@
 title: Aws S3 Bucket
 sidebar:
   label: S3
+  order: 6
 ---
 
-Download block object from S3 storage. 
-
-This source requires building oura using the feature `aws` enabled.
+The S3 source reads block objects from an **AWS S3 bucket** and replays them through the
+pipeline. It pairs naturally with the [AWS S3 sink](/oura/v2/sinks/aws_s3), which writes raw
+CBOR blocks to a bucket — letting you archive chain data once and reprocess it later without
+touching a node.
 
 ## Configuration
 
-The following snippet shows an example of how to set up a S3 source:
-
-```toml
+```toml title="daemon.toml"
 [source]
 type = "S3"
 bucket = "bucket-name"
 items_per_batch = 10
 ```
 
-the envs below need to be set if oura is not running in the aws environment configured
+- `type` (required): the literal value `S3`.
+- `bucket` (required): the name of the bucket to read from.
+- `items_per_batch` (optional): the maximum number of object keys fetched per request.
+
+Set the following environment variables unless Oura is already running in a configured AWS
+environment:
 
 ```sh
 AWS_ACCESS_KEY_ID=
@@ -27,9 +32,7 @@ AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=us-west-2
 ```
 
-### Section `source`:
-
-- `type`: this field must be set to the literal value `S3`
-- `bucket`: bucket name
-- `items_per_batch`: sets the maximum number of keys returned in the response
-
+:::note
+Credentials follow the standard AWS provider chain — see
+[AWS credentials](/oura/v2/sinks/#aws-credentials) for all the supported options.
+:::

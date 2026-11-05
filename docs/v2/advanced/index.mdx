@@ -1,0 +1,19 @@
+---
+title: Configuration
+sidebar:
+  label: Overview
+  order: 0
+---
+
+Beyond the source, filters, and sink, a `daemon.toml` can carry a handful of **optional
+configuration blocks** that tune how a pipeline behaves. Add only the ones you need — every
+one of them has a sensible default.
+
+| Block / feature | Configures | Page |
+| :-------------- | :--------- | :--- |
+| `[intersect]` | where on the chain a pipeline starts reading | [Intersect options](/oura/v2/advanced/intersect_options) |
+| `WorkStats` filter | where a pipeline stops (finalization) | [Finalize options](/oura/v2/advanced/finalize_options) |
+| `[cursor]` | persisting progress so restarts resume where they left off | [Stateful cursor](/oura/v2/advanced/stateful_cursor) |
+| `[retries]` | how failures are retried and backed off | [Retry policy](/oura/v2/advanced/retry_policy) |
+| `[chain]` | connecting to a non-standard network | [Custom networks](/oura/v2/advanced/custom_network) |
+| `[metrics]` | exposing a Prometheus metrics endpoint | [Pipeline metrics](/oura/v2/advanced/pipeline_metrics) |

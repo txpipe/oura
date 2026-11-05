@@ -1,8 +1,11 @@
 ---
 title: Custom networks
+sidebar:
+  order: 5
 ---
 
-Instructions on how to configure Oura for connecting to a custom network (aka: other than mainnet / preprod / preview).
+Connecting to a network other than mainnet, testnet, preprod, or preview? The `[chain]` block
+gives Oura the parameters it needs to make sense of that network.
 
 ## Context
 
@@ -14,7 +17,7 @@ Since `mainnet`, `testnet`, `preprod` and `preview` are well-known, heavily used
 
 By adding a `[chain]` section in the daemon configuration file, users can provide the information required by Oura to connect to a custom network.
 
-The `[chain]` section has the following propoerties:
+The `[chain]` section has the following properties:
 
 | Name                 | DataType | Description                                                   |
 | :------------------- | :------- | :------------------------------------------------------------ |
@@ -35,9 +38,11 @@ The `[chain]` section has the following propoerties:
 
 ### Chain information for mainnet
 
-This example configuration shows the values for mainnet. Since testnet values are hardcoded as part of Oura's release, users are not required to input these exact values anywhere, but it serves as a good example of what the configuration looks like.
+This example shows the values for mainnet. Since these are hardcoded in Oura's release you'd
+never enter them by hand, but they're a good illustration of what a `[chain]` section looks
+like.
 
-```toml
+```toml title="daemon.toml"
 [chain]
 type = "custom"
 magic = 764824073

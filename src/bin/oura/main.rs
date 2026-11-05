@@ -17,6 +17,12 @@ enum Oura {
 }
 
 fn main() {
+    // Install a process-default rustls CryptoProvider before anything uses TLS.
+    // In builds that pull more than one provider (e.g. `aws` brings in aws-lc-rs
+    // alongside ring), rustls has no default and panics on the first handshake;
+    // this guards every TLS-using feature (u5c, gcp, elasticsearch, hydra, …).
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     let args = Oura::parse();
 
     let result = match args {

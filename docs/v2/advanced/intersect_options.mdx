@@ -1,40 +1,47 @@
 ---
 title: Intersect Options
+sidebar:
+  order: 1
 ---
 
-Advanced options for instructing Oura from which point in the chain to start reading from.
+The `[intersect]` block tells Oura **where on the chain to start reading**. By default it picks
+up from the tip; change it when you need to (re)process from a specific point or from the
+chain's origin.
 
-## Feature
+## Strategies
 
-When running in daemon mode, Oura provides 4 different strategies for finding the intersection point within the chain sync process.
+In daemon mode, Oura supports four ways to find its starting point:
 
-- `Tip`: Oura will start reading from the current tip of the chain.
-- `Origin`: Oura will start reading from the beginning of the chain.
-- `Point`: Oura will start reading from a particular point [slot, hash] in the chain.
-- `Breadcrumbs`: Oura will start reading from a some points [[slot, hash],[slot, hash]] in the chain.
+- `Tip` _(default)_: start from the current tip of the chain.
+- `Origin`: start from the very beginning of the chain.
+- `Point`: start from a specific `[slot, hash]`.
+- `Breadcrumbs`: start from a set of points `[[slot, hash], [slot, hash], …]` (useful for
+  recovering across possible rollbacks).
 
-The default strategy use by Oura is `Tip`, unless an alternative option is specified via configuration.
-
-You can also define a finalizing point by providing a block hash at which oura will stop reading from the the chain and exit gracefully.
+:::note
+To stop reading at a given point — rather than start — use the
+[Work Stats filter](/oura/v2/filters/work_stats); see [finalize options](/oura/v2/advanced/finalize_options).
+:::
 
 ## Configuration
 
-To modify the default behaviour used by the daemon mode, a section named `[intersect]` needs to be added in the `daemon.toml` file.
+Add an `[intersect]` section to your `daemon.toml`:
 
-```toml
+```toml title="daemon.toml"
 [intersect]
 type = <Type>
 value = <Value>
 ```
 
-- `type`: Defines which strategy to use. Valid values are `Origin`, `Tip`, `Point`, `Breadcrumbs`. Default value is `Tip`.
-- `value`: Either a point or an array of points to be used as argument for the selected strategy.
+- `type` (optional, default = `Tip`): the strategy — `Origin`, `Tip`, `Point`, or
+  `Breadcrumbs`.
+- `value`: a point, or array of points, used as the argument for the chosen strategy.
 
 ## Examples
 
-The following example show how to configure Oura to use a intersection point.
+Starting from a specific point:
 
-```toml
+```toml title="daemon.toml"
 [intersect]
 type = "Point"
 value = [

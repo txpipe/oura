@@ -1,0 +1,33 @@
+---
+title: Sources
+sidebar:
+  label: Overview
+  order: 0
+---
+
+A **source** is the first stage of every pipeline — it's where Oura reads chain data from
+and turns it into a stream of events. Most pipelines connect straight to a Cardano node; the
+rest cover more specialized cases like fast bootstrapping, archived blocks, or Layer 2.
+
+## Which source should I use?
+
+| Source | Connects to… | Reach for it when… |
+| :----- | :----------- | :----------------- |
+| [N2N](/oura/v2/sources/n2n) | a node over a TCP socket (a relay/peer) | you want to follow the chain without running your own node — the most common choice |
+| [N2C](/oura/v2/sources/n2c) | a local node over a unix socket | you run the node yourself and want the lowest-overhead connection |
+| [UtxoRPC](/oura/v2/sources/utxorpc) | a Dolos / Demeter gRPC endpoint | you'd rather consume a hosted data service than operate a node |
+| [Hydra](/oura/v2/sources/hydra) | a Hydra head over a WebSocket | you're observing events on a Hydra Layer 2 head |
+| [Mithril](/oura/v2/sources/mithril) | a Mithril aggregator snapshot | you need to bootstrap historical chain data quickly |
+| [S3](/oura/v2/sources/s3) | block objects stored in an AWS S3 bucket | you're replaying blocks you previously archived |
+
+:::note
+N2N and N2C are bundled in the default binary. Mithril needs a custom build — see the
+note on its page.
+:::
+
+## How sources fit together
+
+Whatever the source, it hands the rest of the pipeline a stream of `apply` / `undo` events
+carrying raw CBOR blocks by default. [Filters](/oura/v2/filters) then decode and reshape that
+data before a [sink](/oura/v2/sinks) delivers it. To control *where on the chain* a source
+starts (and optionally stops), see [Intersect options](/oura/v2/advanced/intersect_options).

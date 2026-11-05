@@ -1,0 +1,34 @@
+name: Publish (crates.io)
+
+# Reusable workflow invoked by the cargo-dist release pipeline as a custom
+# `publish-jobs` entry. dist calls it with the release plan and `secrets: inherit`
+# only on real tag releases, after the `host` job has created the GitHub release.
+on:
+  workflow_call:
+    inputs:
+      plan:
+        description: "The release plan emitted by cargo-dist"
+        required: true
+        type: string
+
+jobs:
+  crates-io:
+    name: cargo publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      # Pinned via rust-toolchain.toml.
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: cargo publish
+        run: cargo publish --all-features --locked

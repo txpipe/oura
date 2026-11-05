@@ -2,38 +2,43 @@
 title: Redis Streams
 sidebar:
   label: Redis
+  order: 31
 ---
 
-A sink that outputs events into _Redis Stream_.
-
-_Redis Streams_ works as an append-only log where multiple consumers can read from the same queue while keeping independent offsets (as opposed to a PubSub topic where one subscriber affect the other). You can learn more about the _Streams_ feature in the official [Redis Documentation](https://redis.io/docs/manual/data-types/streams).
-
-This sink will process incoming events and send a JSON-encoded message of the payload for each one using the `XADD` command. The Redis instance can be local or remote.
+Appends each event to a [Redis Stream](https://redis.io/docs/manual/data-types/streams) using
+the `XADD` command. A Redis Stream is an append-only log that multiple consumers can read from
+at independent offsets (unlike a PubSub topic, where one subscriber doesn't affect another) —
+handy when several services need to consume the same chain data at their own pace. The Redis
+instance can be local or remote.
 
 ## Configuration
 
-Example configuration that sends all events into a single stream named `mystream` of a Redis instance running in port 6379 of the localhost.
+This example sends every event into a single stream named `mystream` on a Redis instance
+running on `localhost:6379`:
 
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "Redis"
 url = "redis://localhost:6379"
 stream_name = "mystream"
+stream_max_length = 100000
 ```
 
-### Section: `sink`
-
-- `type`: the literal value `Redis`.
-- `url`: the redis server in the format `redis://[<username>][:<password>]@<hostname>[:port][/<db>]`
-- `stream_name` : the name of the redis stream for StreamStrategy `None`, default is "oura" if not specified
+- `type` (required): the literal value `Redis`.
+- `url` (required): the Redis server, as `redis://[<username>][:<password>]@<hostname>[:port][/<db>]`.
+- `stream_name` (optional, default = `oura-sink`): the name of the stream to append to.
+- `stream_max_length` (optional): caps the stream to this many entries (via `XADD … MAXLEN`),
+  discarding the oldest as new ones arrive. Omit it to let the stream grow unbounded.
 
 ## Conventions
 
-It is possible to send all Event to a single stream or create multiple streams, one for each event type. By appling the [select](/oura/v2/filters/select) filter it is possible to define the streams which should be created.
+You can send every event to a single stream, or split events into one stream per type by
+adding a [Select](/oura/v2/filters/select) filter upstream to define which streams get
+created.
 
-The sink uses the default Redis convention to define the unique entry ID for each message sent to the stream ( `<millisecondsTime>-<sequenceNumber>`).
-
-Messages in Redis Streams are required to be `hashes` (maps between the string fields and the string values). This sink will serialize the event into a single-entry map with the following parts:
+Each entry's ID uses the default Redis convention, `<millisecondsTime>-<sequenceNumber>`.
+Because Redis Stream entries must be hashes (string-to-string maps), the sink serializes each
+event into a single-entry map:
 
 - `key`: the event type name.
 - `value`: the json-encoded payload of the event.

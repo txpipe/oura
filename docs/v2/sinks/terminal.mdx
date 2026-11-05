@@ -1,12 +1,16 @@
 ---
 title: Terminal
+sidebar:
+  order: 11
 ---
 
-A sink that outputs each event into the terminal through stdout using fancy coloring 💅.
+Prints each event to the terminal with color-coded, human-readable formatting (the same look
+as `oura watch`). Use it when you want to *watch* a pipeline live rather than feed events into
+another program.
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "Terminal"
 throttle_min_span_millis = 500
@@ -14,5 +18,11 @@ wrap = true
 ```
 
 - `type` (required): the literal value `Terminal`.
-- `throttle_min_span_millis` (optional, default = `500`): the amount of time (milliseconds) to wait between printing each event into the console. This is used to facilitate the reading for human following the output.
-- `wrap` (optional, default = `false`): a true value indicates that long output text should break and continue in the following line. If false, lines will be truncated to fit in the available terminal width.
+- `throttle_min_span_millis` (optional, default = `500`): minimum delay, in milliseconds,
+  between printed events. Throttling keeps the output readable instead of dumping a whole
+  block's events at once.
+- `wrap` (optional, default = `false`): when `true`, long lines wrap; otherwise they're
+  truncated to the terminal width.
+- `adahandle_policy` (optional): the minting policy id (hex) of [ADA Handle](https://adahandle.com/).
+  When set, the sink resolves and displays handles found in outputs for a friendlier rendering.
+  Omit it to disable handle resolution.

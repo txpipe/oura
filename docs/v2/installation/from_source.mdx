@@ -1,5 +1,7 @@
 ---
 title: From Source
+sidebar:
+  order: 3
 ---
 
 The following instructions show how to build and install _Oura_ from source code.
@@ -13,5 +15,28 @@ The following instructions show how to build and install _Oura_ from source code
 ```
 git clone git@github.com:txpipe/oura.git
 cd oura
-cargo install --all-features --path .
+cargo install --path .
 ```
+
+This builds the same [batteries-included](/oura/v2/installation/binary_release) plugin set as the pre-built releases.
+
+## Enabling the remaining integrations
+
+A few integrations are not bundled because they need a special build environment. Enable them explicitly once their prerequisites are installed:
+
+```
+# example: build with the Kafka sink and the Mithril source
+cargo install --path . --features kafka,mithril
+```
+
+| Feature | Prerequisite |
+|---------|--------------|
+| `kafka` | builds a vendored OpenSSL (its only TLS backend): a C compiler and Perl |
+| `zeromq` | a system `libzmq` (install via your OS package manager) |
+| `mithril` | none, but builds a heavy GMP/blst C-crypto toolchain (slow build) |
+| `wasm` | none (pure Rust), but adds a large WASM runtime |
+
+:::note
+`--all-features` requires a system `libzmq` (for `zeromq`) and builds mithril's
+heavy C-crypto toolchain, so it is slow and best avoided unless you need it.
+:::

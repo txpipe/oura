@@ -2,19 +2,29 @@ use pallas::interop::utxorpc::spec::cardano::{metadatum, AuxData, Datum, Metadat
 
 use super::*;
 
+fn coin(value: i64) -> Option<BigInt> {
+    Some(BigInt {
+        big_int: Some(big_int::BigInt::Int(value)),
+    })
+}
+
+fn output_coin(value: i64) -> Option<asset::Quantity> {
+    Some(asset::Quantity::OutputCoin(BigInt {
+        big_int: Some(big_int::BigInt::Int(value)),
+    }))
+}
+
 pub fn multiasset_combo(policy_hex: &str, asset_prefix: &str) -> Multiasset {
     Multiasset {
         policy_id: hex::decode(policy_hex).unwrap().into(),
         assets: vec![
             Asset {
                 name: format!("{asset_prefix}1").as_bytes().to_vec().into(),
-                output_coin: 345000000,
-                mint_coin: 0,
+                quantity: output_coin(345000000),
             },
             Asset {
                 name: format!("{asset_prefix}2").as_bytes().to_vec().into(),
-                output_coin: 345000000,
-                mint_coin: 0,
+                quantity: output_coin(345000000),
             },
         ],
         redeemer: None,
@@ -37,7 +47,7 @@ pub fn test_vectors() -> Vec<Tx> {
     let tx1 = Tx {
         outputs: vec![TxOutput {
             address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
-            coin: 123000000,
+            coin: coin(123000000),
             assets: vec![
                 multiasset_combo("7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373", "abc"),
                 multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
@@ -63,7 +73,7 @@ pub fn test_vectors() -> Vec<Tx> {
             address: hex::decode("619493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e")
                 .unwrap()
                 .into(),
-            coin: 123000000,
+            coin: coin(123000000),
             assets: vec![multiasset_combo(
                 "7eae28af2208be856f7a119668ae52a49b73725e326dc16579dcc373",
                 "abc",
@@ -93,7 +103,7 @@ pub fn test_vectors() -> Vec<Tx> {
     let tx3 = Tx {
         outputs: vec![TxOutput {
             address: hex::decode("019493315cd92eb5d8c4304e67b7e16ae36d61d34502694657811a2c8e337b62cfff6403a06a3acbc34f8c46003c69fe79a3628cefa9c47251").unwrap().into(),
-            coin: 123000000,
+            coin: coin(123000000),
             assets: vec![
                 multiasset_combo("1e349c9bdea19fd6c147626a5260bc44b71635f398b67c59881df209", "123")
             ],

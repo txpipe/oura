@@ -1,14 +1,18 @@
 ---
 title: Stdout
+sidebar:
+  order: 10
 ---
 
-A sink that outputs each event data into the terminal through stdout.
+Writes each event to standard output, one per line. It's the simplest sink — great for piping
+Oura into other shell tools (`grep`, `jq`, a file, another process) or for a quick look at
+what a pipeline produces.
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "Stdout"
 ```
 
-- `type`: the literal value `Stdout`.
+- `type` (required): the literal value `Stdout`.

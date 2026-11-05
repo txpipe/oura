@@ -1,4 +1,3 @@
-use bech32::FromBase32;
 use serde::de::{DeserializeOwned, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::marker::PhantomData;
@@ -99,10 +98,9 @@ pub trait FromBech32: Sized {
     fn from_bech32_parts(hrp: &str, content: Vec<u8>) -> Option<Self>;
 
     fn from_bech32(s: &str) -> anyhow::Result<Self> {
-        let (hrp, content, _) = bech32::decode(s)?;
-        let content = Vec::<u8>::from_base32(&content)?;
+        let (hrp, content) = bech32::decode(s)?;
 
-        Self::from_bech32_parts(&hrp, content)
+        Self::from_bech32_parts(hrp.as_str(), content)
             .ok_or_else(|| anyhow::anyhow!("bech32 hrp '{}' is not compatible for this type", hrp))
     }
 }

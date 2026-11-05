@@ -6,9 +6,19 @@ sidebar:
 
 ## Motivation
 
-We have tools to "explore" the Cardano blockchain, which are useful when you know what you're looking for. We argue that there's a different, complementary use-case which is to "observe" the blockchain and react to particular event patterns.
+We already have tools to "explore" the Cardano blockchain — great when you know what you're
+looking for. _Oura_ fills the complementary need: to "observe" the chain as it moves and react
+to particular event patterns.
 
-_Oura_ is a rust-native implementation of a pipeline that connects to the tip of a Cardano node through a combination of _Ouroboros_ mini-protocol (using either a unix socket or tcp bearer), filters the events that match a particular pattern and then submits a succinct, self-contained payload to pluggable observers called "sinks".
+_Oura_ is a Rust-native pipeline. It connects to the tip of a Cardano node over the _Ouroboros_
+mini-protocols (via a unix socket or TCP), filters the events that match a pattern you define,
+and forwards a succinct, self-contained payload to pluggable observers called **sinks** — a
+terminal, a file, a message broker, a database, and more.
+
+:::tip[New to Oura?]
+Jump to the [Quick Start](/oura/v2/quickstart) to see live chain data in a couple of minutes, or
+read [How it works](/oura/v2/how_it_works) for the pipeline model.
+:::
 
 ## Etymology
 
@@ -16,9 +26,12 @@ The name of the tool is inspired by the `tail` command available in unix-like sy
 
 ## Under the Hood
 
-All the heavy lifting required to communicate with the Cardano node is done by the [Pallas](https://github.com/txpipe/pallas) library, which provides an implementation of the Ouroboros multiplexer and a few of the required mini-protocol state-machines (ChainSync and LocalState in particular).
+The heavy lifting of talking to the Cardano node is handled by the [Pallas](https://github.com/txpipe/pallas)
+library, which implements the Ouroboros multiplexer and the mini-protocol state machines Oura
+relies on (notably ChainSync and LocalState).
 
-The data pipeline makes heavy use (maybe a bit too much) of multi-threading and mpsc channels provided by Rust's `std::sync` library.
+The data pipeline itself leans heavily on multi-threading and mpsc channels from Rust's
+`std::sync` library, which keeps each stage independent and the footprint small.
 
 ## Use Cases
 
@@ -40,5 +53,11 @@ _Oura_ running in `daemon` mode can be configured to use custom filters to pinpo
 
 If the available out-of-the-box features don't satisfy your particular use-case, _Oura_ can be used a library in your Rust project to set up tailor-made pipelines. Each component (sources, filters, sinks, etc) in _Oura_ aims at being self-contained and reusable. For example, custom filters and sinks can be built while reusing the existing sources.
 
-## (Experimental) Windows Support
-_Oura_ Windows support is currently __experimental__, Windows build supports only [Node-to-Node](/oura/v2/sources/n2n) source with tcp socket bearer.
+## Examples
+
+For ready-to-run configurations covering every source, filter and sink — plus end-to-end pipeline recipes — see the [Examples](/oura/v2/examples) section.
+
+:::caution[Windows support is experimental]
+On Windows, Oura currently supports only the [Node-to-Node](/oura/v2/sources/n2n) source over a
+TCP socket bearer.
+:::

@@ -1,0 +1,107 @@
+---
+title: Recipes
+sidebar:
+  order: 1
+---
+
+Short, complete `daemon.toml` snippets you can copy into your own config and adapt. For full
+example **projects** you can clone and run, see [Runnable examples](/oura/v2/examples).
+
+## Select transactions by address
+
+`SplitBlock` breaks each block into individual transactions, `ParseCbor` decodes them, and
+`Select` keeps only the ones touching a given address. See the
+[Select filter](/oura/v2/filters/select).
+
+```toml title="daemon.toml"
+[source]
+type = "N2N"
+peers = ["backbone.mainnet.cardanofoundation.org:3001"]
+
+[intersect]
+type = "Point"
+value = [37225013, "65b3d40e6114e05b662ddde737da63bbab05b86d476148614e82cde98462a6f5"]
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "Select"
+skip_uncertain = true
+predicate = "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktcd8cc3sq835lu7drv2xwl2wywfgse35a3x"
+
+[sink]
+type = "Stdout"
+```
+
+## Stream parsed transactions to JSONL files
+
+`IntoJson` turns the parsed records into JSON, and the
+[FileRotate sink](/oura/v2/sinks/file_rotate) writes them to rotated, compressed JSONL files
+under `./output/`.
+
+```toml title="daemon.toml"
+[source]
+type = "N2N"
+peers = ["backbone.mainnet.cardanofoundation.org:3001"]
+
+[intersect]
+type = "Point"
+value = [4493860, "ce7f821d2140419fea1a7900cf71b0c0a0e94afbb1f814a6717cff071c3b6afc"]
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "IntoJson"
+
+[sink]
+type = "FileRotate"
+max_total_files = 5
+output_format = "JSONL"
+output_path = "./output/logs.jsonl"
+max_bytes_per_file = 5_000_000
+compress_files = true
+```
+
+## Match a metadata label with a regex
+
+A [Select filter](/oura/v2/filters/select) predicate can match on transaction metadata — here,
+label `674` whose text matches a regular expression.
+
+```toml title="daemon.toml"
+[chain]
+type = "preprod"
+
+[source]
+type = "N2N"
+peers = ["preprod-node.world.dev.cardano.org:30000"]
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "SplitBlock"
+
+[[filters]]
+type = "ParseCbor"
+
+[[filters]]
+type = "Select"
+skip_uncertain = false
+
+[filters.predicate.match.metadata]
+label = 674
+
+[filters.predicate.match.metadata.value.text]
+regex = "Hello World"
+
+[sink]
+type = "Stdout"
+```

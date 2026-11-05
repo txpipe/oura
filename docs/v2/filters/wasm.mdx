@@ -1,18 +1,32 @@
 ---
 title: Wasm
+sidebar:
+  order: 8
 ---
 
-The `wasm` or `webassembly` filter will allow a wasm binary to be executed as a stage within the pipeline. Therefore, it's possible to write a stage in any language that supports wasm.
+The `WasmPlugin` filter runs a WebAssembly binary as a stage in the pipeline. Each event is
+handed to your plugin, which can transform it, drop it, or expand it into several events — so
+you can write custom filter logic in any language that compiles to WASM (Go, Rust, Assembly
+Script, …) without forking Oura.
+
+:::caution[Requires a custom build]
+The WASM plugin runtime isn't in the default binary (it's large). Build Oura with the `wasm`
+feature — see [Install from source](/oura/v2/installation/from_source).
+:::
 
 ## Configuration
 
-Adding the following section to the daemon config file will enable the filter as part of the pipeline:
-
-```toml
+```toml title="daemon.toml"
 [[filters]]
 type = "WasmPlugin"
 path = "./extract_fee/plugin.wasm"
 ```
 
-Follow this example to build a plugin wasm in golang [example](https://github.com/txpipe/oura/blob/main/examples/wasm_basic/README.md)
+- `type` (required): the literal value `WasmPlugin`.
+- `path` (required): the path to the compiled `.wasm` plugin to load.
 
+## Building a plugin
+
+The [`wasm_basic` example](https://github.com/txpipe/oura/blob/main/examples/wasm_basic/README.md)
+walks through building a plugin in Go, including the expected entry point and how records are
+passed in and out.

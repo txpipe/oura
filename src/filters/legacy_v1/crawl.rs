@@ -1,5 +1,5 @@
 use gasket::framework::{AsWorkError, WorkerError};
-use pallas::ledger::primitives::babbage::MintedDatumOption;
+use pallas::ledger::primitives::babbage::DatumOption;
 use pallas::ledger::traverse::{MultiEraBlock, MultiEraInput, MultiEraOutput, MultiEraTx};
 use pallas::network::miniprotocols::Point;
 
@@ -17,6 +17,7 @@ impl From<pallas::ledger::traverse::Era> for Era {
             pallas::ledger::traverse::Era::Mary => Era::Mary,
             pallas::ledger::traverse::Era::Alonzo => Era::Alonzo,
             pallas::ledger::traverse::Era::Babbage => Era::Babbage,
+            pallas::ledger::traverse::Era::Conway => Era::Conway,
             _ => Era::Unknown,
         }
     }
@@ -66,7 +67,7 @@ impl EventWriter<'_> {
             }
         }
 
-        if let Some(MintedDatumOption::Data(datum)) = &output.datum() {
+        if let Some(DatumOption::Data(datum)) = &output.datum() {
             child.append_from(PlutusDatumRecord::from(&datum.0))?;
         }
 
@@ -207,5 +208,18 @@ impl EventWriter<'_> {
 
     pub fn crawl_rollback(&mut self, point: Point) -> Result<(), WorkerError> {
         self.append(point.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn conway_blocks_report_their_era() {
+        assert_eq!(
+            Era::from(pallas::ledger::traverse::Era::Conway),
+            Era::Conway
+        );
     }
 }

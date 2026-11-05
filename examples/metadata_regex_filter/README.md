@@ -1,6 +1,23 @@
-# Metadata Regex Filter Example
+# Metadata regex filter
 
-Filter transactions by metadata content using regex patterns.
+Keep only the transactions whose metadata matches a regular expression, and print them to
+standard output. Runs against preprod.
+
+## Pipeline
+
+```mermaid
+flowchart LR
+  src[N2N source] --> f1[SplitBlock] --> f2[ParseCbor] --> f3[Select] --> sink[Stdout sink]
+```
+
+- **Source** — `N2N`: preprod relay, starting from the chain tip.
+- **Filters**
+  - `SplitBlock`: breaks each block into individual transactions.
+  - `ParseCbor`: decodes the raw transaction CBOR into structured records.
+  - `Select`: keeps records whose metadata at `label = 674` has text matching the `regex`
+    predicate. The search recurses through nested arrays and maps; omit `label` to search
+    across all metadata.
+- **Sink** — `Stdout`: prints the matching transactions.
 
 ## Configuration
 
@@ -13,30 +30,25 @@ skip_uncertain = false
 label = 674
 
 [filters.predicate.match.metadata.value.text]
-regex = "testing regex"
+regex = "Hello World"
 ```
 
-## Running
-
-```bash
-oura daemon --config ./daemon.toml
-```
-
-## Features
-
-- **Recursive search**: Automatically searches through nested arrays and maps
-- **Flexible patterns**: Use standard regex syntax
-- **Optional label**: Omit `label` field to search across all metadata
-
-## Common Patterns
+Common regex patterns:
 
 ```toml
-regex = "(?i)keyword"          # Case-insensitive
-regex = "^MyApp:"               # Starts with
-regex = "payment|donation"      # Multiple keywords
+regex = "(?i)keyword"      # case-insensitive
+regex = "^MyApp:"           # starts with
+regex = "payment|donation"  # multiple keywords
 ```
 
-## See Also
+## Run
 
-- [Select Filter Documentation](../../docs/v2/filters/select.mdx)
-- [CIP-20 Specification](https://cips.cardano.org/cips/cip20/)
+```sh
+cd examples/metadata_regex_filter
+oura daemon --config daemon.toml
+```
+
+## See also
+
+- [Select filter docs](../../docs/v2/filters/select.mdx)
+- [CIP-20 specification](https://cips.cardano.org/cips/cip20/)

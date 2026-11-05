@@ -1,5 +1,7 @@
 ---
 title: Watch
+sidebar:
+  order: 1
 ---
 
 The `watch` mode provides a quick way to tail the latest events from the blockchain. It connects directly to a Cardano node using either node-to-client or node-to-node protocols. The output is sent into the terminal in a human-readable fashion.
@@ -24,12 +26,18 @@ oura watch [OPTIONS] <socket>
 - `--throttle`: milliseconds to wait between output lines (for easier reading).
 - `--wrap`: indicates that long output text should break and continue in the following line. If omitted, lines will be truncated to fit in the available terminal width.
 
+:::tip
+`--magic` accepts `mainnet`, `preprod`, `preview`, `testnet`, or a raw numeric magic for a
+custom network. For `--since`, the `<slot>,<hash>` of any block is shown by chain explorers
+(e.g. [Cardanoscan](https://cardanoscan.io/)) — or just omit it to start from the tip.
+:::
+
 ## Examples
 
 ### Watch Live Data From A Remote Relay Node
 
 ```sh
-oura watch relays-new.cardano-mainnet.iohk.io:3001 --bearer tcp
+oura watch backbone.mainnet.cardanofoundation.org:3001 --bearer tcp
 ```
 
 ### Watch Live Data From A Local Node Via Unix Socket
@@ -47,7 +55,7 @@ oura watch /opt/cardano/cnode/sockets/node0.socket --bearer unix --magic testnet
 ### Watch Data Starting At A Particular Block
 
 ```sh
-oura watch relays-new.cardano-mainnet.iohk.io:3001 \
+oura watch backbone.mainnet.cardanofoundation.org:3001 \
     --bearer tcp \
     --since 49159253,d034a2d0e4c3076f57368ed59319010c265718f0923057f8ff914a3b6bfd1314
 ```

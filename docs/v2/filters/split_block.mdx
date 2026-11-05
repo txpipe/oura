@@ -1,25 +1,28 @@
 ---
 title: Split CBOR Block filter
-sidebar: 
+sidebar:
   label: Split Block
+  order: 1
 ---
 
-The `split_block` filter will decode the Cbor block and map each transaction within the block to the CborTx format.
-
-Therefore the next stage will receive each transaction that was in the block as an event in the pipeline, i.e. if the block contains 5 transactions the next stage will receive 5 events with each transaction, in CborTx format.
+The `SplitBlock` filter decodes a CBOR block and emits each transaction inside it as its own
+event (in `CborTx` format). If a block holds 5 transactions, the next stage receives 5 events.
+Add it first whenever you want to work at the transaction level rather than the block level —
+for example before [ParseCbor](/oura/v2/filters/parse_cbor) and
+[Select](/oura/v2/filters/select).
 
 ## Configuration
 
-Adding the following section to the daemon config file will enable the filter as part of the pipeline:
-
-```toml
+```toml title="daemon.toml"
 [[filters]]
 type = "SplitBlock"
 ```
 
+This filter takes no additional options.
+
 ## Examples
 
-Below is an example of the data that will be sent to the sink. A block can contain many transactions, so the sink will receive an event for each transaction.
+Each event the next stage receives carries one transaction's raw CBOR:
 
 ```json
 {

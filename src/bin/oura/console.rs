@@ -54,8 +54,9 @@ impl TuiConsole {
                     gasket::runtime::StagePhase::Bootstrap => "bootstrapping...",
                     gasket::runtime::StagePhase::Working => "working...",
                     gasket::runtime::StagePhase::Teardown => "tearing down...",
-                    gasket::runtime::StagePhase::Ended => "ended",
+                    gasket::runtime::StagePhase::Ended(_) => "ended",
                 },
+                gasket::runtime::TetherState::Finished(_) => "finished",
             };
 
             match tether.read_metrics() {

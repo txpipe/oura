@@ -1,0 +1,13 @@
+version: "3"
+services:
+  # LocalStack emulates AWS locally, so the example runs without a real AWS account.
+  # The init script under ./localstack provisions the bucket Oura writes to.
+  localstack:
+    image: localstack/localstack:3
+    container_name: localstack-s3
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+    volumes:
+      - ./localstack:/etc/localstack/init/ready.d

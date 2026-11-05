@@ -1,39 +1,50 @@
 ---
 title: Daemon
+sidebar:
+  order: 3
 ---
 
-_Oura's_ `daemon` mode processes data in the background, without any live output. This mode is used in scenarios where you need to continuously bridge blockchain data with other persistence mechanisms or to trigger an automated process in response to a particular event pattern.
+import { Steps } from '@astrojs/starlight/components';
 
-## Start Daemon Mode
+`daemon` mode runs Oura in the background with no live output. It's the mode you use in
+production — to continuously bridge chain data into another system, or to trigger an automated
+action whenever a particular event pattern shows up.
 
-To start _Oura_ in _daemon mode_, use the following command:
+If you're just getting started, the [Quick Start](/oura/v2/quickstart) walks through a minimal
+daemon config end to end.
 
-```
-oura daemon
-```
+## Getting started
 
-Available options:
+<Steps>
 
-- `--config`: path of a custom toml configuration file to use. If not specified, configuration will be loaded from `/etc/oura/daemon.toml`.
+1. **Write a config file** describing your pipeline — which source, filters, and sink to use
+   (see [Configuration](#configuration) below).
 
-Example of starting daemon mode with default config file:
+2. **Start the daemon**, pointing it at your config:
 
-```sh
-# config will be loaded from /etc/oura/daemon.toml
-oura daemon
-```
+   ```sh
+   oura daemon --config my_config.toml
+   ```
 
-Example of starting daemon mode with a custom config file at `my_config.toml`:
+   With no `--config`, Oura loads `/etc/oura/daemon.toml` by default:
 
-```sh
-oura daemon --config my_config.toml
-```
+   ```sh
+   oura daemon
+   ```
+
+</Steps>
+
+:::tip
+The [Examples](/oura/v2/examples) section has ready-to-run `daemon.toml` files for every
+source, filter, and sink — a good starting point to copy and adapt.
+:::
 
 ## Configuration
 
-The configuration file needs to specify the source, intersect, filters and sink to use in a particular pipeline. The following toml represent the typical skeleton of an _Oura_ config file:
+A config file describes one pipeline: a `source`, where to `intersect` the chain, a chain of
+`filters`, and a `sink`. Here's the typical skeleton:
 
-```toml
+```toml title="daemon.toml"
 [source]
 type = "X" # the type of source to use
 
@@ -42,7 +53,7 @@ foo = "abc"
 bar = "xyz"
 
 [intersect]
-type = "W" # the type of source intersect chain
+type = "W" # where to start reading the chain
 
 [[filters]]
 type = "Y" # the type of filter to use
@@ -52,38 +63,32 @@ foo = "123"
 bar = "789"
 
 [sink]
-# the type of sink to use
-type = "Z"
+type = "Z" # the type of sink to use
 
 # custom config fields for this sink type
 foo = "123"
 bar = "789"
 ```
 
-### The `source` section
+Every section has a `type` field selecting one of the built-in components; the remaining fields
+depend on the type you choose.
 
-This section specifies the origin of the data. The special `type` field must always be present and containing a value matching any of the available built-in sources. The rest of the fields in the section will depend on the selected `type`. See the sources section for a list of available options and their corresponding config values.
+- **`[source]`** — where the data comes from. See [Sources](/oura/v2/sources) for the options
+  and their fields.
+- **`[intersect]`** — where on the chain to start reading. See
+  [Intersect options](/oura/v2/advanced/intersect_options).
+- **`[[filters]]`** — a sequence of transformations applied to each event, in order. This is an
+  array, so you can list several. See [Filters](/oura/v2/filters).
+- **`[sink]`** — where the data goes. See [Sinks](/oura/v2/sinks).
 
-### The `intersect` section
+### Full example
 
-Advanced options for instructing Oura from which point in the chain to start reading from. You can read more in [intersect advanced](/oura/v2/advanced/intersect_options)
+A pipeline reading from a Node-to-Node source and publishing to a Kafka topic:
 
-### The `filters` section
-
-This section specifies a collection of filters that are applied in sequence to each event. The special `type` field must always be present and containing a value matching any of the available built-in filters. Notice that this section of the config is an array, allowing multiple filter sections per config file. See the filters section for a list of available options and their corresponding config values.
-
-### The `sink` section
-
-This section specifies the destination of the data. The special `type` field must always be present and containing a value matching any of the available built-in sinks. The rest of the fields in the section will depend on the selected `type`. See the sinks section for a list of available options.
-
-### Full Example
-
-Here's an example configuration file that uses a Node-to-Node source and output the events into a Kafka sink:
-
-```toml
+```toml title="daemon.toml"
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["backbone.mainnet.cardanofoundation.org:3001"]
 
 [intersect]
 type = "Tip"

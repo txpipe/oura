@@ -1,0 +1,46 @@
+---
+title: SQL Database
+sidebar:
+  label: SQL Database
+  order: 50
+---
+
+Runs a SQL statement against a relational database for each event. It's built on
+[sqlx](https://github.com/launchbadge/sqlx)'s `Any` driver, so the same sink targets SQLite,
+PostgreSQL, or MySQL depending on the connection string. Reach for it when you want chain data
+landing directly in tables you control.
+
+For every event, the sink renders a [Handlebars](https://handlebarsjs.com/) template into a
+SQL statement and executes it. There's one template per kind of chain event:
+
+- `apply`: rendered when a block/tx is applied to the chain.
+- `undo`: rendered when a block/tx is rolled back.
+- `reset`: rendered when the pipeline resets to a point (no record is available, only the point).
+
+## Configuration
+
+```toml title="daemon.toml"
+[sink]
+type = "SqlDb"
+connection = "sqlite::memory:"
+apply_template = "INSERT INTO events (slot, data) VALUES ({{point.slot}}, '{{record}}')"
+undo_template = "DELETE FROM events WHERE slot = {{point.slot}}"
+reset_template = "DELETE FROM events WHERE slot > {{point.slot}}"
+```
+
+- `type` (required): the literal value `SqlDb`.
+- `connection` (required): the sqlx connection string (e.g. `sqlite::memory:`,
+  `sqlite://./oura.db`, `postgres://user:pass@host/db`).
+- `apply_template` (required): the Handlebars template rendered for `apply` events.
+- `undo_template` (required): the Handlebars template rendered for `undo` events.
+- `reset_template` (required): the Handlebars template rendered for `reset` events.
+
+## Template data
+
+Each template is rendered with the following context:
+
+- `point`: the chain point. For a specific point, an object with `slot` (number) and `hash`
+  (hex string); for the chain origin, `null`.
+- `record`: the event payload. `null` for `reset` events. For other events its shape depends
+  on the filters before it (raw CBOR hex, a parsed transaction, a legacy v1 event, …) — see
+  the [Data Dictionary](/oura/v2/reference/data_dictionary).

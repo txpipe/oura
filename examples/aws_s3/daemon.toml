@@ -1,6 +1,6 @@
 [source]
 type = "N2N"
-peers = ["relays-new.cardano-mainnet.iohk.io:3001"]
+peers = ["backbone.mainnet.cardanofoundation.org:3001"]
 
 [chain]
 type = "mainnet"
@@ -8,8 +8,8 @@ type = "mainnet"
 [intersect]
 type = "Tip"
 
-[[filters]]
-type = "ParseCbor"
+# The AwsS3 sink stores the raw block CBOR, so the block must reach it unparsed
+# (no ParseCbor / SplitBlock filter).
 
 [sink]
 type = "AwsS3"

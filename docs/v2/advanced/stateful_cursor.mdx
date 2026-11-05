@@ -1,35 +1,80 @@
 ---
 title: Stateful Cursor
+sidebar:
+  order: 3
 ---
 
-The _cursor_ feature provides a mechanism to persist the "position" of the processing pipeline to make it resilient to restarts.
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## Context
+The **cursor** persists the pipeline's position so it survives restarts. Without it, a restart
+makes Oura start over from its configured intersect point.
 
-When running in daemon mode, a restart of the process will make Oura start crawling from the initially configured point. This default behavior can be problematic depending on the use-case of the operator.
+## Why it matters
 
-An scenario where continuous "coverage" of all the processed blocks is important (eg: building a stateful view of the chain), it's prohibitive to have "gaps" while procesing. If Oura is configure to start from the "tip" of the chain, a restart of the process might miss some blocks during the bootstrap procedure.
+Some use-cases — like building a stateful view of the chain — can't tolerate gaps. If Oura
+starts from the chain `Tip`, a restart could miss the blocks produced during bootstrap. You
+*could* work around this by always starting from a fixed point and re-processing (safe if your
+sink is idempotent), but if that point is far back, catching up can take hours.
 
-A valid workaround to the above problem is to configure Oura to start from a fixed point in the chain. If a restart occurs, the pipeline will re-process the blocks, ensuring that each block was processed at least once. When working with sinks that implement idempotency when processing an event, receiving data from the same block multiple times should not impose a problem.
-
-Although valid, the workaround described above is very inefficient. If the fixed point at which the pipeline starts is too far behind, catching up could take several hours, wasting time and resource.
-
-## Feature
-
-Oura implements an optional stateful cursor that receives notifications from the sink stage of the pipeline to continuously track the current position of the chain. At certain checkpoints (every 10 secs by default), the position is persisted onto the file system at a configurable location.
-
-Assuming that a restart occurs and the cursor feature is enabled, the process will attempt to locate and load the persisted value and instruct the source stage to begin reading chain data from the last known position. 
+The cursor solves this directly: the sink stage reports its position as it works, and at a
+regular interval that position is saved to a backend. On restart, Oura loads the saved position
+and resumes the source from there.
 
 ## Configuration
 
-The _cursor_ feature is a configurable setting available when running in daemon mode. A top level `[cursor]` section of the daemon toml file controls the feature:
+Add a top-level `[cursor]` section to enable the feature, and pick a backend with `type`:
 
-```toml
+<Tabs syncKey="cursor-backend">
+<TabItem label="Memory">
+
+Keeps the cursor in memory only — the position is **not** persisted across restarts. This is
+the default when no `[cursor]` section is present, and takes no extra fields.
+
+```toml title="daemon.toml"
 [cursor]
-type = "File"
-path = "/var/oura/cursor"
+type = "Memory"
 ```
 
-- `[cursor]`: The presence of this section in the toml file indicates Oura to enable the _cursor_ feature.
-- `type`: The type of persistence backend to use for storing the state of the cursor. The only available option at the moment is `File`, which stores the cursor in the file system.
-- `path`: The location of the cursor file within the file system. Default value is `var/oura/cursor`.
+</TabItem>
+<TabItem label="File">
+
+Stores the cursor in a JSON file on the local file system.
+
+```toml title="daemon.toml"
+[cursor]
+type = "File"
+path = "./cursor.json"
+max_breadcrumbs = 10
+flush_interval = 10
+```
+
+- `path` (optional, default = `./cursor.json`): where the cursor file lives, relative to the
+  working directory.
+- `max_breadcrumbs` (optional, default = `10`): how many recent positions to retain, used to
+  recover across rollbacks.
+- `flush_interval` (optional, default = `10`): how often, in seconds, the position is written
+  to disk.
+
+</TabItem>
+<TabItem label="Redis">
+
+Stores the cursor in a Redis instance — handy when running multiple environments or ephemeral
+containers.
+
+```toml title="daemon.toml"
+[cursor]
+type = "Redis"
+url = "redis://localhost:6379"
+key = "oura-cursor"
+max_breadcrumbs = 10
+flush_interval = 10
+```
+
+- `url` (required): the Redis connection URL.
+- `key` (required): the Redis key the cursor state is stored under.
+- `max_breadcrumbs` (optional, default = `10`): how many recent positions to retain.
+- `flush_interval` (optional, default = `10`): how often, in seconds, the position is flushed
+  to Redis.
+
+</TabItem>
+</Tabs>

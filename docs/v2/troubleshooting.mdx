@@ -1,0 +1,82 @@
+---
+title: Troubleshooting
+sidebar:
+  order: 90
+---
+
+Common symptoms and what usually causes them. Each entry links to the page with the full
+details.
+
+## Oura runs but no events appear
+
+By default the `[intersect]` block starts at the chain **`Tip`**, so you only see *new* blocks
+as the network produces them — if the tip is momentarily quiet, nothing prints. This is normal.
+
+To process existing history, start from a specific point or the chain origin instead:
+
+```toml title="daemon.toml"
+[intersect]
+type = "Origin"
+```
+
+See [Intersect options](/oura/v2/advanced/intersect_options) for `Point`, `Origin`, and
+`Breadcrumbs`.
+
+## Can't connect to the node socket / "connection refused"
+
+For a local [`N2C`](/oura/v2/sources/n2c) source, check, in order:
+
+- The `socket_path` points at the node's actual socket file.
+- The node is running and has finished opening the socket.
+- The Oura process can read the socket — node sockets are often owned by another user, so a
+  permissions mismatch is the most common cause.
+- The bearer matches the endpoint: a unix socket needs `--bearer unix` (or the `N2C` source),
+  while a `host:port` relay needs `--bearer tcp` (or the [`N2N`](/oura/v2/sources/n2n) source).
+
+## Immediate disconnect, or addresses look wrong
+
+Almost always a **network-magic mismatch** — Oura is configured for a different network than the
+node it's talking to. Make sure `--magic` (in `watch`) or `[chain].type` (in `daemon.toml`)
+matches the node's network (`mainnet`, `preprod`, `preview`, `testnet`).
+
+For a network that isn't one of the well-known ones, supply the parameters explicitly — see
+[Custom networks](/oura/v2/advanced/custom_network).
+
+## The pipeline restarts from scratch every time
+
+Without a cursor, Oura starts over from its configured intersect point on every restart (the
+default backend is `Memory`, which keeps nothing across restarts). Add a persistent
+[`[cursor]`](/oura/v2/advanced/stateful_cursor) backed by a file or Redis so it resumes where it
+left off:
+
+```toml title="daemon.toml"
+[cursor]
+type = "File"
+path = "./cursor.json"
+```
+
+## Duplicate or orphaned records after a rollback or restart
+
+The chain rolls back, and a restart can replay recently-seen blocks. Pick the strategy that fits
+your sink (see [How it works](/oura/v2/how_it_works) for the full picture):
+
+- React to `undo` events and reverse the matching `apply`.
+- Add a [RollbackBuffer filter](/oura/v2/filters/rollback_buffer) so your sink rarely sees a
+  rollback at all.
+- Make writes idempotent and pair them with a [cursor](/oura/v2/advanced/stateful_cursor) so a
+  restart resumes cleanly.
+
+## Build fails for `kafka`, or `libzmq` not found
+
+These integrations aren't in the default binary and need build prerequisites:
+
+- **`kafka`** builds a vendored OpenSSL — install a C compiler and Perl.
+- **`zeromq`** links a system `libzmq` — install it via your OS package manager.
+
+See [Install from source](/oura/v2/installation/from_source) for the full feature/prerequisite
+table.
+
+## Webhook fails with a TLS certificate error
+
+If your endpoint uses a self-signed certificate, the [WebHook sink](/oura/v2/sinks/webhook)
+rejects it by default. Set `allow_invalid_certs = true` to skip certificate validation.

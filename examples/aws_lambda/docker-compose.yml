@@ -1,0 +1,16 @@
+version: "3"
+services:
+  # LocalStack emulates AWS locally, so the example runs without a real AWS account.
+  # The init script under ./localstack deploys a tiny function named `my-lambda`
+  # that logs each event it receives.
+  localstack:
+    image: localstack/localstack:3
+    container_name: localstack-lambda
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=lambda
+    volumes:
+      - ./localstack:/etc/localstack/init/ready.d
+      # LocalStack runs each Lambda invocation in its own container.
+      - /var/run/docker.sock:/var/run/docker.sock

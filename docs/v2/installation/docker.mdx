@@ -1,5 +1,7 @@
 ---
 title: Docker
+sidebar:
+  order: 2
 ---
 
 _Oura_ provides already built public Docker images through Github Packages. To execute _Oura_ via Docker, use the following command:
@@ -32,12 +34,31 @@ docker run -d -v $(pwd)/daemon.toml:/etc/oura/daemon.toml \
     ghcr.io/txpipe/oura:latest daemon
 ```
 
+## Available Tags
+
+Images are published to `ghcr.io/txpipe/oura` under several tags, each following a different update trigger (see the _Updated on_ column). Pick the one that matches how closely you want to track new changes:
+
+| Tag                | Example          | Updated on             | Description                                                              |
+| :----------------- | :--------------- | :--------------------- | :---------------------------------------------------------------------- |
+| `latest`           | `latest`         | every push to `main`   | Tracks the tip of the `main` branch (development builds, not a release).|
+| `stable`           | `stable`         | every release          | Tracks the most recent released version.                                |
+| `v{major}`         | `v2`             | every release          | Latest release within a major version.                                  |
+| `v{major}.{minor}` | `v2.1`           | every release          | Latest release within a minor version.                                  |
+| `v{version}`       | `v2.1.0`         | its matching release   | A specific, immutable release.                                          |
+| `sha-{commit}`     | `sha-2dec504`    | every build            | A specific commit; fully immutable.                                     |
+
 ## Versioned Images
 
-Images are also tagged with the corresponding version number. It is highly recommended to use a fixed image version in production environments to avoid the effects of new features being included in each release (please remember Oura hasn't reached v2 stability guarantees).
+:::caution
+Pin a fixed image version in production. `latest` tracks the `main` branch (not releases), so
+it can change under you on any push — avoid it outside of local experimentation.
+:::
 
-To use a versioned image, replace the `latest` tag by the desired version with the `v` prefix. For example, to use version `v2.0.0-alpha.1`, use the following image:
+To use a versioned image, replace the `latest` tag with the desired version, prefixed with
+`v`. For example, to pin the `v2.1.0` release:
 
 ```
-ghcr.io/txpipe/oura:v2.0.0-alpha.1
+ghcr.io/txpipe/oura:v2.1.0
 ```
+
+You can also track a major or minor line (for example `v2` or `v2.1`) to automatically pick up compatible updates, or use `stable` to always run the most recent release. Note that `latest` follows the `main` branch rather than the latest release, so avoid it in production.

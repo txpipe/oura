@@ -4,7 +4,7 @@ use gasket::framework::*;
 use pallas::interop::utxorpc::spec::sync::BlockRef;
 use pallas::network::miniprotocols::Point;
 use serde::Deserialize;
-use tracing::debug;
+use tracing::{debug, error};
 use utxorpc::{CardanoSyncClient, ChainBlock, ClientBuilder, TipEvent};
 
 use crate::framework::*;
@@ -13,8 +13,9 @@ fn point_to_blockref(point: Point) -> Option<BlockRef> {
     match point {
         Point::Origin => None,
         Point::Specific(slot, hash) => Some(BlockRef {
-            index: slot,
+            slot,
             hash: hash.into(),
+            ..Default::default()
         }),
     }
 }
@@ -71,11 +72,11 @@ impl Worker {
             TipEvent::Reset(block) => {
                 stage
                     .output
-                    .send(ChainEvent::Reset(Point::new(block.index, block.hash.to_vec())).into())
+                    .send(ChainEvent::Reset(Point::new(block.slot, block.hash.to_vec())).into())
                     .await
                     .or_panic()?;
 
-                stage.chain_tip.set(block.index as i64);
+                stage.chain_tip.set(block.slot as i64);
             }
         }
 
@@ -124,7 +125,17 @@ impl gasket::framework::Worker<Stage> for Worker {
         &mut self,
         _: &mut Stage,
     ) -> Result<WorkSchedule<TipEvent<utxorpc::Cardano>>, WorkerError> {
-        let event = self.stream.event().await.or_restart()?;
+        let event = self
+            .stream
+            .event()
+            .await
+            .inspect_err(|err| error!(?err, "utxorpc stream error"))
+            .or_restart()?;
+
+        // a `None` event means the server closed the stream; restart to reconnect.
+        let Some(event) = event else {
+            return Err(WorkerError::Restart);
+        };
 
         Ok(WorkSchedule::Unit(event))
     }

@@ -1,12 +1,16 @@
 ---
 title: RabbitMq
+sidebar:
+  order: 32
 ---
 
-A sink that implements a rabbitmq publisher. Each event is json-encoded and sent as a message to a rabbitmq exchange.
+Publishes each event as a json-encoded message to a [RabbitMQ](https://www.rabbitmq.com/)
+exchange. A good fit when your downstream consumers already speak AMQP and you want RabbitMQ
+to handle routing and delivery.
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
 type = "Rabbitmq"
 uri = "amqp://rabbitmq:rabbitmq@127.0.0.1:5672"
@@ -14,7 +18,7 @@ exchange = "events.exchange"
 routing_key = ""
 ```
 
-- `type`: the literal value `Rabbitmq`.
-- `uri`: uri to connect on rabbitmq server.
-- `exchange` field with the name of the exchange where the cardano event will be published.
-- `routing_key` field with cardano event routing key configuration.
+- `type` (required): the literal value `Rabbitmq`.
+- `uri` (required): the connection URI of the RabbitMQ server.
+- `exchange` (required): the exchange to publish events to.
+- `routing_key` (optional): the routing key attached to each published message.

@@ -1,0 +1,24 @@
+[source]
+type = "N2N"
+peers = ["relay.cnode-m1.demeter.run:3000"]
+
+[chain]
+type = "mainnet"
+
+[intersect]
+type = "Tip"
+
+[[filters]]
+type = "RollbackBuffer"
+min_depth = 6
+
+[[filters]]
+type = "WorkStats"
+max_block_quantity = 20
+
+[[filters]]
+type = "LegacyV1"
+
+[sink]
+type = "Assert"
+break_on_failure = true

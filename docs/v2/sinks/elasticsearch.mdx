@@ -1,14 +1,18 @@
 ---
 title: Elasticsearch
+sidebar:
+  order: 51
 ---
 
-A sink that outputs events into an Elasticsearch server. Each event is json-encoded and sent as a message to an index or data stream.
+Indexes each event as a json document into an [Elasticsearch](https://www.elastic.co/)
+index or data stream. Reach for it when you want chain data searchable and ready for Kibana
+dashboards.
 
 ## Configuration
 
-```toml
+```toml title="daemon.toml"
 [sink]
-type = "Elastic"
+type = "ElasticSearch"
 url = "https://localhost:9200"
 index = "oura.sink.v0.mainnet"
 
@@ -18,27 +22,32 @@ username = "oura123"
 password = "my very secret stuff"
 ```
 
-### Section: `sink`
-
-- `type`: the literal value `Elastic`.
-- `url`: the location of the Elasticsearch's API
-- `index`: the name of the index (or data stream) to store the event documents
-- `idempotency` (optional): flag that if enabled will force idempotent calls to ES (to avoid duplicates)
+- `type` (required): the literal value `ElasticSearch`.
+- `url` (required): the Elasticsearch API endpoint.
+- `index` (required): the index (or data stream) to store documents in.
+- `idempotency` (optional): when enabled, forces idempotent writes to avoid duplicates (see
+  below).
 
 ### Section: `sink.credentials`
 
-This section configures the auth mechanism against Elasticsearch. You can remove the whole section from the configuration if you want to skip authentication altogether (maybe private cluster without auth?).
+Configures authentication against Elasticsearch. Omit the whole section to skip auth (e.g. a
+private cluster without authentication).
 
-We currently only implement _basic_ auth, other mechanisms will be implemented at some point.
-
-- `type`: the mechanism to use for authentication, only `Basic` is currently implemented
-- `username`: username of the user with access to Elasticsearch
-- `password`: password of the user with access to Elasticsearch
+- `type` (required): the auth mechanism. Only `Basic` is currently implemented.
+- `username` (required): the Elasticsearch user.
+- `password` (required): that user's password.
 
 ## Idempotency
 
-In services and API calls, _idempotency_ refers to a property of the system where the execution of multiple "equivalent" requests have the same effect as a single request. In other words, "idempotent" calls can be triggered multiple times without problem.
+An *idempotent* write can run multiple times with the same effect as running it once. With
+`idempotency` enabled, the sink derives each document's ID deterministically from the event,
+so a block that gets reprocessed — for example after a restart without a
+[cursor](/oura/v2/advanced/stateful_cursor) — produces the same IDs and Elasticsearch rejects
+the duplicates. Oura then continues with the next event. This guarantees the index won't
+accumulate duplicate data.
 
-If Oura restarts without having a cursor or if the same block is processed for any reason, repeated events will present the same ID and Elasticsearch will reject them and Oura will continue with the following event. This mechanism provides a strong guarantee that our index won't contain duplicate data.
-
-If the flag is disabled, each document will be generated using a random ID, ensuring that it will be indexed regardless.
+:::tip
+If your pipeline can't guarantee exactly-once delivery (no cursor, at-least-once source, etc.),
+enable `idempotency`. With it disabled, each document gets a random ID and is always indexed —
+so reprocessing a block creates duplicates.
+:::

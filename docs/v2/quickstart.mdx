@@ -1,0 +1,94 @@
+---
+title: Quick Start
+sidebar:
+  order: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+This page takes you from nothing to live Cardano data in a couple of minutes. You don't need
+your own node — the first step connects to a public relay.
+
+<Steps>
+
+1. **Install Oura.** Grab the pre-built binary for your platform (no toolchain required):
+
+   <Tabs syncKey="install-method">
+   <TabItem label="Shell (Mac / Linux)">
+   ```sh
+   curl --proto '=https' --tlsv1.2 -LsSf https://github.com/txpipe/oura/releases/latest/download/oura-installer.sh | sh
+   ```
+   </TabItem>
+   <TabItem label="PowerShell (Windows)">
+   ```sh
+   powershell -c "irm https://github.com/txpipe/oura/releases/latest/download/oura-installer.ps1 | iex"
+   ```
+   </TabItem>
+   <TabItem label="Homebrew">
+   ```sh
+   brew install txpipe/tap/oura
+   ```
+   </TabItem>
+   <TabItem label="npm">
+   ```sh
+   npm install -g @txpipe/oura
+   ```
+   </TabItem>
+   </Tabs>
+
+   Manual downloads and details are on the
+   [Binary Releases](/oura/v2/installation/binary_release) page.
+
+2. **Watch live chain data.** Point `oura watch` at a public mainnet relay and see events scroll
+   by in your terminal:
+
+   ```sh
+   oura watch backbone.mainnet.cardanofoundation.org:3001 --bearer tcp
+   ```
+
+   That's the fastest way to confirm Oura works. `watch` is a read-only, throttled view meant
+   for eyeballing the chain — see the [watch command](/oura/v2/usage/watch) for its options.
+
+3. **Run a real pipeline.** For anything beyond watching, you write a `daemon.toml` describing a
+   source, filters, and a sink. This one reads from the same relay, decodes each block into
+   transactions, and prints them to stdout:
+
+   ```toml title="daemon.toml"
+   [source]
+   type = "N2N"
+   peers = ["backbone.mainnet.cardanofoundation.org:3001"]
+
+   [intersect]
+   type = "Tip"
+
+   [[filters]]
+   type = "SplitBlock"
+
+   [[filters]]
+   type = "ParseCbor"
+
+   [sink]
+   type = "Stdout"
+   ```
+
+   Then run it in daemon mode:
+
+   ```sh
+   oura daemon --config daemon.toml
+   ```
+
+</Steps>
+
+:::tip
+Starting from `Tip` means you only see *new* blocks as they're produced. To replay history
+instead, change the `[intersect]` block — see [Intersect options](/oura/v2/advanced/intersect_options).
+:::
+
+## Where to go next
+
+- **[How it works](/oura/v2/how_it_works)** — the pipeline model, events, and rollbacks in one
+  page. Worth reading before you build a consumer.
+- **[Sinks](/oura/v2/sinks)** — send events to a file, message broker, database, or cloud
+  service instead of stdout.
+- **[Runnable examples](/oura/v2/examples)** and **[Recipes](/oura/v2/examples/recipes)** —
+  ready-to-run projects and copy-paste configs for every source, filter, and sink.

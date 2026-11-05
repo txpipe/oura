@@ -1,0 +1,102 @@
+---
+title: Runnable examples
+sidebar:
+  order: 0
+---
+
+The _Oura_ repository ships a collection of ready-to-run example **projects** under the
+[`examples/`](https://github.com/txpipe/oura/tree/main/examples) directory. Each one is a
+complete `daemon.toml` wiring a source, an optional filter chain, and a sink — plus any
+companion files — so you can clone the repo and run a full pipeline end-to-end.
+
+:::tip
+Want a short config snippet to drop into your own `daemon.toml` rather than a whole project?
+See **[Recipes](/oura/v2/examples/recipes)**.
+:::
+
+## Running an example
+
+Most examples reference companion files and relative paths, so run them **from inside their
+own directory** rather than from the repository root:
+
+```sh
+cd examples/<name>
+oura daemon --config daemon.toml
+```
+
+Running from the repository root would scatter relative output and state (`./output`,
+`./snapshot`, cursor and database files) in the wrong place and break the path-based
+examples.
+
+Most examples run on the default binary as-is. Only a few target an integration that isn't
+bundled — the `kafka` and `zeromq` sinks, the `mithril` source, and the `WasmPlugin` filter —
+and those need a build with the matching cargo feature. See
+[Install from source](/oura/v2/installation/from_source) for the feature flags, or use a Docker
+image that bundles them.
+
+## Companion files & setup
+
+Some examples need more than the `daemon.toml` — a backing service (`docker compose up -d`),
+a build step, a cargo feature flag, or they write files to the working directory. Each
+example's own `README.md` documents its pipeline, prerequisites, and run command. Check it
+before running.
+
+## Sources
+
+| Example | What it shows |
+| :------ | :------------ |
+| [`n2c_source`](https://github.com/txpipe/oura/tree/main/examples/n2c_source) | Node-to-Client source over a unix socket → Stdout |
+| [`hydra`](https://github.com/txpipe/oura/tree/main/examples/hydra) | Hydra head source over a WebSocket → Stdout |
+| [`mithril`](https://github.com/txpipe/oura/tree/main/examples/mithril) | Mithril snapshot bootstrap with a `Breadcrumbs` intersect |
+| [`dolos_source`](https://github.com/txpipe/oura/tree/main/examples/dolos_source) | UTxO RPC (U5C) source against a Dolos/Demeter endpoint |
+
+## Filters & pipelines
+
+| Example | What it shows |
+| :------ | :------------ |
+| [`select`](https://github.com/txpipe/oura/tree/main/examples/select) | `SplitBlock` → `ParseCbor` → `Select` by address → Stdout |
+| [`metadata_regex_filter`](https://github.com/txpipe/oura/tree/main/examples/metadata_regex_filter) | `Select` matching a metadata label + regex (preprod) → Stdout |
+| [`parse_cbor`](https://github.com/txpipe/oura/tree/main/examples/parse_cbor) | `SplitBlock` → `ParseCbor` → JSONL file output |
+| [`into_json`](https://github.com/txpipe/oura/tree/main/examples/into_json) | `ParseCbor` → `IntoJson` → compressed JSONL file output |
+| [`wasm_basic`](https://github.com/txpipe/oura/tree/main/examples/wasm_basic) | Custom `WasmPlugin` filter loaded from a `.wasm` file |
+
+## Sinks
+
+| Example | What it shows |
+| :------ | :------------ |
+| [`stdout`](https://github.com/txpipe/oura/tree/main/examples/stdout) | Legacy v1 events printed to standard output |
+| [`webhook_basics`](https://github.com/txpipe/oura/tree/main/examples/webhook_basics) | `WebHook` sink posting events over HTTP |
+| [`kafka`](https://github.com/txpipe/oura/tree/main/examples/kafka) | `Kafka` sink with `ByBlock` partitioning |
+| [`rabbitmq`](https://github.com/txpipe/oura/tree/main/examples/rabbitmq) | `Rabbitmq` sink |
+| [`zeromq`](https://github.com/txpipe/oura/tree/main/examples/zeromq) | `Zeromq` PUSH socket sink |
+| [`elasticsearch`](https://github.com/txpipe/oura/tree/main/examples/elasticsearch) | `ElasticSearch` sink |
+| [`redis`](https://github.com/txpipe/oura/tree/main/examples/redis) | `Redis` streams sink |
+| [`sqlite`](https://github.com/txpipe/oura/tree/main/examples/sqlite) | `SqlDb` sink writing raw CBOR into SQLite |
+| [`postgresql`](https://github.com/txpipe/oura/tree/main/examples/postgresql) | `SqlDb` sink targeting PostgreSQL |
+| [`file_rotate`](https://github.com/txpipe/oura/tree/main/examples/file_rotate) | `FileRotate` sink writing rotated, compressed JSONL |
+| [`aws_lambda`](https://github.com/txpipe/oura/tree/main/examples/aws_lambda) | `AwsLambda` sink invoking a function per event |
+| [`aws_s3`](https://github.com/txpipe/oura/tree/main/examples/aws_s3) | `AwsS3` sink writing objects |
+| [`aws_sqs`](https://github.com/txpipe/oura/tree/main/examples/aws_sqs) | `AwsSqs` sink enqueueing messages |
+| [`gcp_pubsub`](https://github.com/txpipe/oura/tree/main/examples/gcp_pubsub) | `GcpPubSub` sink publishing to a topic |
+| [`gcp_cloudfunction`](https://github.com/txpipe/oura/tree/main/examples/gcp_cloudfunction) | `GcpCloudFunction` sink calling a function |
+| [`assert`](https://github.com/txpipe/oura/tree/main/examples/assert) | `Assert` sink used for testing/validation |
+
+## Cursors
+
+| Example | What it shows |
+| :------ | :------------ |
+| [`file_cursor`](https://github.com/txpipe/oura/tree/main/examples/file_cursor) | Persisting pipeline progress to a `File` cursor |
+| [`redis_cursor`](https://github.com/txpipe/oura/tree/main/examples/redis_cursor) | Persisting pipeline progress to a `Redis` cursor |
+
+## Observability
+
+| Example | What it shows |
+| :------ | :------------ |
+| [`metrics`](https://github.com/txpipe/oura/tree/main/examples/metrics) | Exposing a Prometheus metrics endpoint via the `[metrics]` block |
+
+## As a library
+
+The [`examples/lib`](https://github.com/txpipe/oura/tree/main/examples/lib) project shows how
+to embed _Oura_ in a Rust application with custom stages — a custom filter plus a custom sink
+that persists events into SQLite. See its README for the `sqlx-cli` setup, and the
+[Library usage](/oura/v2/usage/library) page for the API overview.

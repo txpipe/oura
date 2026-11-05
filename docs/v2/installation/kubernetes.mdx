@@ -1,14 +1,26 @@
 ---
 title: Kubernetes
+sidebar:
+  order: 4
 ---
 
-_Oura_ running in `daemon` mode can be installed can be deployed in Kubernetes cluster, Depending on your needs, we recommend any of the following approaches.
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## Approach #1: Sidecar Container
+Oura runs well in Kubernetes in `daemon` mode. There are two common ways to deploy it,
+depending on where your Cardano node lives:
 
-_Oura_ can be loaded as a sidecar container in the same pod as your Cardano node. Since containers in a pod share the same file-system layer, it's easy to point _Oura_ to the unix-socket of the node.
+- **Sidecar** — run Oura in the same pod as your node, sharing the unix socket. Simplest when
+  the node is already in your cluster.
+- **Standalone** — run Oura as its own `Deployment`. Use this when the node lives outside the
+  cluster, or when you want to keep it isolated from sidecar access.
 
-In the following example yaml, we show a redacted version of a Cardano node resource defined a s Kubernetes STS. Pay attention on the extra container and to the volume mounts to share the unix socket.
+<Tabs syncKey="k8s-approach">
+  <TabItem label="Sidecar">
+Load Oura as a second container in your node's pod. Because containers in a pod share a
+file-system layer, Oura can read the node's unix socket directly.
+
+The example below is a redacted Cardano node `StatefulSet`. Note the extra container and the
+volume mounts that share the unix socket.
 
 ```yaml
 apiVersion: apps/v1
@@ -49,7 +61,7 @@ spec:
 
       volumes:
 
-      # REDACTED: here goes any required volume for you normal cardano node setup
+      # REDACTED: here goes any required volume for your normal cardano node setup
 
       # empty-dir volume to share the unix socket between containers
       - name: unix-socket
@@ -60,13 +72,10 @@ spec:
         configMap:
           name: oura-config
 ```
-
-
-## Approach #2: Standalone Deployment
-
-_Oura_ can be implemented as a standalone Kubernetes `deployment` resource. This is useful if your Cardano node is not part of your Kubernetes cluster or if you want to keep your node strictly isolated from the access of a sidecard pod.
-
-Please note that the amount of replicas is set to `1`. _Oura_ doesn't have any kind of "coordination" between instances. Adding more than one replica will just create extra pipelines duplicating the same work.
+  </TabItem>
+  <TabItem label="Standalone">
+Run Oura as its own `Deployment`, with its config supplied by a `ConfigMap`. Use this when the
+node isn't part of your cluster, or you want it isolated from sidecar access.
 
 ```yaml
 apiVersion: v1
@@ -123,3 +132,10 @@ spec:
         configMap:
           name: oura
 ```
+  </TabItem>
+</Tabs>
+
+:::caution[Keep replicas at 1]
+Oura instances don't coordinate with each other. Running more than one replica just creates
+parallel pipelines duplicating the same work — keep `replicas: 1`.
+:::

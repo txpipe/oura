@@ -1,18 +1,26 @@
 ---
 title: Pipeline Metrics
+sidebar:
+  order: 6
 ---
 
-The _metrics_ features allows operators to track the progress and performance of long-running Oura sessions.
+The `[metrics]` feature lets operators track the progress and performance of long-running Oura
+sessions over a Prometheus endpoint.
 
 ## Context
 
-Some use-cases require Oura to be running either continuosuly or for prolonged periods of time. Keeping a sink updated in real-time requires 24/7 operation. Dumping historical chain-data from origin might take several hours.
+Some use-cases keep Oura running continuously or for long stretches: keeping a sink updated in
+real time means 24/7 operation, and dumping historical chain data from origin can take hours.
 
-These scenarios require an understanding of the internal state of the pipeline to facilitate monitoring and troubleshooting of the system. In a data-processing pipeline such as this, two important aspects need to observable: progress and performance.
+These scenarios call for visibility into the pipeline's internal state to make monitoring and
+troubleshooting possible. Two aspects matter most: **progress** and **performance**.
 
 ## Feature
 
-Oura provides an optional `/metrics` HTTP endpoint that uses Prometheus format to expose real-time opertional metrics of the pipeline. Each stage (source / sink) is responsible for notifying their progress as they process each event. This notifications are then aggregated via counters & gauges and exposed via HTTP using the well-known Prometheus encoding.
+Oura provides an optional `/metrics` HTTP endpoint that exposes real-time operational metrics
+in Prometheus format. Each stage (source / sink) reports its progress as it processes events;
+these notifications are aggregated into counters and gauges and served over HTTP using the
+well-known Prometheus encoding.
 
 The following metrics are available:
 
@@ -28,17 +36,13 @@ The following metrics are available:
 
 The _metrics_ feature is a configurable setting available when running in daemon mode. A top level `[metrics]` section of the daemon toml file controls the feature:
 
-```toml
-# daemon.toml file
-
+```toml title="daemon.toml"
 [metrics]
 address = "0.0.0.0:9186"
-endpoint = "/metrics"
 ```
 
 - `[metrics]` section needs to be present to enable the feature. Absence of the section will not expose any HTTP endpoints.
-- `address`: The address at which the HTTP server will be listening for request. Expected format is `<ip>:<port>`. Use the IP value `0.0.0.0` to allow connections on any of the available IP address of the network interface. Default value is `0.0.0.0:9186`.
-- `endpoint`: The path at which the metrics will be exposed. Default value is `/metrics`.
+- `address` (optional): The address at which the HTTP server will be listening for request. Expected format is `<ip>:<port>`. Use the IP value `0.0.0.0` to allow connections on any of the available IP address of the network interface. Default value is `0.0.0.0:9186`.
 
 ## Usage
 
@@ -70,7 +74,9 @@ source_current_slot 2839340
 source_event_count 2277715
 ```
 
-Regardless of the above mechanism, the inteded approach for tracking Oura's metrics is to use a monitoring infrastructure compatible with Prometheus format. Setting up and managing the monitoring stack is outside the scope of Oura. If you don't have any infrastructure in place, we recommend checking out some of the more commons stacks:
+The browser check above is handy, but the intended approach is to point a Prometheus-compatible
+monitoring stack at the endpoint. Setting up and running that stack is outside Oura's scope; if
+you don't already have one, these are common choices:
 
 - Prometheus Server + Grafana
 - Metricbeat + Elasticsearch + Kibana

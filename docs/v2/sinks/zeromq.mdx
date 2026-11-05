@@ -1,0 +1,28 @@
+---
+title: ZeroMQ
+sidebar:
+  label: ZeroMQ
+  order: 33
+---
+
+Publishes chain events over a [ZeroMQ](https://zeromq.org/) socket. The sink opens a `PUSH`
+socket, connects it to the configured address, and sends each event that carries a record as a
+single json-encoded message; events without a record (such as resets) are skipped. A
+downstream `PULL` socket consumes the stream. Useful for lightweight, broker-less fan-out to
+your own processes.
+
+:::caution[Requires a custom build]
+ZeroMQ isn't in the default binary (it links a system `libzmq` at runtime). Build Oura with
+the `zeromq` feature — see [Install from source](/oura/v2/installation/from_source).
+:::
+
+## Configuration
+
+```toml title="daemon.toml"
+[sink]
+type = "Zeromq"
+url = "tcp://localhost:5555"
+```
+
+- `type` (required): the literal value `Zeromq`.
+- `url` (required): the endpoint the `PUSH` socket connects to (e.g. `tcp://localhost:5555`).

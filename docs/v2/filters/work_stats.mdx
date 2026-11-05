@@ -1,0 +1,31 @@
+---
+title: Work Stats filter
+sidebar:
+  label: Work Stats
+  order: 7
+---
+
+The `WorkStats` filter tracks pipeline progress as events pass through, and can optionally stop
+the pipeline once a target is reached. It passes events through unchanged, so you can drop it
+anywhere in the filter chain.
+
+This is also how **finalization** is configured in v2 (see
+[finalize options](/oura/v2/advanced/finalize_options) for the concept): the pipeline exits
+gracefully as soon as any configured condition is met.
+
+## Configuration
+
+```toml title="daemon.toml"
+[[filters]]
+type = "WorkStats"
+until_hash = "aa83acbf5904c0edfe4d79b3689d3d00fcfc553cf360fd2229b98d464c28e9de"
+max_block_slot = 1000000
+max_block_quantity = 5000
+```
+
+- `type`: the literal value `WorkStats`.
+- `until_hash` (optional): stop once the block with this hash has been processed.
+- `max_block_slot` (optional): stop once a block at or beyond this slot number has been processed.
+- `max_block_quantity` (optional): stop after this many blocks have been processed.
+
+All options are optional; if none are set, the filter only tracks statistics and never stops the pipeline.
