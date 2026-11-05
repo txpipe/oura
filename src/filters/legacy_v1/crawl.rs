@@ -17,6 +17,7 @@ impl From<pallas::ledger::traverse::Era> for Era {
             pallas::ledger::traverse::Era::Mary => Era::Mary,
             pallas::ledger::traverse::Era::Alonzo => Era::Alonzo,
             pallas::ledger::traverse::Era::Babbage => Era::Babbage,
+            pallas::ledger::traverse::Era::Conway => Era::Conway,
             _ => Era::Unknown,
         }
     }
@@ -207,5 +208,18 @@ impl EventWriter<'_> {
 
     pub fn crawl_rollback(&mut self, point: Point) -> Result<(), WorkerError> {
         self.append(point.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn conway_blocks_report_their_era() {
+        assert_eq!(
+            Era::from(pallas::ledger::traverse::Era::Conway),
+            Era::Conway
+        );
     }
 }
