@@ -100,3 +100,20 @@ jobs:
           shared-key: ci-check-windows
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo check --all-features --locked
+
+  check-macos:
+    name: Check (macos)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-check-macos
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: cargo check --all-features --locked
