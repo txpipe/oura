@@ -26,7 +26,7 @@ impl gasket::framework::Worker<Stage> for Worker {
 
         let partitioning = stage
             .config
-            .paritioning
+            .partitioning
             .clone()
             .unwrap_or(PartitionStrategy::Random);
 
@@ -101,7 +101,8 @@ pub struct Config {
     pub brokers: Vec<String>,
     pub topic: String,
     pub ack_timeout_secs: Option<u64>,
-    pub paritioning: Option<PartitionStrategy>,
+    #[serde(alias = "paritioning")]
+    pub partitioning: Option<PartitionStrategy>,
 }
 
 impl Config {
@@ -115,5 +116,38 @@ impl Config {
         };
 
         Ok(stage)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn strategy_for(key: &str) -> Option<PartitionStrategy> {
+        let value = serde_json::json!({
+            "brokers": ["localhost:9092"],
+            "topic": "events",
+            key: "ByBlock",
+        });
+
+        serde_json::from_value::<Config>(value)
+            .unwrap()
+            .partitioning
+    }
+
+    #[test]
+    fn reads_the_corrected_key() {
+        assert!(matches!(
+            strategy_for("partitioning"),
+            Some(PartitionStrategy::ByBlock)
+        ));
+    }
+
+    #[test]
+    fn keeps_reading_the_misspelled_key() {
+        assert!(matches!(
+            strategy_for("paritioning"),
+            Some(PartitionStrategy::ByBlock)
+        ));
     }
 }

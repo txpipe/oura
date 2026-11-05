@@ -22,7 +22,7 @@ type = "Kafka"
 brokers = ["kafka-broker-0:9092"]
 topic = "cardano-events"
 ack_timeout_secs = 5
-paritioning = "Random"
+partitioning = "Random"
 ```
 
 - `type` (required): the literal value `Kafka`.
@@ -31,9 +31,9 @@ paritioning = "Random"
 - `topic` (required): the Kafka topic to publish messages to.
 - `ack_timeout_secs` (optional): how long, in seconds, to wait for the broker to acknowledge a
   message.
-- `paritioning` (optional, default = `Random`): how messages are assigned to partitions —
+- `partitioning` (optional, default = `Random`): how messages are assigned to partitions —
   `ByBlock` (messages from the same block share a partition key) or `Random`.
 
 :::note
-The config key really is spelled `paritioning`, to match the field name in the codebase.
+The misspelled `paritioning` key from earlier releases still works.
 :::

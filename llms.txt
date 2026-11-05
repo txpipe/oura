@@ -1,0 +1,28 @@
+# Oura
+
+> Oura follows a Cardano chain through a node, relay or UTxO RPC endpoint, runs each event through a chain of filters, and sends the result to a destination such as a file, message broker, database or webhook. It runs as a CLI or a daemon configured by `daemon.toml`.
+
+The `main` branch and these docs cover v2. Optional integrations may need a build with the matching Cargo feature; each page says so.
+
+## Start here
+
+- [Quick start](https://docs.txpipe.io/oura/v2/quickstart): live chain data in a couple of minutes
+- [How it works](https://docs.txpipe.io/oura/v2/how_it_works): sources, filters, sinks, cursors and rollbacks
+- [Integration guide](https://github.com/txpipe/oura/blob/main/docs/v2/guides/integrating_oura.mdx): choosing stages and wiring a pipeline
+- [Protocol compatibility](https://github.com/txpipe/oura/blob/main/docs/v2/reference/protocol_compatibility.mdx): the protocol versions tested
+
+## Pipeline stages
+
+- [Sources](https://docs.txpipe.io/oura/v2/sources): N2N, N2C, UTxO RPC, Hydra, S3, Mithril
+- [Filters](https://docs.txpipe.io/oura/v2/filters): SplitBlock, ParseCbor, Select, LegacyV1, IntoJson, RollbackBuffer, WorkStats, WasmPlugin
+- [Sinks](https://docs.txpipe.io/oura/v2/sinks): files, stdout, Kafka, RabbitMQ, Redis, ZeroMQ, Elasticsearch, SQL, webhooks and cloud services
+
+## Reference
+
+- [Data dictionary](https://docs.txpipe.io/oura/v2/reference/data_dictionary): the event data model
+- [Legacy v1 events](https://docs.txpipe.io/oura/v2/reference/legacy_v1_events): the schema produced by the LegacyV1 filter
+- [Examples](https://github.com/txpipe/oura/tree/main/examples): runnable `daemon.toml` pipelines
+
+## Contributing
+
+- [AGENTS.md](https://github.com/txpipe/oura/blob/main/AGENTS.md): repository layout, commands and conventions
