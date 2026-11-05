@@ -11,5 +11,9 @@ era wrapper. Each is named for its era and the major protocol version in its hea
 | `conway-v10.block` | 10 | Pallas `test_data/conway4.block` |
 | `conway-v11.block` | 11 | Mainnet slot 202315107, block `d03a37835e9f1ffb70e8a476334c69183ab5491c911faa7ea0d6ba285dd7c8b4`, fetched from `backbone.cardano.iog.io:3001` with block-fetch |
 | `conway-v12.block` | 12 | Pallas `test_data/conway5.block`, Musashi testnet, last block before the fork |
+| `dijkstra-v12.block` | 12 | Pallas `test_data/dijkstra3.block`, Musashi testnet |
 
-Pallas documents the Musashi block in `test_data/dijkstra-fixtures.md`.
+Pallas documents the Musashi blocks in `test_data/dijkstra-fixtures.md`.
+
+The Dijkstra block needs a Pallas build that can read the era, so its tests only compile
+with `--cfg pallas_next`. The `Protocol compatibility (next Pallas)` CI job runs them.

@@ -1,6 +1,8 @@
 //! Runs real blocks at each Cardano protocol version through Oura's filter
 //! stages. See `tests/protocol/README.md` for where each block comes from.
 
+#![allow(unexpected_cfgs)]
+
 use std::time::Duration;
 
 use gasket::messaging::tokio::connect_ports;
@@ -208,5 +210,31 @@ async fn split_block_handles_every_version() {
 async fn legacy_v1_handles_every_version() {
     for (_, fixture) in released() {
         reports_its_legacy_era(&fixture).await;
+    }
+}
+
+/// The Dijkstra era needs a Pallas release that can read it. The `n+1` CI job
+/// builds against the pre-release and turns this on with `--cfg pallas_next`.
+#[cfg(pallas_next)]
+mod dijkstra {
+    use super::*;
+
+    fn dijkstra() -> Fixture {
+        fixture!("dijkstra-v12.block", Era::Unknown)
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn parse_cbor_handles_dijkstra() {
+        parses_into_a_block(&dijkstra()).await;
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn split_block_handles_dijkstra() {
+        splits_into_txs(&dijkstra()).await;
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn legacy_v1_handles_dijkstra() {
+        reports_its_legacy_era(&dijkstra()).await;
     }
 }
