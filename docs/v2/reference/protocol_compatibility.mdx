@@ -1,0 +1,32 @@
+---
+title: Protocol compatibility
+sidebar:
+  order: 3
+---
+
+Oura reads the chain through [Pallas](https://github.com/txpipe/pallas), so its protocol support
+follows the Pallas release it's built on. Each version below is checked by running a real block
+through the `ParseCbor`, `SplitBlock` and `LegacyV1` filters in
+[`tests/protocol_compat.rs`](https://github.com/txpipe/oura/blob/main/tests/protocol_compat.rs),
+on every change to `main`.
+
+| protocol version | era | tested against |
+|---|---|---|
+| 7, 8 | Babbage | current Pallas release |
+| 9, 10, 11 | Conway | current Pallas release |
+| 12 | Conway body under a version 12 header | current Pallas release |
+| 12 | Dijkstra | Pallas pre-release only |
+
+## Dijkstra
+
+Released Oura binaries can't read Dijkstra blocks yet, because that needs a stable Pallas release
+with Dijkstra support. A separate CI job runs the Dijkstra cases against the Pallas pre-release.
+Those cases use blocks from the Musashi testnet.
+
+In the `LegacyV1` schema, Dijkstra blocks report their era as `Unknown` for now.
+
+## Upgrading around a hard fork
+
+When a new era goes live, a build without support for it fails on the first block of that era
+and needs an upgrade. Check this page and the
+[release notes](https://github.com/txpipe/oura/releases) before the fork.
