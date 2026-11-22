@@ -1,5 +1,4 @@
 use gasket::framework::AsWorkError;
-use pallas::ledger::primitives::conway;
 use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
 use std::ops::Deref as _;
@@ -15,7 +14,7 @@ use pallas::ledger::primitives::{
 };
 use pallas::ledger::traverse::{
     ComputeHash, MultiEraAsset, MultiEraBlock, MultiEraCert, MultiEraInput, MultiEraOutput,
-    MultiEraRedeemer, MultiEraTx, OriginalHash,
+    MultiEraRedeemer, MultiEraRedeemerTag, MultiEraTx, OriginalHash,
 };
 use pallas::network::miniprotocols::Point;
 use pallas::{codec::utils::KeepRaw, crypto::hash::Hash};
@@ -248,8 +247,9 @@ impl EventWriter<'_> {
                 .into();
 
             record.native_witnesses = tx
-                .native_scripts()
+                .multi_era_native_scripts()
                 .iter()
+                .filter_map(|x| x.as_alonzo_compatible())
                 .map(|x| self.to_native_witness_record(x))
                 .collect::<Vec<_>>()
                 .into();
@@ -411,13 +411,14 @@ impl EventWriter<'_> {
 
     pub fn to_plutus_redeemer_record(&self, redeemer: &MultiEraRedeemer) -> PlutusRedeemerRecord {
         PlutusRedeemerRecord {
-            purpose: match redeemer.tag() {
-                conway::RedeemerTag::Spend => "spend".to_string(),
-                conway::RedeemerTag::Mint => "mint".to_string(),
-                conway::RedeemerTag::Cert => "cert".to_string(),
-                conway::RedeemerTag::Reward => "reward".to_string(),
-                conway::RedeemerTag::Vote => "vote".to_string(),
-                conway::RedeemerTag::Propose => "propose".to_string(),
+            purpose: match redeemer.multi_era_tag() {
+                MultiEraRedeemerTag::Spend => "spend".to_string(),
+                MultiEraRedeemerTag::Mint => "mint".to_string(),
+                MultiEraRedeemerTag::Cert => "cert".to_string(),
+                MultiEraRedeemerTag::Reward => "reward".to_string(),
+                MultiEraRedeemerTag::Vote => "vote".to_string(),
+                MultiEraRedeemerTag::Propose => "propose".to_string(),
+                other => format!("{other:?}").to_lowercase(),
             },
             ex_units_mem: redeemer.ex_units().mem as u32,
             ex_units_steps: redeemer.ex_units().steps,

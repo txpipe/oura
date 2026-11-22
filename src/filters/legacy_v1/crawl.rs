@@ -75,7 +75,11 @@ impl EventWriter<'_> {
     }
 
     fn crawl_witnesses(&mut self, tx: &MultiEraTx) -> Result<(), WorkerError> {
-        for script in tx.native_scripts() {
+        let native_scripts = tx.multi_era_native_scripts();
+        for script in native_scripts
+            .iter()
+            .filter_map(|x| x.as_alonzo_compatible())
+        {
             self.append_from(self.to_native_witness_record(script))?;
         }
 
@@ -148,7 +152,11 @@ impl EventWriter<'_> {
         self.crawl_metadata(tx)?;
 
         // crawl aux native scripts
-        for script in tx.aux_native_scripts() {
+        let aux_native_scripts = tx.multi_era_aux_native_scripts();
+        for script in aux_native_scripts
+            .iter()
+            .filter_map(|x| x.as_alonzo_compatible())
+        {
             self.append(self.to_aux_native_script_event(script))?;
         }
 
