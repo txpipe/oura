@@ -115,7 +115,7 @@ jobs:
       # policy on OuraE2ETest allowing this repo.
       - name: Configure AWS credentials
         if: matrix.kind == 'aws'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-west-2
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/OuraE2ETest
