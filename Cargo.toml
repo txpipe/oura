@@ -61,7 +61,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 crossterm = "0.26"
 merge = "0.1.0"
 regex = "1.10.5"
-handlebars = { version = "^5.1", optional = true }
+handlebars = { version = "^6.4", optional = true }
 config = { version = "0.13.2", default-features = false, features = ["toml", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = { version = "1.0.104", features = ["arbitrary_precision"] }
